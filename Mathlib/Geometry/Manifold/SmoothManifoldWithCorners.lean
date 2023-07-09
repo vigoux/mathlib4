@@ -1080,7 +1080,6 @@ variable [ChartedSpace H M] [ChartedSpace H' M']
 
 /-- The preferred extended chart on a manifold with corners around a point `x`, from a neighborhood
 of `x` to the model vector space. -/
-@[simp, mfld_simps]
 def extChartAt (x : M) : LocalEquiv M E :=
   (chartAt H x).extend I
 #align ext_chart_at extChartAt
@@ -1180,7 +1179,7 @@ theorem extChartAt_target_mem_nhdsWithin : (extChartAt I x).target ∈ 𝓝[rang
 #align ext_chart_at_target_mem_nhds_within extChartAt_target_mem_nhdsWithin
 
 theorem extChartAt_target_subset_range : (extChartAt I x).target ⊆ range I := by
-  simp only [mfld_simps]
+  simp only [extChartAt, mfld_simps]
 #align ext_chart_at_target_subset_range extChartAt_target_subset_range
 
 theorem nhdsWithin_extChartAt_target_eq' {y : M} (hy : y ∈ (extChartAt I x).source) :
@@ -1354,7 +1353,7 @@ theorem extChartAt_self_apply {x y : H} : extChartAt I x y = I y :=
 /-- In the case of the manifold structure on a vector space, the extended charts are just the
 identity.-/
 theorem extChartAt_model_space_eq_id (x : E) : extChartAt 𝓘(𝕜, E) x = LocalEquiv.refl E := by
-  simp only [mfld_simps]
+  simp only [mfld_simps, extChartAt]
 #align ext_chart_at_model_space_eq_id extChartAt_model_space_eq_id
 
 theorem ext_chart_model_space_apply {x y : E} : extChartAt 𝓘(𝕜, E) x y = y :=
@@ -1363,13 +1362,18 @@ theorem ext_chart_model_space_apply {x y : E} : extChartAt 𝓘(𝕜, E) x y = y
 
 variable {𝕜}
 
+@[simp, mfld_simps]
 theorem extChartAt_prod (x : M × M') :
-    extChartAt (I.prod I') x = (extChartAt I x.1).prod (extChartAt I' x.2) := by
-  simp only [mfld_simps]
-  -- Porting note: `simp` can't use `LocalEquiv.prod_trans` here because of a type
-  -- synonym
-  rw [LocalEquiv.prod_trans]
+    extChartAt (I.prod I') x = (extChartAt I x.1).prod (extChartAt I' x.2) :=
+  LocalEquiv.prod_trans ..
 #align ext_chart_at_prod extChartAt_prod
 
-end ExtendedCharts
+@[simp, mfld_simps]
+theorem extChartAt_pi {ι : Type v} {E : ι → Type w} {M : ι → Type u} {H : ι → Type u'} [Fintype ι]
+    [∀ i, NormedAddCommGroup (E i)] [∀ i, NormedSpace 𝕜 (E i)] [∀ i, TopologicalSpace (H i)]
+    [∀ i, TopologicalSpace (M i)] [∀ i, ChartedSpace (H i) (M i)]
+    (I : ∀ i, ModelWithCorners 𝕜 (E i) (H i)) (x : ∀ i, M i) :
+    extChartAt (.pi I) x = .pi fun i ↦ extChartAt (I i) (x i) :=
+  LocalEquiv.pi_trans ..
 
+end ExtendedCharts
