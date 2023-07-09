@@ -1100,10 +1100,12 @@ theorem isOpen_extChartAt_source : IsOpen (extChartAt I x).source :=
   isOpen_extend_source _ _
 #align is_open_ext_chart_at_source isOpen_extChartAt_source
 
+@[simp, mfld_simps]
 theorem mem_extChartAt_source : x ∈ (extChartAt I x).source := by
   simp only [extChartAt_source, mem_chart_source]
 #align mem_ext_chart_source mem_extChartAt_source
 
+@[simp, mfld_simps]
 theorem mem_extChartAt_target : extChartAt I x x ∈ (extChartAt I x).target :=
   (extChartAt I x).map_source <| mem_extChartAt_source _ _
 
