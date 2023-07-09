@@ -1352,6 +1352,7 @@ theorem extChartAt_self_apply {x y : H} : extChartAt I x y = I y :=
 
 /-- In the case of the manifold structure on a vector space, the extended charts are just the
 identity.-/
+@[simp, mfld_simps]
 theorem extChartAt_model_space_eq_id (x : E) : extChartAt 𝓘(𝕜, E) x = LocalEquiv.refl E := by
   simp only [mfld_simps, extChartAt]
 #align ext_chart_at_model_space_eq_id extChartAt_model_space_eq_id
