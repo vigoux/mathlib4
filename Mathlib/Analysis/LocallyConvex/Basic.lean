@@ -6,6 +6,7 @@ Authors: Jean Lo, Bhavik Mehta, Yaël Dillies
 import Mathlib.Analysis.Convex.Basic
 import Mathlib.Analysis.Convex.Hull
 import Mathlib.Analysis.NormedSpace.Basic
+import Mathlib.Topology.Bornology.Absorbs
 
 #align_import analysis.locally_convex.basic from "leanprover-community/mathlib"@"f2ce6086713c78a7f880485f7917ea547a215982"
 
@@ -51,93 +52,7 @@ variable [SeminormedRing 𝕜]
 
 section SMul
 
-variable (𝕜) [SMul 𝕜 E]
-
-/-- A set `A` absorbs another set `B` if `B` is contained in all scalings of `A` by elements of
-sufficiently large norm. -/
-def Absorbs (A B : Set E) :=
-  ∃ r, ∀ a : 𝕜, r ≤ ‖a‖ → B ⊆ a • A
-#align absorbs Absorbs
-
-variable {𝕜} {s t u v A B : Set E}
-
-lemma Absorbs.exists_pos (h : Absorbs 𝕜 A B) : ∃ r > 0, ∀ a : 𝕜, r ≤ ‖a‖ → B ⊆ a • A :=
-  let ⟨r, hr⟩ := h
-  ⟨max r 1, by simp, fun a ha ↦ hr a ((le_max_left _ _).trans ha)⟩
-
-lemma absorbs_iff_cobounded : Absorbs 𝕜 A B ↔ ∀ᶠ a in Bornology.cobounded 𝕜, B ⊆ a • A := by
-  simp only [Absorbs, ← comap_norm_atTop, (atTop_basis.comap _).eventually_iff, true_and]
-  rfl
-
-alias ⟨Absorbs.eventually_cobounded, Absorbs.of_eventually_cobounded⟩ := absorbs_iff_cobounded
-
-@[simp]
-theorem Absorbs.empty {s : Set E} : Absorbs 𝕜 s (∅ : Set E) :=
-  ⟨1, fun _a _ha => Set.empty_subset _⟩
-#align absorbs_empty Absorbs.empty
-
-theorem Absorbs.mono (hs : Absorbs 𝕜 s u) (hst : s ⊆ t) (hvu : v ⊆ u) : Absorbs 𝕜 t v :=
-  let ⟨r, h⟩ := hs
-  ⟨r, fun _a ha => hvu.trans <| (h _ ha).trans <| smul_set_mono hst⟩
-#align absorbs.mono Absorbs.mono
-
-theorem Absorbs.mono_left (hs : Absorbs 𝕜 s u) (h : s ⊆ t) : Absorbs 𝕜 t u :=
-  hs.mono h Subset.rfl
-#align absorbs.mono_left Absorbs.mono_left
-
-theorem Absorbs.mono_right (hs : Absorbs 𝕜 s u) (h : v ⊆ u) : Absorbs 𝕜 s v :=
-  hs.mono Subset.rfl h
-#align absorbs.mono_right Absorbs.mono_right
-
-@[simp]
-theorem absorbs_union : Absorbs 𝕜 s (u ∪ v) ↔ Absorbs 𝕜 s u ∧ Absorbs 𝕜 s v := by
-  simp only [absorbs_iff_cobounded, union_subset_iff, Filter.eventually_and]
-#align absorbs_union absorbs_union
-
-theorem Absorbs.union (hu : Absorbs 𝕜 s u) (hv : Absorbs 𝕜 s v) : Absorbs 𝕜 s (u ∪ v) :=
-  absorbs_union.2 ⟨hu, hv⟩
-#align absorbs.union Absorbs.union
-
-theorem Set.Finite.absorbs_iUnion {ι : Type*} {s : Set E} {t : Set ι} {f : ι → Set E}
-    (hi : t.Finite) : Absorbs 𝕜 s (⋃ i ∈ t, f i) ↔ ∀ i ∈ t, Absorbs 𝕜 s (f i) := by
-  simp only [absorbs_iff_cobounded, iUnion_subset_iff, eventually_all_finite hi]
-#align set.finite.absorbs_Union Set.Finite.absorbs_iUnion
-
-theorem absorbs_iUnion_finset {ι : Type*} {t : Finset ι} {f : ι → Set E} :
-    Absorbs 𝕜 s (⋃ i ∈ t, f i) ↔ ∀ i ∈ t, Absorbs 𝕜 s (f i) :=
-  t.finite_toSet.absorbs_iUnion
-#align absorbs_Union_finset absorbs_iUnion_finset
-
-variable (𝕜)
-
-/-- A set is absorbent if it absorbs every singleton. -/
-def Absorbent (A : Set E) :=
-  ∀ x, ∃ r, ∀ a : 𝕜, r ≤ ‖a‖ → x ∈ a • A
-#align absorbent Absorbent
-
-variable {𝕜}
-
-theorem absorbent_iff_forall_absorbs_singleton : Absorbent 𝕜 A ↔ ∀ x, Absorbs 𝕜 A {x} := by
-  simp_rw [Absorbs, Absorbent, singleton_subset_iff]
-#align absorbent_iff_forall_absorbs_singleton absorbent_iff_forall_absorbs_singleton
-
-theorem Absorbent.subset (hA : Absorbent 𝕜 A) (hAB : A ⊆ B) : Absorbent 𝕜 B := by
-  rw [absorbent_iff_forall_absorbs_singleton] at *
-  exact fun x ↦ (hA x).mono_left hAB
-#align absorbent.subset Absorbent.subset
-
-theorem Absorbent.absorbs (hs : Absorbent 𝕜 s) {x : E} : Absorbs 𝕜 s {x} :=
-  absorbent_iff_forall_absorbs_singleton.1 hs _
-#align absorbent.absorbs Absorbent.absorbs
-
-#noalign absorbent_iff_nonneg_lt
-
-theorem Absorbent.absorbs_finite {s : Set E} (hs : Absorbent 𝕜 s) {v : Set E} (hv : v.Finite) :
-    Absorbs 𝕜 s v := by
-  rw [← Set.biUnion_of_singleton v]
-  exact hv.absorbs_iUnion.mpr fun _ _ => hs.absorbs
-#align absorbent.absorbs_finite Absorbent.absorbs_finite
-
+variable [SMul 𝕜 E] {s t u v A B : Set E}
 variable (𝕜)
 
 /-- A set `A` is balanced if `a • A` is contained in `A` whenever `a` has norm at most `1`. -/
@@ -146,6 +61,15 @@ def Balanced (A : Set E) :=
 #align balanced Balanced
 
 variable {𝕜}
+
+lemma absorbs_iff_norm : Absorbs 𝕜 A B ↔ ∃ r, ∀ c : 𝕜, r ≤ ‖c‖ → B ⊆ c • A :=
+  Filter.atTop_basis.cobounded_of_norm.eventually_iff.trans <| by simp only [true_and]; rfl
+
+alias ⟨_, Absorbs.of_norm⟩ := absorbs_iff_norm
+
+lemma Absorbs.exists_pos (h : Absorbs 𝕜 A B) : ∃ r > 0, ∀ c : 𝕜, r ≤ ‖c‖ → B ⊆ c • A :=
+  let ⟨r, hr₁, hr⟩ := (Filter.atTop_basis' 1).cobounded_of_norm.eventually_iff.1 h
+  ⟨r, one_pos.trans_le hr₁, hr⟩
 
 theorem balanced_iff_smul_mem : Balanced 𝕜 s ↔ ∀ ⦃a : 𝕜⦄, ‖a‖ ≤ 1 → ∀ ⦃x : E⦄, x ∈ s → a • x ∈ s :=
   forall₂_congr fun _a _ha => smul_set_subset_iff
@@ -200,46 +124,13 @@ section Module
 
 variable [AddCommGroup E] [Module 𝕜 E] {s s₁ s₂ t t₁ t₂ : Set E}
 
-@[simp]
-lemma absorbs_neg_left : Absorbs 𝕜 (-s) t ↔ Absorbs 𝕜 s t :=
-  exists_congr fun r ↦ neg_surjective.forall.trans <| by simp
-
-alias ⟨Absorbs.of_neg_left, Absorbs.neg_left⟩ := absorbs_neg_left
-
-@[simp]
-lemma absorbs_neg_right : Absorbs 𝕜 s (-t) ↔ Absorbs 𝕜 s t :=
-  exists_congr fun r ↦ neg_surjective.forall.trans <| by simp
-
-alias ⟨Absorbs.of_neg_right, Absorbs.neg_right⟩ := absorbs_neg_right
-
-lemma absorbs_neg_neg : Absorbs 𝕜 (-s) (-t) ↔ Absorbs 𝕜 s t :=
-  absorbs_neg_left.trans absorbs_neg_right
-
-alias ⟨Absorbs.of_neg_neg, Absorbs.neg_neg⟩ := absorbs_neg_neg
-
-#align absorbs.neg Absorbs.neg_neg
-
-lemma balanced_neg : Balanced 𝕜 (-s) ↔ Balanced 𝕜 s := forall₂_congr fun _ _ ↦ by simp
-
-alias ⟨Balanced.of_neg, Balanced.neg⟩ := balanced_neg
+theorem Balanced.neg : Balanced 𝕜 s → Balanced 𝕜 (-s) :=
+  forall₂_imp fun _ _ h => (smul_set_neg _ _).subset.trans <| neg_subset_neg.2 h
 #align balanced.neg Balanced.neg
-
-theorem Absorbs.add : Absorbs 𝕜 s₁ t₁ → Absorbs 𝕜 s₂ t₂ → Absorbs 𝕜 (s₁ + s₂) (t₁ + t₂) :=
-  fun ⟨r₁, h₁⟩ ⟨r₂, h₂⟩ =>
-  ⟨max r₁ r₂, fun _a ha =>
-    (add_subset_add (h₁ _ <| le_of_max_le_left ha) <| h₂ _ <| le_of_max_le_right ha).trans
-      (smul_add _ _ _).superset⟩
-#align absorbs.add Absorbs.add
 
 theorem Balanced.add (hs : Balanced 𝕜 s) (ht : Balanced 𝕜 t) : Balanced 𝕜 (s + t) := fun _a ha =>
   (smul_add _ _ _).subset.trans <| add_subset_add (hs _ ha) <| ht _ ha
 #align balanced.add Balanced.add
-
-theorem Absorbs.sub (h₁ : Absorbs 𝕜 s₁ t₁) (h₂ : Absorbs 𝕜 s₂ t₂) :
-    Absorbs 𝕜 (s₁ - s₂) (t₁ - t₂) := by
-  simp_rw [sub_eq_add_neg]
-  exact h₁.add h₂.neg_neg
-#align absorbs.sub Absorbs.sub
 
 theorem Balanced.sub (hs : Balanced 𝕜 s) (ht : Balanced 𝕜 t) : Balanced 𝕜 (s - t) := by
   simp_rw [sub_eq_add_neg]
@@ -266,27 +157,18 @@ section NormedDivisionRing
 
 variable [NormedDivisionRing 𝕜] [AddCommGroup E] [Module 𝕜 E] {s t A B : Set E} {a b : 𝕜} {x : E}
 
-/-- A balanced set absorbs itself. -/
-theorem Balanced.absorbs_self (hA : Balanced 𝕜 A) : Absorbs 𝕜 A A := by
-  refine' ⟨1, fun a ha x hx => _⟩
-  rw [mem_smul_set_iff_inv_smul_mem₀ (norm_pos_iff.1 <| zero_lt_one.trans_le ha)]
-  refine' hA a⁻¹ _ (smul_mem_smul_set hx)
-  rw [norm_inv]
-  exact inv_le_one ha
-#align balanced.absorbs_self Balanced.absorbs_self
-
 theorem Balanced.subset_smul (hA : Balanced 𝕜 A) (ha : 1 ≤ ‖a‖) : A ⊆ a • A := by
-  refine' (subset_set_smul_iff₀ _).2 (hA a⁻¹ _)
-  · rintro rfl
-    rw [norm_zero] at ha
-    exact zero_lt_one.not_le ha
-  · rw [norm_inv]
-    exact inv_le_one ha
+  rw [← @norm_one 𝕜] at ha; simpa using hA.smul_mono ha
 #align balanced.subset_smul Balanced.subset_smul
 
 theorem Balanced.smul_eq (hA : Balanced 𝕜 A) (ha : ‖a‖ = 1) : a • A = A :=
   (hA _ ha.le).antisymm <| hA.subset_smul ha.ge
 #align balanced.smul_eq Balanced.smul_eq
+
+/-- A balanced set absorbs itself. -/
+theorem Balanced.absorbs_self (hA : Balanced 𝕜 A) : Absorbs 𝕜 A A :=
+  .of_norm ⟨1, fun _ => hA.subset_smul⟩
+#align balanced.absorbs_self Balanced.absorbs_self
 
 theorem Balanced.mem_smul_iff (hs : Balanced 𝕜 s) (h : ‖a‖ = ‖b‖) : a • x ∈ s ↔ b • x ∈ s := by
   obtain ⟨c, hc, rfl⟩ : ∃ c : 𝕜, ‖c‖ = 1 ∧ a = c * b := by
@@ -305,61 +187,11 @@ lemma absorbs_iff_nhdsWithin_zero :
   refine eventually_congr <| eventually_mem_nhdsWithin.mono fun c hc ↦ ?_
   rw [← preimage_smul₀ hc]; rfl
 
-lemma absorbs_singleton_iff_nhdsWithin_zero : Absorbs 𝕜 s {x} ↔ ∀ᶠ c : 𝕜 in 𝓝[≠] 0, c • x ∈ s := by
-  simp [absorbs_iff_nhdsWithin_zero]
-
-lemma absorbent_iff_nhdsWithin_zero :
-    Absorbent 𝕜 s ↔ ∀ x : E, ∀ᶠ c : 𝕜 in 𝓝[≠] 0, c • x ∈ s := by
-  simp only [absorbent_iff_forall_absorbs_singleton, absorbs_singleton_iff_nhdsWithin_zero]
-
-lemma absorbent_iff_nhds_zero :
-    Absorbent 𝕜 s ↔ ∀ x : E, ∀ᶠ c : 𝕜 in 𝓝 0, c = 0 ∨ c • x ∈ s := by
-  simp [absorbent_iff_nhdsWithin_zero, nhdsWithin, eventually_inf_principal, or_iff_not_imp_left]
-
-lemma Set.Finite.absorbs_sInter {S : Set (Set E)} (hS : S.Finite) {t : Set E} :
-    Absorbs 𝕜 (⋂₀ S) t ↔ ∀ s ∈ S, Absorbs 𝕜 s t := by
-  simp only [absorbs_iff_nhdsWithin_zero, eventually_all_finite hS, mapsTo', subset_sInter_iff]
-
-@[simp]
-lemma absorbs_iInter {ι : Sort*} [Finite ι] {t : Set E} {f : ι → Set E} :
-    Absorbs 𝕜 (⋂ i, f i) t ↔ ∀ i, Absorbs 𝕜 (f i) t :=
-  (finite_range f).absorbs_sInter.trans forall_range_iff
-
-lemma Set.Finite.absorbs_iInter {ι : Type*} {t : Set E} {I : Set ι} {f : ι → Set E}
-    (hI : I.Finite) : Absorbs 𝕜 (⋂ i ∈ I, f i) t ↔ ∀ i ∈ I, Absorbs 𝕜 (f i) t := by
-  rw [← sInter_image, (hI.image f).absorbs_sInter, ball_image_iff]
-
-@[simp]
-lemma absorbs_inter {s₁ s₂ : Set E} : Absorbs 𝕜 (s₁ ∩ s₂) t ↔ Absorbs 𝕜 s₁ t ∧ Absorbs 𝕜 s₂ t := by
-  rw [← sInter_pair, (Set.toFinite _).absorbs_sInter]; simp
-#align absorbs_inter absorbs_inter
-
-lemma Absorbs.inter {s₁ s₂ : Set E} (h₁ : Absorbs 𝕜 s₁ t) (h₂ : Absorbs 𝕜 s₂ t) :
-    Absorbs 𝕜 (s₁ ∩ s₂) t :=
-  absorbs_inter.2 ⟨h₁, h₂⟩
-#align absorbs.inter Absorbs.inter
-
-theorem absorbent_univ : Absorbent 𝕜 (univ : Set E) := by
-  refine' fun x => ⟨1, fun a ha => _⟩
-  rw [smul_set_univ₀ (norm_pos_iff.1 <| zero_lt_one.trans_le ha)]
-  exact trivial
-#align absorbent_univ absorbent_univ
-
-section NontriviallyNormed
+variable [TopologicalSpace E] [ContinuousSMul 𝕜 E]
 
 variable [NeBot (𝓝[≠] (0 : 𝕜))]
 
-@[simp]
-theorem absorbs_zero_iff : Absorbs 𝕜 s 0 ↔ (0 : E) ∈ s := by
-  refine ⟨fun h ↦ ?_, fun h => ⟨1, fun a _ => zero_subset.2 <| zero_mem_smul_set h⟩⟩
-  obtain ⟨c, -, hc⟩ : ∃ c : 𝕜, c ≠ 0 ∧ c • 0 ∈ s :=
-    (eventually_mem_nhdsWithin.and (absorbs_singleton_iff_nhdsWithin_zero.1 h)).exists
-  rwa [smul_zero] at hc
-#align absorbs_zero_iff absorbs_zero_iff
-
-theorem Absorbent.zero_mem (hs : Absorbent 𝕜 s) : (0 : E) ∈ s :=
-  absorbs_zero_iff.1 <| absorbent_iff_forall_absorbs_singleton.1 hs _
-#align absorbent.zero_mem Absorbent.zero_mem
+theorem Absorbent.zero_mem' (hs : Absorbent 𝕜 s) : (0 : E) ∈ s := hs.zero_mem
 
 end NontriviallyNormed
 
@@ -455,9 +287,8 @@ theorem balanced_iff_neg_mem (hs : Convex ℝ s) : Balanced ℝ s ↔ ∀ ⦃x�
   refine' ⟨fun h x => h.neg_mem_iff.2, fun h a ha => smul_set_subset_iff.2 fun x hx => _⟩
   rw [Real.norm_eq_abs, abs_le] at ha
   rw [show a = -((1 - a) / 2) + (a - -1) / 2 by ring, add_smul, neg_smul, ← smul_neg]
-  exact
-    hs (h hx) hx (div_nonneg (sub_nonneg_of_le ha.2) zero_le_two)
-      (div_nonneg (sub_nonneg_of_le ha.1) zero_le_two) (by ring)
+  exact hs (h hx) hx (div_nonneg (sub_nonneg_of_le ha.2) zero_le_two)
+    (div_nonneg (sub_nonneg_of_le ha.1) zero_le_two) (by ring)
 #align balanced_iff_neg_mem balanced_iff_neg_mem
 
 end Real

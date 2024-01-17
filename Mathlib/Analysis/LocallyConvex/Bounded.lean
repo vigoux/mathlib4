@@ -171,9 +171,9 @@ theorem isVonNBounded_of_smul_tendsto_zero {ε : ι → 𝕝} {l : Filter ι} [l
   contrapose! H
   have : ∀ᶠ n in l, ∃ x : S, ε n • x.1 ∉ V := by
     filter_upwards [hε] with n hn
-    rw [Absorbs] at H
-    push_neg at H
-    rcases H ‖(ε n)⁻¹‖ with ⟨a, haε, haS⟩
+    rw [absorbs_iff_norm] at hVS
+    push_neg at hVS
+    rcases hVS ‖(ε n)⁻¹‖ with ⟨a, haε, haS⟩
     rcases Set.not_subset.mp haS with ⟨x, hxS, hx⟩
     refine ⟨⟨x, hxS⟩, fun hnx => ?_⟩
     rw [← Set.mem_inv_smul_set_iff₀ hn] at hnx
@@ -274,13 +274,13 @@ theorem TotallyBounded.isVonNBounded {s : Set E} (hs : TotallyBounded s) :
   simp_rw [← nhds_prod_eq, id.def] at h'
   rcases h.basis_left h' U hU with ⟨x, hx, h''⟩
   rcases hs x.snd hx.2.1 with ⟨t, ht, hs⟩
-  refine' Absorbs.mono_right _ hs
-  rw [ht.absorbs_iUnion]
+  refine Absorbs.mono_right ?_ hs
+  rw [ht.absorbs_biUnion]
   have hx_fstsnd : x.fst + x.snd ⊆ U := add_subset_iff.mpr fun z1 hz1 z2 hz2 ↦
     h'' <| mk_mem_prod hz1 hz2
-  refine' fun y _ => Absorbs.mono_left _ hx_fstsnd
-  rw [← Set.singleton_vadd, vadd_eq_add]
-  exact (absorbent_nhds_zero hx.1.1).absorbs.add hx.2.2.absorbs_self
+  refine fun y _ => Absorbs.mono_left ?_ hx_fstsnd
+  -- TODO: with dot notation, Lean timeouts on the next line. Why?
+  exact Absorbent.vadd_absorbs (absorbent_nhds_zero hx.1.1) hx.2.2.absorbs_self
 #align totally_bounded.is_vonN_bounded TotallyBounded.isVonNBounded
 
 end UniformAddGroup
@@ -305,7 +305,7 @@ theorem isVonNBounded_iff (s : Set E) : Bornology.IsVonNBounded 𝕜 s ↔ Borno
   rw [Metric.isBounded_iff_subset_closedBall (0 : E)]
   constructor
   · intro h
-    rcases (h <| Metric.ball_mem_nhds 0 zero_lt_one).exists_pos with ⟨ρ, hρ, hρball⟩
+    rcases (h (Metric.ball_mem_nhds 0 zero_lt_one)).exists_pos with ⟨ρ, hρ, hρball⟩
     rcases NormedField.exists_lt_norm 𝕜 ρ with ⟨a, ha⟩
     specialize hρball a ha.le
     rw [← ball_normSeminorm 𝕜 E, Seminorm.smul_ball_zero (norm_pos_iff.1 <| hρ.trans ha),
@@ -338,7 +338,7 @@ theorem isBounded_iff_subset_smul_ball {s : Set E} :
   rw [← isVonNBounded_iff 𝕜]
   constructor
   · intro h
-    rcases h (Metric.ball_mem_nhds 0 zero_lt_one) with ⟨ρ, hρball⟩
+    rcases (h (Metric.ball_mem_nhds 0 zero_lt_one)).exists_pos with ⟨ρ, _, hρball⟩
     rcases NormedField.exists_lt_norm 𝕜 ρ with ⟨a, ha⟩
     exact ⟨a, hρball a ha.le⟩
   · rintro ⟨a, ha⟩
