@@ -155,22 +155,19 @@ theorem add_lt_top [LT α] {a b : WithTop α} : a + b < ⊤ ↔ a < ⊤ ∧ b < 
 
 theorem add_eq_coe :
     ∀ {a b : WithTop α} {c : α}, a + b = c ↔ ∃ a' b' : α, ↑a' = a ∧ ↑b' = b ∧ a' + b' = c
-  | none, b, c => by simp [none_eq_top]
-  | Option.some a, none, c => by simp [none_eq_top]
-  | Option.some a, Option.some b, c =>
-  by simp only [some_eq_coe, ← coe_add, coe_eq_coe, exists_and_left, exists_eq_left]
+  | ⊤, b, c => by simp
+  | some a, ⊤, c => by simp
+  | some a, some b, c => by norm_cast; simp
 #align with_top.add_eq_coe WithTop.add_eq_coe
 
 -- Porting note: simp can already prove this.
 -- @[simp]
-theorem add_coe_eq_top_iff {x : WithTop α} {y : α} : x + y = ⊤ ↔ x = ⊤ := by
-  induction x using WithTop.recTopCoe <;> simp [← coe_add]
+theorem add_coe_eq_top_iff {x : WithTop α} {y : α} : x + y = ⊤ ↔ x = ⊤ := by simp
 #align with_top.add_coe_eq_top_iff WithTop.add_coe_eq_top_iff
 
 -- Porting note: simp can already prove this.
 -- @[simp]
-theorem coe_add_eq_top_iff {y : WithTop α} : ↑x + y = ⊤ ↔ y = ⊤ := by
-  induction y using WithTop.recTopCoe <;> simp [← coe_add]
+theorem coe_add_eq_top_iff {y : WithTop α} : ↑x + y = ⊤ ↔ y = ⊤ := by simp
 #align with_top.coe_add_eq_top_iff WithTop.coe_add_eq_top_iff
 
 theorem add_right_cancel_iff [IsRightCancelAdd α] (ha : a ≠ ⊤) : b + a = c + a ↔ b = c := by

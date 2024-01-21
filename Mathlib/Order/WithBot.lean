@@ -75,10 +75,12 @@ protected theorem «exists» {p : WithBot α → Prop} : (∃ x, p x) ↔ p ⊥ 
   Option.exists
 #align with_bot.exists WithBot.exists
 
+@[deprecated]
 theorem none_eq_bot : (none : WithBot α) = (⊥ : WithBot α) :=
   rfl
 #align with_bot.none_eq_bot WithBot.none_eq_bot
 
+@[deprecated]
 theorem some_eq_coe (a : α) : (Option.some a : WithBot α) = (↑a : WithBot α) :=
   rfl
 #align with_bot.some_eq_coe WithBot.some_eq_coe
@@ -96,8 +98,8 @@ theorem coe_ne_bot : (a : WithBot α) ≠ ⊥ :=
 /-- Recursor for `WithBot` using the preferred forms `⊥` and `↑a`. -/
 @[elab_as_elim]
 def recBotCoe {C : WithBot α → Sort*} (bot : C ⊥) (coe : ∀ a : α, C a) : ∀ n : WithBot α, C n
-  | none => bot
-  | Option.some a => coe a
+  | ⊥ => bot
+  | (a : α) => coe a
 #align with_bot.rec_bot_coe WithBot.recBotCoe
 
 @[simp]
@@ -239,18 +241,18 @@ theorem coe_le : ∀ {o : Option α}, b ∈ o → ((a : WithBot α) ≤ o ↔ a 
 #align with_bot.coe_le WithBot.coe_le
 
 theorem coe_le_iff : ∀ {x : WithBot α}, (a : WithBot α) ≤ x ↔ ∃ b : α, x = b ∧ a ≤ b
-  | Option.some x => by simp [some_eq_coe]
-  | none => iff_of_false (not_coe_le_bot _) <| by simp [none_eq_bot]
+  | (x : α) => by simp
+  | ⊥ => iff_of_false (not_coe_le_bot _) <| by simp
 #align with_bot.coe_le_iff WithBot.coe_le_iff
 
 theorem le_coe_iff : ∀ {x : WithBot α}, x ≤ b ↔ ∀ a : α, x = ↑a → a ≤ b
-  | Option.some b => by simp [some_eq_coe, coe_eq_coe]
-  | none => by simp [none_eq_bot]
+  | (b : α) => by simp
+  | ⊥ => by simp
 #align with_bot.le_coe_iff WithBot.le_coe_iff
 
 protected theorem _root_.IsMax.withBot (h : IsMax a) : IsMax (a : WithBot α)
-  | none, _ => bot_le
-  | Option.some _, hb => some_le_some.2 <| h <| some_le_some.1 hb
+  | ⊥, _ => bot_le
+  | (_ : α), hb => some_le_some.2 <| h <| some_le_some.1 hb
 #align is_max.with_bot IsMax.withBot
 
 theorem le_unbot_iff {a : α} {b : WithBot α} (h : b ≠ ⊥) :
@@ -297,13 +299,13 @@ theorem not_lt_none (a : WithBot α) : ¬@LT.lt (WithBot α) _ a none :=
 #align with_bot.not_lt_none WithBot.not_lt_none
 
 theorem lt_iff_exists_coe : ∀ {a b : WithBot α}, a < b ↔ ∃ p : α, b = p ∧ a < p
-  | a, Option.some b => by simp [some_eq_coe, coe_eq_coe]
-  | a, none => iff_of_false (not_lt_none _) <| by simp [none_eq_bot]
+  | a, some b => by simp [coe_eq_coe]
+  | a, ⊥ => iff_of_false (not_lt_none _) <| by simp
 #align with_bot.lt_iff_exists_coe WithBot.lt_iff_exists_coe
 
 theorem lt_coe_iff : ∀ {x : WithBot α}, x < b ↔ ∀ a, x = ↑a → a < b
-  | Option.some b => by simp [some_eq_coe, coe_eq_coe, coe_lt_coe]
-  | none => by simp [none_eq_bot, bot_lt_coe]
+  | (_ : α) => by simp
+  | ⊥ => by simp
 #align with_bot.lt_coe_iff WithBot.lt_coe_iff
 
 /-- A version of `bot_lt_iff_ne_bot` for `WithBot` that only requires `LT α`, not
@@ -333,9 +335,7 @@ instance partialOrder [PartialOrder α] : PartialOrder (WithBot α) :=
       cases' o₁ with a
       · cases' o₂ with b
         · rfl
-
         rcases h₂ b rfl with ⟨_, ⟨⟩, _⟩
-
       · rcases h₁ a rfl with ⟨b, ⟨⟩, h₁'⟩
         rcases h₂ b rfl with ⟨_, ⟨⟩, h₂'⟩
         rw [le_antisymm h₁' h₂']
@@ -403,16 +403,16 @@ theorem le_coe_unbot' [Preorder α] : ∀ (a : WithBot α) (b : α), a ≤ a.unb
 
 theorem unbot'_le_iff [LE α] {a : WithBot α} {b c : α} (h : a = ⊥ → b ≤ c) :
     a.unbot' b ≤ c ↔ a ≤ c := by
-  cases a
+  induction a using recBotCoe
   · simpa using h rfl
-  · simp [some_eq_coe]
+  · simp
 #align with_bot.unbot'_bot_le_iff WithBot.unbot'_le_iff
 
 theorem unbot'_lt_iff [LT α] {a : WithBot α} {b c : α} (h : a = ⊥ → b < c) :
     a.unbot' b < c ↔ a < c := by
-  cases a
+  induction a using recBotCoe
   · simpa [bot_lt_coe] using h rfl
-  · simp [some_eq_coe]
+  · simp
 
 instance semilatticeSup [SemilatticeSup α] : SemilatticeSup (WithBot α) :=
   { WithBot.partialOrder, @WithBot.orderBot α _ with
@@ -422,13 +422,10 @@ instance semilatticeSup [SemilatticeSup α] : SemilatticeSup (WithBot α) :=
     sup_le := fun o₁ o₂ o₃ h₁ h₂ a ha => by
       cases' o₁ with b <;> cases' o₂ with c <;> cases ha
       · exact h₂ a rfl
-
       · exact h₁ a rfl
-
       · rcases h₁ b rfl with ⟨d, ⟨⟩, h₁'⟩
         simp at h₂
-        exact ⟨d, rfl, sup_le h₁' h₂⟩
-         }
+        exact ⟨d, rfl, sup_le h₁' h₂⟩ }
 
 theorem coe_sup [SemilatticeSup α] (a b : α) : ((a ⊔ b : α) : WithBot α) = (a : WithBot α) ⊔ b :=
   rfl
@@ -612,10 +609,12 @@ protected theorem «exists» {p : WithTop α → Prop} : (∃ x, p x) ↔ p ⊤ 
   Option.exists
 #align with_top.exists WithTop.exists
 
+@[deprecated]
 theorem none_eq_top : (none : WithTop α) = (⊤ : WithTop α) :=
   rfl
 #align with_top.none_eq_top WithTop.none_eq_top
 
+@[deprecated]
 theorem some_eq_coe (a : α) : (Option.some a : WithTop α) = (↑a : WithTop α) :=
   rfl
 #align with_top.some_eq_coe WithTop.some_eq_coe
@@ -1199,16 +1198,12 @@ theorem coe_untop'_le [Preorder α] : ∀ (a : WithTop α) (b : α), a.untop' b 
   | ⊤, _ => le_top
 
 theorem le_untop'_iff [LE α] {a : WithTop α} {b c : α} (h : a = ⊤ → c ≤ b) :
-    c ≤ a.untop' b ↔ c ≤ a := by
-  cases a
-  · simpa using h rfl
-  · simp [some_eq_coe]
+    c ≤ a.untop' b ↔ c ≤ a :=
+  WithBot.unbot'_le_iff (α := αᵒᵈ) h
 
 theorem lt_untop'_iff [LT α] {a : WithTop α} {b c : α} (h : a = ⊤ → c < b) :
-    c < a.untop' b ↔ c < a := by
-  cases a
-  · simpa [none_eq_top, coe_lt_top] using h rfl
-  · simp [some_eq_coe]
+    c < a.untop' b ↔ c < a :=
+  WithBot.unbot'_lt_iff (α := αᵒᵈ) h
 
 instance semilatticeInf [SemilatticeInf α] : SemilatticeInf (WithTop α) :=
   { WithTop.partialOrder with
@@ -1218,13 +1213,10 @@ instance semilatticeInf [SemilatticeInf α] : SemilatticeInf (WithTop α) :=
     le_inf := fun o₁ o₂ o₃ h₁ h₂ a ha => by
       cases' o₂ with b <;> cases' o₃ with c <;> cases ha
       · exact h₂ a rfl
-
       · exact h₁ a rfl
-
       · rcases h₁ b rfl with ⟨d, ⟨⟩, h₁'⟩
         simp at h₂
-        exact ⟨d, rfl, le_inf h₁' h₂⟩
-         }
+        exact ⟨d, rfl, le_inf h₁' h₂⟩ }
 
 theorem coe_inf [SemilatticeInf α] (a b : α) : ((a ⊓ b : α) : WithTop α) = (a : WithTop α) ⊓ b :=
   rfl
