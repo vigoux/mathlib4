@@ -1017,17 +1017,15 @@ section Succ
 variable [DecidableEq α] [PartialOrder α] [OrderTop α] [SuccOrder α]
 
 instance : SuccOrder (WithTop α) where
-  succ a :=
-    match a with
+  succ
     | ⊤ => ⊤
-    | Option.some a => ite (a = ⊤) ⊤ (some (succ a))
-  le_succ a := by
-    cases' a with a a
-    · exact le_top
-    change _ ≤ ite _ _ _
-    split_ifs
-    · exact le_top
-    · exact some_le_some.2 (le_succ a)
+    | (a : α) => ite (a = ⊤) ⊤ (some (succ a))
+  le_succ
+    | ⊤ => le_top
+    | (a : α) => by
+      dsimp only
+      split
+      exacts [le_top, coe_le_coe.2 (le_succ a)]
   max_of_succ_le {a} ha := by
     cases a
     · exact isMax_top

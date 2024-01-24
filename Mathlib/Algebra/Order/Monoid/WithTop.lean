@@ -113,7 +113,7 @@ instance add : Add (WithTop α) :=
   ⟨Option.map₂ (· + ·)⟩
 #align with_top.has_add WithTop.add
 
-@[norm_cast] lemma coe_add (a b : α) : ↑(a + b) = (a + b : WithTop α) := rfl
+@[simp, norm_cast] lemma coe_add (a b : α) : ↑(a + b) = (a + b : WithTop α) := rfl
 #align with_top.coe_add WithTop.coe_add
 
 section deprecated
@@ -142,7 +142,10 @@ theorem add_top (a : WithTop α) : a + ⊤ = ⊤ := by cases a <;> rfl
 
 @[simp]
 theorem add_eq_top : a + b = ⊤ ↔ a = ⊤ ∨ b = ⊤ := by
-  cases a <;> cases b <;> simp [none_eq_top, some_eq_coe, ← WithTop.coe_add]
+  match a, b with
+  | ⊤, _ => simp
+  | _, ⊤ => simp
+  | (a : α), (b : α) => simp only [← coe_add, coe_ne_top, or_false]
 #align with_top.add_eq_top WithTop.add_eq_top
 
 theorem add_ne_top : a + b ≠ ⊤ ↔ a ≠ ⊤ ∧ b ≠ ⊤ :=
@@ -361,8 +364,7 @@ instance addMonoidWithOne : AddMonoidWithOne (WithTop α) :=
       rw [Nat.cast_zero, WithTop.coe_zero],
     natCast_succ := fun n => by
       simp only -- Porting note: Had to add this...?
-      rw [Nat.cast_add_one, WithTop.coe_add, WithTop.coe_one]
-  }
+      rw [Nat.cast_add_one, WithTop.coe_add, WithTop.coe_one] }
 
 @[simp, norm_cast] lemma coe_nat (n : ℕ) : ((n : α) : WithTop α) = n := rfl
 #align with_top.coe_nat WithTop.coe_nat
@@ -382,14 +384,8 @@ instance charZero [AddMonoidWithOne α] [CharZero α] : CharZero (WithTop α) :=
 instance addCommMonoidWithOne [AddCommMonoidWithOne α] : AddCommMonoidWithOne (WithTop α) :=
   { WithTop.addMonoidWithOne, WithTop.addCommMonoid with }
 
-instance orderedAddCommMonoid [OrderedAddCommMonoid α] : OrderedAddCommMonoid (WithTop α) :=
-  { WithTop.partialOrder, WithTop.addCommMonoid with
-    add_le_add_left := by
-      rintro a b h (_ | c); · simp [none_eq_top]
-      rcases b with (_ | b); · simp [none_eq_top]
-      rcases le_coe_iff.1 h with ⟨a, rfl, _⟩
-      simp only [some_eq_coe, ← coe_add, coe_le_coe] at h ⊢
-      exact add_le_add_left h c }
+instance orderedAddCommMonoid [OrderedAddCommMonoid α] : OrderedAddCommMonoid (WithTop α) where
+  add_le_add_left _ _ := add_le_add_left
 
 instance linearOrderedAddCommMonoidWithTop [LinearOrderedAddCommMonoid α] :
     LinearOrderedAddCommMonoidWithTop (WithTop α) :=

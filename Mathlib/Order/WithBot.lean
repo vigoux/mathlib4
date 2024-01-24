@@ -1304,12 +1304,11 @@ instance instWellFoundedGT [LT α] [WellFoundedGT α] : WellFoundedGT (WithTop �
 
 instance trichotomous.lt [Preorder α] [IsTrichotomous α (· < ·)] :
     IsTrichotomous (WithTop α) (· < ·) :=
-  ⟨by
-    rintro (a | a) (b | b)
-    · simp
-    · simp
-    · simp
-    · simpa [some_eq_coe, IsTrichotomous, coe_eq_coe] using @trichotomous α (· < ·) _ a b⟩
+  ⟨fun
+    | (a : α), (b : α) => by simp [trichotomous]
+    | ⊤, (b : α) => by simp
+    | (a : α), ⊤ => by simp
+    | ⊤, ⊤ => by simp⟩
 #align with_top.trichotomous.lt WithTop.trichotomous.lt
 
 instance IsWellOrder.lt [Preorder α] [IsWellOrder α (· < ·)] : IsWellOrder (WithTop α) (· < ·) where
@@ -1317,12 +1316,7 @@ instance IsWellOrder.lt [Preorder α] [IsWellOrder α (· < ·)] : IsWellOrder (
 
 instance trichotomous.gt [Preorder α] [IsTrichotomous α (· > ·)] :
     IsTrichotomous (WithTop α) (· > ·) :=
-  ⟨by
-    rintro (a | a) (b | b)
-    · simp
-    · simp
-    · simp
-    · simpa [some_eq_coe, IsTrichotomous, coe_eq_coe] using @trichotomous α (· > ·) _ a b⟩
+  have : IsTrichotomous α (· < ·) := .swap _; .swap _
 #align with_top.trichotomous.gt WithTop.trichotomous.gt
 
 instance IsWellOrder.gt [Preorder α] [IsWellOrder α (· > ·)] : IsWellOrder (WithTop α) (· > ·) where

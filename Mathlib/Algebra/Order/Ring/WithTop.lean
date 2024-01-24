@@ -98,10 +98,10 @@ theorem coe_mul {a b : α} : (↑(a * b) : WithTop α) = a * b := by
 
 theorem mul_coe {b : α} (hb : b ≠ 0) : ∀ {a : WithTop α},
     a * (b : WithTop α) = a.bind fun a : α => ↑(a * b)
-  | none =>
+  | ⊤ =>
     show (if (⊤ : WithTop α) = 0 ∨ (b : WithTop α) = 0 then 0 else ⊤ : WithTop α) = ⊤ by simp [hb]
-  | Option.some a => by
-    rw [some_eq_coe, ← coe_mul]
+  | some a => by
+    rw [← coe_mul]
     rfl
 #align with_top.mul_coe WithTop.mul_coe
 
