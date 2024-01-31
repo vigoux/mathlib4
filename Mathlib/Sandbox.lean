@@ -51,7 +51,7 @@ example :
     Tendsto (fun r : ℕ ↦ (CountingFunction s r : ℝ) / r ^ card ι)
       atTop (nhds (volume s).toReal) := by
   have : ContinuousOn (Set.indicator s (fun _ ↦ (1:ℝ))) (BoxIntegral.Box.Icc (UnitBox ι)) := sorry
-  have main := IntegrableOn.hasBoxIntegral' this BoxIntegral.IntegrationParams.Riemann
+  have main := ContinuousOn.hasBoxIntegral this BoxIntegral.IntegrationParams.Riemann
   rw [BoxIntegral.hasIntegral_iff] at main
   have : ∫ x in (UnitBox ι), Set.indicator s (fun x ↦ (1:ℝ)) x = (volume s).toReal := by sorry
   rw [this] at main
