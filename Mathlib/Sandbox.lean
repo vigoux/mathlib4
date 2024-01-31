@@ -2,18 +2,104 @@ import Mathlib
 
 noncomputable section
 
-open MeasureTheory
+open MeasureTheory Submodule Filter Fintype
 
-open scoped Pointwise NNReal Classical
+open scoped Pointwise ENNReal Classical
 
 variable (ι : Type*)
 
-variable {n : ℕ} (hn : 0 < n)
+variable {r : ℕ+}
 
 def UnitBox : BoxIntegral.Box ι where
   lower := fun _ ↦ 0
   upper := fun _ ↦ 1
   lower_lt_upper := fun _ ↦ by norm_num
+
+def UnitBoxTag (ν : ι → Fin r) : ι → ℝ := fun i ↦ ν i / r
+
+def UnitBoxPart (ν : ι → Fin r) : BoxIntegral.Box ι where
+  lower := fun i ↦ UnitBoxTag ι ν i
+  upper := fun i ↦ UnitBoxTag ι ν i + 1 / r
+  lower_lt_upper := fun _ ↦ by norm_num
+
+theorem UnitBoxPart_le_UnitBox (ν : ι → Fin r) : UnitBoxPart ι ν ≤ UnitBox ι := sorry
+
+variable [Fintype ι]
+
+def UnitBoxPrepartition : BoxIntegral.TaggedPrepartition (UnitBox ι) where
+  boxes := Finset.univ.image (fun ν : ι → Fin r ↦ UnitBoxPart ι ν)
+  le_of_mem' _ hJ := by
+    obtain ⟨ν, _, rfl⟩ := Finset.mem_image.mp hJ
+    exact UnitBoxPart_le_UnitBox ι ν
+  pairwiseDisjoint := sorry
+  tag := by
+    intro J
+    by_cases hJ : ∃ ν : ι → Fin r, J = UnitBoxPart ι ν
+    · exact UnitBoxTag ι hJ.choose
+    · exact 0
+  tag_mem_Icc := sorry
+
+variable {ι} (r)
+
+variable (s : Set (ι → ℝ))
+
+def CountingFunction (r : ℕ) :=
+  if r = 0 then 0 else
+    Nat.card ((r:ℝ) • s ∩ span ℤ (Set.range (Pi.basisFun ℝ ι)) : Set (ι → ℝ))
+
+example :
+    Tendsto (fun r : ℕ ↦ (CountingFunction s r : ℝ) / r ^ card ι)
+      atTop (nhds (volume s).toReal) := by
+  have : ContinuousOn (Set.indicator s (fun _ ↦ (1:ℝ))) (BoxIntegral.Box.Icc (UnitBox ι)) := sorry
+  have main := IntegrableOn.hasBoxIntegral' this BoxIntegral.IntegrationParams.Riemann
+  rw [BoxIntegral.hasIntegral_iff] at main
+  have : ∫ x in (UnitBox ι), Set.indicator s (fun x ↦ (1:ℝ)) x = (volume s).toReal := by sorry
+  rw [this] at main
+  rw [Metric.tendsto_atTop]
+  intro eps h_eps
+  specialize main eps h_eps
+  obtain ⟨r, hr₁, hr₂⟩ := main
+  specialize hr₁ 1
+  specialize hr₂ 1
+
+  sorry
+
+#exit
+
+example : Tendsto (fun r : ℕ ↦ (CountingFunction s r : ℝ≥0) / r ^ card ι) atTop
+  (nhds (volume s)) := by
+
+
+#exit
+
+  le_of_mem' := by
+    rintro _ hJ
+    obtain ⟨k, _, rfl⟩ := Finset.mem_image.mp hJ
+    exact UnitBoxPart_le_UnitBox ι hn k
+  pairwiseDisjoint := by
+    intro _ hJ _ hK h
+    obtain ⟨k, _, rfl⟩ := Finset.mem_image.mp hJ
+    obtain ⟨l, _, rfl⟩ := Finset.mem_image.mp hK
+    have : k ≠ l := by
+      rwa [ne_eq, UnitBoxPart_eq_iff] at h
+    exact UnitBoxPart_disjoint ι hn this
+  tag := by
+    intro J
+    exact if J ≤ UnitBox ι then J.lower else fun _ ↦ 0
+  tag_mem_Icc := by -- this can probably be simplified
+    intro J
+    split_ifs with h
+    · dsimp
+      rw [BoxIntegral.Box.le_iff_bounds] at h
+      rw [BoxIntegral.Box.Icc_def, Set.mem_Icc]
+      refine ⟨h.1, ?_⟩
+      simp_rw [Pi.le_def] at h ⊢
+      intro i
+      have := J.lower_lt_upper i
+      refine le_trans (le_of_lt this) (h.2 i)
+    · simp [UnitBox, BoxIntegral.Box.Icc_def, Pi.le_def]
+
+#exit
 
 def UnitBoxPart (k :ℕ) : BoxIntegral.Box ι where
   lower := fun _ ↦ k / n
