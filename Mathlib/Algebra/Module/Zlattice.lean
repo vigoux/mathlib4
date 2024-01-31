@@ -310,6 +310,10 @@ instance [Fintype ι] : DiscreteTopology (span ℤ (Set.range b)) := by
   · exact discreteTopology_pi_basisFun
   · refine Subtype.map_injective _ (Basis.equivFun b).injective
 
+instance [Fintype ι] : DiscreteTopology (span ℤ (Set.range b)).toAddSubgroup := by
+  change DiscreteTopology (span ℤ (Set.range b))
+  infer_instance
+
 @[measurability]
 theorem fundamentalDomain_measurableSet [MeasurableSpace E] [OpensMeasurableSpace E] [Finite ι] :
     MeasurableSet (fundamentalDomain b) := by
@@ -360,6 +364,11 @@ theorem volume_fundamentalDomain [Fintype ι] [DecidableEq ι] (b : Basis ι ℝ
     volume_pi, Measure.pi_pi, Real.volume_Ico, sub_zero, ENNReal.ofReal_one, Finset.prod_const_one,
     mul_one, ← Matrix.det_transpose]
   rfl
+
+theorem  volume_fundamentalDomain_pi_basisFun [Fintype ι] :
+    volume (fundamentalDomain (Pi.basisFun ℝ ι)) = 1 := by
+  rw [fundamentalDomain_pi_basisFun, volume_pi, Measure.pi_pi, Real.volume_Ico, sub_zero,
+    ENNReal.ofReal_one, Finset.prod_const_one]
 
 end Real
 

@@ -788,9 +788,6 @@ theorem exists_ne_zero_mem_ringOfIntegers_of_norm_le {B : ℝ}
   have : Countable (Submodule.span ℤ (Set.range (latticeBasis K))).toAddSubgroup := by
     change Countable (Submodule.span ℤ (Set.range (latticeBasis K)): Set (E K))
     infer_instance
-  have : DiscreteTopology (Submodule.span ℤ (Set.range (latticeBasis K))).toAddSubgroup := by
-    change DiscreteTopology  (Submodule.span ℤ (Set.range (latticeBasis K)): Set (E K))
-    infer_instance
   obtain ⟨⟨x, hx⟩, h_nzr, h_mem⟩ := exists_ne_zero_mem_lattice_of_measure_mul_two_pow_le_measure
       h_fund (fun _ ↦ convexBodySum_symmetric K B) (convexBodySum_convex K B)
       (convexBodySum_compact K B) h
