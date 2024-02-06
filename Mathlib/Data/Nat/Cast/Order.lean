@@ -81,7 +81,7 @@ theorem strictMono_cast : StrictMono (Nat.cast : ℕ → α) :=
 #align nat.strict_mono_cast Nat.strictMono_cast
 
 /-- `Nat.cast : ℕ → α` as an `OrderEmbedding` -/
-@[simps! (config := { fullyApplied := false })]
+@[simps! (config := .asFn)]
 def castOrderEmbedding : ℕ ↪o α :=
   OrderEmbedding.ofStrictMono Nat.cast Nat.strictMono_cast
 #align nat.cast_order_embedding Nat.castOrderEmbedding
@@ -121,7 +121,7 @@ for `ℕ∞` and `ℝ≥0∞`, so we use type-specific lemmas for these types. -
 @[simp, norm_cast]
 theorem cast_tsub [CanonicallyOrderedCommSemiring α] [Sub α] [OrderedSub α]
     [ContravariantClass α α (· + ·) (· ≤ ·)] (m n : ℕ) : ↑(m - n) = (m - n : α) := by
-  cases' le_total m n with h h
+  rcases le_total m n with h | h
   · rw [Nat.sub_eq_zero_of_le h, cast_zero, tsub_eq_zero_of_le]
     exact mono_cast h
   · rcases le_iff_exists_add'.mp h with ⟨m, rfl⟩
@@ -140,11 +140,11 @@ instance [AddMonoidWithOne α] [CharZero α] : Nontrivial α where exists_pair_n
 
 section RingHomClass
 
-variable {R S F : Type*} [NonAssocSemiring R] [NonAssocSemiring S]
+variable {R S F : Type*} [NonAssocSemiring R] [NonAssocSemiring S] [FunLike F R S]
 
 theorem NeZero.nat_of_injective {n : ℕ} [h : NeZero (n : R)] [RingHomClass F R S] {f : F}
     (hf : Function.Injective f) : NeZero (n : S) :=
-  ⟨fun h ↦ NeZero.natCast_ne n R <| hf <| by simpa only [map_natCast, map_zero f] ⟩
+  ⟨fun h ↦ NeZero.natCast_ne n R <| hf <| by simpa only [map_natCast, map_zero f]⟩
 #align ne_zero.nat_of_injective NeZero.nat_of_injective
 
 end RingHomClass
