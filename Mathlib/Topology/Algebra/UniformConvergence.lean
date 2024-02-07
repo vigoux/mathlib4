@@ -302,34 +302,6 @@ instance UniformFunOn.uniformContinuousConstSMul {𝔖 : Set (Set α)} :
 
 end ConstSMul
 
--- section SMul
-
--- variable {M α X : Type*} [SMul M X] [TopologicalSpace M] [UniformSpace X]
-
--- lemma UniformFun.continuousSMul
---     (h : ∀ a : M, Tendsto (fun x : M × (X × X) ↦ (a • x.2.1, x.1 • x.2.2)) (𝓝 a ×ˢ 𝓤 X) (𝓤 X)) :
---     ContinuousSMul M (α →ᵤ X) where
---   continuous_smul := continuous_iff_continuousAt.2 fun (a, f) ↦ by
---     refine (((𝓝 a).basis_sets.prod_nhds (UniformFun.hasBasis_nhds ..)).tendsto_iff
---       (UniformFun.hasBasis_nhds ..)).2 ?_
---     intro s (hs : s ∈ 𝓤 X)
---     rcases ((𝓝 a).basis_sets.prod (𝓤 X).basis_sets).mem_iff.1 (h a hs)
---       with ⟨⟨U, V⟩, ⟨hU, hV⟩, h⟩
---     exact ⟨(U, V), ⟨hU, hV⟩, fun (b, g) ⟨hb, hg⟩ x ↦ h (Set.mk_mem_prod hb (hg x))⟩
-
--- lemma UniformOnFun.continuousSMul {𝔖 : Set (Set α)} :
---     -- (h : ∀ a : M, ∀ s ∈ 𝔖,
---     --   Tendsto (fun x : M × (X × X) ↦ (a • x.2.1, x.1 • x.2.2)) (𝓝 a ×ˢ (𝓤 X ⊓ 𝓟 (s ×ˢ s))) (𝓤 X)) :
---     ContinuousSMul M (α →ᵤ[𝔖] X) where
---   continuous_smul := by
---     refine UniformOnFun.continuous_rng_iff.2 fun s hs ↦ ?_
---     suffices ContinuousSMul M (s →ᵤ X) from this.1.comp₂ continuous_fst <|
---       (UniformOnFun.uniformContinuous_restrict _ _ _ hs).continuous.snd'
---     refine UniformFun.continuousSMul fun a ↦ ?_
-    
-
--- end SMul
-
 section Module
 
 variable (𝕜 α E H : Type*) {hom : Type*} [NormedField 𝕜] [AddCommGroup H] [Module 𝕜 H]
@@ -370,7 +342,7 @@ lemma UniformFun.continuousSMul_induced_of_range_bounded (φ : hom)
   · intro u U hU
     simp only [Set.mem_setOf_eq, map_smul, Pi.smul_apply]
     simpa only [Set.mapsTo_range_iff] using (h u hU).eventually_nhds_zero (mem_of_mem_nhds hU)
-  
+
 /-- Let `E` be a TVS, `𝔖 : Set (Set α)` and `H` a submodule of `α →ᵤ[𝔖] E`. If the image of any
 `S ∈ 𝔖` by any `u ∈ H` is bounded (in the sense of `Bornology.IsVonNBounded`), then `H`,
 equipped with the topology of `𝔖`-convergence, is a TVS.
