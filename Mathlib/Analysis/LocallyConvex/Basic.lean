@@ -78,6 +78,9 @@ theorem balanced_iff_smul_mem : Balanced 𝕜 s ↔ ∀ ⦃a : 𝕜⦄, ‖a‖ 
 alias ⟨Balanced.smul_mem, _⟩ := balanced_iff_smul_mem
 #align balanced.smul_mem Balanced.smul_mem
 
+theorem balanced_iff_closedBall_smul : Balanced 𝕜 s ↔ Metric.closedBall (0 : 𝕜) 1 • s ⊆ s := by
+  simp [balanced_iff_smul_mem, smul_subset_iff]
+
 @[simp]
 theorem balanced_empty : Balanced 𝕜 (∅ : Set E) := fun _ _ => by rw [smul_set_empty]
 #align balanced_empty balanced_empty
@@ -128,6 +131,18 @@ theorem Balanced.neg : Balanced 𝕜 s → Balanced 𝕜 (-s) :=
   forall₂_imp fun _ _ h => (smul_set_neg _ _).subset.trans <| neg_subset_neg.2 h
 #align balanced.neg Balanced.neg
 
+@[simp]
+theorem balanced_neg : Balanced 𝕜 (-s) ↔ Balanced 𝕜 s :=
+  ⟨fun h ↦ neg_neg s ▸ h.neg, fun h ↦ h.neg⟩
+
+theorem Balanced.neg_mem_iff [NormOneClass 𝕜] (h : Balanced 𝕜 s) {x : E} : -x ∈ s ↔ x ∈ s :=
+  ⟨fun hx ↦ by simpa using h.smul_mem (a := -1) (by simp) hx,
+    fun hx ↦ by simpa using h.smul_mem (a := -1) (by simp) hx⟩
+#align balanced.neg_mem_iff Balanced.neg_mem_iff
+
+theorem Balanced.neg_eq [NormOneClass 𝕜] (h : Balanced 𝕜 s) : -s = s :=
+  Set.ext fun _ ↦ h.neg_mem_iff
+
 theorem Balanced.add (hs : Balanced 𝕜 s) (ht : Balanced 𝕜 t) : Balanced 𝕜 (s + t) := fun _a ha =>
   (smul_add _ _ _).subset.trans <| add_subset_add (hs _ ha) <| ht _ ha
 #align balanced.add Balanced.add
@@ -157,9 +172,23 @@ section NormedDivisionRing
 
 variable [NormedDivisionRing 𝕜] [AddCommGroup E] [Module 𝕜 E] {s t A B : Set E} {a b : 𝕜} {x : E}
 
+theorem Balanced.smul_mem_mono [SMulCommClass 𝕝 𝕜 E] (hs : Balanced 𝕝 s) {a : 𝕜} {b : 𝕝}
+    (ha : a • x ∈ s) (hba : ‖b‖ ≤ ‖a‖) : b • x ∈ s := by
+  rcases eq_or_ne a 0 with rfl | ha₀
+  · simp_all
+  · calc
+      b • x = (a⁻¹ • b) • a • x := by rw [smul_comm, smul_assoc, smul_inv_smul₀ ha₀]
+      _ ∈ s := by
+        refine hs.smul_mem ?_ ha
+        rw [norm_smul, norm_inv, ← div_eq_inv_mul]
+        exact div_le_one_of_le hba (norm_nonneg _)
+
 theorem Balanced.subset_smul (hA : Balanced 𝕜 A) (ha : 1 ≤ ‖a‖) : A ⊆ a • A := by
   rw [← @norm_one 𝕜] at ha; simpa using hA.smul_mono ha
 #align balanced.subset_smul Balanced.subset_smul
+
+theorem Balanced.smul_congr (hs : Balanced 𝕜 A) (h : ‖a‖ = ‖b‖) : a • A = b • A :=
+  (hs.smul_mono h.le).antisymm (hs.smul_mono h.ge)
 
 theorem Balanced.smul_eq (hA : Balanced 𝕜 A) (ha : ‖a‖ = 1) : a • A = A :=
   (hA _ ha.le).antisymm <| hA.subset_smul ha.ge
@@ -265,6 +294,10 @@ end NormedField
 section NontriviallyNormedField
 
 variable [NontriviallyNormedField 𝕜] [AddCommGroup E] [Module 𝕜 E] {s : Set E}
+
+@[deprecated Absorbent.zero_mem] -- Since 2024/02/02
+theorem Absorbent.zero_mem' (hs : Absorbent 𝕜 s) : (0 : E) ∈ s := hs.zero_mem
+
 variable [Module ℝ E] [SMulCommClass ℝ 𝕜 E]
 
 protected theorem Balanced.convexHull (hs : Balanced 𝕜 s) : Balanced 𝕜 (convexHull ℝ s) := by
@@ -276,6 +309,9 @@ protected theorem Balanced.convexHull (hs : Balanced 𝕜 s) : Balanced 𝕜 (co
   simp only [smul_add, ← smul_comm]
   exact convex_convexHull ℝ s (hx a ha) (hy a ha) hu hv huv
 #align balanced_convex_hull_of_balanced Balanced.convexHull
+
+@[deprecated] -- Since 2024/02/02
+alias balanced_convexHull_of_balanced := Balanced.convexHull
 
 end NontriviallyNormedField
 
