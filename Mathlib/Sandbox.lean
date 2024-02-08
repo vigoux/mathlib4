@@ -210,7 +210,27 @@ theorem UnitBoxTaggedPrepartition_isSubordinate {r : ℝ} (hr : 0 < r) (hn : 1 /
 
 variable (s : Set (ι → ℝ)) (hs₁ : s ≤ UnitBox ι)
 
-abbrev IntegralPoints : Set (ι → ℝ) := ↑(s ∩ (n:ℝ)⁻¹ • span ℤ (Set.range (Pi.basisFun ℝ ι)))
+abbrev IntegralPoints : Set (ι → ℝ) := ↑((n:ℝ) • s ∩ span ℤ (Set.range (Pi.basisFun ℝ ι)))
+
+abbrev IntegralPoints' : Set (ι → ℝ) := ↑(s ∩ (n:ℝ)⁻¹ • span ℤ (Set.range (Pi.basisFun ℝ ι)))
+
+theorem IntegralPoints_mem_iff {x : ι → ℝ} :
+    x ∈ IntegralPoints ι n s ↔ (n:ℝ)⁻¹ • x ∈ IntegralPoints' ι n s := by
+  simp only [Set.mem_inter_iff, SetLike.mem_coe, ne_eq, Nat.cast_eq_zero, PNat.ne_zero,
+    not_false_eq_true, ← Set.mem_smul_set_iff_inv_smul_mem₀, smul_inv_smul₀]
+
+def IntegralPointsEquiv : IntegralPoints ι n s ≃ IntegralPoints' ι n s := by
+  refine Equiv.ofBijective ?_ ⟨?_, ?_⟩
+  · rintro ⟨x, hx⟩
+    exact ⟨(n:ℝ)⁻¹ • x, (IntegralPoints_mem_iff ι n s).mp hx⟩
+  · intro _ _ h
+    have := congr_arg ((n:ℝ) • ·) (Subtype.mk_eq_mk.mp h)
+    simpa [smul_inv_smul₀, SetCoe.ext_iff, this]
+  · rintro ⟨y, hy⟩
+    refine ⟨⟨((n:ℝ) • y), ?_⟩, ?_⟩
+    · simpa only [IntegralPoints_mem_iff, ne_eq, Nat.cast_eq_zero, PNat.ne_zero, not_false_eq_true,
+      inv_smul_smul₀]
+    · simp only [ne_eq, Nat.cast_eq_zero, PNat.ne_zero, not_false_eq_true, inv_smul_smul₀]
 
 theorem UnitBoxTag_mem_smul_span (ν : ι → ℤ) :
     UnitBoxTag ι n ν ∈ (n:ℝ)⁻¹ • span ℤ (Set.range (Pi.basisFun ℝ ι)) := by
@@ -243,7 +263,7 @@ theorem UnitBoxTag_eq_of_mem_smul_span {x : ι → ℝ}
   rw [Nat.cast_ne_zero]
   exact PNat.ne_zero n
 
-theorem Index_admissible_of_mem {x : ι → ℝ} (hx : x ∈ IntegralPoints ι n s) :
+theorem Index_admissible_of_mem {x : ι → ℝ} (hx : x ∈ IntegralPoints' ι n s) :
     UnitBoxIndex ι n x ∈ AdmissibleIndex ι n := by
   rw [← @UnitBox_mem_iff_index]
   refine hs₁ (Set.mem_of_mem_inter_left hx)
@@ -255,6 +275,7 @@ theorem CountingFunction_eq :
     Finset.sum (UnitBoxTaggedPrepartition ι n).toPrepartition.boxes
       fun B ↦ (Set.indicator s (fun x ↦ 1) ((UnitBoxTaggedPrepartition ι n).tag B)) := by
   classical
+  rw [CountingFunction, Nat.card_congr (IntegralPointsEquiv ι n s)]
   rw [Finset.sum_indicator_eq_sum_filter]
   rw [← Finset.card_eq_sum_ones]
   rw [← Nat.card_eq_finsetCard]
