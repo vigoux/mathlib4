@@ -210,10 +210,10 @@ theorem UnitBoxTaggedPrepartition_isSubordinate {r : ℝ} (hr : 0 < r) (hn : 1 /
 
 variable (s : Set (ι → ℝ)) (hs₁ : s ≤ UnitBox ι)
 
-abbrev IntegralPoints : Set (ι → ℝ) := ↑(s ∩ (1 / (n:ℝ)) • span ℤ (Set.range (Pi.basisFun ℝ ι)))
+abbrev IntegralPoints : Set (ι → ℝ) := ↑(s ∩ (n:ℝ)⁻¹ • span ℤ (Set.range (Pi.basisFun ℝ ι)))
 
 theorem UnitBoxTag_mem_smul_span (ν : ι → ℤ) :
-    UnitBoxTag ι n ν ∈ (1 / (n:ℝ)) • span ℤ (Set.range (Pi.basisFun ℝ ι)) := by
+    UnitBoxTag ι n ν ∈ (n:ℝ)⁻¹ • span ℤ (Set.range (Pi.basisFun ℝ ι)) := by
   simp_rw [← SetLike.mem_coe, coe_pointwise_smul, Set.mem_smul_set, SetLike.mem_coe,
     Basis.mem_span_iff_repr_mem, Pi.basisFun_repr, algebraMap_int_eq, Int.coe_castRingHom,
     Set.mem_range]
@@ -228,7 +228,7 @@ theorem UnitBoxTag_mem_smul_span (ν : ι → ℤ) :
       ring
 
 theorem UnitBoxTag_eq_of_mem_smul_span {x : ι → ℝ}
-    (hx : x ∈ (1 / (n:ℝ)) • span ℤ (Set.range (Pi.basisFun ℝ ι))) :
+    (hx : x ∈ (n:ℝ)⁻¹ • span ℤ (Set.range (Pi.basisFun ℝ ι))) :
     UnitBoxTag ι n (UnitBoxIndex ι n x) = x := by
   simp_rw [← SetLike.mem_coe, coe_pointwise_smul, Set.mem_smul_set, SetLike.mem_coe,
     Basis.mem_span_iff_repr_mem, Pi.basisFun_repr, algebraMap_int_eq, Int.coe_castRingHom,
@@ -236,7 +236,7 @@ theorem UnitBoxTag_eq_of_mem_smul_span {x : ι → ℝ}
   obtain ⟨ν, hν, rfl⟩ := hx
   ext i
   obtain ⟨y, hy⟩ := hν i
-  rw [UnitBoxTag, UnitBoxIndex, Pi.smul_apply, ← hy, smul_eq_mul, ← mul_assoc, mul_div_cancel',
+  rw [UnitBoxTag, UnitBoxIndex, Pi.smul_apply, ← hy, smul_eq_mul, ← mul_assoc, mul_inv_cancel,
     one_mul, Int.cast_sub, Int.cast_one, sub_add_cancel]
   rw [Int.ceil_intCast]
   ring
