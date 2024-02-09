@@ -1,20 +1,24 @@
 import Mathlib.Analysis.BoxIntegral.Integrability
 
+set_option autoImplicit false
+
 noncomputable section
 
 open MeasureTheory Submodule Filter Fintype
 
 open scoped Pointwise NNReal ENNReal
 
-variable (ι : Type*) (n : ℕ+)
+variable (ι : Type*) {lw : ι → ℤ} {up : ι → ℤ} (H : ∀ i, lw i < up i)
 
 def UnitBox : BoxIntegral.Box ι where
-  lower := fun _ ↦ 0
-  upper := fun _ ↦ 1
-  lower_lt_upper := fun _ ↦ by norm_num
+  lower := fun i ↦ lw i
+  upper := fun i ↦ up i
+  lower_lt_upper := fun _ ↦ by norm_num [H]
 
-theorem UnitBox_mem (x : ι → ℝ) : x ∈ UnitBox ι ↔ ∀ i, 0 < x i ∧ x i ≤ 1 := by
+theorem UnitBox_mem (x : ι → ℝ) : x ∈ UnitBox ι H ↔ ∀ i, lw i < x i ∧ x i ≤ up i := by
   simp_rw [BoxIntegral.Box.mem_def, UnitBox, Set.mem_Ioc]
+
+variable (n : ℕ+)
 
 def UnitBoxPart (ν : ι → ℤ) : BoxIntegral.Box ι where
   lower := fun i ↦ ν i / n
@@ -105,32 +109,36 @@ theorem UnitBoxPart_volume (ν : ι → ℤ) :
   any_goals positivity
   exact Nat.cast_pos.mpr n.pos
 
-def AdmissibleIndex :
-  Finset (ι → ℤ) := Fintype.piFinset (fun _ ↦ Finset.Ico 0 (n:ℤ))
+variable (lw up) in
+def AdmissibleIndex  :
+  Finset (ι → ℤ) := Fintype.piFinset (fun i ↦ Finset.Ico (n * lw i) (n * up i))
 
-variable {ι n} in
+variable {ι H n} in
 theorem UnitBox_mem_iff_index {x : ι → ℝ} :
-    x ∈ UnitBox ι ↔ UnitBoxIndex ι n x ∈ AdmissibleIndex ι n := by
+    x ∈ UnitBox ι H ↔ UnitBoxIndex ι n x ∈ AdmissibleIndex ι lw up n := by
   have h₁ : 0 < (n:ℝ) := Nat.cast_pos.mpr n.pos
   have h₂ : (n:ℝ) ≠ 0 := Nat.cast_ne_zero.mpr n.ne_zero
-  simp_rw [UnitBox_mem, AdmissibleIndex]
-  simp_rw [mem_piFinset, Finset.mem_Ico, UnitBoxIndex_apply, sub_nonneg, Int.one_le_ceil_iff,
-    mul_pos_iff_of_pos_left h₁, Int.lt_iff_add_one_le, sub_add_cancel, Int.ceil_le,
-    ← le_div_iff' h₁, Int.cast_ofNat, div_self h₂]
+  simp_rw [UnitBox_mem, AdmissibleIndex, mem_piFinset, Finset.mem_Ico, UnitBoxIndex_apply,
+    Int.lt_iff_add_one_le, sub_add_cancel, Int.ceil_le]
+  sorry
+--  simp_rw [mem_piFinset, Finset.mem_Ico, UnitBoxIndex_apply, sub_nonneg, Int.one_le_ceil_iff,
+--    mul_pos_iff_of_pos_left h₁, Int.lt_iff_add_one_le, sub_add_cancel, Int.ceil_le,
+--    ← le_div_iff' h₁, Int.cast_ofNat, div_self h₂]
 
-variable {ι n} in
+variable {ι H n} in
 theorem UnitBoxPart_le_UnitBox {ν : ι → ℤ} :
-    UnitBoxPart ι n ν ≤ UnitBox ι ↔ ν ∈ AdmissibleIndex ι n := by
+    UnitBoxPart ι n ν ≤ UnitBox ι H ↔ ν ∈ AdmissibleIndex ι lw up n := by
   have h : 0 < (n:ℝ) := Nat.cast_pos.mpr n.pos
-  simp_rw [BoxIntegral.Box.le_iff_bounds, UnitBox, UnitBoxPart, AdmissibleIndex, mem_piFinset,
-    Finset.mem_Ico, Pi.le_def, ← forall_and, ← add_div, le_div_iff' h, mul_zero,
-    Int.cast_nonneg, div_le_iff h, one_mul, ← Int.cast_one (R := ℝ), ← Int.cast_add,
-    show ((n:ℕ):ℝ) = (n:ℤ) by rfl, Int.cast_le, ← Int.lt_iff_add_one_le]
+  sorry
+--  simp_rw [BoxIntegral.Box.le_iff_bounds, UnitBox, UnitBoxPart, AdmissibleIndex, mem_piFinset,
+--    Finset.mem_Ico, Pi.le_def, ← forall_and, ← add_div, le_div_iff' h, mul_zero,
+--    Int.cast_nonneg, div_le_iff h, one_mul, ← Int.cast_one (R := ℝ), ← Int.cast_add,
+--    show ((n:ℕ):ℝ) = (n:ℤ) by rfl, Int.cast_le, ← Int.lt_iff_add_one_le]
 
 variable [DecidableEq (BoxIntegral.Box ι)]
 
-def UnitBoxTaggedPrepartition : BoxIntegral.TaggedPrepartition (UnitBox ι) where
-  boxes := Finset.image (fun ν ↦ UnitBoxPart ι n ν) (AdmissibleIndex ι n)
+def UnitBoxTaggedPrepartition : BoxIntegral.TaggedPrepartition (UnitBox ι H) where
+  boxes := Finset.image (fun ν ↦ UnitBoxPart ι n ν) (AdmissibleIndex ι lw up n)
   le_of_mem' _ hB := by
     obtain ⟨_, hν, rfl⟩ := Finset.mem_image.mp hB
     exact UnitBoxPart_le_UnitBox.mpr hν
@@ -143,7 +151,7 @@ def UnitBoxTaggedPrepartition : BoxIntegral.TaggedPrepartition (UnitBox ι) wher
     exact (UnitBoxPart_disjoint ι n).mp h
   tag := by
     intro B
-    by_cases hB : ∃ ν ∈ AdmissibleIndex ι n, B = UnitBoxPart ι n ν
+    by_cases hB : ∃ ν ∈ AdmissibleIndex ι lw up n, B = UnitBoxPart ι n ν
     · exact UnitBoxTag ι n hB.choose
     · exact 1
   tag_mem_Icc := by
@@ -152,35 +160,37 @@ def UnitBoxTaggedPrepartition : BoxIntegral.TaggedPrepartition (UnitBox ι) wher
     · refine BoxIntegral.Box.coe_subset_Icc ?_
       rw [BoxIntegral.Box.mem_coe]
       have t1 := UnitBoxTag_mem_unitBoxPart ι n h.choose
-      have t2 := UnitBoxPart_le_UnitBox.mpr h.choose_spec.1
-      exact t2 t1
+      sorry
+      -- have t2 := UnitBoxPart_le_UnitBox.mpr h.choose_spec.1
+      -- exact t2 t1
     · refine BoxIntegral.Box.coe_subset_Icc ?_
       rw [BoxIntegral.Box.mem_coe, UnitBox_mem]
       intro _
       norm_num
+      sorry
 
-variable {ι n} in
+variable {ι H n} in
 theorem mem_UnitBoxTaggedPrepartition_iff {B : BoxIntegral.Box ι} :
-    B ∈ UnitBoxTaggedPrepartition ι n ↔ ∃ ν ∈ AdmissibleIndex ι n, UnitBoxPart ι n ν = B := by
-  simp [UnitBoxTaggedPrepartition]
+    B ∈ UnitBoxTaggedPrepartition ι H n ↔
+      ∃ ν ∈ AdmissibleIndex ι lw up n, UnitBoxPart ι n ν = B := by simp [UnitBoxTaggedPrepartition]
 
 @[simp]
-theorem UnitBoxTaggedPrepartition_tag_eq {ν : ι → ℤ} (hν : ν ∈ AdmissibleIndex ι n) :
-    (UnitBoxTaggedPrepartition ι n).tag (UnitBoxPart ι n ν) = UnitBoxTag ι n ν := by
+theorem UnitBoxTaggedPrepartition_tag_eq {ν : ι → ℤ} (hν : ν ∈ AdmissibleIndex ι lw up n) :
+    (UnitBoxTaggedPrepartition ι H n).tag (UnitBoxPart ι n ν) = UnitBoxTag ι n ν := by
   dsimp only [UnitBoxTaggedPrepartition]
-  have h : ∃ ν' ∈ AdmissibleIndex ι n, UnitBoxPart ι n ν = UnitBoxPart ι n ν' := ⟨ν, hν, rfl⟩
+  have h : ∃ ν' ∈ AdmissibleIndex ι lw up n, UnitBoxPart ι n ν = UnitBoxPart ι n ν' := ⟨ν, hν, rfl⟩
   rw [dif_pos h, (UnitBoxTag_injective ι n).eq_iff, ← (UnitBoxPart_injective ι n).eq_iff]
   exact h.choose_spec.2.symm
 
 theorem UnitBoxTaggedPrepartition_isHenstock :
-    (UnitBoxTaggedPrepartition ι n).IsHenstock := by
+    (UnitBoxTaggedPrepartition ι H n).IsHenstock := by
   intro _ hB
   obtain ⟨ν, hν, rfl⟩ := mem_UnitBoxTaggedPrepartition_iff.mp hB
-  rw [UnitBoxTaggedPrepartition_tag_eq ι n hν]
+  rw [UnitBoxTaggedPrepartition_tag_eq ι H n hν]
   exact BoxIntegral.Box.coe_subset_Icc (UnitBoxTag_mem_unitBoxPart ι n ν)
 
 theorem UnitBoxTaggedPrepartition_isPartition :
-    (UnitBoxTaggedPrepartition ι n).IsPartition := by
+    (UnitBoxTaggedPrepartition ι H n).IsPartition := by
   intro x hx
   use UnitBoxPart ι n (UnitBoxIndex ι n x)
   refine ⟨?_, ?_⟩
@@ -189,7 +199,7 @@ theorem UnitBoxTaggedPrepartition_isPartition :
   · exact (UnitBoxPart_mem_iff_index_eq ι n).mpr rfl
 
 theorem UnitBoxTaggedPrepartition_isSubordinate {r : ℝ} (hr : 0 < r) (hn : 1 / r ≤ n) :
-    (UnitBoxTaggedPrepartition ι n).IsSubordinate (fun _ ↦ ⟨r, hr⟩) := by
+    (UnitBoxTaggedPrepartition ι H n).IsSubordinate (fun _ ↦ ⟨r, hr⟩) := by
   intro _ hB
   obtain ⟨ν, hν, rfl⟩ := mem_UnitBoxTaggedPrepartition_iff.mp hB
   dsimp
@@ -199,7 +209,7 @@ theorem UnitBoxTaggedPrepartition_isSubordinate {r : ℝ} (hr : 0 < r) (hn : 1 /
     rwa [div_le_iff hr, mul_comm] at hn
     exact Nat.cast_pos.mpr n.pos
   intro x hx
-  rw [Metric.mem_closedBall, UnitBoxTaggedPrepartition_tag_eq ι n hν]
+  rw [Metric.mem_closedBall, UnitBoxTaggedPrepartition_tag_eq ι H n hν]
   have t2 : UnitBoxTag ι n ν ∈ (BoxIntegral.Box.Icc (UnitBoxPart ι n ν)) := by
     refine BoxIntegral.Box.coe_subset_Icc ?_
     exact UnitBoxTag_mem_unitBoxPart _ _ _
@@ -208,18 +218,20 @@ theorem UnitBoxTaggedPrepartition_isSubordinate {r : ℝ} (hr : 0 < r) (hn : 1 /
   refine IsCompact.isBounded ?_
   exact BoxIntegral.Box.isCompact_Icc (UnitBoxPart ι n ν)
 
-variable (s : Set (ι → ℝ)) (hs₁ : s ≤ UnitBox ι)
+variable (s : Set (ι → ℝ))
 
-abbrev IntegralPoints : Set (ι → ℝ) := ↑((n:ℝ) • s ∩ span ℤ (Set.range (Pi.basisFun ℝ ι)))
+abbrev IntegralPoints (c : ℝ) : Set (ι → ℝ) := c • s ∩ span ℤ (Set.range (Pi.basisFun ℝ ι))
 
-abbrev IntegralPoints' : Set (ι → ℝ) := ↑(s ∩ (n:ℝ)⁻¹ • span ℤ (Set.range (Pi.basisFun ℝ ι)))
+abbrev IntegralPoints' (c : ℝ) : Set (ι → ℝ) := s ∩ c⁻¹ • span ℤ (Set.range (Pi.basisFun ℝ ι))
+
+def CountingFunction := Nat.card (IntegralPoints ι s n)
 
 theorem IntegralPoints_mem_iff {x : ι → ℝ} :
-    x ∈ IntegralPoints ι n s ↔ (n:ℝ)⁻¹ • x ∈ IntegralPoints' ι n s := by
+    x ∈ IntegralPoints ι s n ↔ (n:ℝ)⁻¹ • x ∈ IntegralPoints' ι s n := by
   simp only [Set.mem_inter_iff, SetLike.mem_coe, ne_eq, Nat.cast_eq_zero, PNat.ne_zero,
     not_false_eq_true, ← Set.mem_smul_set_iff_inv_smul_mem₀, smul_inv_smul₀]
 
-def IntegralPointsEquiv : IntegralPoints ι n s ≃ IntegralPoints' ι n s := by
+def IntegralPointsEquiv : IntegralPoints ι s n ≃ IntegralPoints' ι s n := by
   refine Equiv.ofBijective ?_ ⟨?_, ?_⟩
   · rintro ⟨x, hx⟩
     exact ⟨(n:ℝ)⁻¹ • x, (IntegralPoints_mem_iff ι n s).mp hx⟩
@@ -263,17 +275,17 @@ theorem UnitBoxTag_eq_of_mem_smul_span {x : ι → ℝ}
   rw [Nat.cast_ne_zero]
   exact PNat.ne_zero n
 
-theorem Index_admissible_of_mem {x : ι → ℝ} (hx : x ∈ IntegralPoints' ι n s) :
-    UnitBoxIndex ι n x ∈ AdmissibleIndex ι n := by
-  rw [← @UnitBox_mem_iff_index]
-  refine hs₁ (Set.mem_of_mem_inter_left hx)
+-- variable (hs₁ : s ≤ UnitBox ι H)
 
-def CountingFunction := Nat.card (IntegralPoints ι n s)
+-- theorem Index_admissible_of_mem0 {x : ι → ℝ} (hx : x ∈ IntegralPoints' ι s n) :
+--     UnitBoxIndex ι n x ∈ AdmissibleIndex ι lw up n := by
+--   rw [← @UnitBox_mem_iff_index]
+--   refine hs₁ (Set.mem_of_mem_inter_left hx)
 
-theorem CountingFunction_eq :
+theorem CountingFunction_eq (hs₁ : s ≤ UnitBox ι H) :
   CountingFunction ι n s =
-    Finset.sum (UnitBoxTaggedPrepartition ι n).toPrepartition.boxes
-      fun B ↦ (Set.indicator s (fun x ↦ 1) ((UnitBoxTaggedPrepartition ι n).tag B)) := by
+    Finset.sum (UnitBoxTaggedPrepartition ι H n).toPrepartition.boxes
+      fun B ↦ (Set.indicator s (fun x ↦ 1) ((UnitBoxTaggedPrepartition ι H n).tag B)) := by
   classical
   rw [CountingFunction, Nat.card_congr (IntegralPointsEquiv ι n s)]
   rw [Finset.sum_indicator_eq_sum_filter]
@@ -308,7 +320,7 @@ theorem CountingFunction_eq :
   · dsimp
     rintro ⟨_, hB, h⟩
     obtain ⟨ν, hν, rfl⟩ := hB
-    rw [UnitBoxTaggedPrepartition_tag_eq ι n hν] at h
+    rw [UnitBoxTaggedPrepartition_tag_eq ι H n hν] at h
     dsimp
     refine ⟨⟨?_, ?_⟩, ?_⟩
     · exact UnitBoxTag ι n ν
@@ -318,10 +330,10 @@ theorem CountingFunction_eq :
       rw [(UnitBoxPart_injective _ _).eq_iff]
       exact UnitBoxIndex_tag ι n ν
 
-theorem UnitBoxTaggedPrepartition_integralSum n :
+theorem UnitBoxTaggedPrepartition_integralSum n (hs₁ : s ≤ UnitBox ι H) :
     BoxIntegral.integralSum (Set.indicator s fun x ↦ 1)
       (BoxIntegral.BoxAdditiveMap.toSMul (Measure.toBoxAdditive volume))
-       (UnitBoxTaggedPrepartition ι n) = (CountingFunction ι n s : ℝ) / n ^ card ι := by
+       (UnitBoxTaggedPrepartition ι H n) = (CountingFunction ι n s : ℝ) / n ^ card ι := by
   classical
   unfold BoxIntegral.integralSum
   rw [CountingFunction_eq, Nat.cast_sum]
@@ -337,17 +349,20 @@ theorem UnitBoxTaggedPrepartition_integralSum n :
     rfl
   · exact hs₁
 
-theorem main (hs₂ : MeasurableSet s) :
+theorem main (hs₁ : Bornology.IsBounded s) (hs₂ : MeasurableSet s) :
     Tendsto (fun n : ℕ+ ↦ (CountingFunction ι n s : ℝ) / n ^ card ι)
       atTop (nhds (volume s).toReal) := by
-  have : ContinuousOn (Set.indicator s (fun _ ↦ (1:ℝ))) (BoxIntegral.Box.Icc (UnitBox ι)) := sorry
+  obtain ⟨C, _⟩ : ∃ C : ℕ+, s ≤ Metric.closedBall 0 C := sorry
+  have H₀ : ∀ i : ι, - (C:ℤ) < (C:ℤ) := sorry
+  have hs : s ≤ UnitBox ι H₀ := sorry
+  have : ContinuousOn (Set.indicator s (fun _ ↦ (1:ℝ))) (BoxIntegral.Box.Icc (UnitBox ι H₀)) := sorry
   have main := ContinuousOn.hasBoxIntegral (volume : Measure (ι → ℝ)) this
     BoxIntegral.IntegrationParams.Riemann
   rw [BoxIntegral.hasIntegral_iff] at main
-  have : ∫ x in (UnitBox ι), Set.indicator s (fun x ↦ (1:ℝ)) x = (volume s).toReal := by
+  have : ∫ x in (UnitBox ι H₀), Set.indicator s (fun x ↦ (1:ℝ)) x = (volume s).toReal := by
     rw [MeasureTheory.integral_indicator_const _ hs₂]
     simp only [smul_eq_mul, mul_one]
-    rw [Measure.restrict_eq_self volume hs₁]
+    rw [Measure.restrict_eq_self volume hs]
   rw [this] at main
   rw [Metric.tendsto_atTop]
   intro eps h_eps
@@ -366,16 +381,16 @@ theorem main (hs₂ : MeasurableSet s) :
 
   have : ∀ n, N ≤ n →
       BoxIntegral.IntegrationParams.MemBaseSet BoxIntegral.IntegrationParams.Riemann
-        (UnitBox ι) 0 (r 0) (UnitBoxTaggedPrepartition ι n) := by
+        (UnitBox ι H₀) 0 (r 0) (UnitBoxTaggedPrepartition ι H₀ n) := by
     intro n hn
     refine ⟨?_, ?_, ?_, ?_⟩
     · have : r 0 = fun _ ↦ r 0 0 := Function.funext_iff.mpr hr₁
       rw [this]
-      refine UnitBoxTaggedPrepartition_isSubordinate ι _ _ ?_
+      refine UnitBoxTaggedPrepartition_isSubordinate ι _ _ _ ?_
       exact le_trans (Nat.le_ceil _) (Nat.cast_le.mpr hn)
     · intro h
       simp [BoxIntegral.IntegrationParams.Riemann] at h
-      exact UnitBoxTaggedPrepartition_isHenstock ι _
+      exact UnitBoxTaggedPrepartition_isHenstock ι _ _
     · intro h
       simp [BoxIntegral.IntegrationParams.Riemann] at h
     · intro h
@@ -384,8 +399,20 @@ theorem main (hs₂ : MeasurableSet s) :
   use N
   intro n hn
 
-  specialize hr₂ _ (this n hn) (UnitBoxTaggedPrepartition_isPartition ι n)
+  specialize hr₂ _ (this n hn) (UnitBoxTaggedPrepartition_isPartition ι H₀ n)
   rw [UnitBoxTaggedPrepartition_integralSum] at hr₂
   refine lt_of_le_of_lt hr₂ ?_
   exact half_lt_self_iff.mpr h_eps
-  exact hs₁
+  exact hs
+
+#exit
+
+variable (t : Set (ι → ℝ)) (ht : MeasurableSet t)
+
+theorem toto :
+  ∃ (c : ℝ) (v : ι → ℝ), c • (v +ᵥ t) ≤ UnitBox ι := by sorry
+
+theorem main' :
+    Tendsto (fun n : ℕ+ ↦ (CountingFunction ι n t : ℝ) / n ^ card ι)
+      atTop (nhds (volume t).toReal) := by
+  sorry
