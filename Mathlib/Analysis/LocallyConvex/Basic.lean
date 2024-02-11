@@ -170,7 +170,39 @@ end SeminormedRing
 
 section NormedDivisionRing
 
-variable [NormedDivisionRing 𝕜] [AddCommGroup E] [Module 𝕜 E] {s t A B : Set E} {a b : 𝕜} {x : E}
+variable [NormedField 𝕜] [NormedRing 𝕝] [NormedSpace 𝕜 𝕝] [AddCommGroup E] [Module 𝕜 E]
+  [SMulWithZero 𝕝 E] [IsScalarTower 𝕜 𝕝 E] {s t u v A B : Set E} {x : E} {a b : 𝕜}
+
+theorem absorbs_iff_eventually_nhdsWithin_zero :
+    Absorbs 𝕜 s t ↔ ∀ᶠ c : 𝕜 in 𝓝[≠] 0, MapsTo (c • ·) t s := by
+  rw [absorbs_iff_eventually_cobounded_mapsTo, ← Filter.inv_cobounded₀]; rfl
+
+alias ⟨Absorbs.eventually_nhdsWithin_zero, _⟩ := absorbs_iff_eventually_nhdsWithin_zero
+
+theorem Absorbs.eventually_nhds_zero (h : Absorbs 𝕜 s t) (h₀ : 0 ∈ s) :
+    ∀ᶠ c : 𝕜 in 𝓝 0, MapsTo (c • ·) t s := by
+  rw [← nhdsWithin_compl_singleton_sup_pure, Filter.eventually_sup, Filter.eventually_pure,
+    ← absorbs_iff_eventually_nhdsWithin_zero]
+  refine ⟨h, fun x _ ↦ ?_⟩
+  simpa only [zero_smul]
+
+theorem absorbent_iff_eventually_nhdsWithin_zero :
+    Absorbent 𝕜 s ↔ ∀ x : E, ∀ᶠ c : 𝕜 in 𝓝[≠] 0, c • x ∈ s :=
+  forall_congr' fun x ↦ by simp only [absorbs_iff_eventually_nhdsWithin_zero, mapsTo_singleton]
+
+alias ⟨Absorbent.eventually_nhdsWithin_zero, _⟩ := absorbent_iff_eventually_nhdsWithin_zero
+
+/-- Scalar multiplication (by possibly different types) of a balanced set is monotone. -/
+theorem Balanced.smul_mono (hs : Balanced 𝕝 s) {a : 𝕝} {b : 𝕜} (h : ‖a‖ ≤ ‖b‖) : a • s ⊆ b • s := by
+  obtain rfl | hb := eq_or_ne b 0
+  · rw [norm_zero, norm_le_zero_iff] at h
+    simp only [h, ← image_smul, zero_smul, Subset.rfl]
+  · calc
+      a • s = b • (b⁻¹ • a) • s := by rw [smul_assoc, smul_inv_smul₀ hb]
+      _ ⊆ b • s := smul_set_mono <| hs _ <| by
+        rw [norm_smul, norm_inv, ← div_eq_inv_mul]
+        exact div_le_one_of_le h (norm_nonneg _)
+#align balanced.smul_mono Balanced.smul_mono
 
 theorem Balanced.smul_mem_mono [SMulCommClass 𝕝 𝕜 E] (hs : Balanced 𝕝 s) {a : 𝕜} {b : 𝕝}
     (ha : a • x ∈ s) (hba : ‖b‖ ≤ ‖a‖) : b • x ∈ s := by
