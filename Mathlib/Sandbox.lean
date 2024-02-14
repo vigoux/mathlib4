@@ -102,7 +102,7 @@ theorem UnitBoxPart_injective : Function.Injective (UnitBoxPart ι n) := by
   rw [UnitBoxPart_disjoint] at h
   exact BoxIntegral.Box.ne_of_disjoint_coe h
 
-variable [Fintype ι] [DecidableEq ι]
+variable [Fintype ι] [DecidableEq ι] -- Use Finite instead so Decidable should not be necessary
 
 theorem UnitBoxPart_diam (ν : ι → ℤ) :
     Metric.diam (BoxIntegral.Box.Icc (UnitBoxPart ι n ν)) ≤ 1 / n := by
@@ -497,9 +497,26 @@ variable (s : Set E)
 
 abbrev LatticePoints (c : ℝ) : Set E := c • s ∩ span ℤ (Set.range b)
 
+abbrev LatticePoints' (c : ℝ) : Set E := s ∩ c⁻¹ • span ℤ (Set.range b)
+
 def LatticeCountingFunction (c : ℝ) := Nat.card (LatticePoints b s c)
 
 variable [Fintype ι]
+
+def EquivIntegralPoints {c : ℝ} (hc : c ≠ 0) : LatticePoints' b s c ≃ IntegralPoints' ι (b.equivFun '' s) c := by
+  refine Equiv.ofBijective ?_ ⟨?_, ?_⟩
+  · rintro ⟨x, hx⟩
+    refine ⟨b.equivFun x, ?_, ?_⟩
+    · exact ⟨_, hx.1, rfl⟩
+    · -- rw [← coe_pointwise_smul]
+      refine ⟨c • b.equivFun x, ?_, ?_⟩
+      · rw [SetLike.mem_coe]
+        rw [← @LinearEquiv.map_smul]
+
+        sorry
+      · simp [inv_smul_smul₀ hc]
+
+
 
 theorem toto (c : ℝ) : LatticeCountingFunction b s c = CountingFunction ι (b.equivFun '' s) c := by
   refine Nat.card_congr ?_
