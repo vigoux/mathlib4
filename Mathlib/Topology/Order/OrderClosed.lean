@@ -352,9 +352,35 @@ theorem Icc_mem_nhds {a b x : α} (ha : a < x) (hb : x < b) : Icc a b ∈ 𝓝 x
   mem_of_superset (Ioo_mem_nhds ha hb) Ioo_subset_Icc_self
 #align Icc_mem_nhds Icc_mem_nhds
 
+theorem eventually_le_nhds (hab : a < b) : ∀ᶠ x in 𝓝 a, x ≤ b := Iic_mem_nhds hab
+#align eventually_le_nhds eventually_le_nhds
+
+theorem eventually_lt_nhds (hab : a < b) : ∀ᶠ x in 𝓝 a, x < b := Iio_mem_nhds hab
+#align eventually_lt_nhds eventually_lt_nhds
+
+theorem eventually_ge_nhds (hab : b < a) : ∀ᶠ x in 𝓝 a, b ≤ x := Ici_mem_nhds hab
+#align eventually_ge_nhds eventually_ge_nhds
+
+theorem eventually_gt_nhds (hab : b < a) : ∀ᶠ x in 𝓝 a, b < x := Ioi_mem_nhds hab
+#align eventually_gt_nhds eventually_gt_nhds
+
+theorem lt_mem_nhds {a b : α} (h : a < b) : ∀ᶠ x in 𝓝 b, a < x := isOpen_Ioi.mem_nhds h
+#align lt_mem_nhds lt_mem_nhds
+
+theorem le_mem_nhds {a b : α} (h : a < b) : ∀ᶠ x in 𝓝 b, a ≤ x :=
+  (lt_mem_nhds h).mono fun _ => le_of_lt
+#align le_mem_nhds le_mem_nhds
+
+theorem gt_mem_nhds {a b : α} (h : a < b) : ∀ᶠ x in 𝓝 a, x < b := isOpen_Iio.mem_nhds h
+#align gt_mem_nhds gt_mem_nhds
+
+theorem ge_mem_nhds {a b : α} (h : a < b) : ∀ᶠ x in 𝓝 a, x ≤ b :=
+  (gt_mem_nhds h).mono fun _ => le_of_lt
+#align ge_mem_nhds ge_mem_nhds
+
 theorem eventually_lt_of_tendsto_lt {l : Filter γ} {f : γ → α} {u v : α} (hv : v < u)
     (h : Filter.Tendsto f l (𝓝 v)) : ∀ᶠ a in l, f a < u :=
-  tendsto_nhds.1 h (· < u) isOpen_Iio hv
+  h.eventually _
 #align eventually_lt_of_tendsto_lt eventually_lt_of_tendsto_lt
 
 theorem eventually_gt_of_tendsto_gt {l : Filter γ} {f : γ → α} {u v : α} (hv : u < v)
@@ -819,18 +845,6 @@ instance Pi.orderClosedTopology' [Preorder β] [TopologicalSpace β] [OrderClose
 section OrderClosedTopology
 
 variable [TopologicalSpace α] [LinearOrder α] [OrderClosedTopology α] {a b : α}
-
-theorem eventually_le_nhds (hab : a < b) : ∀ᶠ x in 𝓝 a, x ≤ b := Iic_mem_nhds hab
-#align eventually_le_nhds eventually_le_nhds
-
-theorem eventually_lt_nhds (hab : a < b) : ∀ᶠ x in 𝓝 a, x < b := Iio_mem_nhds hab
-#align eventually_lt_nhds eventually_lt_nhds
-
-theorem eventually_ge_nhds (hab : b < a) : ∀ᶠ x in 𝓝 a, b ≤ x := Ici_mem_nhds hab
-#align eventually_ge_nhds eventually_ge_nhds
-
-theorem eventually_gt_nhds (hab : b < a) : ∀ᶠ x in 𝓝 a, b < x := Ioi_mem_nhds hab
-#align eventually_gt_nhds eventually_gt_nhds
 
 end OrderClosedTopology
 
