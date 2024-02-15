@@ -215,6 +215,11 @@ theorem nextCoeff_mul (hp : Monic p) (hq : Monic q) :
       show Nat.succ 0 = 1 from rfl]
 #align polynomial.monic.next_coeff_mul Polynomial.Monic.nextCoeff_mul
 
+theorem nextCoeff_pow (hp : p.Monic) (n : ℕ) : (p ^ n).nextCoeff = n • p.nextCoeff := by
+  induction n with
+  | zero => rw [pow_zero, Nat.zero_eq, zero_smul, ← map_one (f := C), nextCoeff_C_eq_zero]
+  | succ n ih => rw [pow_succ, hp.nextCoeff_mul (hp.pow n), ih, succ_nsmul]
+
 theorem eq_one_of_map_eq_one {S : Type*} [Semiring S] [Nontrivial S] (f : R →+* S) (hp : p.Monic)
     (map_eq : p.map f = 1) : p = 1 := by
   nontriviality R
@@ -253,6 +258,11 @@ theorem Monic.eq_one_of_isUnit (hm : Monic p) (hpu : IsUnit p) : p = 1 := by
 theorem Monic.isUnit_iff (hm : p.Monic) : IsUnit p ↔ p = 1 :=
   ⟨hm.eq_one_of_isUnit, fun h => h.symm ▸ isUnit_one⟩
 #align polynomial.monic.is_unit_iff Polynomial.Monic.isUnit_iff
+
+theorem eq_of_monic_of_associated (hp : p.Monic) (hq : q.Monic) (hpq : Associated p q) : p = q := by
+  obtain ⟨u, rfl⟩ := hpq
+  rw [(hp.of_mul_monic_left hq).eq_one_of_isUnit u.isUnit, mul_one]
+#align polynomial.eq_of_monic_of_associated Polynomial.eq_of_monic_of_associated
 
 end Semiring
 
