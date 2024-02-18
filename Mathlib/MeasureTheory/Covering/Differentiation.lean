@@ -116,11 +116,16 @@ theorem ae_eventually_measure_pos [SecondCountableTopology α] :
 /-- For every point `x`, sufficiently small sets in a Vitali family around `x` have finite measure.
 (This is a trivial result, following from the fact that the measure is locally finite). -/
 theorem eventually_measure_lt_top [IsLocallyFiniteMeasure μ] (x : α) :
-    ∀ᶠ a in v.filterAt x, μ a < ∞ := by
-  obtain ⟨ε, εpos, με⟩ : ∃ (ε : ℝ), 0 < ε ∧ μ (closedBall x ε) < ∞ :=
-    (μ.finiteAt_nhds x).exists_mem_basis nhds_basis_closedBall
-  exact v.eventually_filterAt_iff.2 ⟨ε, εpos, fun a _ haε => (measure_mono haε).trans_lt με⟩
+    ∀ᶠ a in v.filterAt x, μ a < ∞ :=
+  (μ.finiteAt_nhds x).eventually.filter_mono inf_le_left
 #align vitali_family.eventually_measure_lt_top VitaliFamily.eventually_measure_lt_top
+
+open Lean Meta Elab Term in
+elab "#show_instances " e:term : command => Command.runTermElabM fun _ => do
+  let e ← elabTerm e none
+  let x ← (← getGlobalInstancesIndex).getUnify e {}
+  let xs := x.map fun i => (i.priority, i.globalName?.getD `noname)
+  logInfo m!"{xs.qsort (·.1 < ·.1)}"
 
 /-- If two measures `ρ` and `ν` have, at every point of a set `s`, arbitrarily small sets in a
 Vitali family satisfying `ρ a ≤ ν a`, then `ρ s ≤ ν s` if `ρ ≪ μ`.-/
