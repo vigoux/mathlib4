@@ -19,18 +19,22 @@ def UnitBox : BoxIntegral.Box ι where
 theorem UnitBox_mem (x : ι → ℝ) : x ∈ UnitBox ι A ↔ ∀ i, - A < x i ∧ x i ≤ A := by
   simp_rw [BoxIntegral.Box.mem_def, UnitBox, Set.mem_Ioc]
 
-theorem UnitBox_ball_le [Fintype ι] : Metric.ball 0 A ⊆ (UnitBox ι A).toSet := by
+theorem UnitBox_ball_le [Fintype ι] :
+
+    Metric.ball 0 A ⊆ (UnitBox ι A).toSet := by
   simp_rw [ball_pi _ (Nat.cast_pos.mpr A.pos), BoxIntegral.Box.coe_eq_pi,
     Set.univ_pi_subset_univ_pi_iff, Real.ball_eq_Ioo, UnitBox, Pi.zero_apply, zero_sub, zero_add,
     Set.Ioo_subset_Ioc_self, implies_true, true_or]
 
-theorem UnitBox_le_closedBall [Fintype ι] : (UnitBox ι A).toSet ⊆ Metric.closedBall 0 A := by
+theorem UnitBox_le_closedBall [Fintype ι] :
+    (UnitBox ι A).toSet ⊆ Metric.closedBall 0 A := by
   simp_rw [closedBall_pi _ (Nat.cast_nonneg A), BoxIntegral.Box.coe_eq_pi,
     Set.univ_pi_subset_univ_pi_iff, Real.closedBall_eq_Icc, UnitBox, Pi.zero_apply, zero_sub,
     zero_add, Set.Ioc_subset_Icc_self, implies_true, true_or]
 
-theorem UnitBox_isBounded [Fintype ι] :
+theorem UnitBox_isBounded [Finite ι] :
     Bornology.IsBounded (UnitBox ι A).toSet :=
+  have := Fintype.ofFinite ι
   (Metric.isBounded_iff_subset_closedBall _).mpr ⟨_, UnitBox_le_closedBall ι A⟩
 
 variable (n : ℕ+)
@@ -511,8 +515,11 @@ def EquivIntegralPoints {c : ℝ} (hc : c ≠ 0) : LatticePoints' b s c ≃ Inte
     · -- rw [← coe_pointwise_smul]
       refine ⟨c • b.equivFun x, ?_, ?_⟩
       · rw [SetLike.mem_coe]
-        rw [← @LinearEquiv.map_smul]
-
+        simp_rw [Basis.mem_span_iff_repr_mem, Basis.equivFun_apply,
+          Pi.basisFun_repr, Set.mem_range, Pi.smul_apply, smul_eq_mul]
+        intro i
+        refine ⟨?_, ?_⟩
+        
         sorry
       · simp [inv_smul_smul₀ hc]
 
