@@ -1,6 +1,97 @@
 import Mathlib.Algebra.Module.Zlattice
 import Mathlib.Analysis.BoxIntegral.Integrability
 
+noncomputable section
+
+namespace BoxIntegral
+
+open Bornology MeasureTheory Fintype
+
+/-- A `BoxIntegral` is integral if its vertices are integers. -/
+class IsIntegral {ι : Type*} (B : BoxIntegral.Box ι) : Prop where
+  isIntegral : ∃ (lw : ι → ℤ) (up : ι → ℤ), ∀ i, B.lower i = lw i ∧ B.upper i = up i
+
+theorem le_isIntegral_of_isBounded {ι : Type*} [Finite ι] {s : Set (ι → ℝ)} (h : IsBounded s) :
+    ∃ B : BoxIntegral.Box ι, IsIntegral B ∧ s ≤ B := by
+  have := Fintype.ofFinite ι
+  obtain ⟨R, hR₁, hR₂⟩ := Bornology.IsBounded.subset_ball_lt h 0 0
+  let C : ℕ+ := ⟨Nat.ceil R, Nat.ceil_pos.mpr hR₁⟩
+  refine ⟨?_, ⟨?_, ?_, ?_⟩, ?_⟩
+  · refine BoxIntegral.Box.mk (fun _ ↦ - C) (fun _ ↦ C ) ?_
+    intro i
+    norm_num [hR₁]
+  · exact fun _ ↦ - C
+  · exact fun _ ↦ C
+  · intro _
+    simp
+  · sorry
+
+variable (ι : Type*) (n : ℕ+)
+
+def UnitBoxPart (ν : ι → ℤ) : BoxIntegral.Box ι where
+  lower := fun i ↦ ν i / n
+  upper := fun i ↦ ν i / n + 1 / n
+  lower_lt_upper := fun _ ↦ by norm_num
+
+@[simp]
+theorem UnitBoxPart_mem {ν : ι → ℤ} {x : ι → ℝ} :
+    x ∈ UnitBoxPart ι n ν ↔ ∀ i, ν i / n < x i ∧ x i ≤ ν i / n + 1 / n := by
+  simp_rw [BoxIntegral.Box.mem_def, UnitBoxPart, Set.mem_Ioc]
+
+def UnitBoxIndex (x : ι → ℝ) : ι → ℤ := fun i ↦ Int.ceil (n * x i) - 1
+
+@[simp]
+theorem UnitBoxIndex_apply {x : ι → ℝ} (i : ι) :
+    UnitBoxIndex ι n x i = Int.ceil (n * (x : ι → ℝ) i) - 1 := rfl
+
+theorem UnitBoxPart_mem_iff_index_eq {x : ι → ℝ} {ν : ι → ℤ} :
+    x ∈ UnitBoxPart ι n ν ↔ UnitBoxIndex ι n x = ν := by
+  rw [UnitBoxPart_mem, Function.funext_iff]
+  have h_npos : 0 < (n:ℝ) := Nat.cast_pos.mpr <| PNat.pos n
+  simp_rw [UnitBoxIndex_apply ι n, sub_eq_iff_eq_add, Int.ceil_eq_iff, Int.cast_add, Int.cast_one,
+    add_sub_cancel, ← _root_.le_div_iff' h_npos, ← div_lt_iff' h_npos, add_div]
+
+-- Upper right corner
+def UnitBoxTag (ν : ι → ℤ) : ι → ℝ := fun i ↦ (ν i + 1) / n
+
+theorem UnitBoxTag_mem_unitBoxPart (ν : ι → ℤ) :
+    UnitBoxTag ι n ν ∈ UnitBoxPart ι n ν := by
+  simp_rw [BoxIntegral.Box.mem_def, UnitBoxTag, UnitBoxPart, Set.mem_Ioc]
+  refine fun _ ↦ ⟨?_, by rw [← add_div]⟩
+  rw [div_lt_div_right <| Nat.cast_pos.mpr (PNat.pos n)]
+  linarith
+
+@[simp]
+theorem UnitBoxIndex_tag (ν : ι → ℤ) :
+    UnitBoxIndex ι n (UnitBoxTag ι n ν) = ν := by
+  rw [← UnitBoxPart_mem_iff_index_eq]
+  exact UnitBoxTag_mem_unitBoxPart _ _ _
+
+variable [Fintype ι]
+
+theorem UnitBoxPart_diam (ν : ι → ℤ) :
+    Metric.diam (BoxIntegral.Box.Icc (UnitBoxPart ι n ν)) ≤ 1 / n := by
+  refine ENNReal.toReal_le_of_le_ofReal (by positivity) ?_
+  rw [BoxIntegral.Box.Icc_eq_pi]
+  refine EMetric.diam_pi_le_of_le (fun i ↦ ?_)
+  rw [Real.ediam_Icc, UnitBoxPart, add_sub_cancel', ENNReal.ofReal_div_of_pos, ENNReal.ofReal_one]
+  exact Nat.cast_pos.mpr n.pos
+
+@[simp]
+theorem UnitBoxPart_volume (ν : ι → ℤ) :
+    (volume (UnitBoxPart ι n ν : Set (ι → ℝ))).toReal = 1 / n ^ card ι := by
+  simp_rw [volume_pi, BoxIntegral.Box.coe_eq_pi, Measure.pi_pi, Real.volume_Ioc, UnitBoxPart,
+    add_sub_cancel']
+  rw [Finset.prod_const, ENNReal.ofReal_div_of_pos (Nat.cast_pos.mpr n.pos), ENNReal.toReal_pow,
+    ENNReal.toReal_div, div_pow, ENNReal.toReal_ofReal (by positivity), ENNReal.toReal_ofReal
+    (by positivity), one_pow, Fintype.card]
+
+class UnitBoxIndex_isAdmissible (B : Box ι) (ν : ι → ℤ) : Prop where
+  le_box : UnitBoxPart ι n ν ≤ B
+
+
+#exit
+
 set_option autoImplicit false
 
 noncomputable section pi
@@ -20,7 +111,6 @@ theorem UnitBox_mem (x : ι → ℝ) : x ∈ UnitBox ι A ↔ ∀ i, - A < x i �
   simp_rw [BoxIntegral.Box.mem_def, UnitBox, Set.mem_Ioc]
 
 theorem UnitBox_ball_le [Fintype ι] :
-
     Metric.ball 0 A ⊆ (UnitBox ι A).toSet := by
   simp_rw [ball_pi _ (Nat.cast_pos.mpr A.pos), BoxIntegral.Box.coe_eq_pi,
     Set.univ_pi_subset_univ_pi_iff, Real.ball_eq_Ioo, UnitBox, Pi.zero_apply, zero_sub, zero_add,
@@ -519,7 +609,7 @@ def EquivIntegralPoints {c : ℝ} (hc : c ≠ 0) : LatticePoints' b s c ≃ Inte
           Pi.basisFun_repr, Set.mem_range, Pi.smul_apply, smul_eq_mul]
         intro i
         refine ⟨?_, ?_⟩
-        
+
         sorry
       · simp [inv_smul_smul₀ hc]
 
