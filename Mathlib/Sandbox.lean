@@ -86,9 +86,55 @@ theorem UnitBoxPart_volume (ν : ι → ℤ) :
     ENNReal.toReal_div, div_pow, ENNReal.toReal_ofReal (by positivity), ENNReal.toReal_ofReal
     (by positivity), one_pow, Fintype.card]
 
-class UnitBoxIndex_isAdmissible (B : Box ι) (ν : ι → ℤ) : Prop where
-  le_box : UnitBoxPart ι n ν ≤ B
+theorem UnitBoxIndex_setFinite_of_finite_measure {s : Set (ι → ℝ)} (hs : volume s < ⊤) :
+    Set.Finite {ν : ι → ℤ | UnitBoxPart ι n ν ≤ s} := by
+  contrapose! hs
 
+
+def UnitBoxIndexAdmissible (B : Box ι) : Finset (ι → ℤ) := by
+  let A := { ν : ι → ℤ | UnitBoxPart ι n ν ≤ B}
+  refine Set.Finite.toFinset (s := A) ?_
+  sorry
+
+theorem UnitBoxIndex_mem_admissible (B : Box ι) (ν : ι → ℤ) :
+    ν ∈ UnitBoxIndexAdmissible ι n B ↔ UnitBoxPart ι n ν ≤ B := by
+  rw [UnitBoxIndexAdmissible, Set.Finite.mem_toFinset, Set.mem_setOf_eq]
+
+open Classical in
+def UnitBoxTaggedPrepartition (B : Box ι) : BoxIntegral.TaggedPrepartition B where
+  boxes := Finset.image (fun ν ↦ UnitBoxPart ι n ν) (UnitBoxIndexAdmissible ι n B)
+  le_of_mem' _ hB := by
+    obtain ⟨_, hν, rfl⟩ := Finset.mem_image.mp hB
+    exact (UnitBoxIndex_mem_admissible ι n B _).mp hν
+#exit
+
+      pairwiseDisjoint := by
+    intro _ hB _ hB'
+    obtain ⟨_, _, rfl⟩ := Finset.mem_image.mp hB
+    obtain ⟨_, _, rfl⟩ := Finset.mem_image.mp hB'
+    rw [(UnitBoxPart_injective ι n).ne_iff]
+    intro h
+    exact (UnitBoxPart_disjoint ι n).mp h
+  tag := by
+    intro B
+    by_cases hB : ∃ ν ∈ AdmissibleIndex ι A n, B = UnitBoxPart ι n ν
+    · exact UnitBoxTag ι n hB.choose
+    · exact 1
+  tag_mem_Icc := by
+    intro B
+    split_ifs with h
+    · refine BoxIntegral.Box.coe_subset_Icc ?_
+      rw [BoxIntegral.Box.mem_coe]
+      have t2 := UnitBoxPart_le_UnitBox.mpr h.choose_spec.1
+      refine t2 ?_
+      exact UnitBoxTag_mem_unitBoxPart ι n (Exists.choose h)
+    · refine BoxIntegral.Box.coe_subset_Icc ?_
+      rw [BoxIntegral.Box.mem_coe, UnitBox_mem]
+      intro _
+      simp
+      refine ⟨?_, ?_⟩
+      linarith
+      exact A.pos
 
 #exit
 
