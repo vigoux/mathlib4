@@ -5,19 +5,14 @@ Authors: Thomas Browning
 -/
 import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 import Mathlib.Data.Real.Pi.Bounds
-import Mathlib.Topology.Algebra.Equicontinuity
 import Mathlib.Topology.Algebra.Group.Compact
-import Mathlib.Topology.ContinuousFunction.Algebra
 import Mathlib.Topology.ContinuousFunction.Bounded
 import Mathlib.Topology.Algebra.ContinuousMonoidHom
 import Mathlib.Topology.Covering
-import Mathlib.Topology.IsLocalHomeomorph
-import Mathlib.Topology.UniformSpace.Equicontinuity
 
 #align_import topology.algebra.continuous_monoid_hom from "leanprover-community/mathlib"@"6ca1a09bc9aa75824bf97388c9e3b441fc4ccf3f"
 
 /-!
-
 # Pontryagin dual
 
 This file defines the Pontryagin dual of a topological group. The Pontryagin dual of a topological
