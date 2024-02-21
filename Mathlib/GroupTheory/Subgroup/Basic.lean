@@ -868,7 +868,7 @@ def topEquiv : (⊤ : Subgroup G) ≃* G :=
 /-- The trivial subgroup `{1}` of a group `G`. -/
 @[to_additive "The trivial `AddSubgroup` `{0}` of an `AddGroup` `G`."]
 instance : Bot (Subgroup G) :=
-  ⟨{ (⊥ : Submonoid G) with inv_mem' := by simp}⟩
+  ⟨{ (⊥ : Submonoid G) with inv_mem' := by unfold_let; simp}⟩
 
 @[to_additive]
 instance : Inhabited (Subgroup G) :=

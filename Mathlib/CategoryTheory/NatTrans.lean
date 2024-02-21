@@ -49,7 +49,8 @@ structure NatTrans (F G : C ⥤ D) : Type max u₁ v₂ where
   /-- The component of a natural transformation. -/
   app : ∀ X : C, F.obj X ⟶ G.obj X
   /-- The naturality square for a given morphism. -/
-  naturality : ∀ ⦃X Y : C⦄ (f : X ⟶ Y), F.map f ≫ app Y = app X ≫ G.map f := by aesop_cat
+  naturality : ∀ ⦃X Y : C⦄ (f : X ⟶ Y), F.map f ≫ app Y = app X ≫ G.map f := by
+    unfold_let; aesop_cat
 #align category_theory.nat_trans CategoryTheory.NatTrans
 #align category_theory.nat_trans.naturality CategoryTheory.NatTrans.naturality
 #align category_theory.nat_trans.ext_iff CategoryTheory.NatTrans.ext_iff

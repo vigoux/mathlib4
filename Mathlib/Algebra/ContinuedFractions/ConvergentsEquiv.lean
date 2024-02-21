@@ -320,6 +320,7 @@ theorem succ_nth_convergent_eq_squashGCF_nth_convergent [Field K]
         ((pb + a / b) * pA + pa * ppA) / ((pb + a / b) * pB + pa * ppB) =
           (b * (pb * pA + pa * ppA) + a * pA) / (b * (pb * pB + pa * ppB) + a * pB) by
         obtain ⟨eq1, eq2, eq3, eq4⟩ : pA' = pA ∧ pB' = pB ∧ ppA' = ppA ∧ ppB' = ppB := by
+          unfold_let
           simp [*, (continuantsAux_eq_continuantsAux_squashGCF_of_le <| le_refl <| n' + 1).symm,
             (continuantsAux_eq_continuantsAux_squashGCF_of_le n'.le_succ).symm]
         symm

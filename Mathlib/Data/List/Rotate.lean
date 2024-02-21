@@ -373,12 +373,14 @@ theorem rotate_reverse (l : List α) (n : ℕ) :
   rw [← length_reverse l]
   let k := n % l.reverse.length
   cases' hk' : k with k'
-  · simp_all! [length_reverse, ← rotate_rotate]
-  · cases' l with x l
+  · unfold_let at hk'
+    simp_all! [length_reverse, ← rotate_rotate]
+  · unfold_let at hk'
+    cases' l with x l
     · simp
     · rw [Nat.mod_eq_of_lt, tsub_add_cancel_of_le (α := ℕ), rotate_length]
       · exact tsub_le_self
-      · exact tsub_lt_self (by simp) (by simp_all!)
+      · exact tsub_lt_self (by simp) (by rw [hk']; exact zero_lt_succ _)
 #align list.rotate_reverse List.rotate_reverse
 
 theorem map_rotate {β : Type*} (f : α → β) (l : List α) (n : ℕ) :

@@ -378,7 +378,9 @@ variable (E : Type u₃) [Category.{v₃} E] [MonoidalCategory E] [BraidedCatego
 which preserves the braiding.
 -/
 structure LaxBraidedFunctor extends LaxMonoidalFunctor C D where
-  braided : ∀ X Y : C, μ X Y ≫ map (β_ X Y).hom = (β_ (obj X) (obj Y)).hom ≫ μ Y X := by aesop_cat
+  braided : ∀ X Y : C, μ X Y ≫ map (β_ X Y).hom = (β_ (obj X) (obj Y)).hom ≫ μ Y X := by
+    unfold_let
+    aesop_cat
 #align category_theory.lax_braided_functor CategoryTheory.LaxBraidedFunctor
 
 namespace LaxBraidedFunctor
@@ -399,6 +401,7 @@ variable {C D E}
 def comp (F : LaxBraidedFunctor C D) (G : LaxBraidedFunctor D E) : LaxBraidedFunctor C E :=
   { LaxMonoidalFunctor.comp F.toLaxMonoidalFunctor G.toLaxMonoidalFunctor with
     braided := fun X Y => by
+      unfold_let
       dsimp
       slice_lhs 2 3 =>
         rw [← CategoryTheory.Functor.map_comp, F.braided, CategoryTheory.Functor.map_comp]
@@ -440,6 +443,7 @@ structure BraidedFunctor extends MonoidalFunctor C D where
   -- We move the `μ X Y` to the right hand side,
   -- so that this makes a good `@[simp]` lemma.
   braided : ∀ X Y : C, map (β_ X Y).hom = inv (μ X Y) ≫ (β_ (obj X) (obj Y)).hom ≫ μ Y X := by
+    unfold_let
     aesop_cat
 #align category_theory.braided_functor CategoryTheory.BraidedFunctor
 
@@ -628,15 +632,20 @@ def tensorMonoidal : MonoidalFunctor (C × C) C :=
     ε := (λ_ (𝟙_ C)).inv
     μ := tensor_μ C
     μ_natural_left := fun f Z => by
+      unfold_let
       -- `simpa` will be not needed when we define `μ_natural_left` in terms of the whiskerings.
       simpa using tensor_μ_natural_left C f.1 f.2 Z.1 Z.2
     μ_natural_right := fun Z f => by
+      unfold_let
       simpa using tensor_μ_natural_right C Z.1 Z.2 f.1 f.2
     associativity := fun X Y Z => by
+      unfold_let
       simpa using tensor_associativity C X.1 X.2 Y.1 Y.2 Z.1 Z.2
     left_unitality := fun ⟨X₁, X₂⟩ => by
+      unfold_let
       simpa using tensor_left_unitality C X₁ X₂
     right_unitality := fun ⟨X₁, X₂⟩ => by
+      unfold_let
       simpa using tensor_right_unitality C X₁ X₂
     μ_isIso := by dsimp [tensor_μ]; infer_instance }
 
@@ -741,6 +750,7 @@ monoidal opposite, upgraded to a braided functor. -/
   -- we could then make this fully automated if we mark `yang_baxter` as simp
   -- should it be marked as such?
   associativity X Y Z := by
+    unfold_let
     simp [id_tensorHom, tensorHom_id, ← yang_baxter_assoc]
   __ := mopFunctor C
 
@@ -750,6 +760,7 @@ monoidal opposite of `C` to `C`, upgraded to a braided functor. -/
   μ X Y := (β_ (unmop X) (unmop Y)).hom
   ε := 𝟙 (𝟙_ C)
   associativity X Y Z := by
+    unfold_let
     simp [id_tensorHom, tensorHom_id, ← yang_baxter_assoc]
   __ := unmopFunctor C
 

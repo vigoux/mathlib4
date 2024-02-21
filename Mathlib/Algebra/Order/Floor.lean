@@ -1161,6 +1161,7 @@ theorem fract_div_intCast_eq_div_intCast_mod {m : ℤ} {n : ℕ} :
   let q := ⌈↑m₀ / (n : k)⌉
   let m₁ := q * ↑n - (↑m₀ : ℤ)
   have hm₁ : 0 ≤ m₁ := by
+    unfold_let
     simpa [← @cast_le k, ← div_le_iff hn] using FloorRing.gc_ceil_coe.le_u_l _
   calc
     fract ((Int.cast (-(m₀ : ℤ)) : k) / (n : k))
@@ -1172,6 +1173,7 @@ theorem fract_div_intCast_eq_div_intCast_mod {m : ℤ} {n : ℕ} :
 
   · rw [← fract_int_add q, ← mul_div_cancel (q : k) (ne_of_gt hn), ← add_div, ← sub_eq_add_neg]
     -- Porting note: the `simp` was `push_cast`
+    unfold_let
     simp
   · congr 2
     change (q * ↑n - (↑m₀ : ℤ)) % ↑n = _
