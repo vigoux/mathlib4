@@ -342,6 +342,7 @@ def chineseRemainder' (h : a ≡ b [MOD gcd n m]) : { k // k ≡ a [MOD n] ∧ k
           Int.toNat_of_nonneg (Int.emod_nonneg _ (Int.coe_nat_ne_zero.2 (lcm_ne_zero hn hm)))]
         have hnonzero : (gcd n m : ℤ) ≠ 0 := by
           norm_cast
+          stop
           rw [Nat.gcd_eq_zero_iff, not_and]
           exact fun _ => hm
         have hcoedvd : ∀ t, (gcd n m : ℤ) ∣ t * (b - a) := fun t => h.dvd.mul_left _

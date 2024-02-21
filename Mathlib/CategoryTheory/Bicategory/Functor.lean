@@ -165,14 +165,17 @@ structure OplaxFunctor (B : Type u₁) [Bicategory.{w₁, v₁} B] (C : Type u�
   mapComp_naturality_left :
     ∀ {a b c : B} {f f' : a ⟶ b} (η : f ⟶ f') (g : b ⟶ c),
       map₂ (η ▷ g) ≫ mapComp f' g = mapComp f g ≫ map₂ η ▷ map g := by
+    unfold_let
     aesop_cat
   mapComp_naturality_right :
     ∀ {a b c : B} (f : a ⟶ b) {g g' : b ⟶ c} (η : g ⟶ g'),
       map₂ (f ◁ η) ≫ mapComp f g' = mapComp f g ≫ map f ◁ map₂ η := by
+    unfold_let
     aesop_cat
-  map₂_id : ∀ {a b : B} (f : a ⟶ b), map₂ (𝟙 f) = 𝟙 (map f) := by aesop
+  map₂_id : ∀ {a b : B} (f : a ⟶ b), map₂ (𝟙 f) = 𝟙 (map f) := by unfold_let; aesop
   map₂_comp :
     ∀ {a b : B} {f g h : a ⟶ b} (η : f ⟶ g) (θ : g ⟶ h), map₂ (η ≫ θ) = map₂ η ≫ map₂ θ := by
+    unfold_let
     aesop_cat
   -- porting note: `map₂_associator_aux` was used here in lean 3, but this was a hack
   -- to avoid a timeout; we revert this hack here (because it was causing other problems
@@ -181,14 +184,17 @@ structure OplaxFunctor (B : Type u₁) [Bicategory.{w₁, v₁} B] (C : Type u�
     ∀ {a b c d : B} (f : a ⟶ b) (g : b ⟶ c) (h : c ⟶ d),
       map₂ (α_ f g h).hom ≫ mapComp f (g ≫ h) ≫ map f ◁ mapComp g h =
     mapComp (f ≫ g) h ≫ mapComp f g ▷ map h ≫ (α_ (map f) (map g) (map h)).hom := by
+    unfold_let
     aesop_cat
   map₂_leftUnitor :
     ∀ {a b : B} (f : a ⟶ b),
       map₂ (λ_ f).hom = mapComp (𝟙 a) f ≫ mapId a ▷ map f ≫ (λ_ (map f)).hom := by
+    unfold_let
     aesop_cat
   map₂_rightUnitor :
     ∀ {a b : B} (f : a ⟶ b),
       map₂ (ρ_ f).hom = mapComp f (𝟙 b) ≫ map f ◁ mapId b ≫ (ρ_ (map f)).hom := by
+    unfold_let
     aesop_cat
 #align category_theory.oplax_functor CategoryTheory.OplaxFunctor
 #align category_theory.oplax_functor.map_id CategoryTheory.OplaxFunctor.mapId
@@ -287,15 +293,18 @@ def comp (F : OplaxFunctor B C) (G : OplaxFunctor C D) : OplaxFunctor B D :=
     mapComp := fun f g => by
       exact (G.mapFunctor _ _).map (F.mapComp f g) ≫ G.mapComp (F.map f) (F.map g)
     mapComp_naturality_left := fun η g => by
+      unfold_let
       dsimp
       rw [← map₂_comp_assoc, mapComp_naturality_left, map₂_comp_assoc, mapComp_naturality_left,
         assoc]
     mapComp_naturality_right := fun η => by
+      unfold_let
       dsimp
       intros
       rw [← map₂_comp_assoc, mapComp_naturality_right, map₂_comp_assoc, mapComp_naturality_right,
         assoc]
     map₂_associator := fun f g h => by
+      unfold_let
       dsimp
       -- porting note: if you use the `map₂_associator_aux` hack in the definition of
       -- `map₂_associator` then the `simp only` call below does not seem to apply `map₂_associator`
@@ -304,10 +313,12 @@ def comp (F : OplaxFunctor B C) (G : OplaxFunctor C D) : OplaxFunctor B D :=
       simp only [map₂_associator, map₂_comp, mapComp_naturality_left_assoc, comp_whiskerRight,
         assoc]
     map₂_leftUnitor := fun f => by
+      unfold_let
       dsimp
       simp only [map₂_leftUnitor, map₂_comp, mapComp_naturality_left_assoc, comp_whiskerRight,
         assoc]
     map₂_rightUnitor := fun f => by
+      unfold_let
       dsimp
       simp only [map₂_rightUnitor, map₂_comp, mapComp_naturality_right_assoc, whiskerLeft_comp,
         assoc] }
@@ -367,31 +378,39 @@ structure Pseudofunctor (B : Type u₁) [Bicategory.{w₁, v₁} B] (C : Type u�
     [Bicategory.{w₂, v₂} C] extends PrelaxFunctor B C where
   mapId (a : B) : map (𝟙 a) ≅ 𝟙 (obj a)
   mapComp {a b c : B} (f : a ⟶ b) (g : b ⟶ c) : map (f ≫ g) ≅ map f ≫ map g
-  map₂_id : ∀ {a b : B} (f : a ⟶ b), map₂ (𝟙 f) = 𝟙 (map f) := by aesop_cat
+  map₂_id : ∀ {a b : B} (f : a ⟶ b), map₂ (𝟙 f) = 𝟙 (map f) := by
+    unfold_let
+    aesop_cat
   map₂_comp :
     ∀ {a b : B} {f g h : a ⟶ b} (η : f ⟶ g) (θ : g ⟶ h), map₂ (η ≫ θ) = map₂ η ≫ map₂ θ := by
+    unfold_let
     aesop_cat
   map₂_whisker_left :
     ∀ {a b c : B} (f : a ⟶ b) {g h : b ⟶ c} (η : g ⟶ h),
       map₂ (f ◁ η) = (mapComp f g).hom ≫ map f ◁ map₂ η ≫ (mapComp f h).inv := by
+    unfold_let
     aesop_cat
   map₂_whisker_right :
     ∀ {a b c : B} {f g : a ⟶ b} (η : f ⟶ g) (h : b ⟶ c),
       map₂ (η ▷ h) = (mapComp f h).hom ≫ map₂ η ▷ map h ≫ (mapComp g h).inv := by
+    unfold_let
     aesop_cat
   map₂_associator :
     ∀ {a b c d : B} (f : a ⟶ b) (g : b ⟶ c) (h : c ⟶ d),
       map₂ (α_ f g h).hom = (mapComp (f ≫ g) h).hom ≫ (mapComp f g).hom ▷ map h ≫
       (α_ (map f) (map g) (map h)).hom ≫ map f ◁ (mapComp g h).inv ≫
       (mapComp f (g ≫ h)).inv := by
+    unfold_let
     aesop_cat
   map₂_left_unitor :
     ∀ {a b : B} (f : a ⟶ b),
       map₂ (λ_ f).hom = (mapComp (𝟙 a) f).hom ≫ (mapId a).hom ▷ map f ≫ (λ_ (map f)).hom := by
+    unfold_let
     aesop_cat
   map₂_right_unitor :
     ∀ {a b : B} (f : a ⟶ b),
       map₂ (ρ_ f).hom = (mapComp f (𝟙 b)).hom ≫ map f ◁ (mapId b).hom ≫ (ρ_ (map f)).hom := by
+    unfold_let
     aesop_cat
 #align category_theory.pseudofunctor CategoryTheory.Pseudofunctor
 

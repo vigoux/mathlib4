@@ -42,9 +42,9 @@ additionally satisfying:
 structure MonoidalNatTrans (F G : LaxMonoidalFunctor C D) extends
   NatTrans F.toFunctor G.toFunctor where
   /-- The unit condition for a monoidal natural transformation. -/
-  unit : F.ε ≫ app (𝟙_ C) = G.ε := by aesop_cat
+  unit : F.ε ≫ app (𝟙_ C) = G.ε := by unfold_let; aesop_cat
   /-- The tensor condition for a monoidal natural transformation. -/
-  tensor : ∀ X Y, F.μ _ _ ≫ app (X ⊗ Y) = (app X ⊗ app Y) ≫ G.μ _ _ := by aesop_cat
+  tensor : ∀ X Y, F.μ _ _ ≫ app (X ⊗ Y) = (app X ⊗ app Y) ≫ G.μ _ _ := by unfold_let; aesop_cat
 #align category_theory.monoidal_nat_trans CategoryTheory.MonoidalNatTrans
 
 -- Porting note: `reassoc (attr := simp)` seems to add a `simp`
@@ -112,10 +112,10 @@ def hcomp {F G : LaxMonoidalFunctor C D} {H K : LaxMonoidalFunctor D E} (α : Mo
     (β : MonoidalNatTrans H K) : MonoidalNatTrans (F ⊗⋙ H) (G ⊗⋙ K) :=
   { NatTrans.hcomp α.toNatTrans β.toNatTrans with
     unit := by
-      dsimp; simp
+      unfold_let; dsimp; simp
       conv_lhs => rw [← K.toFunctor.map_comp, α.unit]
     tensor := fun X Y => by
-      dsimp; simp
+      unfold_let; dsimp; simp
       conv_lhs => rw [← K.toFunctor.map_comp, α.tensor, K.toFunctor.map_comp] }
 #align category_theory.monoidal_nat_trans.hcomp CategoryTheory.MonoidalNatTrans.hcomp
 
