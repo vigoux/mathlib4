@@ -1653,6 +1653,9 @@ lemma pos_of_ne_zero {n : ℕ} {a : Fin (n + 1)} (h : a ≠ 0) :
 
 end AddGroup
 
+/-! ### clamp -/
+
+@[simp] theorem coe_clamp (n m : Nat) : (clamp n m : Nat) = min n m := rfl
 #align fin.coe_clamp Fin.coe_clamp
 
 @[simp]

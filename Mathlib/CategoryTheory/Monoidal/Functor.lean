@@ -72,22 +72,25 @@ structure LaxMonoidalFunctor extends C ⥤ D where
   μ_natural_left :
     ∀ {X Y : C} (f : X ⟶ Y) (X' : C),
       (map f ⊗ 𝟙 (obj X')) ≫ μ Y X' = μ X X' ≫ map (f ⊗ 𝟙 X') := by
+    unfold_let
     aesop_cat
   μ_natural_right :
     ∀ {X Y : C} (X' : C) (f : X ⟶ Y) ,
       (𝟙 (obj X') ⊗ map f) ≫ μ X' Y = μ X' X ≫ map (𝟙 X' ⊗ f) := by
+    unfold_let
     aesop_cat
   /-- associativity of the tensorator -/
   associativity :
     ∀ X Y Z : C,
       (μ X Y ⊗ 𝟙 (obj Z)) ≫ μ (X ⊗ Y) Z ≫ map (α_ X Y Z).hom =
         (α_ (obj X) (obj Y) (obj Z)).hom ≫ (𝟙 (obj X) ⊗ μ Y Z) ≫ μ X (Y ⊗ Z) := by
+    unfold_let
     aesop_cat
   -- unitality
   left_unitality : ∀ X : C, (λ_ (obj X)).hom = (ε ⊗ 𝟙 (obj X)) ≫ μ (𝟙_ C) X ≫ map (λ_ X).hom :=
-    by aesop_cat
+    by unfold_let; aesop_cat
   right_unitality : ∀ X : C, (ρ_ (obj X)).hom = (𝟙 (obj X) ⊗ ε) ≫ μ X (𝟙_ C) ≫ map (ρ_ X).hom :=
-    by aesop_cat
+    by unfold_let; aesop_cat
 #align category_theory.lax_monoidal_functor CategoryTheory.LaxMonoidalFunctor
 
 -- Porting note: todo: remove this configuration and use the default configuration.
@@ -428,11 +431,14 @@ def comp : LaxMonoidalFunctor.{v₁, v₃} C E :=
     μ := fun X Y => G.μ (F.obj X) (F.obj Y) ≫ G.map (F.μ X Y)
     μ_natural_left := by
       intro X Y f X'
+      unfold_let
       simp_rw [comp_obj, F.comp_map, μ_natural_left_assoc, assoc, ← G.map_comp, μ_natural_left]
     μ_natural_right := by
       intro X Y f X'
+      unfold_let
       simp_rw [comp_obj, F.comp_map, μ_natural_right_assoc, assoc, ← G.map_comp, μ_natural_right]
     associativity := fun X Y Z => by
+      unfold_let
       dsimp
       rw [id_tensor_comp]
       slice_rhs 3 4 => rw [← G.toFunctor.map_id, G.μ_natural]
@@ -523,9 +529,11 @@ def comp : MonoidalFunctor.{v₁, v₃} C E :=
     F.toLaxMonoidalFunctor.comp
       G.toLaxMonoidalFunctor with
     ε_isIso := by
+      unfold_let
       dsimp
       infer_instance
     μ_isIso := by
+      unfold_let
       dsimp
       infer_instance }
 #align category_theory.monoidal_functor.comp CategoryTheory.MonoidalFunctor.comp

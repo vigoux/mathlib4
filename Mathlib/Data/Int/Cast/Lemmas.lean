@@ -443,12 +443,13 @@ variable (α) [CommGroup α] [AddCommGroup α]
 
 /-- If `α` is commutative, `zmultiplesHom` is an additive equivalence. -/
 def zmultiplesAddHom : α ≃+ (ℤ →+ α) :=
-  { zmultiplesHom α with map_add' := fun a b => AddMonoidHom.ext fun n => by simp [zsmul_add] }
+  { zmultiplesHom α with
+    map_add' := fun a b => AddMonoidHom.ext fun n => by unfold_let; simp [zsmul_add] }
 #align zmultiples_add_hom zmultiplesAddHom
 
 /-- If `α` is commutative, `zpowersHom` is a multiplicative equivalence. -/
 def zpowersMulHom : α ≃* (Multiplicative ℤ →* α) :=
-  { zpowersHom α with map_mul' := fun a b => MonoidHom.ext fun n => by simp [mul_zpow] }
+  { zpowersHom α with map_mul' := fun a b => MonoidHom.ext fun n => by unfold_let; simp [mul_zpow] }
 #align zpowers_mul_hom zpowersMulHom
 
 variable {α}

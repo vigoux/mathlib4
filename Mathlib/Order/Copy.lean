@@ -114,6 +114,7 @@ def Frame.copy (c : Frame α) (le : α → α → Prop) (eq_le : le = (by infer_
   { CompleteLattice.copy (@Frame.toCompleteLattice α c) le eq_le top eq_top bot eq_bot
       sup eq_sup inf eq_inf sSup eq_sSup sInf eq_sInf with
     inf_sSup_le_iSup_inf := fun a s => by
+      unfold_let
       simp [eq_le, eq_sup, eq_inf, eq_sSup, @Order.Frame.inf_sSup_le_iSup_inf α _ a s] }
 #align frame.copy Frame.copy
 
@@ -131,6 +132,7 @@ def Coframe.copy (c : Coframe α) (le : α → α → Prop) (eq_le : le = (by in
   { CompleteLattice.copy (@Coframe.toCompleteLattice α c) le eq_le top eq_top bot eq_bot sup
         eq_sup inf eq_inf sSup eq_sSup sInf eq_sInf with
     iInf_sup_le_sup_sInf := fun a s => by
+      unfold_let
       simp [eq_le, eq_sup, eq_inf, eq_sInf, @Order.Coframe.iInf_sup_le_sup_sInf α _ a s] }
 #align coframe.copy Coframe.copy
 
