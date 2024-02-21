@@ -76,13 +76,11 @@ theorem MonoidHom.isClosed_range (X Y : Type*)
     [TopologicalSpace X] [Group X] [TopologicalGroup X]
     [TopologicalSpace Y] [Group Y] [TopologicalGroup Y] [T1Space Y] :
     IsClosed (Set.range ((↑) : (X →* Y) → (X → Y))) := by
-  have key : Set.range ((↑) : (X →* Y) → (X → Y)) = ⋂ (x) (y), {f | f x * f y * (f (x * y))⁻¹ = 1} := by
-    ext f
-    simp_rw [mul_inv_eq_one, eq_comm, Set.mem_iInter]
-    exact ⟨fun ⟨g, h⟩ ↦ h ▸ map_mul g, fun h ↦ ⟨MonoidHom.mk' f h, rfl⟩⟩
-  rw [key]
-  exact isClosed_iInter (fun _ ↦ isClosed_iInter
-    (fun _ ↦ isClosed_singleton.preimage (by continuity)))
+  suffices h : Set.range ((↑) : (X →* Y) → X → Y) = ⋂ (x) (y), {f | f (x * y) = f x * f y} from
+    h ▸ isClosed_iInter fun _ ↦ isClosed_iInter fun _ ↦ isClosed_eq (by continuity) (by continuity)
+  ext f
+  rw [Set.mem_iInter₂]
+  exact ⟨fun ⟨g, h⟩ ↦ h ▸ map_mul g, fun h ↦ ⟨MonoidHom.mk' f h, rfl⟩⟩
 
 theorem mythm {X Y : Type*}
     [TopologicalSpace X] [Group X] [TopologicalGroup X]
