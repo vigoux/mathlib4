@@ -3,10 +3,10 @@ Copyright (c) 2014 Microsoft Corporation. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Leonardo de Moura, Mario Carneiro
 -/
-import Mathlib.Mathport.Rename
-import Std.Classes.SetNotation
 import Std.Tactic.Relation.Rfl
 import Std.Tactic.Relation.Symm
+import Std.Util.ExtendedBinder
+import Mathlib.Mathport.Rename
 import Mathlib.Tactic.Relation.Trans
 
 /-!
