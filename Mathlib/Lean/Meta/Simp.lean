@@ -79,10 +79,13 @@ def mkSimpTheoremsFromConst' (declName : Name) (post : Bool) (inv : Bool) (prio 
         auxNames := auxNames.push auxName
         r := r.push <| ← mkSimpTheoremCore (.decl declName)
           (mkConst auxName (cinfo.levelParams.map mkLevelParam)) #[] (mkConst auxName) post prio
+          (noIndexAtArgs := false)
       return (auxNames, r)
     else
-      return (#[], #[← mkSimpTheoremCore (.decl declName) (mkConst declName <|
-        cinfo.levelParams.map mkLevelParam) #[] (mkConst declName) post prio])
+      return (#[], #[
+        ← mkSimpTheoremCore
+          (.decl declName) (mkConst declName <| cinfo.levelParams.map mkLevelParam)
+          #[] (mkConst declName) post prio (noIndexAtArgs := false)])
 
 /-- Similar to `addSimpTheorem` except that it returns an array of all auto-generated
   simp-theorems. -/
