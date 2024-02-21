@@ -1703,7 +1703,6 @@ theorem bind_ret_eq_map (f : α → β) (l : List α) : l.bind (List.ret ∘ f) 
   induction l <;>
     simp (config := { unfoldPartialApp := true })
       [map, join, List.ret, cons_append, nil_append, *] at *
-  assumption
 #align list.bind_ret_eq_map List.bind_ret_eq_map
 
 theorem bind_congr {l : List α} {f g : α → List β} (h : ∀ x ∈ l, f x = g x) :
@@ -3351,7 +3350,6 @@ theorem reduceOption_length_lt_iff {l : List (Option α)} :
   rw [(reduceOption_length_le l).lt_iff_ne, Ne, reduceOption_length_eq_iff]
   induction l <;> simp [*]
   rw [@eq_comm _ none, ← Option.not_isSome_iff_eq_none, Decidable.imp_iff_not_or]
-  simp [Option.isNone_iff_eq_none]
 #align list.reduce_option_length_lt_iff List.reduceOption_length_lt_iff
 
 theorem reduceOption_singleton (x : Option α) : [x].reduceOption = x.toList := by cases x <;> rfl
@@ -3662,8 +3660,8 @@ variable [DecidableEq α]
 
 theorem map_erase [DecidableEq β] {f : α → β} (finj : Injective f) {a : α} (l : List α) :
     map f (l.erase a) = (map f l).erase (f a) := by
-  have this : Eq a = Eq (f a) ∘ f := by ext b; simp [finj.eq_iff]
-  simp [erase_eq_eraseP, erase_eq_eraseP, eraseP_map, this]; rfl
+  have this : (a == ·) = (f a == ·) ∘ f := by ext b; simp [Bool.beq_eq_decide_eq, finj.eq_iff]
+  simp [erase_eq_eraseP, erase_eq_eraseP, eraseP_map, this, Function.comp_def]
 #align list.map_erase List.map_erase
 
 theorem map_foldl_erase [DecidableEq β] {f : α → β} (finj : Injective f) {l₁ l₂ : List α} :
@@ -3717,7 +3715,9 @@ theorem erase_diff_erase_sublist_of_sublist {a : α} :
     ∀ {l₁ l₂ : List α}, l₁ <+ l₂ → (l₂.erase a).diff (l₁.erase a) <+ l₂.diff l₁
   | [], l₂, _ => erase_sublist _ _
   | b :: l₁, l₂, h =>
-    if heq : b = a then by simp only [heq, erase_cons_head, diff_cons]; rfl
+    if heq : b == a then by
+      rw [Bool.beq_eq_decide_eq, Bool.of_decide_iff] at heq
+      simp only [heq, erase_cons_head, diff_cons, Sublist.refl]
     else by
       simp only [erase_cons_head b l₁, erase_cons_tail l₁ heq,
         diff_cons ((List.erase l₂ a)) (List.erase l₁ a) b, diff_cons l₂ l₁ b, erase_comm a b l₂]

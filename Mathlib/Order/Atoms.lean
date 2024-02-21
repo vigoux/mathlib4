@@ -659,6 +659,7 @@ def equivBool {α} [DecidableEq α] [LE α] [BoundedOrder α] [IsSimpleOrder α]
 def orderIsoBool : α ≃o Bool :=
   { equivBool with
     map_rel_iff' := @fun a b => by
+      rename_i src; simp only [src]
       rcases eq_bot_or_eq_top a with (rfl | rfl)
       · simp [bot_ne_top]
       · rcases eq_bot_or_eq_top b with (rfl | rfl)
