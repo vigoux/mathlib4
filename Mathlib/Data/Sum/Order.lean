@@ -562,8 +562,9 @@ theorem sumComm_symm (α β : Type*) [LE α] [LE β] :
 def sumAssoc (α β γ : Type*) [LE α] [LE β] [LE γ] : Sum (Sum α β) γ ≃o Sum α (Sum β γ) :=
   { Equiv.sumAssoc α β γ with
     map_rel_iff' := @fun a b => by
+      rename_i h
       rcases a with ((_ | _) | _) <;> rcases b with ((_ | _) | _) <;>
-      simp [Equiv.sumAssoc] }
+      simp [h, Equiv.sumAssoc] }
 #align order_iso.sum_assoc OrderIso.sumAssoc
 
 @[simp]

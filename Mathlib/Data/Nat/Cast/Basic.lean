@@ -132,7 +132,7 @@ theorem map_natCast' {A} [AddMonoidWithOne A] [FunLike F A B] [AddMonoidHomClass
   { toFun := fun n ↦ n • (1 : A)
     map_zero' := zero_nsmul _
     map_add' := add_nsmul _ }
-  exact eq_natCast' f $ by simp
+  exact eq_natCast' f $ by simp [f]
 #align nsmul_one nsmul_one
 
 end AddMonoidHomClass
@@ -277,12 +277,12 @@ variable (α) [CommMonoid α] [AddCommMonoid α]
 
 /-- If `α` is commutative, `multiplesHom` is an additive equivalence. -/
 def multiplesAddHom : α ≃+ (ℕ →+ α) :=
-  { multiplesHom α with map_add' := fun a b ↦ AddMonoidHom.ext fun n ↦ by simp [nsmul_add] }
+  { multiplesHom α with map_add' := fun a b ↦ AddMonoidHom.ext fun n ↦ by rename_i h; simp [h, nsmul_add] }
 #align multiples_add_hom multiplesAddHom
 
 /-- If `α` is commutative, `powersHom` is a multiplicative equivalence. -/
 def powersMulHom : α ≃* (Multiplicative ℕ →* α) :=
-  { powersHom α with map_mul' := fun a b ↦ MonoidHom.ext fun n ↦ by simp [mul_pow] }
+  { powersHom α with map_mul' := fun a b ↦ MonoidHom.ext fun n ↦ by rename_i h; simp [h, mul_pow] }
 #align powers_mul_hom powersMulHom
 
 @[simp] lemma multiplesAddHom_apply (x : α) (n : ℕ) : multiplesAddHom α x n = n • x := rfl
