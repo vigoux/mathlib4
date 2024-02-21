@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2024 Thomas Browning. All rights reserved.
+Copyright (c) 2022 Thomas Browning. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Thomas Browning
 -/
@@ -18,18 +18,24 @@ import Mathlib.Topology.UniformSpace.Equicontinuity
 
 /-!
 
-# Pontryagin Duals
+# Pontryagin dual
 
-This file defines the pontryagin dual.
+This file defines the Pontryagin dual of a topological group. The Pontryagin dual of a topological
+group `A` is the topological group of continuous homomorphisms `A →* circle` with the compact-open
+topology. For example, `ℤ` and `circle` are Pontryagin duals of each other. This is an example of
+Pontryagin duality, which states that a locally compact abelian topological group is canonically
+isomorphic to its double dual.
 
 ## Main definitions
 
-* `ContinuousMonoidHom A B`: The continuous homomorphisms `A →* B`.
-* `ContinuousAddMonoidHom A B`: The continuous additive homomorphisms `A →+ B`.
+* `PontryaginDual A`: The group of continuous homomorphisms `A →* circle`.
 -/
 
+open BoundedContinuousFunction Function Pointwise
 
-open Pointwise Function
+variable (A B C D E : Type*) [Monoid A] [Monoid B] [Monoid C] [Monoid D] [CommGroup E]
+  [TopologicalSpace A] [TopologicalSpace B] [TopologicalSpace C] [TopologicalSpace D]
+  [TopologicalSpace E] [TopologicalGroup E]
 
 namespace ContinuousMonoidHom
 
@@ -38,9 +44,9 @@ theorem arzela_ascoli {X Y : Type*} [TopologicalSpace X] [UniformSpace Y] [Compa
     (S : Set C(X, Y)) (hS1 : IsCompact (ContinuousMap.toFun '' S))
     (hS2 : Equicontinuous ((↑) : S → X → Y)) :
     IsCompact S := by
-  suffices : Inducing (Equiv.Set.image (↑) S DFunLike.coe_injective)
-  · rw [isCompact_iff_compactSpace] at hS1 ⊢
-    exact (Equiv.toHomeomorphOfInducing _ this).symm.compactSpace
+  suffices h : Inducing (Equiv.Set.image (↑) S DFunLike.coe_injective) by
+    rw [isCompact_iff_compactSpace] at hS1 ⊢
+    exact (Equiv.toHomeomorphOfInducing _ h).symm.compactSpace
   rw [inducing_subtype_val.inducing_iff, inducing_iff_nhds]
   refine' fun ϕ ↦ le_antisymm (Filter.map_le_iff_le_comap.mp
     (ContinuousMap.continuous_coe.comp continuous_subtype_val).continuousAt) _
@@ -71,14 +77,12 @@ theorem arzela_ascoli {X Y : Type*} [TopologicalSpace X] [UniformSpace Y] [Compa
     refine' ⟨ψ.1 x, _, ⟨ψ.1 x, hV', UniformSpace.mem_ball_self (ψ.1 x) hV⟩⟩
     exact ⟨ϕ.1 x, ⟨x, hx, rfl⟩, hWV ⟨ψ.1 x', ⟨ϕ.1 x', hW₀.mk_mem_comm.mp (h' ϕ), h x' hx'⟩, h' ψ⟩⟩
 
-open BoundedContinuousFunction
-
 theorem MonoidHom.isClosed_range (X Y : Type*)
     [TopologicalSpace X] [Group X] [TopologicalGroup X]
     [TopologicalSpace Y] [Group Y] [TopologicalGroup Y] [T1Space Y] :
     IsClosed (Set.range ((↑) : (X →* Y) → (X → Y))) := by
-  have key : Set.range ((↑) : (X →* Y) → (X → Y)) = ⋂ (x) (y), {f | f x * f y * (f (x * y))⁻¹ = 1}
-  · ext f
+  have key : Set.range ((↑) : (X →* Y) → (X → Y)) = ⋂ (x) (y), {f | f x * f y * (f (x * y))⁻¹ = 1} := by
+    ext f
     simp_rw [mul_inv_eq_one, eq_comm, Set.mem_iInter]
     exact ⟨fun ⟨g, h⟩ ↦ h ▸ map_mul g, fun h ↦ ⟨MonoidHom.mk' f h, rfl⟩⟩
   rw [key]
@@ -99,27 +103,27 @@ theorem mythm {X Y : Type*}
   let S3 : Set C(X, Y) := (↑) '' S2
   let S4 : Set (X → Y) := (↑) '' S3
   replace h : Equicontinuous ((↑) : S1 → X → Y) := equicontinuous_of_equicontinuousAt_one _ h
-  have hS : S4 = (↑) '' S1
-  · ext
+  have hS : S4 = (↑) '' S1 := by
+    ext
     constructor
     · rintro ⟨-, ⟨f, hf, rfl⟩, rfl⟩
       exact ⟨f, hf, rfl⟩
     · rintro ⟨f, hf, rfl⟩
       exact ⟨⟨f, h.continuous ⟨f, hf⟩⟩, ⟨⟨f, h.continuous ⟨f, hf⟩⟩, hf, rfl⟩, rfl⟩
-  replace h : Equicontinuous ((↑) : S3 → X → Y)
-  · rw [equicontinuous_iff_range, ← Set.image_eq_range] at h ⊢
+  replace h : Equicontinuous ((↑) : S3 → X → Y) := by
+    rw [equicontinuous_iff_range, ← Set.image_eq_range] at h ⊢
     rwa [← hS] at h
-  have hS2 : (interior S2).Nonempty
-  · let T : Set (ContinuousMonoidHom X Y) := {f | f '' U ⊆ interior V}
+  have hS2 : (interior S2).Nonempty := by
+    let T : Set (ContinuousMonoidHom X Y) := {f | f '' U ⊆ interior V}
     have h1 : T ⊆ S2 := fun f hf ↦ Set.image_subset_iff.mp (Set.Subset.trans hf interior_subset)
     have h2 : IsOpen T := isOpen_induced (ContinuousMap.isOpen_gen hUc isOpen_interior)
     have h3 : T.Nonempty := ⟨1, fun _ ⟨_, _, h⟩ ↦ h ▸ mem_interior_iff_mem_nhds.mpr hVo⟩
     exact h3.mono (interior_maximal h1 h2)
-  suffices : IsClosed S4
-  · exact ⟨⟨S2, (inducing_toContinuousMap X Y).isCompact_iff.mpr
-      (arzela_ascoli S3 this.isCompact h)⟩, hS2⟩
-  replace hS : S4 = Set.pi U (fun _ ↦ V) ∩ Set.range ((↑) : (X →* Y) → (X → Y))
-  · rw [hS]
+  suffices hS4 : IsClosed S4 from
+    ⟨⟨S2, (inducing_toContinuousMap X Y).isCompact_iff.mpr
+      (arzela_ascoli S3 hS4.isCompact h)⟩, hS2⟩
+  replace hS : S4 = Set.pi U (fun _ ↦ V) ∩ Set.range ((↑) : (X →* Y) → (X → Y)) := by
+    rw [hS]
     ext f
     simp only [Set.mem_image, Set.mem_setOf_eq]
     exact ⟨fun ⟨g, hg, hf⟩ ↦ hf ▸ ⟨hg, g, rfl⟩, fun ⟨hg, g, hf⟩ ↦ ⟨g, hf ▸ hg, hf⟩⟩
@@ -147,14 +151,11 @@ theorem mythm' {X Y : Type*}
   rw [hVo.uniformity_of_nhds_one.equicontinuousAt_iff_right]
   refine' fun n _ ↦ Filter.eventually_iff_exists_mem.mpr ⟨U n, hU1 n, fun x hx ⟨f, hf⟩ ↦ _⟩
   rw [Set.mem_setOf_eq, map_one, div_one]
-  suffices : U n ⊆ f ⁻¹' V n
-  · exact this hx
+  suffices hUV : U n ⊆ f ⁻¹' V n from hUV hx
   clear x hx
   induction' n with n ih
   · exact hf
   · exact fun x hx ↦ hV (ih (hU3 n hx)) (map_mul f x x ▸ ih (hU2 n (Set.mul_mem_mul hx hx)))
-
-open Pointwise
 
 -- PR # 7596
 lemma coveringmap : IsCoveringMap expMapCircle := sorry
@@ -162,8 +163,8 @@ lemma coveringmap : IsCoveringMap expMapCircle := sorry
 lemma basis0 :
     Filter.HasBasis (nhds (0 : ℝ)) (fun _ ↦ True) (fun n : ℕ ↦ Set.Icc (- (n + 1 : ℝ)⁻¹) (n + 1 : ℝ)⁻¹) := by
   have key := nhds_basis_zero_abs_sub_lt ℝ
-  have : ∀ ε : ℝ, {b | |b| < ε} = Set.Ioo (-ε) ε
-  · simp [Set.ext_iff, abs_lt]
+  have : ∀ ε : ℝ, {b | |b| < ε} = Set.Ioo (-ε) ε := by
+    simp [Set.ext_iff, abs_lt]
   simp only [this] at key
   refine' key.to_hasBasis (fun ε hε ↦ _) (fun n _ ↦ ⟨(n + 1)⁻¹, by positivity, Set.Ioo_subset_Icc_self⟩)
   obtain ⟨n, hn⟩ := exists_nat_one_div_lt hε
@@ -190,21 +191,21 @@ lemma smul_Icc {a b c : ℝ} (ha : 0 < a) : a • Set.Icc b c = Set.Icc (a • b
 instance {X : Type*} [TopologicalSpace X] [Group X] [TopologicalGroup X] [LocallyCompactSpace X] :
     LocallyCompactSpace (ContinuousMonoidHom X circle) := by
   let Vn : ℕ → Set circle := fun n ↦ expMapCircle '' Set.Icc (-(2 ^ n : ℝ)⁻¹) (2 ^ n : ℝ)⁻¹
-  have key0 : Filter.HasBasis (nhds 1) (fun _ ↦ True) Vn
-  · rw [← expMapCircle_zero, ← coveringmap.isLocalHomeomorph.map_nhds_eq 0]
+  have key0 : Filter.HasBasis (nhds 1) (fun _ ↦ True) Vn := by
+    rw [← expMapCircle_zero, ← coveringmap.isLocalHomeomorph.map_nhds_eq 0]
     exact basis1.map expMapCircle
   refine' mythm' Vn _ (isCompact_Icc.image coveringmap.continuous).isClosed key0
   intro n x h2 h1
-  have h3 : ∀ t, t < Real.pi → Set.Icc (-t) t ⊆ Set.Ioc (-Real.pi) Real.pi
-  · intro t ht
+  have h3 : ∀ t, t < Real.pi → Set.Icc (-t) t ⊆ Set.Ioc (-Real.pi) Real.pi := by
+    intro t ht
     by_cases h : -t ≤ t
     · exact (Set.Icc_subset_Ioc_iff h).mpr ⟨neg_lt_neg ht, ht.le⟩
     · rw [Set.Icc_eq_empty h]
       apply Set.empty_subset
   have hpi : 3 < Real.pi := Real.pi_gt_three
   have hpow : (2 ^ n : ℝ)⁻¹ ≤ 1 := inv_le_one (one_le_pow_of_one_le one_le_two n)
-  have h3 : x ∈ Vn (n + 1)
-  · obtain ⟨s, hs, h1⟩ := h1
+  have h3 : x ∈ Vn (n + 1) := by
+    obtain ⟨s, hs, h1⟩ := h1
     obtain ⟨t, ht, h2⟩ := h2
     refine' ⟨t, _, h2⟩
     rw [← h2, ← expMapCircle_add] at h1
@@ -222,10 +223,6 @@ instance {X : Type*} [TopologicalSpace X] [Group X] [TopologicalGroup X] [Locall
   exact h3
 
 end ContinuousMonoidHom
-
-variable (A B C E) [Monoid A] [Monoid B] [Monoid C] [CommGroup E]
-  [TopologicalSpace A] [TopologicalSpace B] [TopologicalSpace C] [TopologicalSpace E]
-  [TopologicalGroup E]
 
 /-- The Pontryagin dual of `A` is the group of continuous homomorphism `A → circle`. -/
 def PontryaginDual :=
@@ -254,7 +251,7 @@ instance : TopologicalGroup (PontryaginDual A) :=
 noncomputable instance : Inhabited (PontryaginDual A) :=
   (inferInstance : Inhabited (ContinuousMonoidHom A circle))
 
-variable {A B C E}
+variable {A B C D E}
 
 namespace PontryaginDual
 
@@ -266,7 +263,7 @@ instance : FunLike (PontryaginDual A) A circle :=
 noncomputable instance : ContinuousMonoidHomClass (PontryaginDual A) A circle :=
   ContinuousMonoidHom.ContinuousMonoidHomClass
 
-/-- `PontryaginDual` is a functor. -/
+/-- `PontryaginDual` is a contravariant functor. -/
 noncomputable def map (f : ContinuousMonoidHom A B) :
     ContinuousMonoidHom (PontryaginDual B) (PontryaginDual A) :=
   f.compLeft circle
@@ -294,7 +291,7 @@ nonrec theorem map_mul (f g : ContinuousMonoidHom A E) : map (f * g) = map f * m
   ext fun x => ext fun y => map_mul x (f y) (g y)
 #align pontryagin_dual.map_mul PontryaginDual.map_mul
 
-variable (A B C E)
+variable (A B C D E)
 
 /-- `ContinuousMonoidHom.dual` as a `ContinuousMonoidHom`. -/
 noncomputable def mapHom [LocallyCompactSpace E] :
