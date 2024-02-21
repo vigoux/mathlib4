@@ -1,11 +1,262 @@
-import Mathlib.Algebra.Module.Zlattice
-import Mathlib.Analysis.BoxIntegral.Integrability
+import Mathlib
+
+section analysis
+
+open Filter BigOperators Topology
+
+example :
+    Tendsto (fun s : ℂ ↦ (s - 1) * ∑' (n : ℕ), 1 / (n:ℂ) ^ s)
+      (𝓝[{s | 1 < s.re}] 1) (𝓝 1) := by
+  have : Tendsto (fun s : ℂ ↦ (s - 1) * riemannZeta s) (𝓝[{s | 1 < s.re}] 1) (𝓝 1) := by
+    refine Filter.Tendsto.mono_left riemannZeta_residue_one ?_
+    refine nhdsWithin_mono _ ?_
+    aesop
+  refine Tendsto.congr' ?_ this
+  rw [eventuallyEq_nhdsWithin_iff]
+  refine eventually_of_forall (fun s hs ↦ ?_)
+  exact congr_arg ((s - 1) * ·) (zeta_eq_tsum_one_div_nat_cpow hs)
+
+example {x : ℕ → ℝ} (h₁ : Monotone x) {l : ℝ}
+    (h₂ : Tendsto x atTop ⊤)
+    (h₃ : Tendsto (fun c : ℝ ↦ Nat.card {i | x i ≤ c} / c) atTop (nhds l)) :
+    Tendsto (fun s : ℝ => (s - 1) * ∑' i, (x i) ^ (- s)) (nhdsWithin 1 {1}ᶜ) (nhds l) := by
+  have t1 : ∀ k, Nat.card {i | x i ≤ x k} = k + 1 := sorry
+  have t2 : Tendsto (fun k ↦ (k + 1) / x k) atTop (nhds l) := by
+    rw [Metric.tendsto_atTop] at h₃ ⊢
+    intro ε hε
+    specialize h₃ ε hε
+    obtain ⟨B, hB⟩ := h₃
+    have : ∃ N, ∀ n ≥ N, B ≤ x n := by
+      exact?
+
+  sorry
+
+end analysis
+
+section Box
+
+theorem BoxIntegral.Box.IsBounded_Icc {ι : Type*} [Fintype ι] (B : BoxIntegral.Box ι) :
+    Bornology.IsBounded (BoxIntegral.Box.Icc B) := B.isCompact_Icc.isBounded
+
+theorem BoxIntegral.Box.IsBounded {ι : Type*} [Fintype ι] (B : BoxIntegral.Box ι) :
+    Bornology.IsBounded B.toSet :=
+  Bornology.IsBounded.subset (BoxIntegral.Box.IsBounded_Icc B) coe_subset_Icc
+
+end Box
 
 noncomputable section
 
 namespace BoxIntegral
 
 open Bornology MeasureTheory Fintype
+
+variable {ι : Type*} (n : ℕ+)
+
+def UnitBoxPart (ν : ι → ℤ) : BoxIntegral.Box ι where
+  lower := fun i ↦ ν i / n
+  upper := fun i ↦ ν i / n + 1 / n
+  lower_lt_upper := fun _ ↦ by norm_num
+
+@[simp]
+theorem UnitBoxPart_mem {ν : ι → ℤ} {x : ι → ℝ} :
+    x ∈ UnitBoxPart n ν ↔ ∀ i, ν i / n < x i ∧ x i ≤ ν i / n + 1 / n := by
+  simp_rw [BoxIntegral.Box.mem_def, UnitBoxPart, Set.mem_Ioc]
+
+def UnitBoxIndex (x : ι → ℝ) : ι → ℤ := fun i ↦ Int.ceil (n * x i) - 1
+
+@[simp]
+theorem UnitBoxIndex_apply {x : ι → ℝ} (i : ι) :
+    UnitBoxIndex n x i = Int.ceil (n * (x : ι → ℝ) i) - 1 := rfl
+
+variable {n} in
+theorem UnitBoxPart_mem_iff_index_eq {x : ι → ℝ} {ν : ι → ℤ} :
+    x ∈ UnitBoxPart n ν ↔ UnitBoxIndex n x = ν := by
+  rw [UnitBoxPart_mem, Function.funext_iff]
+  have h_npos : 0 < (n:ℝ) := Nat.cast_pos.mpr <| PNat.pos n
+  simp_rw [UnitBoxIndex_apply n, sub_eq_iff_eq_add, Int.ceil_eq_iff, Int.cast_add, Int.cast_one,
+    add_sub_cancel, ← _root_.le_div_iff' h_npos, ← div_lt_iff' h_npos, add_div]
+
+-- Upper right corner
+def UnitBoxTag (ν : ι → ℤ) : ι → ℝ := fun i ↦ (ν i + 1) / n
+
+theorem UnitBoxTag_injective : Function.Injective (fun ν : ι → ℤ ↦ UnitBoxTag n ν) := by
+  intro _ _ h
+  ext i
+  have := congr_arg (fun x ↦ x i) h
+  dsimp [UnitBoxTag] at this
+  field_simp at this
+  exact this
+
+theorem UnitBoxTag_mem_unitBoxPart (ν : ι → ℤ) :
+    UnitBoxTag n ν ∈ UnitBoxPart n ν := by
+  simp_rw [Box.mem_def, UnitBoxTag, UnitBoxPart, Set.mem_Ioc]
+  refine fun _ ↦ ⟨?_, by rw [← add_div]⟩
+  rw [div_lt_div_right <| Nat.cast_pos.mpr (PNat.pos n)]
+  linarith
+
+@[simp]
+theorem UnitBoxIndex_tag (ν : ι → ℤ) :
+    UnitBoxIndex n (UnitBoxTag n ν) = ν := by
+  rw [← UnitBoxPart_mem_iff_index_eq]
+  exact UnitBoxTag_mem_unitBoxPart n ν
+
+theorem UnitBoxPart_disjoint {ν ν' : ι → ℤ} :
+    ν ≠ ν' ↔ Disjoint (UnitBoxPart n ν).toSet (UnitBoxPart n ν').toSet := by
+  rw [not_iff_not.symm, ne_eq, not_not, Set.not_disjoint_iff]
+  simp_rw [Box.mem_coe]
+  refine ⟨fun h ↦ ?_, fun ⟨x, hx, hx'⟩ ↦ ?_⟩
+  · exact ⟨UnitBoxTag n ν, UnitBoxTag_mem_unitBoxPart n ν, h ▸ UnitBoxTag_mem_unitBoxPart n ν⟩
+  · rw [← UnitBoxPart_mem_iff_index_eq.mp hx, ← UnitBoxPart_mem_iff_index_eq.mp hx']
+
+theorem UnitBoxPart_injective : Function.Injective (fun ν : ι → ℤ ↦ UnitBoxPart n ν) := by
+  intro _ _ h
+  contrapose! h
+  rw [UnitBoxPart_disjoint] at h
+  exact Box.ne_of_disjoint_coe h
+
+variable [Fintype ι]
+
+theorem UnitBoxPart_diam (ν : ι → ℤ) :
+    Metric.diam (BoxIntegral.Box.Icc (UnitBoxPart n ν)) ≤ 1 / n := by
+  refine ENNReal.toReal_le_of_le_ofReal (by positivity) ?_
+  rw [BoxIntegral.Box.Icc_eq_pi]
+  refine EMetric.diam_pi_le_of_le (fun i ↦ ?_)
+  rw [Real.ediam_Icc, UnitBoxPart, add_sub_cancel', ENNReal.ofReal_div_of_pos, ENNReal.ofReal_one]
+  exact Nat.cast_pos.mpr n.pos
+
+@[simp]
+theorem UnitBoxPart_volume (ν : ι → ℤ) :
+    volume (UnitBoxPart n ν : Set (ι → ℝ)) = 1 / n ^ card ι := by
+  simp_rw [volume_pi, BoxIntegral.Box.coe_eq_pi, Measure.pi_pi, Real.volume_Ioc, UnitBoxPart,
+    add_sub_cancel']
+  rw [Finset.prod_const, ENNReal.ofReal_div_of_pos (Nat.cast_pos.mpr n.pos), ENNReal.ofReal_one,
+    ENNReal.ofReal_coe_nat, Finset.card_univ, one_div, one_div, ENNReal.inv_pow]
+
+theorem UnitBoxIndex_setFinite_of_finite_measure {s : Set (ι → ℝ)} (hm : NullMeasurableSet s)
+    (hs : volume s ≠ ⊤) :
+    Set.Finite {ν : ι → ℤ | ↑(UnitBoxPart n ν) ⊆ s} := by
+  have := Measure.finite_const_le_meas_of_disjoint_iUnion₀
+    (volume : Measure (ι → ℝ)) (ε := 1 / n ^ card ι) (by norm_num)
+    (As := fun ν : ι → ℤ ↦ (UnitBoxPart n ν) ∩ s) ?_ ?_ ?_
+  · refine this.subset ?_
+    intro ν hν
+    rw [Set.mem_setOf, Set.inter_eq_self_of_subset_left hν, UnitBoxPart_volume]
+  · intro ν
+    refine NullMeasurableSet.inter ?_ hm
+    exact (UnitBoxPart n ν).measurableSet_coe.nullMeasurableSet
+  · intro ν ν' h
+    have := (UnitBoxPart_disjoint n).mp h
+    refine Disjoint.aedisjoint ?_
+    rw [Set.disjoint_iff_inter_eq_empty]
+    dsimp only
+    rw [Set.inter_inter_inter_comm]
+    rw [Set.disjoint_iff_inter_eq_empty] at this
+    rw [this]
+    rw [Set.empty_inter]
+  · rw [← lt_top_iff_ne_top]
+    refine measure_lt_top_of_subset ?_ hs
+    aesop
+
+def UnitBoxIndexAdmissible (B : Box ι) : Finset (ι → ℤ) := by
+  let A := { ν : ι → ℤ | UnitBoxPart n ν ≤ B}
+  refine Set.Finite.toFinset (s := A) ?_
+  refine UnitBoxIndex_setFinite_of_finite_measure n ?_ ?_
+  · exact B.measurableSet_coe.nullMeasurableSet
+  · rw [← lt_top_iff_ne_top]
+    refine IsBounded.measure_lt_top ?_
+    exact Box.IsBounded B
+
+theorem UnitBoxIndex_mem_admissible (B : Box ι) (ν : ι → ℤ) :
+    ν ∈ UnitBoxIndexAdmissible n B ↔ UnitBoxPart n ν ≤ B := by
+  rw [UnitBoxIndexAdmissible, Set.Finite.mem_toFinset, Set.mem_setOf_eq]
+
+open Classical in
+def UnitBoxTaggedPrepartition (B : Box ι) : BoxIntegral.TaggedPrepartition B where
+  boxes := Finset.image (fun ν ↦ UnitBoxPart n ν) (UnitBoxIndexAdmissible n B)
+  le_of_mem' _ hB := by
+    obtain ⟨_, hν, rfl⟩ := Finset.mem_image.mp hB
+    exact (UnitBoxIndex_mem_admissible n B _).mp hν
+  pairwiseDisjoint := by
+    intro _ hB _ hB' h
+    obtain ⟨_, _, rfl⟩ := Finset.mem_image.mp hB
+    obtain ⟨_, _, rfl⟩ := Finset.mem_image.mp hB'
+    exact (UnitBoxPart_disjoint n).mp fun h' ↦ h (congrArg (UnitBoxPart n) h')
+  tag := by
+    intro B'
+    by_cases hB' : ∃ ν ∈ UnitBoxIndexAdmissible n B, B' = UnitBoxPart n ν
+    · exact UnitBoxTag n hB'.choose
+    · exact B.exists_mem.choose
+  tag_mem_Icc := by
+    intro B'
+    split_ifs with hB'
+    · have := hB'.choose_spec.1
+      rw [UnitBoxIndex_mem_admissible] at this
+      refine Box.coe_subset_Icc ?_
+      refine this ?_
+      exact UnitBoxTag_mem_unitBoxPart n (Exists.choose hB')
+    · exact Box.coe_subset_Icc (B.exists_mem.choose_spec)
+
+variable {n} in
+@[simp]
+theorem UnitBoxTaggedPrepartition_mem_iff {B B' : Box ι} :
+    B' ∈ UnitBoxTaggedPrepartition n B ↔
+      ∃ ν ∈ UnitBoxIndexAdmissible n B, UnitBoxPart n ν = B' := by
+  classical
+  rw [UnitBoxTaggedPrepartition, TaggedPrepartition.mem_mk, Prepartition.mem_mk, Finset.mem_image]
+
+theorem UnitBoxTaggedPrepartition_tag_eq {ν : ι → ℤ} (B : Box ι)
+    (hν : ν ∈ UnitBoxIndexAdmissible n B) :
+    (UnitBoxTaggedPrepartition n B).tag (UnitBoxPart n ν) = UnitBoxTag n ν := by
+  dsimp only [UnitBoxTaggedPrepartition]
+  have h : ∃ ν' ∈ UnitBoxIndexAdmissible n B, UnitBoxPart n ν = UnitBoxPart n ν' := ⟨ν, hν, rfl⟩
+  rw [dif_pos h, (UnitBoxTag_injective n).eq_iff, ← (UnitBoxPart_injective n).eq_iff]
+  exact h.choose_spec.2.symm
+
+theorem UnitBoxTaggedPrepartition_isHenstock (B : Box ι) :
+    (UnitBoxTaggedPrepartition n B).IsHenstock := by
+  intro _ hB
+  obtain ⟨ν, hν, rfl⟩ := UnitBoxTaggedPrepartition_mem_iff.mp hB
+  rw [UnitBoxTaggedPrepartition_tag_eq n B hν]
+  exact BoxIntegral.Box.coe_subset_Icc (UnitBoxTag_mem_unitBoxPart n ν)
+
+def IsThick_at (B : Box ι) : Prop :=
+  ∀ x : ι → ℝ, x ∈ B → UnitBoxPart n (UnitBoxIndex n x) ≤ B
+
+def IsThick (B : Box ι) : Prop := ∀ n, IsThick_at n B
+
+theorem UnitBoxTaggedPrepartition_isPartition {B : Box ι} (hB : IsThick_at n B) :
+    (UnitBoxTaggedPrepartition n B).IsPartition := by
+  intro x hx
+  use UnitBoxPart n (UnitBoxIndex n x)
+  refine ⟨?_, ?_⟩
+  · rw [BoxIntegral.TaggedPrepartition.mem_toPrepartition, UnitBoxTaggedPrepartition_mem_iff]
+    refine ⟨UnitBoxIndex n x, ?_, rfl⟩
+    rw [UnitBoxIndex_mem_admissible]
+    exact hB x hx
+  · exact UnitBoxPart_mem_iff_index_eq.mpr rfl
+
+theorem UnitBoxTaggedPrepartition_isSubordinate (B : Box ι) {r : ℝ} (hr : 0 < r) (hn : 1 / r ≤ n) :
+    (UnitBoxTaggedPrepartition n B).IsSubordinate (fun _ ↦ ⟨r, hr⟩) := by
+  intro _ hB
+  obtain ⟨ν, hν, rfl⟩ := UnitBoxTaggedPrepartition_mem_iff.mp hB
+  dsimp
+  have t1 : Metric.diam (Box.Icc (UnitBoxPart n ν)) ≤ r := by
+    refine le_trans (UnitBoxPart_diam n ν) ?_
+    rw [div_le_iff]
+    rwa [div_le_iff hr, mul_comm] at hn
+    exact Nat.cast_pos.mpr n.pos
+  intro x hx
+  rw [Metric.mem_closedBall, UnitBoxTaggedPrepartition_tag_eq n B hν]
+  have t2 : UnitBoxTag n ν ∈ (BoxIntegral.Box.Icc (UnitBoxPart n ν)) := by
+    refine Box.coe_subset_Icc ?_
+    exact UnitBoxTag_mem_unitBoxPart _ _
+  have t3 := Metric.dist_le_diam_of_mem ?_ hx t2
+  exact le_trans t3 t1
+  refine IsCompact.isBounded ?_
+  exact BoxIntegral.Box.isCompact_Icc (UnitBoxPart n ν)
+
+
+#exit
 
 /-- A `BoxIntegral` is integral if its vertices are integers. -/
 class IsIntegral {ι : Type*} (B : BoxIntegral.Box ι) : Prop where
@@ -25,116 +276,6 @@ theorem le_isIntegral_of_isBounded {ι : Type*} [Finite ι] {s : Set (ι → ℝ
   · intro _
     simp
   · sorry
-
-variable (ι : Type*) (n : ℕ+)
-
-def UnitBoxPart (ν : ι → ℤ) : BoxIntegral.Box ι where
-  lower := fun i ↦ ν i / n
-  upper := fun i ↦ ν i / n + 1 / n
-  lower_lt_upper := fun _ ↦ by norm_num
-
-@[simp]
-theorem UnitBoxPart_mem {ν : ι → ℤ} {x : ι → ℝ} :
-    x ∈ UnitBoxPart ι n ν ↔ ∀ i, ν i / n < x i ∧ x i ≤ ν i / n + 1 / n := by
-  simp_rw [BoxIntegral.Box.mem_def, UnitBoxPart, Set.mem_Ioc]
-
-def UnitBoxIndex (x : ι → ℝ) : ι → ℤ := fun i ↦ Int.ceil (n * x i) - 1
-
-@[simp]
-theorem UnitBoxIndex_apply {x : ι → ℝ} (i : ι) :
-    UnitBoxIndex ι n x i = Int.ceil (n * (x : ι → ℝ) i) - 1 := rfl
-
-theorem UnitBoxPart_mem_iff_index_eq {x : ι → ℝ} {ν : ι → ℤ} :
-    x ∈ UnitBoxPart ι n ν ↔ UnitBoxIndex ι n x = ν := by
-  rw [UnitBoxPart_mem, Function.funext_iff]
-  have h_npos : 0 < (n:ℝ) := Nat.cast_pos.mpr <| PNat.pos n
-  simp_rw [UnitBoxIndex_apply ι n, sub_eq_iff_eq_add, Int.ceil_eq_iff, Int.cast_add, Int.cast_one,
-    add_sub_cancel, ← _root_.le_div_iff' h_npos, ← div_lt_iff' h_npos, add_div]
-
--- Upper right corner
-def UnitBoxTag (ν : ι → ℤ) : ι → ℝ := fun i ↦ (ν i + 1) / n
-
-theorem UnitBoxTag_mem_unitBoxPart (ν : ι → ℤ) :
-    UnitBoxTag ι n ν ∈ UnitBoxPart ι n ν := by
-  simp_rw [BoxIntegral.Box.mem_def, UnitBoxTag, UnitBoxPart, Set.mem_Ioc]
-  refine fun _ ↦ ⟨?_, by rw [← add_div]⟩
-  rw [div_lt_div_right <| Nat.cast_pos.mpr (PNat.pos n)]
-  linarith
-
-@[simp]
-theorem UnitBoxIndex_tag (ν : ι → ℤ) :
-    UnitBoxIndex ι n (UnitBoxTag ι n ν) = ν := by
-  rw [← UnitBoxPart_mem_iff_index_eq]
-  exact UnitBoxTag_mem_unitBoxPart _ _ _
-
-variable [Fintype ι]
-
-theorem UnitBoxPart_diam (ν : ι → ℤ) :
-    Metric.diam (BoxIntegral.Box.Icc (UnitBoxPart ι n ν)) ≤ 1 / n := by
-  refine ENNReal.toReal_le_of_le_ofReal (by positivity) ?_
-  rw [BoxIntegral.Box.Icc_eq_pi]
-  refine EMetric.diam_pi_le_of_le (fun i ↦ ?_)
-  rw [Real.ediam_Icc, UnitBoxPart, add_sub_cancel', ENNReal.ofReal_div_of_pos, ENNReal.ofReal_one]
-  exact Nat.cast_pos.mpr n.pos
-
-@[simp]
-theorem UnitBoxPart_volume (ν : ι → ℤ) :
-    (volume (UnitBoxPart ι n ν : Set (ι → ℝ))).toReal = 1 / n ^ card ι := by
-  simp_rw [volume_pi, BoxIntegral.Box.coe_eq_pi, Measure.pi_pi, Real.volume_Ioc, UnitBoxPart,
-    add_sub_cancel']
-  rw [Finset.prod_const, ENNReal.ofReal_div_of_pos (Nat.cast_pos.mpr n.pos), ENNReal.toReal_pow,
-    ENNReal.toReal_div, div_pow, ENNReal.toReal_ofReal (by positivity), ENNReal.toReal_ofReal
-    (by positivity), one_pow, Fintype.card]
-
-theorem UnitBoxIndex_setFinite_of_finite_measure {s : Set (ι → ℝ)} (hs : volume s < ⊤) :
-    Set.Finite {ν : ι → ℤ | UnitBoxPart ι n ν ≤ s} := by
-  contrapose! hs
-
-
-def UnitBoxIndexAdmissible (B : Box ι) : Finset (ι → ℤ) := by
-  let A := { ν : ι → ℤ | UnitBoxPart ι n ν ≤ B}
-  refine Set.Finite.toFinset (s := A) ?_
-  sorry
-
-theorem UnitBoxIndex_mem_admissible (B : Box ι) (ν : ι → ℤ) :
-    ν ∈ UnitBoxIndexAdmissible ι n B ↔ UnitBoxPart ι n ν ≤ B := by
-  rw [UnitBoxIndexAdmissible, Set.Finite.mem_toFinset, Set.mem_setOf_eq]
-
-open Classical in
-def UnitBoxTaggedPrepartition (B : Box ι) : BoxIntegral.TaggedPrepartition B where
-  boxes := Finset.image (fun ν ↦ UnitBoxPart ι n ν) (UnitBoxIndexAdmissible ι n B)
-  le_of_mem' _ hB := by
-    obtain ⟨_, hν, rfl⟩ := Finset.mem_image.mp hB
-    exact (UnitBoxIndex_mem_admissible ι n B _).mp hν
-#exit
-
-      pairwiseDisjoint := by
-    intro _ hB _ hB'
-    obtain ⟨_, _, rfl⟩ := Finset.mem_image.mp hB
-    obtain ⟨_, _, rfl⟩ := Finset.mem_image.mp hB'
-    rw [(UnitBoxPart_injective ι n).ne_iff]
-    intro h
-    exact (UnitBoxPart_disjoint ι n).mp h
-  tag := by
-    intro B
-    by_cases hB : ∃ ν ∈ AdmissibleIndex ι A n, B = UnitBoxPart ι n ν
-    · exact UnitBoxTag ι n hB.choose
-    · exact 1
-  tag_mem_Icc := by
-    intro B
-    split_ifs with h
-    · refine BoxIntegral.Box.coe_subset_Icc ?_
-      rw [BoxIntegral.Box.mem_coe]
-      have t2 := UnitBoxPart_le_UnitBox.mpr h.choose_spec.1
-      refine t2 ?_
-      exact UnitBoxTag_mem_unitBoxPart ι n (Exists.choose h)
-    · refine BoxIntegral.Box.coe_subset_Icc ?_
-      rw [BoxIntegral.Box.mem_coe, UnitBox_mem]
-      intro _
-      simp
-      refine ⟨?_, ?_⟩
-      linarith
-      exact A.pos
 
 #exit
 
