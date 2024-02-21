@@ -109,6 +109,7 @@ lemma fermatLastTheoremWith_nat_int_rat_tfae (n : ℕ) :
       one_mul, mul_one, Rat.num_div_den, habc]
   tfae_have 3 → 1
   · rintro h a b c
+    stop
     exact mod_cast h a b c
   tfae_finish
 
