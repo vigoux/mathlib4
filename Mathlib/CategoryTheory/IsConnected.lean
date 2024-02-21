@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Bhavik Mehta, Jakob von Raumer
 -/
 import Mathlib.Data.List.Chain
+import Mathlib.Data.Set.Defs
 import Mathlib.CategoryTheory.PUnit
 import Mathlib.CategoryTheory.Groupoid
 import Mathlib.CategoryTheory.Category.ULift
@@ -212,9 +213,10 @@ instance [hc : IsConnected J] : IsConnected (ULiftHom.{v₂} (ULift.{u₂} J)) :
   have : Nonempty (ULiftHom.{v₂} (ULift.{u₂} J)) := by simp [ULiftHom, hc.is_nonempty]
   apply IsConnected.of_induct
   rintro p hj₀ h ⟨j⟩
-  let p' : Set J := {j : J | p ⟨j⟩}
+  let p' : Set J := {j : J | ⟨j⟩ ∈ p}
   have hj₀' : Classical.choice hc.is_nonempty ∈ p' := by
-    simp only [(eq_self p')]
+    unfold_let
+    rw [Set.mem_setOf_eq]
     exact hj₀
   apply induct_on_objects p' hj₀' @fun _ _ f =>
     h ((ULiftHomULiftCategory.equiv J).functor.map f)
