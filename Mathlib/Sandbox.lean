@@ -17,17 +17,114 @@ example :
   exact congr_arg ((s - 1) * ·) (zeta_eq_tsum_one_div_nat_cpow hs)
 
 example {x : ℕ → ℝ} (h₁ : Monotone x) {l : ℝ}
-    (h₂ : Tendsto x atTop ⊤)
+    (h₂ : Tendsto x atTop atTop) -- This might not be necessary
+    (h₃ : Tendsto (fun c : ℝ ↦ Nat.card {i | x i ≤ c} / c) atTop (nhds l)) :
+    Tendsto (fun k ↦ (k + 1) / x k) atTop (nhds l) := by
+  have h₄ : ∀ᶠ k in atTop, x k - 1 ≠ 0 :=
+    (tendsto_atTop_add_const_right atTop _ h₂).eventually_ne_atTop _
+  have h₅ : ∀ᶠ k in atTop, 0 < x k := Tendsto.eventually_gt_atTop h₂ _
+  have lim₁ : Tendsto (fun k ↦ Nat.card {i | x i ≤ x k} / x k) atTop (nhds l) := by
+    rw [tendsto_iff_seq_tendsto] at h₃
+    specialize h₃ (fun k ↦ x k) h₂
+    exact h₃
+  have lim₂ : Tendsto (fun k ↦ Nat.card {i | x i ≤ x k - 1} / x k) atTop (nhds l) := by
+    rw [tendsto_iff_seq_tendsto] at h₃
+    specialize h₃ (fun k ↦ x k - 1) (tendsto_atTop_add_const_right atTop _ h₂)
+    have : Tendsto (fun k ↦ (x k - 1) / x k) atTop (nhds 1) := by
+      simp_rw [sub_div]
+      sorry
+    have := Tendsto.mul h₃ this
+    rw [mul_one] at this
+    refine Tendsto.congr' ?_ this
+    filter_upwards [h₄] with _ h
+    rw [Function.comp_apply, div_mul_div_cancel _ h]
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' lim₂ lim₁ ?_ ?_
+  · dsimp only
+    filter_upwards [h₄, h₅]
+    
+    sorry
+  · dsimp only
+    filter_upwards [h₅] with k h
+    rw [div_le_div_right h, ← Nat.cast_add_one, Nat.cast_le,
+      show k + 1 = Nat.card (Set.Icc 0 k) by simp]
+    refine Nat.card_mono ?_ ?_
+    sorry
+    exact fun _ _ ↦ by aesop
+
+example {x : ℕ → ℝ} (h₁ : Monotone x) {l : ℝ}
+    (h₂ : Tendsto x atTop atTop)
     (h₃ : Tendsto (fun c : ℝ ↦ Nat.card {i | x i ≤ c} / c) atTop (nhds l)) :
     Tendsto (fun s : ℝ => (s - 1) * ∑' i, (x i) ^ (- s)) (nhdsWithin 1 {1}ᶜ) (nhds l) := by
-  have t1 : ∀ k, Nat.card {i | x i ≤ x k} = k + 1 := sorry
+  have t11 : ∀ k, k + 1 ≤ Nat.card {i | x i ≤ x k} := by
+    intro k
+    suffices Set.Icc 0 k ⊆ {i | x i ≤ x k} by
+      convert Nat.card_mono sorry this
+      simp
+    exact fun _ hi ↦ h₁ hi.2
+  have t12 : ∀ δ, 0 < δ → ∀ k, Nat.card {i | x i ≤ x k - δ} < k + 1 := by
+    intro δ hδ k
+    rw [Nat.lt_succ]
+    suffices {i | x i ≤ x k - δ} ⊆ Set.Ico 0 k by
+      convert Nat.card_mono sorry this
+      simp
+    intro i hi
+    have : x i < x k := sorry
+    simp
+    exact Monotone.reflect_lt h₁ this
+  have t21 : Tendsto (fun k ↦ Nat.card {i | x i ≤ x k} / x k) atTop (nhds l) := by
+    rw [tendsto_iff_seq_tendsto] at h₃
+    specialize h₃ (fun k ↦ x k) h₂
+    exact h₃
+  have t22 : Tendsto (fun k ↦ Nat.card {i | x i ≤ x k - 1} / x k) atTop (nhds l) := by
+    rw [tendsto_iff_seq_tendsto] at h₃
+    specialize h₃ (fun k ↦ x k - 1) sorry
+    have : Tendsto (fun k ↦ (x k - 1) / x k) atTop (nhds 1) := sorry
+    have := Tendsto.mul h₃ this
+    rw [mul_one] at this
+    refine Tendsto.congr' ?_ this
+    sorry
   have t2 : Tendsto (fun k ↦ (k + 1) / x k) atTop (nhds l) := by
+    refine tendsto_of_tendsto_of_tendsto_of_le_of_le t22 t21 ?_ ?_
+    · intro k
+      simp
+      sorry
+    · intro k
+      simp
+      sorry
+
+
+
+#exit
+
+  have t22 : Tendsto (fun k ↦ Nat.card {i | x i ≤ x k - 1} / x k) atTop (nhds l) := by
+    sorry
+  have t22 : ∀ δ, 0 < δ →
+      Tendsto (fun k ↦ Nat.card {i | x i ≤ x k - δ} / x k) atTop (nhds l) := by
+
+  have t2 : Tendsto (fun k ↦ (k + 1) / x k) atTop (nhds l) := by
+    simp_rw [Metric.tendsto_atTop] at h₂ t21 t22 ⊢
+    intro ε hε
+
+#exit
+
+  -- refine tendsto_of_tendsto_of_tendsto_of_le_of_le
+
     rw [Metric.tendsto_atTop] at h₃ ⊢
     intro ε hε
     specialize h₃ ε hε
     obtain ⟨B, hB⟩ := h₃
     have : ∃ N, ∀ n ≥ N, B ≤ x n := by
-      exact?
+      rw [tendsto_atTop_atTop] at h₂
+      specialize h₂ B
+      exact h₂
+    obtain ⟨N, hN⟩ := this
+    use N
+    intro n hn
+    specialize hB (x n)
+    specialize hN n hn
+    rw [← ge_iff_le] at hN
+    convert hB hN
+    rw [t1 n, Nat.cast_add_one]
 
   sorry
 
