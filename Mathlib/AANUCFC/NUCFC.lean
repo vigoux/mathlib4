@@ -13,7 +13,8 @@ lemma isUnit_of_fst_one (x : (Unitization R A)ˣ) (hx_fst : x.val.fst = 1) :
     x.val.snd + x⁻¹.val.snd + x.val.snd * x⁻¹.val.snd = 0 := by
   have := congr($(x.mul_inv).snd)
   simp [-Units.mul_inv, snd_one, hx_fst] at this
-
+  have : x⁻¹.val.fst = (isUnit_fst x.isUnit).unit⁻¹.val := sorry
+  have : x⁻¹.val.fst = (Units.map (fstHom R A) x)⁻¹ := sorry
   sorry
 
 #exit
