@@ -373,7 +373,7 @@ theorem affine_openCover_TFAE {X Y : Scheme.{u}} [IsAffine Y] (f : X ⟶ Y) :
         ∀ {U : Scheme} (g : U ⟶ X) [IsAffine U] [IsOpenImmersion g],
           P (Scheme.Γ.map (g ≫ f).op)] := by
   tfae_have 1 → 4
-  · intro H U g _ hg
+  | H, U, g, _, hg => by
     skip
     specialize H ⟨⟨_, hg.base_open.open_range⟩, rangeIsAffineOpenOfOpenImmersion g⟩
     rw [← hP.respectsIso.cancel_right_isIso _ (Scheme.Γ.map (IsOpenImmersion.isoOfRangeEq g
@@ -382,11 +382,11 @@ theorem affine_openCover_TFAE {X Y : Scheme.{u}} [IsAffine Y] (f : X ⟶ Y) :
       ← Scheme.Γ.map_comp, ← op_comp, IsOpenImmersion.isoOfRangeEq_hom_fac_assoc] at H
     exact H
   tfae_have 4 → 3
-  · intro H 𝒰 _ i; skip; apply H
+  | H, 𝒰, _, i => by skip; apply H
   tfae_have 3 → 2
-  · intro H; refine' ⟨X.affineCover, inferInstance, H _⟩
-  tfae_have 2 → 1
-  · rintro ⟨𝒰, _, h𝒰⟩
+  | H => by refine' ⟨X.affineCover, inferInstance, H _⟩
+  tfae_have 2 → 1 := by
+    rintro ⟨𝒰, _, h𝒰⟩
     exact sourceAffineLocally_of_source_openCover hP f 𝒰 h𝒰
   tfae_finish
 #align ring_hom.property_is_local.affine_open_cover_tfae RingHom.PropertyIsLocal.affine_openCover_TFAE
@@ -398,7 +398,7 @@ theorem openCover_TFAE {X Y : Scheme.{u}} [IsAffine Y] (f : X ⟶ Y) :
         ∀ (𝒰 : Scheme.OpenCover.{u} X) (i : 𝒰.J), sourceAffineLocally (@P) (𝒰.map i ≫ f),
         ∀ {U : Scheme} (g : U ⟶ X) [IsOpenImmersion g], sourceAffineLocally (@P) (g ≫ f)] := by
   tfae_have 1 → 4
-  · intro H U g hg V
+  | H, U, g, hg, V => by
     skip
     -- Porting note: this has metavariable if I put it directly into rw
     have := (hP.affine_openCover_TFAE f).out 0 3
@@ -410,11 +410,11 @@ theorem openCover_TFAE {X Y : Scheme.{u}} [IsAffine Y] (f : X ⟶ Y) :
       LocallyRingedSpace.IsOpenImmersion.comp _ _
     apply H
   tfae_have 4 → 3
-  · intro H 𝒰 _ i; skip; apply H
+  | H, 𝒰, _, i => by skip; apply H
   tfae_have 3 → 2
-  · intro H; refine' ⟨X.affineCover, H _⟩
-  tfae_have 2 → 1
-  · rintro ⟨𝒰, h𝒰⟩
+  | H => by refine' ⟨X.affineCover, H _⟩
+  tfae_have 2 → 1 := by
+    rintro ⟨𝒰, h𝒰⟩
     -- Porting note: this has metavariable if I put it directly into rw
     have := (hP.affine_openCover_TFAE f).out 0 1
     rw [this]
