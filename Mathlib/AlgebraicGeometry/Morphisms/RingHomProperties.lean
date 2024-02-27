@@ -372,23 +372,23 @@ theorem affine_openCover_TFAE {X Y : Scheme.{u}} [IsAffine Y] (f : X ⟶ Y) :
           P (Scheme.Γ.map (𝒰.map i ≫ f).op),
         ∀ {U : Scheme} (g : U ⟶ X) [IsAffine U] [IsOpenImmersion g],
           P (Scheme.Γ.map (g ≫ f).op)] := by
-  tfae_have 1 → 4
-  | H, U, g, _, hg => by
-    skip
-    specialize H ⟨⟨_, hg.base_open.open_range⟩, rangeIsAffineOpenOfOpenImmersion g⟩
-    rw [← hP.respectsIso.cancel_right_isIso _ (Scheme.Γ.map (IsOpenImmersion.isoOfRangeEq g
-      (X.ofRestrict (Opens.openEmbedding ⟨_, hg.base_open.open_range⟩))
-      Subtype.range_coe.symm).hom.op),
-      ← Scheme.Γ.map_comp, ← op_comp, IsOpenImmersion.isoOfRangeEq_hom_fac_assoc] at H
-    exact H
-  tfae_have 4 → 3
-  | H, 𝒰, _, i => by skip; apply H
-  tfae_have 3 → 2
-  | H => by refine' ⟨X.affineCover, inferInstance, H _⟩
-  tfae_have 2 → 1 := by
-    rintro ⟨𝒰, _, h𝒰⟩
-    exact sourceAffineLocally_of_source_openCover hP f 𝒰 h𝒰
-  tfae_finish
+  tfae
+    1 → 4
+    | H, U, g, _, hg => by
+      skip
+      specialize H ⟨⟨_, hg.base_open.open_range⟩, rangeIsAffineOpenOfOpenImmersion g⟩
+      rw [← hP.respectsIso.cancel_right_isIso _ (Scheme.Γ.map (IsOpenImmersion.isoOfRangeEq g
+        (X.ofRestrict (Opens.openEmbedding ⟨_, hg.base_open.open_range⟩))
+        Subtype.range_coe.symm).hom.op),
+        ← Scheme.Γ.map_comp, ← op_comp, IsOpenImmersion.isoOfRangeEq_hom_fac_assoc] at H
+      exact H
+    4 → 3
+    | H, 𝒰, _, i => by skip; apply H
+    3 → 2
+    | H => by refine' ⟨X.affineCover, inferInstance, H _⟩
+    2 → 1 := by
+      rintro ⟨𝒰, _, h𝒰⟩
+      exact sourceAffineLocally_of_source_openCover hP f 𝒰 h𝒰
 #align ring_hom.property_is_local.affine_open_cover_tfae RingHom.PropertyIsLocal.affine_openCover_TFAE
 
 theorem openCover_TFAE {X Y : Scheme.{u}} [IsAffine Y] (f : X ⟶ Y) :
@@ -397,41 +397,41 @@ theorem openCover_TFAE {X Y : Scheme.{u}} [IsAffine Y] (f : X ⟶ Y) :
         ∃ 𝒰 : Scheme.OpenCover.{u} X, ∀ i : 𝒰.J, sourceAffineLocally (@P) (𝒰.map i ≫ f),
         ∀ (𝒰 : Scheme.OpenCover.{u} X) (i : 𝒰.J), sourceAffineLocally (@P) (𝒰.map i ≫ f),
         ∀ {U : Scheme} (g : U ⟶ X) [IsOpenImmersion g], sourceAffineLocally (@P) (g ≫ f)] := by
-  tfae_have 1 → 4
-  | H, U, g, hg, V => by
-    skip
-    -- Porting note: this has metavariable if I put it directly into rw
-    have := (hP.affine_openCover_TFAE f).out 0 3
-    rw [this] at H
-    haveI : IsAffine _ := V.2
-    rw [← Category.assoc]
-    -- Porting note: Lean could find this previously
-    have : IsOpenImmersion <| (Scheme.ofRestrict U (Opens.openEmbedding V.val)) ≫ g :=
-      LocallyRingedSpace.IsOpenImmersion.comp _ _
-    apply H
-  tfae_have 4 → 3
-  | H, 𝒰, _, i => by skip; apply H
-  tfae_have 3 → 2
-  | H => by refine' ⟨X.affineCover, H _⟩
-  tfae_have 2 → 1 := by
-    rintro ⟨𝒰, h𝒰⟩
-    -- Porting note: this has metavariable if I put it directly into rw
-    have := (hP.affine_openCover_TFAE f).out 0 1
-    rw [this]
-    refine' ⟨𝒰.bind fun _ => Scheme.affineCover _, _, _⟩
-    · intro i; dsimp; infer_instance
-    · intro i
-      specialize h𝒰 i.1
+  tfae
+    1 → 4
+    | H, U, g, hg, V => by
+      skip
       -- Porting note: this has metavariable if I put it directly into rw
-      have := (hP.affine_openCover_TFAE (𝒰.map i.fst ≫ f)).out 0 3
-      rw [this] at h𝒰
-      erw [Category.assoc]
-      -- Porting note: this was discharged after the apply previously
-      have : IsAffine (Scheme.OpenCover.obj
-        (Scheme.OpenCover.bind 𝒰 fun x ↦ Scheme.affineCover (Scheme.OpenCover.obj 𝒰 x)) i) := by
-          dsimp; infer_instance
-      apply @h𝒰 _ (show _ from _)
-  tfae_finish
+      have := (hP.affine_openCover_TFAE f).out 0 3
+      rw [this] at H
+      haveI : IsAffine _ := V.2
+      rw [← Category.assoc]
+      -- Porting note: Lean could find this previously
+      have : IsOpenImmersion <| (Scheme.ofRestrict U (Opens.openEmbedding V.val)) ≫ g :=
+        LocallyRingedSpace.IsOpenImmersion.comp _ _
+      apply H
+    4 → 3
+    | H, 𝒰, _, i => by skip; apply H
+    3 → 2
+    | H => by refine' ⟨X.affineCover, H _⟩
+    2 → 1 := by
+      rintro ⟨𝒰, h𝒰⟩
+      -- Porting note: this has metavariable if I put it directly into rw
+      have := (hP.affine_openCover_TFAE f).out 0 1
+      rw [this]
+      refine' ⟨𝒰.bind fun _ => Scheme.affineCover _, _, _⟩
+      · intro i; dsimp; infer_instance
+      · intro i
+        specialize h𝒰 i.1
+        -- Porting note: this has metavariable if I put it directly into rw
+        have := (hP.affine_openCover_TFAE (𝒰.map i.fst ≫ f)).out 0 3
+        rw [this] at h𝒰
+        erw [Category.assoc]
+        -- Porting note: this was discharged after the apply previously
+        have : IsAffine (Scheme.OpenCover.obj
+          (Scheme.OpenCover.bind 𝒰 fun x ↦ Scheme.affineCover (Scheme.OpenCover.obj 𝒰 x)) i) := by
+            dsimp; infer_instance
+        apply @h𝒰 _ (show _ from _)
 #align ring_hom.property_is_local.open_cover_tfae RingHom.PropertyIsLocal.openCover_TFAE
 
 theorem sourceAffineLocally_comp_of_isOpenImmersion {X Y Z : Scheme.{u}} [IsAffine Z] (f : X ⟶ Y)
