@@ -1,4 +1,5 @@
 import Mathlib.Algebra.Algebra.Unitization
+import Mathlib.Algebra.Algebra.Spectrum
 
 structure Quasi (R : Type*) where
   val : R
