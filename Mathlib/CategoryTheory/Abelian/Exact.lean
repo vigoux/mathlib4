@@ -98,8 +98,9 @@ open List in
 theorem exact_tfae :
     TFAE [Exact f g, f ≫ g = 0 ∧ kernel.ι g ≫ cokernel.π f = 0,
       imageSubobject f = kernelSubobject g] := by
-  1 ↔ 2 := by apply exact_iff
-  1 ↔ 3 := by apply exact_iff_image_eq_kernel
+  tfae
+    1 ↔ 2 := by apply exact_iff
+    1 ↔ 3 := by apply exact_iff_image_eq_kernel
 #align category_theory.abelian.exact_tfae CategoryTheory.Abelian.exact_tfae
 
 nonrec theorem IsEquivalence.exact_iff {D : Type u₁} [Category.{v₁} D] [Abelian D] (F : C ⥤ D)
@@ -251,11 +252,12 @@ variable (Z)
 
 open List in
 theorem tfae_mono : TFAE [Mono f, kernel.ι f = 0, Exact (0 : Z ⟶ X) f] := by
-  3 → 2 := kernel_ι_eq_zero_of_exact_zero_left Z
-  1 → 3 := by
-    intros
-    exact exact_zero_left_of_mono Z
-  2 → 1 := mono_of_kernel_ι_eq_zero _
+  tfae
+    3 → 2 := kernel_ι_eq_zero_of_exact_zero_left Z
+    1 → 3 := by
+      intros
+      exact exact_zero_left_of_mono Z
+    2 → 1 := mono_of_kernel_ι_eq_zero _
 #align category_theory.abelian.tfae_mono CategoryTheory.Abelian.tfae_mono
 
 -- Note we've already proved `mono_iff_exact_zero_left : mono f ↔ Exact (0 : Z ⟶ X) f`
@@ -266,15 +268,16 @@ theorem mono_iff_kernel_ι_eq_zero : Mono f ↔ kernel.ι f = 0 :=
 
 open List in
 theorem tfae_epi : TFAE [Epi f, cokernel.π f = 0, Exact f (0 : Y ⟶ Z)] := by
-  3 → 2 := by
-    rw [exact_iff]
-    rintro ⟨-, h⟩
-    exact zero_of_epi_comp _ h
-  1 → 3 := by
-    rw [exact_iff]
-    intro
-    exact ⟨by simp, by simp [cokernel.π_of_epi]⟩
-  2 → 1 := epi_of_cokernel_π_eq_zero _
+  tfae
+    3 → 2 := by
+      rw [exact_iff]
+      rintro ⟨-, h⟩
+      exact zero_of_epi_comp _ h
+    1 → 3 := by
+      rw [exact_iff]
+      intro
+      exact ⟨by simp, by simp [cokernel.π_of_epi]⟩
+    2 → 1 := epi_of_cokernel_π_eq_zero _
 #align category_theory.abelian.tfae_epi CategoryTheory.Abelian.tfae_epi
 
 -- Note we've already proved `epi_iff_exact_zero_right : epi f ↔ exact f (0 : Y ⟶ Z)`

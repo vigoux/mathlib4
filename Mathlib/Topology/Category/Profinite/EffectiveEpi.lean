@@ -68,9 +68,10 @@ theorem effectiveEpi_tfae
     , Epi π
     , Function.Surjective π
     ] := by
-  1 → 2 := fun _ ↦ inferInstance
-  2 ↔ 3 := epi_iff_surjective π
-  3 → 1 := fun hπ ↦ ⟨⟨struct π hπ⟩⟩
+  tfae
+    1 → 2 := fun _ ↦ inferInstance
+    2 ↔ 3 := epi_iff_surjective π
+    3 → 1 := fun hπ ↦ ⟨⟨struct π hπ⟩⟩
 
 instance : Preregular Profinite where
   exists_fac := by
