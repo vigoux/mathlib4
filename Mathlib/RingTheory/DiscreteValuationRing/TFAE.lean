@@ -176,7 +176,7 @@ theorem tfae_of_isNoetherianRing_of_localRing_of_isDomain
     2 → 1 := fun _ ↦ ((IsBezout.TFAE (R := R)).out 0 1).mp ‹_›
     1 → 4
     | H => ⟨inferInstance, fun P hP hP' ↦ eq_maximalIdeal (hP'.isMaximal hP)⟩
-    4 → 3 :=
+    4 → 3
     | ⟨h₁, h₂⟩ => { h₁ with maximalOfPrime := (h₂ _ · · ▸ maximalIdeal.isMaximal R) }
     3 → 5 := fun h ↦ maximalIdeal_isPrincipal_of_isDedekindDomain R
     6 ↔ 5 := finrank_cotangentSpace_le_one_iff
