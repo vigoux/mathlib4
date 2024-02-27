@@ -1,4 +1,3 @@
-import Mathlib.Topology.ContinuousFunction.FunctionalCalculus
 import Mathlib.Algebra.Algebra.Unitization
 
 structure Quasi (R : Type*) where
