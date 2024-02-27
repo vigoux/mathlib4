@@ -68,8 +68,7 @@ theorem effectiveEpi_tfae
     , Function.Surjective π
     ] := by
   tfae
-    1 → 2
-    | _ => inferInstance
+    1 → 2 := fun _ ↦ inferInstance
     2 ↔ 3 := epi_iff_surjective π
     3 → 1 := fun hπ ↦ ⟨⟨struct π hπ⟩⟩
 
@@ -95,8 +94,7 @@ theorem effectiveEpiFamily_tfae
     2 → 1
     | _ => by
       simpa [← effectiveEpi_desc_iff_effectiveEpiFamily, (effectiveEpi_tfae (Sigma.desc π)).out 0 1]
-    1 → 2
-    | _ => inferInstance
+    1 → 2 := fun _ ↦ inferInstance
     3 → 2
     | e => by
       rw [epi_iff_surjective]

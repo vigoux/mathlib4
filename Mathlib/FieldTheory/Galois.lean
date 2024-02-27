@@ -433,8 +433,8 @@ theorem tfae [FiniteDimensional F E] :
     List.TFAE [IsGalois F E, IntermediateField.fixedField (⊤ : Subgroup (E ≃ₐ[F] E)) = ⊥,
       Fintype.card (E ≃ₐ[F] E) = finrank F E, ∃ p: F[X], p.Separable ∧ p.IsSplittingField F E] := by
   tfae
-    1 → 2 :=
-      fun h => OrderIso.map_bot (@intermediateFieldEquivSubgroup F _ E _ _ _ h).symm
+    1 → 2
+    | h => OrderIso.map_bot (@intermediateFieldEquivSubgroup F _ E _ _ _ h).symm
     1 → 3
     | _ => card_aut_eq_finrank F E
     1 → 4

@@ -57,10 +57,8 @@ theorem TFAE [IsBezout R] [IsDomain R] :
     tfae
       1 → 2
       | H => ⟨fun I => isPrincipal_of_FG _ (IsNoetherian.noetherian _)⟩
-      2 → 3
-      | _ => inferInstance
-      3 → 4
-      | _ => inferInstance
+      2 → 3 := fun _ ↦ inferInstance
+      3 → 4 := fun _ ↦ inferInstance
       4 → 1 := by
         rintro ⟨h⟩
         rw [isNoetherianRing_iff, isNoetherian_iff_fg_wellFounded]
