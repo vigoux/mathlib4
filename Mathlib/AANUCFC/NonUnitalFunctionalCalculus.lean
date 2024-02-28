@@ -3,13 +3,13 @@ import Mathlib.AANUCFC.QuasiSpectrum
 
 section IdealInstances
 
---instance Ideal.instMulMemClass {R : Type*} [Semiring R] :
-    --MulMemClass (Ideal R) R where
-  --mul_mem _ := Ideal.mul_mem_left _ _
+instance Ideal.instMulMemClass {R : Type*} [Semiring R] :
+    MulMemClass (Ideal R) R where
+  mul_mem _ := Ideal.mul_mem_left _ _
 
-instance Ideal.instMulMemClass {R : Type*} [Semiring R] (I : Ideal R) :
-    Mul I where
-  mul x y := ⟨x * y, I.mul_mem_left x y.property⟩
+--instance Ideal.instMul {R : Type*} [Semiring R] (I : Ideal R) :
+    --Mul I where
+  --mul x y := ⟨x * y, I.mul_mem_left x y.property⟩
 
 instance Ideal.instNonUnitalSemiring {R : Type*} [Semiring R] (I : Ideal R) :
     NonUnitalSemiring I where
@@ -37,7 +37,7 @@ instance Ideal.instNonUnitalCommRing {R : Type*} [CommRing R] (I : Ideal R) :
 
 instance Ideal.instTopologicalSemiring {R : Type*} [Semiring R] [TopologicalSpace R]
     [TopologicalSemiring R] (I : Ideal R) : TopologicalSemiring I where
-  continuous_mul := by -- continuity gets this, slowly, but `fun_prop` fails
+  continuous_mul := by -- `continuity` gets this, slowly, but `fun_prop` fails
     apply Continuous.subtype_mk
     exact continuous_induced_dom.comp' continuous_fst |>.mul <|
       continuous_induced_dom.comp' continuous_snd
@@ -54,10 +54,59 @@ end
 
 end IdealInstances
 
+structure ContinuousMapZero (X R : Type*) [Zero X] [Zero R] [TopologicalSpace X]
+    [TopologicalSpace R] extends C(X, R) where
+  map_zero' : toContinuousMap 0 = 0
+
+namespace ContinuousMapZero
+
+scoped notation "C(" X ", " R ")₀" => ContinuousMapZero X R
+
+section Basic
+
+variable {X Y R : Type*} [Zero X] [Zero Y] [Zero R]
+variable [TopologicalSpace X] [TopologicalSpace Y] [TopologicalSpace R]
+
+instance instFunLike : FunLike C(X, R)₀ X R where
+  coe f := f.toFun
+  coe_injective' f g h := by
+    cases f
+    cases g
+    congr
+    apply DFunLike.coe_injective'
+    exact h
+
+instance instContinuousMapClass : ContinuousMapClass C(X, R)₀ X R where
+  map_continuous f := f.continuous
+
+instance instZeroHomClass : ZeroHomClass C(X, R)₀ X R where
+  map_zero f := f.map_zero'
+
+def comp (g : C(Y, R)₀) (f : C(X, Y)₀) : C(X, R)₀ where
+  toContinuousMap := g.toContinuousMap.comp f.toContinuousMap
+  map_zero' := show g (f 0) = 0 from map_zero f ▸ map_zero g
+
+@[simp]
+lemma comp_apply (g : C(Y, R)₀) (f : C(X, Y)₀) (x : X) : g.comp f x = g (f x) := rfl
+
+end Basic
+
+end ContinuousMapZero
+
+end
+
+namespace ContinuousMapZero
+
+variable {X Y R : Type*} [Zero X] [TopologicalSpace X] [Zero Y] [TopologicalSpace Y]
+variable [Semifield R] [TopologicalSpace R] [TopologicalSemiring R]
+
+end ContinuousMapZero
+
+#exit
 section Notation
 
-variable {X R : Type*} [Semifield R] [Zero X] [TopologicalSpace X] [TopologicalSpace R]
-    [TopologicalSemiring R]
+variable {X Y R : Type*} [Zero X] [TopologicalSpace X] [Zero Y] [TopologicalSpace Y]
+variable [Semifield R] [TopologicalSpace R] [TopologicalSemiring R]
 
 scoped[ContinuousMap] notation3 "C(" X ", " R ")₀" => idealOfSet R {(0 : X)}ᶜ
 
@@ -70,9 +119,17 @@ instance {X R : Type*} [TopologicalSpace X] [CommSemiring R] [TopologicalSpace R
   star_mul f g := Subtype.ext <| star_mul (f : C(X, R)) g
   star_add f g := Subtype.ext <| star_add (f : C(X, R)) g
 
+lemma ContinuousMap.mem_zeroAtZero_iff (f : C(X, R)) : f ∈ C(X, R)₀ ↔ f 0 = 0 := by simp
+
+lemma ContinuousMap.zeroAtZero_map_zero (f : C(X, R)₀) : f.val 0 = 0 :=
+  f.val.mem_zeroAtZero_iff.mp f.property
+
+def ContinuousMap.comp_zeroAtZero (g : C(Y, R)₀) (f : C(X, Y)) (h0 : f 0 = 0) : C(X, R)₀ :=
+  ⟨g.val.comp f, by simp [h0, ContinuousMap.zeroAtZero_map_zero g]⟩
+
 end Notation
 
-notation "σₙ" => quasiSpectrum
+local notation "σₙ" => quasiSpectrum
 
 open scoped ContinuousMap
 
@@ -84,10 +141,26 @@ class NonUnitalContinuousFunctionalCalculus (R : Type*) {A : Type*} (p : outPara
     ClosedEmbedding φ ∧ φ ⟨(ContinuousMap.id R).restrict <| σₙ R a, by simp⟩ = a ∧
       (∀ f, σₙ R (φ f) = Set.range f.val) ∧ ∀ f, p (φ f)
 
+-- we really don't actually want a separate class for this, but for now we'll use this hack to
+-- write the rest of the file.
+class UniqueNonUnitalContinuousFunctionalCalculus (R A : Type*) [Semifield R] [StarRing R]
+    [MetricSpace R] [TopologicalSemiring R] [ContinuousStar R] [NonUnitalRing A] [StarRing A]
+    [TopologicalSpace A] [Module R A] [IsScalarTower R A A] [SMulCommClass R A A] : Prop where
+  eq_of_continuous_of_map_id (a : A) (φ ψ : C(σₙ R a, R)₀ →⋆ₙₐ[R] A)
+    (hφ : Continuous φ) (hψ : Continuous ψ)
+    (h : φ ⟨.restrict (σₙ R a) <| .id R, by simp⟩ = ψ ⟨.restrict (σₙ R a) <| .id R, by simp⟩) :
+    φ = ψ
+
 variable {R A : Type*} {p : A → Prop} [Semifield R] [StarRing R] [MetricSpace R]
 variable [TopologicalSemiring R] [ContinuousStar R] [NonUnitalRing A] [StarRing A]
 variable [TopologicalSpace A] [Module R A] [IsScalarTower R A A] [SMulCommClass R A A]
 variable [NonUnitalContinuousFunctionalCalculus R p]
+
+lemma NonUnitalStarAlgHom.ext_continuousMap [UniqueNonUnitalContinuousFunctionalCalculus R A]
+    (a : A) (φ ψ : C(σₙ R a, R)₀ →⋆ₙₐ[R] A) (hφ : Continuous φ) (hψ : Continuous ψ)
+    (h : φ ⟨.restrict (σₙ R a) <| .id R, by simp⟩ = ψ ⟨.restrict (σₙ R a) <| .id R, by simp⟩) :
+    φ = ψ :=
+  UniqueNonUnitalContinuousFunctionalCalculus.eq_of_continuous_of_map_id a φ ψ hφ hψ h
 
 section cfcₙHom
 
@@ -113,17 +186,21 @@ lemma cfcₙHom_predicate (f : C(σₙ R a, R)₀) :
     p (cfcₙHom ha f) :=
   (NonUnitalContinuousFunctionalCalculus.exists_cfc_of_predicate a ha).choose_spec.2.2.2 f
 
---lemma cfcₙHom_eq_of_continuous_of_map_id [UniqueNonUnitalContinuousFunctionalCalculus R A]
-    --(φ : C(σₙ R a, R) →⋆ₐ[R] A) (hφ₁ : Continuous φ)
-    --(hφ₂ : φ (.restrict (σₙ R a) <| .id R) = a) : cfcₙHom ha = φ :=
-  --(cfcₙHom ha).ext_continuousMap a φ (cfcₙHom_closedEmbedding ha).continuous hφ₁ <| by
-    --rw [cfcₙHom_id ha, hφ₂]
+lemma cfcₙHom_eq_of_continuous_of_map_id [UniqueNonUnitalContinuousFunctionalCalculus R A]
+    (φ : C(σₙ R a, R)₀ →⋆ₙₐ[R] A) (hφ₁ : Continuous φ)
+    (hφ₂ : φ ⟨.restrict (σₙ R a) <| .id R, by simp⟩ = a) : cfcₙHom ha = φ :=
+  (cfcₙHom ha).ext_continuousMap a φ (cfcₙHom_closedEmbedding ha).continuous hφ₁ <| by
+    rw [cfcₙHom_id ha, hφ₂]
 
---theorem cfcHom_comp [UniqueContinuousFunctionalCalculus R A] (f : C(σₙ R a, R))
-    --(f' : C(σₙ R a, σₙ R (cfcHom ha f)))
-    --(hff' : ∀ x, f x = f' x) (g : C(σₙ R (cfcHom ha f), R)) :
-    --cfcHom ha (g.comp f') = cfcHom (cfcHom_predicate ha f) g := by
-  --let φ : C(σₙ R (cfcHom ha f), R) →⋆ₐ[R] A :=
+theorem cfcₙHom_comp [UniqueNonUnitalContinuousFunctionalCalculus R A] (f : C(σₙ R a, R)₀)
+    (f' : C(σₙ R a, σₙ R (cfcₙHom ha f))) (hf' : f' 0 = 0)
+    (hff' : ∀ x, f.val x = f' x) (g : C(σₙ R (cfcₙHom ha f), R)₀) :
+    cfcₙHom ha (ContinuousMap.comp_zeroAtZero g f' hf') = cfcₙHom (cfcₙHom_predicate ha f) g := by
+  --let ψ : C(σₙ R a, R)₀ →⋆ₙₐ[R] C(σₙ R (cfcₙHom ha f), R)₀ :=
+    --{ toFun g' := ContinuousMap.comp_zeroAtZero g' f' hf' }
+  sorry
+  #exit
+  --let φ : C(σₙ R (cfcHom ha f), R)₀ →⋆ₙₐ[R] A :=
     --(cfcHom ha).comp <| ContinuousMap.compStarAlgHom' R R f'
   --suffices cfcHom (cfcHom_predicate ha f) = φ from DFunLike.congr_fun this.symm g
   --refine cfcHom_eq_of_continuous_of_map_id (cfcHom_predicate ha f) φ ?_ ?_
