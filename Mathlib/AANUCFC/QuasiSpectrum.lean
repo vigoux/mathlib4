@@ -184,6 +184,9 @@ lemma quasiSpectrum.zero_mem (a : A) : 0 ∈ quasiSpectrum R a := by
 instance quasiSpectrum.instZero (a : A) : Zero (quasiSpectrum R a) where
   zero := ⟨0, quasiSpectrum.zero_mem R a⟩
 
+@[simp]
+lemma quasiSpectrum.coe_zero (a : A) : (0 : quasiSpectrum R a) = (0 : R) := rfl
+
 lemma quasiSpectrum.mem_of_not_quasiregular (a : A) {r : R} (hr : ¬ IsQuasiregular (-(r⁻¹ • a))) :
     r ∈ quasiSpectrum R a :=
   .inr hr
