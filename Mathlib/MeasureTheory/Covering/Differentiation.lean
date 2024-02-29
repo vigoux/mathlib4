@@ -120,13 +120,6 @@ theorem eventually_measure_lt_top [IsLocallyFiniteMeasure μ] (x : α) :
   (μ.finiteAt_nhds x).eventually.filter_mono inf_le_left
 #align vitali_family.eventually_measure_lt_top VitaliFamily.eventually_measure_lt_top
 
-open Lean Meta Elab Term in
-elab "#show_instances " e:term : command => Command.runTermElabM fun _ => do
-  let e ← elabTerm e none
-  let x ← (← getGlobalInstancesIndex).getUnify e {}
-  let xs := x.map fun i => (i.priority, i.globalName?.getD `noname)
-  logInfo m!"{xs.qsort (·.1 < ·.1)}"
-
 /-- If two measures `ρ` and `ν` have, at every point of a set `s`, arbitrarily small sets in a
 Vitali family satisfying `ρ a ≤ ν a`, then `ρ s ≤ ν s` if `ρ ≪ μ`.-/
 theorem measure_le_of_frequently_le [SecondCountableTopology α] [BorelSpace α] {ρ : Measure α}
