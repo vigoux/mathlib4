@@ -191,6 +191,8 @@ theorem exists_disjoint_subfamily_covering_enlargment_closedBall [MetricSpace α
     exact ⟨c, cu, by simp only [closedBall_eq_empty.2 h'a, empty_subset]⟩
 #align vitali.exists_disjoint_subfamily_covering_enlargment_closed_ball Vitali.exists_disjoint_subfamily_covering_enlargment_closedBall
 
+variable [MetricSpace α] [MeasurableSpace α] [OpensMeasurableSpace α] [SecondCountableTopology α]
+
 /-- The measurable Vitali covering theorem. Assume one is given a family `t` of closed sets with
 nonempty interior, such that each `a ∈ t` is included in a ball `B (x, r)` and covers a definite
 proportion of the ball `B (x, 3 r)` for a given measure `μ` (think of the situation where `μ` is
@@ -200,9 +202,9 @@ Then one can extract from `t` a disjoint subfamily that covers almost all `s`.
 
 For more flexibility, we give a statement with a parameterized family of sets.
 -/
-theorem exists_disjoint_covering_ae [MetricSpace α] [MeasurableSpace α] [OpensMeasurableSpace α]
-    [SecondCountableTopology α] (μ : Measure α) [IsLocallyFiniteMeasure μ] (s : Set α) (t : Set ι)
-    (C : ℝ≥0) (r : ι → ℝ) (c : ι → α) (B : ι → Set α) (hB : ∀ a ∈ t, B a ⊆ closedBall (c a) (r a))
+theorem exists_disjoint_covering_ae (μ : Measure α) [IsLocallyFiniteMeasure μ]
+    (s : Set α) (t : Set ι) (C : ℝ≥0) (r : ι → ℝ) (c : ι → α)
+    (B : ι → Set α) (hB : ∀ a ∈ t, B a ⊆ closedBall (c a) (r a))
     (μB : ∀ a ∈ t, μ (closedBall (c a) (3 * r a)) ≤ C * μ (B a))
     (ht : ∀ a ∈ t, (interior (B a)).Nonempty) (h't : ∀ a ∈ t, IsClosed (B a))
     (hf : ∀ x ∈ s, ∀ ε > (0 : ℝ), ∃ a ∈ t, r a ≤ ε ∧ c a = x) :
@@ -226,19 +228,10 @@ theorem exists_disjoint_covering_ae [MetricSpace α] [MeasurableSpace α] [Opens
   the family is assumed to be fine at every point of `s`).
   -/
   -- choose around each `x` a small ball on which the measure is finite
-  have : ∀ x, ∃ R, 0 < R ∧ R ≤ 1 ∧ μ (closedBall x (20 * R)) < ∞ := by
-    intro x
-    obtain ⟨R, Rpos, μR⟩ : ∃ R, 0 < R ∧ μ (closedBall x R) < ∞ :=
-      (μ.finiteAt_nhds x).exists_mem_basis nhds_basis_closedBall
-    refine' ⟨min 1 (R / 20), _, min_le_left _ _, _⟩
-    · simp only [true_and_iff, lt_min_iff, zero_lt_one]
-      linarith
-    · apply lt_of_le_of_lt (measure_mono _) μR
-      apply closedBall_subset_closedBall
-      calc
-        20 * min 1 (R / 20) ≤ 20 * (R / 20) :=
-          mul_le_mul_of_nonneg_left (min_le_right _ _) (by norm_num)
-        _ = R := by ring
+  have : ∀ x, ∃ R, 0 < R ∧ R ≤ 1 ∧ μ (closedBall x (20 * R)) < ∞ := fun x ↦ by
+    refine ((eventually_le_nhds one_pos).and ?_).exists_gt
+    refine (tendsto_closedBall_smallSets x).comp ?_ (μ.finiteAt_nhds x).eventually
+    exact Continuous.tendsto' (by fun_prop) _ _ (mul_zero _)
   choose R hR0 hR1 hRμ using this
   -- we restrict to a subfamily `t'` of `t`, made of elements small enough to ensure that
   -- they only see a finite part of the measure, and with a doubling property
@@ -384,7 +377,7 @@ theorem exists_disjoint_covering_ae [MetricSpace α] [MeasurableSpace α] [Opens
     exact subset_iUnion (fun a : { a // a ∉ w } => closedBall (c a) (3 * r a)) b''
   -- now that we have proved our main inclusion, we can use it to estimate the measure of the points
   -- in `ball x (r x)` not covered by `u`.
-  haveI : Encodable v := (u_count.mono vu).toEncodable
+  haveI : Countable v := (u_count.mono vu).to_subtype
   calc
     μ ((s \ ⋃ a ∈ u, B a) ∩ ball x (R x)) ≤ μ (⋃ a : { a // a ∉ w }, closedBall (c a) (3 * r a)) :=
       measure_mono M
@@ -406,16 +399,13 @@ protected def vitaliFamily [MetricSpace α] [MeasurableSpace α] [OpensMeasurabl
   setsAt x := { a | IsClosed a ∧ (interior a).Nonempty ∧
     ∃ r, a ⊆ closedBall x r ∧ μ (closedBall x (3 * r)) ≤ C * μ a }
   measurableSet x a ha := ha.1.measurableSet
-  nonempty_interior x a ha := ha.2.1
-  nontrivial x ε εpos := by
-    obtain ⟨r, μr, rpos, rε⟩ :
-        ∃ r, μ (closedBall x (3 * r)) ≤ C * μ (closedBall x r) ∧ r ∈ Ioc (0 : ℝ) ε :=
-      ((h x).and_eventually (Ioc_mem_nhdsWithin_Ioi ⟨le_rfl, εpos⟩)).exists
-    refine'
-      ⟨closedBall x r, ⟨isClosed_ball, _, ⟨r, Subset.rfl, μr⟩⟩, closedBall_subset_closedBall rε⟩
-    exact (nonempty_ball.2 rpos).mono ball_subset_interior_closedBall
+  nontrivial x :=
+    (tendsto_closedBall_smallSets x).frequently <| (h x).of_inf_principal.mono fun r hr ↦
+      ⟨isClosed_ball, ⟨x, ball_subset_interior_closedBall <| mem_ball_self hr.1⟩, _,
+        Subset.rfl, hr.2⟩
   covering := by
     intro s f fsubset ffine
+    simp only at fsubset
     let t : Set (ℝ × α × Set α) :=
       { p | p.2.2 ⊆ closedBall p.2.1 p.1 ∧ μ (closedBall p.2.1 (3 * p.1)) ≤ C * μ p.2.2 ∧
             (interior p.2.2).Nonempty ∧ IsClosed p.2.2 ∧ p.2.2 ∈ f p.2.1 ∧ p.2.1 ∈ s }
