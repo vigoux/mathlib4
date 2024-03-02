@@ -35,7 +35,7 @@ variable {𝕜 : Type u} {𝕜' : Type u'} {E : Type v} {F : Type w} {G : Type x
 
 section
 
-variable [CommSemiring 𝕜] [AddCommMonoid E] [Module 𝕜 E] [TopologicalSpace E] [ContinuousAdd E]
+variable [Semiring 𝕜] [AddCommMonoid E] [Module 𝕜 E] [TopologicalSpace E] [ContinuousAdd E]
   [ContinuousConstSMul 𝕜 E] [AddCommMonoid F] [Module 𝕜 F] [TopologicalSpace F]
   [ContinuousAdd F] [ContinuousConstSMul 𝕜 F] [AddCommMonoid G] [Module 𝕜 G]
   [TopologicalSpace G] [ContinuousAdd G] [ContinuousConstSMul 𝕜 G]
@@ -59,11 +59,9 @@ instance : Inhabited (FormalMultilinearSeries 𝕜 E F) :=
 
 section Module
 
-/- `derive` is not able to find the module structure, probably because Lean is confused by the
-dependent types. We register it explicitly. -/
--- Porting note: rewrote with `inferInstanceAs`
-instance : Module 𝕜 (FormalMultilinearSeries 𝕜 E F) :=
-  inferInstanceAs <| Module 𝕜 <| ∀ n : ℕ, E[×n]→L[𝕜] F
+instance (𝕜') [Semiring 𝕜'] [Module 𝕜' F] [ContinuousConstSMul 𝕜' F] [SMulCommClass 𝕜 𝕜' F] :
+    Module 𝕜' (FormalMultilinearSeries 𝕜 E F) :=
+  inferInstanceAs <| Module 𝕜' <| ∀ n : ℕ, E[×n]→L[𝕜] F
 
 end Module
 
@@ -135,7 +133,7 @@ theorem compContinuousLinearMap_apply (p : FormalMultilinearSeries 𝕜 F G) (u 
   rfl
 #align formal_multilinear_series.comp_continuous_linear_map_apply FormalMultilinearSeries.compContinuousLinearMap_apply
 
-variable (𝕜) [CommSemiring 𝕜'] [SMul 𝕜 𝕜']
+variable (𝕜) [Semiring 𝕜'] [SMul 𝕜 𝕜']
 
 variable [Module 𝕜' E] [ContinuousConstSMul 𝕜' E] [IsScalarTower 𝕜 𝕜' E]
 
@@ -194,12 +192,14 @@ def unshift (q : FormalMultilinearSeries 𝕜 E (E →L[𝕜] F)) (z : F) : Form
 
 end FormalMultilinearSeries
 
-namespace ContinuousLinearMap
+section
 
-variable [CommSemiring 𝕜] [AddCommMonoid E] [Module 𝕜 E] [TopologicalSpace E] [ContinuousAdd E]
+variable [Semiring 𝕜] [AddCommMonoid E] [Module 𝕜 E] [TopologicalSpace E] [ContinuousAdd E]
   [ContinuousConstSMul 𝕜 E] [AddCommMonoid F] [Module 𝕜 F] [TopologicalSpace F]
   [ContinuousAdd F] [ContinuousConstSMul 𝕜 F] [AddCommMonoid G] [Module 𝕜 G]
   [TopologicalSpace G] [ContinuousAdd G] [ContinuousConstSMul 𝕜 G]
+
+namespace ContinuousLinearMap
 
 /-- Composing each term `pₙ` in a formal multilinear series with a continuous linear map `f` on the
 left gives a new formal multilinear series `f.compFormalMultilinearSeries p` whose general term
@@ -221,11 +221,28 @@ theorem compFormalMultilinearSeries_apply' (f : F →L[𝕜] G) (p : FormalMulti
 
 end ContinuousLinearMap
 
+namespace ContinuousMultilinearMap
+
+variable {ι : Type*} {E : ι → Type*} [∀ i, AddCommGroup (E i)] [∀ i, Module 𝕜 (E i)]
+  [∀ i, TopologicalSpace (E i)] [∀ i, TopologicalAddGroup (E i)]
+  [∀ i, ContinuousConstSMul 𝕜 (E i)] [Fintype ι] (f : ContinuousMultilinearMap 𝕜 E F)
+
+/-- Realize a ContinuousMultilinearMap on `∀ i : ι, E i` as the evaluation of a
+FormalMultilinearSeries by choosing an arbitrary identification `ι ≃ Fin (Fintype.card ι)`. -/
+noncomputable def toFormalMultilinearSeries : FormalMultilinearSeries 𝕜 (∀ i, E i) F :=
+  fun n ↦ if h : Fintype.card ι = n then
+    (f.compContinuousLinearMap .proj).domDomCongr (Fintype.equivFinOfCardEq h)
+  else 0
+
+end ContinuousMultilinearMap
+
+end
+
 namespace FormalMultilinearSeries
 
 section Order
 
-variable [CommSemiring 𝕜] {n : ℕ} [AddCommMonoid E] [Module 𝕜 E] [TopologicalSpace E]
+variable [Semiring 𝕜] {n : ℕ} [AddCommMonoid E] [Module 𝕜 E] [TopologicalSpace E]
   [ContinuousAdd E] [ContinuousConstSMul 𝕜 E] [AddCommMonoid F] [Module 𝕜 F]
   [TopologicalSpace F] [ContinuousAdd F] [ContinuousConstSMul 𝕜 F]
   {p : FormalMultilinearSeries 𝕜 E F}
@@ -288,10 +305,10 @@ def coeff (p : FormalMultilinearSeries 𝕜 𝕜 E) (n : ℕ) : E :=
   p n 1
 #align formal_multilinear_series.coeff FormalMultilinearSeries.coeff
 
-theorem mkPiField_coeff_eq (p : FormalMultilinearSeries 𝕜 𝕜 E) (n : ℕ) :
-    ContinuousMultilinearMap.mkPiField 𝕜 (Fin n) (p.coeff n) = p n :=
-  (p n).mkPiField_apply_one_eq_self
-#align formal_multilinear_series.mk_pi_field_coeff_eq FormalMultilinearSeries.mkPiField_coeff_eq
+theorem mkPiRing_coeff_eq (p : FormalMultilinearSeries 𝕜 𝕜 E) (n : ℕ) :
+    ContinuousMultilinearMap.mkPiRing 𝕜 (Fin n) (p.coeff n) = p n :=
+  (p n).mkPiRing_apply_one_eq_self
+#align formal_multilinear_series.mk_pi_field_coeff_eq FormalMultilinearSeries.mkPiRing_coeff_eq
 
 @[simp]
 theorem apply_eq_prod_smul_coeff : p n y = (∏ i, y i) • p.coeff n := by
@@ -301,16 +318,15 @@ theorem apply_eq_prod_smul_coeff : p n y = (∏ i, y i) • p.coeff n := by
 #align formal_multilinear_series.apply_eq_prod_smul_coeff FormalMultilinearSeries.apply_eq_prod_smul_coeff
 
 theorem coeff_eq_zero : p.coeff n = 0 ↔ p n = 0 := by
-  rw [← mkPiField_coeff_eq p, ContinuousMultilinearMap.mkPiField_eq_zero_iff]
+  rw [← mkPiRing_coeff_eq p, ContinuousMultilinearMap.mkPiRing_eq_zero_iff]
 #align formal_multilinear_series.coeff_eq_zero FormalMultilinearSeries.coeff_eq_zero
 
-@[simp]
 theorem apply_eq_pow_smul_coeff : (p n fun _ => z) = z ^ n • p.coeff n := by simp
 #align formal_multilinear_series.apply_eq_pow_smul_coeff FormalMultilinearSeries.apply_eq_pow_smul_coeff
 
 @[simp]
 theorem norm_apply_eq_norm_coef : ‖p n‖ = ‖coeff p n‖ := by
-  rw [← mkPiField_coeff_eq p, ContinuousMultilinearMap.norm_mkPiField]
+  rw [← mkPiRing_coeff_eq p, ContinuousMultilinearMap.norm_mkPiRing]
 #align formal_multilinear_series.norm_apply_eq_norm_coef FormalMultilinearSeries.norm_apply_eq_norm_coef
 
 end Coef
