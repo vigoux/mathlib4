@@ -299,21 +299,12 @@ theorem cfcₙHom_comp [UniqueNonUnitalContinuousFunctionalCalculus R A] (f : C(
   refine cfcₙHom_eq_of_continuous_of_map_id (cfcₙHom_predicate ha f) φ ?_ ?_
   · refine (cfcₙHom_closedEmbedding ha).continuous.comp ?_ --f'.continuous_comp_left
     apply continuous_induced_rng.mpr
-    rw [Function.comp]
-    have := f'.toContinuousMap.continuous_comp_left
-    continuity?
-  --sorry
-  --let φ : C(σₙ R (cfcₙHom ha f), R)₀ →⋆ₙₐ[R] A :=
-    --(cfcₙHom ha).comp <| ContinuousMap.compStarAlgHom' R R f'
-  --suffices cfcₙHom (cfcₙHom_predicate ha f) = φ from DFunLike.congr_fun this.symm g
-  --refine cfcₙHom_eq_of_continuous_of_map_id (cfcₙHom_predicate ha f) φ ?_ ?_
-  --· exact (cfcₙHom_closedEmbedding ha).continuous.comp f'.continuous_comp_left
-  --· simp only [StarAlgHom.comp_apply, ContinuousMap.compStarAlgHom'_apply]
-    --congr
-    --ext x
-    --simp [hff']
+    exact f'.toContinuousMap.continuous_comp_left.comp continuous_induced_dom
+  · simp only [NonUnitalStarAlgHom.comp_apply, NonUnitalStarAlgHom.coe_mk', NonUnitalAlgHom.coe_mk]
+    congr
+    ext x
+    simp [hff']
 
-#exit
 end cfcₙHom
 
 
