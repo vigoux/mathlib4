@@ -3,7 +3,8 @@ import Mathlib.AANUCFC.QuasiSpectrum
 
 section IdealInstances
 
-instance Ideal.instMulMemClass {R : Type*} [Semiring R] :
+
+instance (priority := 10000) Ideal.instMulMemClass {R : Type*} [Semiring R] :
     MulMemClass (Ideal R) R where
   mul_mem _ := Ideal.mul_mem_left _ _
 
@@ -46,12 +47,6 @@ instance Ideal.instTopologicalRing {R : Type*} [Ring R] [TopologicalSpace R]
     [TopologicalRing R] (I : Ideal R) : TopologicalRing I :=
   { }
 
-section
-variable {R : Type*} [Ring R] (I : Ideal R)
-
-#synth Module R I
-end
-
 end IdealInstances
 
 structure ContinuousMapZero (X R : Type*) [Zero X] [Zero R] [TopologicalSpace X]
@@ -82,6 +77,12 @@ instance instContinuousMapClass : ContinuousMapClass C(X, R)₀ X R where
 instance instZeroHomClass : ZeroHomClass C(X, R)₀ X R where
   map_zero f := f.map_zero'
 
+@[ext]
+lemma ext {f g : C(X, R)₀} (h : ∀ x, f x = g x) : f = g := DFunLike.ext f g h
+
+@[simp]
+lemma coe_mk {f : C(X, R)} {h0 : f 0 = 0} : ⇑(mk f h0) = f := rfl
+
 def comp (g : C(Y, R)₀) (f : C(X, Y)₀) : C(X, R)₀ where
   toContinuousMap := g.toContinuousMap.comp f.toContinuousMap
   map_zero' := show g (f 0) = 0 from map_zero f ▸ map_zero g
@@ -91,25 +92,114 @@ lemma comp_apply (g : C(Y, R)₀) (f : C(X, Y)₀) (x : X) : g.comp f x = g (f x
 
 end Basic
 
+section Semiring
+
+variable {X R : Type*} [Zero X] [TopologicalSpace X]
+variable [CommSemiring R] [TopologicalSpace R] [TopologicalSemiring R]
+
+instance instZero : Zero C(X, R)₀ where
+  zero := ⟨0, rfl⟩
+
+instance instAdd : Add C(X, R)₀ where
+  add f g := ⟨f + g, by simp⟩
+
+instance instMul : Mul C(X, R)₀ where
+  mul f g := ⟨f * g, by simp⟩
+
+instance instSMul {M : Type*} [SMulZeroClass M R] [ContinuousConstSMul M R] :
+    SMul M C(X, R)₀ where
+  smul m f := ⟨m • f, by simp⟩
+
+lemma toContinuousMap_injective :
+    Function.Injective (toContinuousMap (X := X) (R := R)) :=
+  fun f g h ↦ by refine congr(.mk $(h) ?_); exacts [f.map_zero', g.map_zero']
+
+instance instNonUnitalCommSemiring : NonUnitalCommSemiring C(X, R)₀ :=
+  (toContinuousMap_injective (X := X) (R := R)).nonUnitalCommSemiring
+    _ rfl (fun _ _ ↦ rfl) (fun _ _ ↦ rfl) (fun _ _ ↦ rfl)
+
+instance instModule {M : Type*} [Semiring M] [Module M R] [ContinuousConstSMul M R] :
+    Module M C(X, R)₀ :=
+  (toContinuousMap_injective (X := X) (R := R)).module M
+    { toFun := _, map_add' := fun _ _ ↦ rfl, map_zero' := rfl } (fun _ _ ↦ rfl)
+
+instance instSMulCommClass {M N : Type*} [SMulZeroClass M R] [ContinuousConstSMul M R]
+    [SMulZeroClass N R] [ContinuousConstSMul N R] [SMulCommClass M N R] :
+    SMulCommClass M N C(X, R)₀ where
+  smul_comm _ _ _ := ext fun _ ↦ smul_comm ..
+
+instance instIsScalarTower {M N : Type*} [SMulZeroClass M R] [ContinuousConstSMul M R]
+    [SMulZeroClass N R] [ContinuousConstSMul N R] [SMul M N] [IsScalarTower M N R] :
+    IsScalarTower M N C(X, R)₀ where
+  smul_assoc _ _ _ := ext fun _ ↦ smul_assoc ..
+
+instance instStarRing [StarRing R] [ContinuousStar R] : StarRing C(X, R)₀ where
+  star f := ⟨star f, by simp⟩
+  star_involutive _ := ext fun _ ↦ star_star _
+  star_mul _ _ := ext fun _ ↦ star_mul ..
+  star_add _ _ := ext fun _ ↦ star_add ..
+
+instance instTopologicalSpace : TopologicalSpace C(X, R)₀ :=
+  TopologicalSpace.induced toContinuousMap inferInstance
+
+end Semiring
+
+variable {X R : Type*} [Zero X] [TopologicalSpace X]
+variable [CommRing R] [TopologicalSpace R] [TopologicalRing R]
+section Ring
+
+instance instSub : Sub C(X, R)₀ where
+  sub f g := ⟨f - g, by simp⟩
+
+instance instNeg : Neg C(X, R)₀ where
+  neg f := ⟨-f, by simp⟩
+
+instance instNonUnitalCommRing : NonUnitalCommRing C(X, R)₀ :=
+  (toContinuousMap_injective (X := X) (R := R)).nonUnitalCommRing _ rfl
+  (fun _ _ ↦ rfl) (fun _ _ ↦ rfl) (fun _ ↦ rfl) (fun _ _ ↦ rfl) (fun _ _ ↦ rfl) (fun _ _ ↦ rfl)
+
+end Ring
+
 end ContinuousMapZero
 
-end
-
-namespace ContinuousMapZero
-
-variable {X Y R : Type*} [Zero X] [TopologicalSpace X] [Zero Y] [TopologicalSpace Y]
-variable [Semifield R] [TopologicalSpace R] [TopologicalSemiring R]
-
-end ContinuousMapZero
-
-#exit
+/-
 section Notation
 
 variable {X Y R : Type*} [Zero X] [TopologicalSpace X] [Zero Y] [TopologicalSpace Y]
 variable [Semifield R] [TopologicalSpace R] [TopologicalSemiring R]
 
-scoped[ContinuousMap] notation3 "C(" X ", " R ")₀" => idealOfSet R {(0 : X)}ᶜ
+@[simps]
+def ContinuousMap.evalRingHom {X : Type*} (R : Type*) [TopologicalSpace X] [TopologicalSpace R]
+    [Semiring R] [TopologicalSemiring R] (x : X) : C(X, R) →+* R where
+  toFun f := f x
+  map_one' := rfl
+  map_zero' := rfl
+  map_mul' _ _ := rfl
+  map_add' _ _ := rfl
 
+
+-- scoped[ContinuousMap] notation3 "C(" X ", " R ")₀" => idealOfSet R {(0 : X)}ᶜ
+scoped[ContinuousMap] notation3 "C(" X ", " R ")₀" => RingHom.ker (ContinuousMap.evalRingHom R (0 : X))
+
+set_option profiler true in
+instance {X R : Type*} [TopologicalSpace X] [CommSemiring R] [TopologicalSpace R] [StarRing R]
+    [ContinuousStar R] [TopologicalSemiring R] (x : X) :
+    StarRing (RingHom.ker (ContinuousMap.evalRingHom R (x : X))) where
+  star := sorry
+  star_involutive f := sorry
+  star_mul f g := sorry
+  star_add f g := sorry
+  --star f := ⟨star f.val, by rw [RingHom.mem_ker]; sorry⟩ --
+    --Subtype.map (star (R := C(X, R))) fun y hy ↦ by
+    --rw [RingHom.mem_ker (ContinuousMap.evalRingHom R (x : X))] at hy ⊢
+    --simpa only [star_zero] using congr(star $(hy))
+
+  #exit
+  star_involutive f := Subtype.ext <| star_star (f : C(X, R))
+  star_mul f g := Subtype.ext <| star_mul (f : C(X, R)) g
+  star_add f g := Subtype.ext <| star_add (f : C(X, R)) g
+
+#exit
 open ContinuousMap
 
 instance {X R : Type*} [TopologicalSpace X] [CommSemiring R] [TopologicalSpace R] [StarRing R]
@@ -128,18 +218,19 @@ def ContinuousMap.comp_zeroAtZero (g : C(Y, R)₀) (f : C(X, Y)) (h0 : f 0 = 0) 
   ⟨g.val.comp f, by simp [h0, ContinuousMap.zeroAtZero_map_zero g]⟩
 
 end Notation
+-/
 
 local notation "σₙ" => quasiSpectrum
 
-open scoped ContinuousMap
+open scoped ContinuousMapZero
 
 class NonUnitalContinuousFunctionalCalculus (R : Type*) {A : Type*} (p : outParam (A → Prop))
     [Semifield R] [StarRing R] [MetricSpace R] [TopologicalSemiring R] [ContinuousStar R]
     [NonUnitalRing A] [StarRing A] [TopologicalSpace A] [Module R A] [IsScalarTower R A A]
     [SMulCommClass R A A] : Prop where
   exists_cfc_of_predicate : ∀ a, p a → ∃ φ : C(σₙ R a, R)₀ →⋆ₙₐ[R] A,
-    ClosedEmbedding φ ∧ φ ⟨(ContinuousMap.id R).restrict <| σₙ R a, by simp⟩ = a ∧
-      (∀ f, σₙ R (φ f) = Set.range f.val) ∧ ∀ f, p (φ f)
+    ClosedEmbedding φ ∧ φ ⟨(ContinuousMap.id R).restrict <| σₙ R a, rfl⟩ = a ∧
+      (∀ f, σₙ R (φ f) = Set.range f) ∧ ∀ f, p (φ f)
 
 -- we really don't actually want a separate class for this, but for now we'll use this hack to
 -- write the rest of the file.
@@ -148,7 +239,7 @@ class UniqueNonUnitalContinuousFunctionalCalculus (R A : Type*) [Semifield R] [S
     [TopologicalSpace A] [Module R A] [IsScalarTower R A A] [SMulCommClass R A A] : Prop where
   eq_of_continuous_of_map_id (a : A) (φ ψ : C(σₙ R a, R)₀ →⋆ₙₐ[R] A)
     (hφ : Continuous φ) (hψ : Continuous ψ)
-    (h : φ ⟨.restrict (σₙ R a) <| .id R, by simp⟩ = ψ ⟨.restrict (σₙ R a) <| .id R, by simp⟩) :
+    (h : φ ⟨.restrict (σₙ R a) <| .id R, rfl⟩ = ψ ⟨.restrict (σₙ R a) <| .id R, rfl⟩) :
     φ = ψ
 
 variable {R A : Type*} {p : A → Prop} [Semifield R] [StarRing R] [MetricSpace R]
@@ -158,7 +249,7 @@ variable [NonUnitalContinuousFunctionalCalculus R p]
 
 lemma NonUnitalStarAlgHom.ext_continuousMap [UniqueNonUnitalContinuousFunctionalCalculus R A]
     (a : A) (φ ψ : C(σₙ R a, R)₀ →⋆ₙₐ[R] A) (hφ : Continuous φ) (hψ : Continuous ψ)
-    (h : φ ⟨.restrict (σₙ R a) <| .id R, by simp⟩ = ψ ⟨.restrict (σₙ R a) <| .id R, by simp⟩) :
+    (h : φ ⟨.restrict (σₙ R a) <| .id R, rfl⟩ = ψ ⟨.restrict (σₙ R a) <| .id R, rfl⟩) :
     φ = ψ :=
   UniqueNonUnitalContinuousFunctionalCalculus.eq_of_continuous_of_map_id a φ ψ hφ hψ h
 
@@ -179,7 +270,7 @@ lemma cfcₙHom_id :
 
 /-- The **spectral mapping theorem** for the continuous functional calculus. -/
 lemma cfcₙHom_map_quasiSpectrum (f : C(σₙ R a, R)₀) :
-    σₙ R (cfcₙHom ha f) = Set.range f.val :=
+    σₙ R (cfcₙHom ha f) = Set.range f :=
   (NonUnitalContinuousFunctionalCalculus.exists_cfc_of_predicate a ha).choose_spec.2.2.1 f
 
 lemma cfcₙHom_predicate (f : C(σₙ R a, R)₀) :
@@ -193,23 +284,36 @@ lemma cfcₙHom_eq_of_continuous_of_map_id [UniqueNonUnitalContinuousFunctionalC
     rw [cfcₙHom_id ha, hφ₂]
 
 theorem cfcₙHom_comp [UniqueNonUnitalContinuousFunctionalCalculus R A] (f : C(σₙ R a, R)₀)
-    (f' : C(σₙ R a, σₙ R (cfcₙHom ha f))) (hf' : f' 0 = 0)
-    (hff' : ∀ x, f.val x = f' x) (g : C(σₙ R (cfcₙHom ha f), R)₀) :
-    cfcₙHom ha (ContinuousMap.comp_zeroAtZero g f' hf') = cfcₙHom (cfcₙHom_predicate ha f) g := by
-  --let ψ : C(σₙ R a, R)₀ →⋆ₙₐ[R] C(σₙ R (cfcₙHom ha f), R)₀ :=
-    --{ toFun g' := ContinuousMap.comp_zeroAtZero g' f' hf' }
-  sorry
-  #exit
-  --let φ : C(σₙ R (cfcHom ha f), R)₀ →⋆ₙₐ[R] A :=
-    --(cfcHom ha).comp <| ContinuousMap.compStarAlgHom' R R f'
-  --suffices cfcHom (cfcHom_predicate ha f) = φ from DFunLike.congr_fun this.symm g
-  --refine cfcHom_eq_of_continuous_of_map_id (cfcHom_predicate ha f) φ ?_ ?_
-  --· exact (cfcHom_closedEmbedding ha).continuous.comp f'.continuous_comp_left
+    (f' : C(σₙ R a, σₙ R (cfcₙHom ha f))₀)
+    (hff' : ∀ x, f x = f' x) (g : C(σₙ R (cfcₙHom ha f), R)₀) :
+    cfcₙHom ha (g.comp f') = cfcₙHom (cfcₙHom_predicate ha f) g := by
+  let ψ : C(σₙ R (cfcₙHom ha f), R)₀ →⋆ₙₐ[R] C(σₙ R a, R)₀ :=
+    { toFun := (ContinuousMapZero.comp · f')
+      map_smul' := fun _ _ ↦ rfl
+      map_add' := fun _ _ ↦ rfl
+      map_mul' := fun _ _ ↦ rfl
+      map_zero' := rfl
+      map_star' := fun _ ↦ rfl }
+  let φ : C(σₙ R (cfcₙHom ha f), R)₀ →⋆ₙₐ[R] A := (cfcₙHom ha).comp ψ
+  suffices cfcₙHom (cfcₙHom_predicate ha f) = φ from DFunLike.congr_fun this.symm g
+  refine cfcₙHom_eq_of_continuous_of_map_id (cfcₙHom_predicate ha f) φ ?_ ?_
+  · refine (cfcₙHom_closedEmbedding ha).continuous.comp ?_ --f'.continuous_comp_left
+    apply continuous_induced_rng.mpr
+    rw [Function.comp]
+    have := f'.toContinuousMap.continuous_comp_left
+    continuity?
+  --sorry
+  --let φ : C(σₙ R (cfcₙHom ha f), R)₀ →⋆ₙₐ[R] A :=
+    --(cfcₙHom ha).comp <| ContinuousMap.compStarAlgHom' R R f'
+  --suffices cfcₙHom (cfcₙHom_predicate ha f) = φ from DFunLike.congr_fun this.symm g
+  --refine cfcₙHom_eq_of_continuous_of_map_id (cfcₙHom_predicate ha f) φ ?_ ?_
+  --· exact (cfcₙHom_closedEmbedding ha).continuous.comp f'.continuous_comp_left
   --· simp only [StarAlgHom.comp_apply, ContinuousMap.compStarAlgHom'_apply]
     --congr
     --ext x
     --simp [hff']
 
+#exit
 end cfcₙHom
 
 
@@ -226,7 +330,7 @@ functional calculus, and all the API applies to this declaration. For more infor
 module documentation for `Topology.ContinuousFunction.FunctionalCalculus`. -/
 noncomputable irreducible_def cfcₙ (a : A) (f : R → R) : A :=
   if h : p a ∧ ContinuousOn f (σₙ R a) ∧ f 0 = 0
-    then cfcₙHom h.1 ⟨⟨_, h.2.1.restrict⟩, by simp [h.2.2]⟩
+    then cfcₙHom h.1 ⟨⟨_, h.2.1.restrict⟩, h.2.2⟩
     else 0
 
 variable (a : A)
@@ -240,7 +344,7 @@ macro_rules
 
 lemma cfcₙ_apply (f : R → R) (ha : p a := by cfc_tac)
     (hf : ContinuousOn f (σₙ R a) := by cfc_cont_tac) (h0 : f 0 = 0 := by cfc_zero_tac) :
-    cfcₙ a f = cfcₙHom (a := a) ha ⟨⟨_, hf.restrict⟩, by simp [h0]⟩ := by
+    cfcₙ a f = cfcₙHom (a := a) ha ⟨⟨_, hf.restrict⟩, h0⟩ := by
   rw [cfcₙ_def, dif_pos ⟨ha, hf, h0⟩]
 
 lemma cfcₙ_apply_of_not_and_and {f : R → R} (ha : ¬ (p a ∧ ContinuousOn f (σₙ R a) ∧ f 0 = 0)) :
@@ -300,7 +404,7 @@ lemma eqOn_of_cfcₙ_eq_cfcₙ {f g : R → R} (h : cfcₙ a f = cfcₙ a g) (ha
   rw [cfcₙ_apply a f, cfcₙ_apply a g] at h
   have := (cfcₙHom_closedEmbedding (show p a from ha) (R := R)).inj h
   intro x hx
-  congrm($(this).val ⟨x, hx⟩)
+  congrm($(this) ⟨x, hx⟩)
 
 lemma cfcₙ_eq_cfcₙ_iff_eqOn {f g : R → R} (ha : p a := by cfc_tac)
     (hf : ContinuousOn f (σₙ R a) := by cfc_cont_tac) (hf0 : f 0 = 0 := by cfc_zero_tac)
@@ -338,7 +442,6 @@ lemma cfcₙ_mul (f g : R → R)
   --rw [cfcₙ_apply a f, ← map_pow, cfcₙ_apply a _]
   --congr
 
-set_option synthInstance.maxHeartbeats 50000 -- ewwww
 lemma cfcₙ_add (f g : R → R)
     (hf : ContinuousOn f (σₙ R a) := by cfc_cont_tac) (hf0 : f 0 = 0 := by cfc_zero_tac)
     (hg : ContinuousOn g (σₙ R a) := by cfc_cont_tac) (hg0 : g 0 = 0 := by cfc_zero_tac) :
