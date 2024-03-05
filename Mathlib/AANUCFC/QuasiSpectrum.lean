@@ -1,42 +1,81 @@
+/-
+Copyright (c) 2024 Jireh Loreaux. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Jireh Loreaux
+-/
 import Mathlib.Algebra.Algebra.Unitization
 import Mathlib.Algebra.Algebra.Spectrum
 
-structure Quasi (R : Type*) where
+/-!
+# Quasiregularity and quasispectrum
+
+For a non-unital ring `R`, an element `r : R` is *quasiregular* if it is invertible in the monoid
+`(R, ∘)` where `x ∘ y := y + x + x * y` with identity `0 : R`. We implement this both as a type
+synonym `Quasiregular` which has an associated `Monoid` instance (note: *not* an `AddMonoid`
+instance despite the fact that `0 : R` is the identity in this monoid) so that one may access
+the quasiregular elements of `R` as `(Quasiregular R)ˣ`, but also as a predicate `IsQuasiregular`.
+
+Quasiregularity is closely tied to invertibility. Indeed, `(Quasiregular A)ˣ` is isomorphic to the
+subgroup of `Unitization R A` whose scalar part is `1`, whenever `A` is a non-unital `R`-algebra,
+and moreover this isomorphism is implemented by the map `(x : A) ↦ (1 + x : Unitization R A)`. It
+is because of this isomorphism, and the assoicated ties with multiplicative invertibility, that we
+choose a `Monoid` (as opposed to an `AddMonoid`) structure on `Quasiregular`.  In addition,
+in unital rings, we even have `IsQuasiregular x ↔ IsUnit (1 + x)`.
+
+The *quasispectrum* of `a : A` (with respect to `R`) is defined in terms of quasiregularity, and
+this is the natural analogue of the `spectrum` for non-unital rings. Indeed, it is true that
+`quasiSpectrum R a = spectrum R a ∪ {0}` when `A` is unital.
+
+In Mathlib, the quasispectrum is the domain of the continuous functions associated to the
+*non-unital* continuous functional calculus.
+
+## Main declarations
+
++ `Unitization.unitsFstOne`: the subgroup with carrier `{ x : (Unitization R A)ˣ | x.fst = 1 }`.
++ `unitsFstOne_mulEquiv_unitsQuasiregular`:
+
+
+-/
+
+#exit
+
+structure Quasiregular (R : Type*) where
   val : R
 
-namespace Quasi
+namespace Quasiregular
 
 variable {R : Type*} [NonUnitalSemiring R]
 
 @[simps]
-def equiv : R ≃ Quasi R where
+def equiv : R ≃ Quasiregular R where
   toFun := .mk
-  invFun := Quasi.val
+  invFun := Quasiregular.val
   left_inv _ := rfl
   right_inv _ := rfl
 
-instance instOne : One (Quasi R) where
+instance instOne : One (Quasiregular R) where
   one := equiv 0
 
 @[simp]
-lemma val_one : (1 : Quasi R).val = 0 := rfl
+lemma val_one : (1 : Quasiregular R).val = 0 := rfl
 
-instance instMul : Mul (Quasi R) where
+instance instMul : Mul (Quasiregular R) where
   mul x y := .mk (y.val + x.val + x.val * y.val)
 
 @[simp]
-lemma val_mul (x y : Quasi R) : (x * y).val = y.val + x.val + x.val * y.val := rfl
+lemma val_mul (x y : Quasiregular R) : (x * y).val = y.val + x.val + x.val * y.val := rfl
 
-instance instMonoid : Monoid (Quasi R) where
+instance instMonoid : Monoid (Quasiregular R) where
   one := equiv 0
   mul x y := .mk (y.val + x.val + x.val * y.val)
   mul_one _ := equiv.symm.injective <| by simp [-EmbeddingLike.apply_eq_iff_eq]
   one_mul _ := equiv.symm.injective <| by simp [-EmbeddingLike.apply_eq_iff_eq]
   mul_assoc x y z := equiv.symm.injective <| by simp [mul_add, add_mul, mul_assoc]; abel
 
-end Quasi
+end Quasiregular
 
 namespace Unitization
+open Quasiregular
 
 variable {R A : Type*} [CommSemiring R] [NonUnitalSemiring A] [Module R A] [IsScalarTower R A A]
   [SMulCommClass R A A]
@@ -55,43 +94,43 @@ lemma mem_unitsFst_one (x : (Unitization R A)ˣ) : x ∈ unitsFstOne R A ↔ x.v
 
 variable (R) in
 /-- this whole thing is gross -/
-def unitsFstOne_mulEquiv_quasiUnits : unitsFstOne R A ≃* (Quasi A)ˣ where
+def unitsFstOne_mulEquiv_unitsQuasiregular : unitsFstOne R A ≃* (Quasiregular A)ˣ where
   toFun x :=
-    { val := Quasi.equiv x.val.val.snd
-      inv := Quasi.equiv x⁻¹.val.val.snd
-      val_inv := Quasi.equiv.symm.injective <| by
+    { val := equiv x.val.val.snd
+      inv := equiv x⁻¹.val.val.snd
+      val_inv := equiv.symm.injective <| by
         have hx_inv : x.val⁻¹.val.fst = 1 := by
           have := congr($(x.val.mul_inv).fst)
           rwa [fst_mul, fst_one, x.property, one_mul] at this
-        simp only [InvMemClass.coe_inv, Quasi.equiv_symm_apply, Quasi.val_mul,
-          Quasi.equiv_apply_val, Quasi.val_one]
+        simp only [InvMemClass.coe_inv, equiv_symm_apply, val_mul,
+          equiv_apply_val, val_one]
         have := congr(snd $(x.val.mul_inv))
         simp [-Units.mul_inv] at this
         rwa [x.property, hx_inv, one_smul, one_smul] at this
-      inv_val := Quasi.equiv.symm.injective <| by
+      inv_val := equiv.symm.injective <| by
         have hx_inv : x.val⁻¹.val.fst = 1 := by
           have := congr($(x.val.mul_inv).fst)
           rwa [fst_mul, fst_one, x.property, one_mul] at this
-        simp only [InvMemClass.coe_inv, Quasi.equiv_symm_apply, Quasi.val_mul,
-          Quasi.equiv_apply_val, Quasi.val_one]
+        simp only [InvMemClass.coe_inv, equiv_symm_apply, val_mul,
+          equiv_apply_val, val_one]
         have := congr(snd $(x.val.inv_mul))
         simp [-Units.inv_mul] at this
         rwa [x.property, hx_inv, one_smul, one_smul] at this }
   invFun x :=
     { val :=
-      { val := addEquiv R A |>.symm (1, Quasi.equiv.symm x.val)
-        inv := addEquiv R A |>.symm (1, Quasi.equiv.symm x⁻¹.val)
+      { val := addEquiv R A |>.symm (1, equiv.symm x.val)
+        inv := addEquiv R A |>.symm (1, equiv.symm x⁻¹.val)
         val_inv := by
           ext
           exact mul_one 1 -- gross
-          change 1 • Quasi.equiv.symm _ + 1 • Quasi.equiv.symm _ + -- gross
-            Quasi.equiv.symm _ * Quasi.equiv.symm _ = _
+          change 1 • equiv.symm _ + 1 • equiv.symm _ + -- gross
+            equiv.symm _ * equiv.symm _ = _
           simpa [-Units.mul_inv] using congr($(x.mul_inv).val)
         inv_val := by
           ext
           exact mul_one 1 -- gross
-          change 1 • Quasi.equiv.symm _ + 1 • Quasi.equiv.symm _ + -- gross
-            Quasi.equiv.symm _ * Quasi.equiv.symm _ = _
+          change 1 • equiv.symm _ + 1 • equiv.symm _ + -- gross
+            equiv.symm _ * equiv.symm _ = _
           simpa [-Units.inv_mul] using congr($(x.inv_mul).val) }
       property := by simp; rfl } -- gross
   left_inv x := by
@@ -103,7 +142,7 @@ def unitsFstOne_mulEquiv_quasiUnits : unitsFstOne R A ≃* (Quasi A)ˣ where
     ext
     simp only [Submonoid.coe_mul, Subgroup.coe_toSubmonoid, Units.val_mul, snd_mul,
       InvMemClass.coe_inv]
-    apply Quasi.equiv.symm.injective
+    apply equiv.symm.injective
     rw [x.property, y.property, one_smul, one_smul R]
     simp
 
@@ -111,10 +150,12 @@ end Unitization
 
 section Quasiregular
 
+open Quasiregular
+
 variable {R : Type*} [NonUnitalSemiring R]
 
 def IsQuasiregular (x : R) : Prop :=
-  ∃ u : (Quasi R)ˣ, Quasi.equiv.symm u.val = x
+  ∃ u : (Quasiregular R)ˣ, equiv.symm u.val = x
 
 @[simp]
 lemma isQuasiregular_zero : IsQuasiregular 0 := ⟨1, rfl⟩
@@ -123,12 +164,12 @@ lemma isQuasiregular_iff {x : R} :
     IsQuasiregular x ↔ ∃ y, y + x + x * y = 0 ∧ x + y + y * x = 0 := by
   constructor
   · rintro ⟨u, rfl⟩
-    use Quasi.equiv.symm u⁻¹.val
-    exact ⟨congr(Quasi.equiv.symm $(u.mul_inv)), congr(Quasi.equiv.symm $(u.inv_mul))⟩
+    use equiv.symm u⁻¹.val
+    exact ⟨congr(equiv.symm $(u.mul_inv)), congr(equiv.symm $(u.inv_mul))⟩
   · rintro ⟨y, hy₁, hy₂⟩
-    refine ⟨⟨Quasi.equiv x, Quasi.equiv y, ?_, ?_⟩, rfl⟩
+    refine ⟨⟨equiv x, equiv y, ?_, ?_⟩, rfl⟩
     all_goals
-      apply Quasi.equiv.symm.injective
+      apply equiv.symm.injective
       assumption
 
 end Quasiregular
