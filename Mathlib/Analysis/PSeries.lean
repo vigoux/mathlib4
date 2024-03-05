@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yury G. Kudryashov
 -/
 import Mathlib.Analysis.SpecialFunctions.Pow.NNReal
+import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
 
 #align_import analysis.p_series from "leanprover-community/mathlib"@"0b9eaaa7686280fad8cce467f5c3c57ee6ce77f8"
 
@@ -224,8 +225,8 @@ theorem Real.summable_one_div_nat_pow {p : ℕ} :
 theorem Real.summable_one_div_int_pow {p : ℕ} :
     (Summable fun n : ℤ => 1 / (n : ℝ) ^ p) ↔ 1 < p := by
   refine'
-    ⟨fun h => Real.summable_one_div_nat_pow.mp (h.comp_injective Nat.cast_injective), fun h =>
-      summable_int_of_summable_nat (Real.summable_one_div_nat_pow.mpr h)
+    ⟨fun h ↦ Real.summable_one_div_nat_pow.mp (h.comp_injective Nat.cast_injective),
+     fun h ↦ (Real.summable_one_div_nat_pow.mpr h).of_natCast_neg_natCast
         (((Real.summable_one_div_nat_pow.mpr h).mul_left <| 1 / (-1 : ℝ) ^ p).congr fun n => _)⟩
   conv_rhs =>
     rw [Int.cast_neg, neg_eq_neg_one_mul, mul_pow, ← div_div]
@@ -234,15 +235,7 @@ theorem Real.summable_one_div_int_pow {p : ℕ} :
 
 theorem Real.summable_abs_int_rpow {b : ℝ} (hb : 1 < b) :
     Summable fun n : ℤ => |(n : ℝ)| ^ (-b) := by
-  -- Porting note: was
-  -- refine'
-  --   summable_int_of_summable_nat (_ : Summable fun n : ℕ => |(n : ℝ)| ^ _)
-  --     (_ : Summable fun n : ℕ => |((-n : ℤ) : ℝ)| ^ _)
-  -- on_goal 2 => simp_rw [Int.cast_neg, Int.cast_ofNat, abs_neg]
-  -- all_goals
-  --   simp_rw [fun n : ℕ => abs_of_nonneg (n.cast_nonneg : 0 ≤ (n : ℝ))]
-  --   rwa [Real.summable_nat_rpow, neg_lt_neg_iff]
-  apply summable_int_of_summable_nat
+  apply Summable.of_natCast_neg_natCast
   on_goal 2 => simp_rw [Int.cast_neg, abs_neg]
   all_goals
     simp_rw [Int.cast_ofNat, fun n : ℕ => abs_of_nonneg (n.cast_nonneg : 0 ≤ (n : ℝ))]
@@ -339,3 +332,42 @@ theorem sum_Ioo_inv_sq_le (k n : ℕ) : (∑ i in Ioo k n, (i ^ 2 : α)⁻¹) �
 #align sum_Ioo_inv_sq_le sum_Ioo_inv_sq_le
 
 end
+
+/-!
+## Translating the `p`-series by a real number
+-/
+section shifted
+
+open Asymptotics
+
+lemma Real.summable_one_div_nat_add_rpow (a : ℝ) (s : ℝ) :
+    Summable (fun n : ℕ ↦ 1 / |n + a| ^ s) ↔ 1 < s := by
+  suffices ∀ (b c : ℝ), Summable (fun n : ℕ ↦ 1 / |n + b| ^ s) →
+      Summable (fun n : ℕ ↦ 1 / |n + c| ^ s) by
+    simp_rw [← summable_one_div_nat_rpow, Iff.intro (this a 0) (this 0 a), add_zero, Nat.abs_cast]
+  refine fun b c h ↦ summable_of_isBigO_nat h (isBigO_of_div_tendsto_nhds ?_ 1 ?_)
+  · filter_upwards [eventually_gt_atTop (Nat.ceil |b|)] with n hn hx
+    have hna : 0 < n + b := by linarith [lt_of_abs_lt ((abs_neg b).symm ▸ Nat.lt_of_ceil_lt hn)]
+    exfalso
+    revert hx
+    positivity
+  · simp_rw [Pi.div_def, div_div, mul_one_div, one_div_div]
+    refine (?_ : Tendsto (fun x : ℝ ↦ |x + b| ^ s / |x + c| ^ s) atTop (𝓝 1)).comp
+      tendsto_nat_cast_atTop_atTop
+    have : Tendsto (fun x : ℝ ↦ 1 + (b - c) / x) atTop (𝓝 1) := by
+      simpa using tendsto_const_nhds.add ((tendsto_const_nhds (X := ℝ)).div_atTop tendsto_id)
+    have : Tendsto (fun x ↦ (x + b) / (x + c)) atTop (𝓝 1) := by
+      refine (this.comp (tendsto_id.atTop_add (tendsto_const_nhds (x := c)))).congr' ?_
+      filter_upwards [eventually_gt_atTop (-c)] with x hx
+      field_simp [(by linarith : 0 < x + c).ne']
+    apply (one_rpow s ▸ (continuousAt_rpow_const _ s (by simp)).tendsto.comp this).congr'
+    filter_upwards [eventually_gt_atTop (-b), eventually_gt_atTop (-c)] with x hb hc
+    rw [neg_lt_iff_pos_add] at hb hc
+    rw [Function.comp_apply, div_rpow hb.le hc.le, abs_of_pos hb, abs_of_pos hc]
+
+lemma Real.summable_one_div_int_add_rpow (a : ℝ) (s : ℝ) :
+    Summable (fun n : ℤ ↦ 1 / |n + a| ^ s) ↔ 1 < s := by
+  simp_rw [summable_int_iff_summable_natCast_neg_natCast, ← abs_neg (↑(-_ : ℤ) + a), neg_add,
+    Int.cast_neg, neg_neg, Int.cast_ofNat, summable_one_div_nat_add_rpow, and_self]
+
+end shifted
