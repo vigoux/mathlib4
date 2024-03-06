@@ -1,4 +1,21 @@
+/-
+Copyright (c) 2024 Jireh Loreaux. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Jireh Loreaux
+-/
 import Mathlib.Topology.ContinuousFunction.Algebra
+
+/-!
+# Continuous maps sending zero to zero
+
+This is the type of continuous maps from `X` to `R` such that `(0 : X) ↦ (0 : R)` for which we
+provide the scoped notation `C(X, R)₀`.  We provide this as a dedicated type solely for the
+non-unital continuous functional calculus, as using various terms of type `Ideal C(X, R)` were
+overly burdensome on type class synthesis.
+
+Of course, one could generalize to maps between pointed topological spaces, but that goes beyond
+the purpose of this type.
+-/
 
 structure ContinuousMapZero (X R : Type*) [Zero X] [Zero R] [TopologicalSpace X]
     [TopologicalSpace R] extends C(X, R) where
