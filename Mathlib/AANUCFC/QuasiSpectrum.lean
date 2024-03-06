@@ -29,15 +29,30 @@ this is the natural analogue of the `spectrum` for non-unital rings. Indeed, it 
 In Mathlib, the quasispectrum is the domain of the continuous functions associated to the
 *non-unital* continuous functional calculus.
 
-## Main declarations
+## Main definitions
 
++ `Quasiregular R`: a structure wrapping `R` that inherits a distinct `Monoid` instance when `R`
+  is a non-unital semiring.
 + `Unitization.unitsFstOne`: the subgroup with carrier `{ x : (Unitization R A)ˣ | x.fst = 1 }`.
-+ `unitsFstOne_mulEquiv_unitsQuasiregular`:
++ `unitsFstOne_mulEquiv_unitsQuasiregular`: the group isomorphism between `Unitization.unitsFstOne`
+  and the units of `Quasiregular` which sends `(1, x) ↦ x`.
++ `IsQuasiregular x`: the proposition that `x : R` is a unit with respect to the monoid structure on
+  `Quasiregular R`, i.e., there is some `u : (Quasiregular R)ˣ` such that `u.val` is identified with
+  `x` (via the natural equivalence between `R` and `Quasiregular R`).
++ `quasiSpectrum R a`: in an algebra over the semifield `R`, this is the set
+  `{ r : R | r = 0 ∨ ¬ IsQuasiregular (-(r⁻¹ • a)) }`, which should be thought of as a version of
+  the `spectrum` which is applicable in non-unital algebras.
 
+## Main theorems
+
++ `isQuasiregular_iff_isUnit`: in a unital ring, `x` is quasiregular if and only if `1 + x` is
+  a unit.
++ `quasiSpectrum_eq_spectrum_union`: in a unital `R`-algebra `A`, the quasispectrum of `a : A`
+  is just the `spectrum` with zero added.
++ `Unitization.isQuasiregular_inr_iff`: `a : A` is quasiregular if and only if it is quasiregular
+  in `Unitization R A` (via the coercion `Unitization.inr`).
 
 -/
-
-#exit
 
 structure Quasiregular (R : Type*) where
   val : R
@@ -72,6 +87,16 @@ instance instMonoid : Monoid (Quasiregular R) where
   one_mul _ := equiv.symm.injective <| by simp [-EmbeddingLike.apply_eq_iff_eq]
   mul_assoc x y z := equiv.symm.injective <| by simp [mul_add, add_mul, mul_assoc]; abel
 
+@[simp]
+lemma inv_add_add_mul_eq_zero (u : (Quasiregular R)ˣ) :
+    u⁻¹.val.val + u.val.val + u.val.val * u⁻¹.val.val = 0 := by
+  simpa [-Units.mul_inv] using congr($(u.mul_inv).val)
+
+@[simp]
+lemma add_inv_add_mul_eq_zero (u : (Quasiregular R)ˣ) :
+    u.val.val + u⁻¹.val.val + u⁻¹.val.val * u.val.val = 0 := by
+  simpa [-Units.inv_mul] using congr($(u.inv_mul).val)
+
 end Quasiregular
 
 namespace Unitization
@@ -90,54 +115,46 @@ def unitsFstOne : Subgroup (Unitization R A)ˣ where
     simpa [-Units.mul_inv, hx] using congr(fstHom R A $(x.mul_inv))
 
 @[simp]
-lemma mem_unitsFst_one (x : (Unitization R A)ˣ) : x ∈ unitsFstOne R A ↔ x.val.fst = 1 := Iff.rfl
+lemma mem_unitsFstOne {x : (Unitization R A)ˣ} : x ∈ unitsFstOne R A ↔ x.val.fst = 1 := Iff.rfl
+
+@[simp]
+lemma unitsFstOne_val_val_fst (x : (unitsFstOne R A)) : x.val.val.fst = 1 :=
+  mem_unitsFstOne.mp x.property
+
+@[simp]
+lemma unitsFstOne_val_inv_val_fst (x : (unitsFstOne R A)) : x.val⁻¹.val.fst = 1 :=
+  mem_unitsFstOne.mp x⁻¹.property
 
 variable (R) in
 /-- this whole thing is gross -/
+@[simps]
 def unitsFstOne_mulEquiv_unitsQuasiregular : unitsFstOne R A ≃* (Quasiregular A)ˣ where
   toFun x :=
     { val := equiv x.val.val.snd
       inv := equiv x⁻¹.val.val.snd
       val_inv := equiv.symm.injective <| by
-        have hx_inv : x.val⁻¹.val.fst = 1 := by
-          have := congr($(x.val.mul_inv).fst)
-          rwa [fst_mul, fst_one, x.property, one_mul] at this
-        simp only [InvMemClass.coe_inv, equiv_symm_apply, val_mul,
-          equiv_apply_val, val_one]
-        have := congr(snd $(x.val.mul_inv))
-        simp [-Units.mul_inv] at this
-        rwa [x.property, hx_inv, one_smul, one_smul] at this
+        simpa [-Units.mul_inv] using congr(snd $(x.val.mul_inv))
       inv_val := equiv.symm.injective <| by
-        have hx_inv : x.val⁻¹.val.fst = 1 := by
-          have := congr($(x.val.mul_inv).fst)
-          rwa [fst_mul, fst_one, x.property, one_mul] at this
-        simp only [InvMemClass.coe_inv, equiv_symm_apply, val_mul,
-          equiv_apply_val, val_one]
-        have := congr(snd $(x.val.inv_mul))
-        simp [-Units.inv_mul] at this
-        rwa [x.property, hx_inv, one_smul, one_smul] at this }
+        simpa [-Units.inv_mul] using congr(snd $(x.val.inv_mul)) }
   invFun x :=
     { val :=
-      { val := addEquiv R A |>.symm (1, equiv.symm x.val)
-        inv := addEquiv R A |>.symm (1, equiv.symm x⁻¹.val)
+      { val := 1 + equiv.symm x.val
+        inv := 1 + equiv.symm x⁻¹.val
         val_inv := by
-          ext
-          exact mul_one 1 -- gross
-          change 1 • equiv.symm _ + 1 • equiv.symm _ + -- gross
-            equiv.symm _ * equiv.symm _ = _
-          simpa [-Units.mul_inv] using congr($(x.mul_inv).val)
+          convert congr((1 + $(inv_add_add_mul_eq_zero x) : Unitization R A)) using 1
+          · simp only [mul_one, equiv_symm_apply, one_mul, inr_zero, add_zero, mul_add, add_mul,
+              inr_add, inr_mul]
+            abel
+          · simp only [inr_zero, add_zero]
         inv_val := by
-          ext
-          exact mul_one 1 -- gross
-          change 1 • equiv.symm _ + 1 • equiv.symm _ + -- gross
-            equiv.symm _ * equiv.symm _ = _
-          simpa [-Units.inv_mul] using congr($(x.inv_mul).val) }
-      property := by simp; rfl } -- gross
-  left_inv x := by
-    ext
-    · exact x.property.symm
-    · rfl
-  right_inv x := rfl
+          convert congr((1 + $(add_inv_add_mul_eq_zero x) : Unitization R A)) using 1
+          · simp only [mul_one, equiv_symm_apply, one_mul, inr_zero, add_zero, mul_add, add_mul,
+              inr_add, inr_mul]
+            abel
+          · simp only [inr_zero, add_zero] }
+      property := by simp }
+  left_inv x := Subtype.ext <| Units.ext <| by simpa using x.val.val.inl_fst_add_inr_snd_eq
+  right_inv x := Units.ext <| by simp [-equiv_symm_apply]
   map_mul' x y := by
     ext
     simp only [Submonoid.coe_mul, Subgroup.coe_toSubmonoid, Units.val_mul, snd_mul,
@@ -164,8 +181,7 @@ lemma isQuasiregular_iff {x : R} :
     IsQuasiregular x ↔ ∃ y, y + x + x * y = 0 ∧ x + y + y * x = 0 := by
   constructor
   · rintro ⟨u, rfl⟩
-    use equiv.symm u⁻¹.val
-    exact ⟨congr(equiv.symm $(u.mul_inv)), congr(equiv.symm $(u.inv_mul))⟩
+    exact ⟨equiv.symm u⁻¹.val, ⟨congr(equiv.symm $(u.mul_inv)), congr(equiv.symm $(u.inv_mul))⟩⟩
   · rintro ⟨y, hy₁, hy₂⟩
     refine ⟨⟨equiv x, equiv y, ?_, ?_⟩, rfl⟩
     all_goals
@@ -181,7 +197,6 @@ lemma IsQuasiregular.map {F R S : Type*} [NonUnitalSemiring R] [NonUnitalSemirin
   obtain ⟨y, hy₁, hy₂⟩ := hx
   exact ⟨f y, by simpa using And.intro congr(f $(hy₁)) congr(f $(hy₂))⟩
 
--- holds for semirings
 lemma IsQuasiregular.isUnit_one_add_self {R : Type*} [Semiring R] {x : R} (hx : IsQuasiregular x) :
     IsUnit (1 + x) := by
   obtain ⟨y, hy₁, hy₂⟩ := isQuasiregular_iff.mp hx
@@ -189,7 +204,6 @@ lemma IsQuasiregular.isUnit_one_add_self {R : Type*} [Semiring R] {x : R} (hx : 
   · convert congr(1 + $(hy₁)) using 1 <;> first | noncomm_ring | simp
   · convert congr(1 + $(hy₂)) using 1 <;> first | noncomm_ring | simp
 
--- holds for rings
 lemma isQuasiregular_iff_isUnit {R : Type*} [Ring R] {x : R} :
     IsQuasiregular x ↔ IsUnit (1 + x) := by
   refine ⟨IsQuasiregular.isUnit_one_add_self, fun hx ↦ ?_⟩
@@ -206,13 +220,11 @@ lemma isQuasiregular_iff_isUnit {R : Type*} [Ring R] {x : R} :
 -- interestingly, this holds even in the semiring case.
 lemma isQuasiregular_iff_isUnit' (R : Type*) {A : Type*} [CommSemiring R] [NonUnitalSemiring A]
     [Module R A] [IsScalarTower R A A] [SMulCommClass R A A] {x : A} :
-    IsQuasiregular x ↔ IsUnit ((Unitization.addEquiv R A).symm (1, x)) := by
-  constructor
+    IsQuasiregular x ↔ IsUnit (1 + x : Unitization R A) := by
+  refine ⟨?_, fun hx ↦ ?_⟩
   · rintro ⟨u, rfl⟩
-    exact (Unitization.unitsFstOne_mulEquiv_quasiUnits R).symm u |>.val.isUnit
-  · intro hx
-    let u : Unitization.unitsFstOne R A := ⟨hx.unit, rfl⟩
-    exact ⟨(Unitization.unitsFstOne_mulEquiv_quasiUnits R) u, rfl⟩
+    exact (Unitization.unitsFstOne_mulEquiv_unitsQuasiregular R).symm u |>.val.isUnit
+  · exact ⟨(Unitization.unitsFstOne_mulEquiv_unitsQuasiregular R) ⟨hx.unit, by simp⟩, by simp⟩
 
 variable (R : Type*) {A : Type*} [Semifield R] [NonUnitalRing A]
   [Module R A] [IsScalarTower R A A] [SMulCommClass R A A]
@@ -247,6 +259,7 @@ lemma quasiSpectrum_eq_spectrum_union (R : Type*) {A : Type*} [Semifield R] [Rin
   rw [← r.val_inv_eq_inv_val, Algebra.algebraMap_eq_smul_one]
   exact (IsUnit.smul_sub_iff_sub_inv_smul r a).symm
 
+-- MOVE ME to `Algebra.Algebra.Unitization`
 instance Unitization.instCanLift :
     CanLift (Unitization R A) A Unitization.inr (fun x ↦ x.fst = 0) where
   prf x hx := ⟨x.snd, Unitization.ext (by simp [hx]) rfl⟩
