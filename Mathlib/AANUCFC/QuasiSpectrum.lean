@@ -24,7 +24,7 @@ in unital rings, we even have `IsQuasiregular x ↔ IsUnit (1 + x)`.
 
 The *quasispectrum* of `a : A` (with respect to `R`) is defined in terms of quasiregularity, and
 this is the natural analogue of the `spectrum` for non-unital rings. Indeed, it is true that
-`quasiSpectrum R a = spectrum R a ∪ {0}` when `A` is unital.
+`quasispectrum R a = spectrum R a ∪ {0}` when `A` is unital.
 
 In Mathlib, the quasispectrum is the domain of the continuous functions associated to the
 *non-unital* continuous functional calculus.
@@ -39,7 +39,7 @@ In Mathlib, the quasispectrum is the domain of the continuous functions associat
 + `IsQuasiregular x`: the proposition that `x : R` is a unit with respect to the monoid structure on
   `Quasiregular R`, i.e., there is some `u : (Quasiregular R)ˣ` such that `u.val` is identified with
   `x` (via the natural equivalence between `R` and `Quasiregular R`).
-+ `quasiSpectrum R a`: in an algebra over the semifield `R`, this is the set
++ `quasispectrum R a`: in an algebra over the semifield `R`, this is the set
   `{ r : R | r = 0 ∨ ¬ IsQuasiregular (-(r⁻¹ • a)) }`, which should be thought of as a version of
   the `spectrum` which is applicable in non-unital algebras.
 
@@ -47,7 +47,7 @@ In Mathlib, the quasispectrum is the domain of the continuous functions associat
 
 + `isQuasiregular_iff_isUnit`: in a unital ring, `x` is quasiregular if and only if `1 + x` is
   a unit.
-+ `quasiSpectrum_eq_spectrum_union`: in a unital `R`-algebra `A`, the quasispectrum of `a : A`
++ `quasispectrum_eq_spectrum_union`: in a unital `R`-algebra `A`, the quasispectrum of `a : A`
   is just the `spectrum` with zero added.
 + `Unitization.isQuasiregular_inr_iff`: `a : A` is quasiregular if and only if it is quasiregular
   in `Unitization R A` (via the coercion `Unitization.inr`).
@@ -234,45 +234,45 @@ variable (R : Type*) {A : Type*} [CommSemiring R] [NonUnitalRing A]
   [Module R A] [IsScalarTower R A A] [SMulCommClass R A A]
 
 --/-- If `A` is a non-unital `R`-algebra, the `R`-quasispectrum of `a : A` consists of ....-/
---def quasiSpectrum' (a : A) : Set R := { r : R | r = 0 ∨ ¬ IsQuasiregular (-(↑r⁻¹ • a)) }
+--def quasispectrum' (a : A) : Set R := { r : R | r = 0 ∨ ¬ IsQuasiregular (-(↑r⁻¹ • a)) }
 
 /-- If `A` is a non-unital `R`-algebra, the `R`-quasispectrum of `a : A` consists of ....-/
-def quasiSpectrum (a : A) : Set R :=
+def quasispectrum (a : A) : Set R :=
   {r : R | (hr : IsUnit r) → ¬ IsQuasiregular (-(hr.unit⁻¹ • a))}
 
 variable {R} in
-lemma quasiSpectrum.not_isUnit_mem (a : A) {r : R} (hr : ¬ IsUnit r) : r ∈ quasiSpectrum R a :=
+lemma quasispectrum.not_isUnit_mem (a : A) {r : R} (hr : ¬ IsUnit r) : r ∈ quasispectrum R a :=
   fun hr' ↦ (hr hr').elim
 
 @[simp]
-lemma quasiSpectrum.zero_mem [Nontrivial R] (a : A) : 0 ∈ quasiSpectrum R a :=
-  quasiSpectrum.not_isUnit_mem a <| by simp
+lemma quasispectrum.zero_mem [Nontrivial R] (a : A) : 0 ∈ quasispectrum R a :=
+  quasispectrum.not_isUnit_mem a <| by simp
 
-instance quasiSpectrum.instZero [Nontrivial R] (a : A) : Zero (quasiSpectrum R a) where
-  zero := ⟨0, quasiSpectrum.zero_mem R a⟩
+instance quasispectrum.instZero [Nontrivial R] (a : A) : Zero (quasispectrum R a) where
+  zero := ⟨0, quasispectrum.zero_mem R a⟩
 
 variable {R}
 
 @[simp]
-lemma quasiSpectrum.coe_zero [Nontrivial R] (a : A) : (0 : quasiSpectrum R a) = (0 : R) := rfl
+lemma quasispectrum.coe_zero [Nontrivial R] (a : A) : (0 : quasispectrum R a) = (0 : R) := rfl
 
-lemma quasiSpectrum.mem_of_not_quasiregular (a : A) {r : Rˣ}
-    (hr : ¬ IsQuasiregular (-(r⁻¹ • a))) : (r : R) ∈ quasiSpectrum R a :=
+lemma quasispectrum.mem_of_not_quasiregular (a : A) {r : Rˣ}
+    (hr : ¬ IsQuasiregular (-(r⁻¹ • a))) : (r : R) ∈ quasispectrum R a :=
   fun _ ↦ by simpa using hr
 
-lemma quasiSpectrum_eq_spectrum_union (R : Type*) {A : Type*} [CommSemiring R]
-    [Ring A] [Algebra R A] (a : A) : quasiSpectrum R a = spectrum R a ∪ {r : R | ¬ IsUnit r} := by
+lemma quasispectrum_eq_spectrum_union (R : Type*) {A : Type*} [CommSemiring R]
+    [Ring A] [Algebra R A] (a : A) : quasispectrum R a = spectrum R a ∪ {r : R | ¬ IsUnit r} := by
   ext r
-  rw [quasiSpectrum]
+  rw [quasispectrum]
   simp only [Set.mem_setOf_eq, Set.mem_union, ← imp_iff_or_not, spectrum.mem_iff]
   congr! 1 with hr
   rw [not_iff_not, isQuasiregular_iff_isUnit, ← sub_eq_add_neg, Algebra.algebraMap_eq_smul_one]
   exact (IsUnit.smul_sub_iff_sub_inv_smul hr.unit a).symm
 
 
-lemma quasiSpectrum_eq_spectrum_union_zero (R : Type*) {A : Type*} [Semifield R] [Ring A]
-    [Algebra R A] (a : A) : quasiSpectrum R a = spectrum R a ∪ {0} := by
-  convert quasiSpectrum_eq_spectrum_union R a
+lemma quasispectrum_eq_spectrum_union_zero (R : Type*) {A : Type*} [Semifield R] [Ring A]
+    [Algebra R A] (a : A) : quasispectrum R a = spectrum R a ∪ {0} := by
+  convert quasispectrum_eq_spectrum_union R a
   ext x
   simpa using isUnit_iff_ne_zero |>.symm |> not_iff_not.mpr
 
@@ -290,11 +290,11 @@ lemma Unitization.isQuasiregular_inr_iff (a : A) :
   refine ⟨y, ?_, ?_⟩ <;> exact inr_injective (R := R) <| by simpa
 
 -- we need this for `R := ℝ≥0`, `S := ℝ`.
-lemma Unitization.quasiSpectrum_eq_spectrum_union (R S : Type*) {A : Type*} [Semifield R]
+lemma Unitization.quasispectrum_eq_spectrum_union (R S : Type*) {A : Type*} [Semifield R]
     [Field S] [NonUnitalRing A] [Algebra R S] [Module S A] [IsScalarTower S A A]
     [SMulCommClass S A A] [Module R A] [IsScalarTower R S A] (a : A) :
-    quasiSpectrum R a = spectrum R (a : Unitization S A) ∪ {0} := by
+    quasispectrum R a = spectrum R (a : Unitization S A) ∪ {0} := by
   ext r
-  rw [← _root_.quasiSpectrum_eq_spectrum_union_zero]
+  rw [← _root_.quasispectrum_eq_spectrum_union_zero]
   apply forall_congr' fun x ↦ ?_
   rw [not_iff_not, Units.smul_def, Units.smul_def, ← inr_smul, ← inr_neg, isQuasiregular_inr_iff]
