@@ -46,6 +46,25 @@ local notation "σₙ" => quasispectrum
 
 open scoped ContinuousMapZero
 
+/-- A non-unital star `R`-algebra `A` has a *continuous functional calculus* for elements
+satisfying the property `p : A → Prop` if
+
++ for every such element `a : A` there is a non-unital star algebra homomorphism
+  `cfcₙHom : C(quasispectrum R a, R)₀ →⋆ₙₐ[R] A` sending the (restriction of) the identity map
+  to `a`.
++ `cfcₙHom` is a closed embedding for which the quasispectrum of the image of function `f` is its
+  range.
++ `cfcₙHom` preserves the property `p`.
+
+The property `p` is marked as an `outParam` so that the user need not specify it. In practice,
+
++ for `R := ℂ`, we choose `p := IsStarNormal`,
++ for `R := ℝ`, we choose `p := IsSelfAdjoint`,
++ for `R := ℝ≥0`, we choose `p := (0 ≤ ·)`.
+
+Instead of directly providing the data we opt instead for a `Prop` class. In all relevant cases,
+the continuous functional calculus is uniquely determined, and utilizing this approach
+prevents diamonds or problems arising from multiple instances. -/
 class NonUnitalContinuousFunctionalCalculus (R : Type*) {A : Type*} (p : outParam (A → Prop))
     [Semifield R] [StarRing R] [MetricSpace R] [TopologicalSemiring R] [ContinuousStar R]
     [NonUnitalRing A] [StarRing A] [TopologicalSpace A] [Module R A] [IsScalarTower R A A]
@@ -54,8 +73,8 @@ class NonUnitalContinuousFunctionalCalculus (R : Type*) {A : Type*} (p : outPara
     ClosedEmbedding φ ∧ φ ⟨(ContinuousMap.id R).restrict <| σₙ R a, rfl⟩ = a ∧
       (∀ f, σₙ R (φ f) = Set.range f) ∧ ∀ f, p (φ f)
 
--- we really don't actually want a separate class for this, but for now we'll use this hack to
--- write the rest of the file.
+/-- we really don't actually want a separate class for this, but for now we'll use this hack to
+write the rest of the file. -/
 class UniqueNonUnitalContinuousFunctionalCalculus (R A : Type*) [Semifield R] [StarRing R]
     [MetricSpace R] [TopologicalSemiring R] [ContinuousStar R] [NonUnitalRing A] [StarRing A]
     [TopologicalSpace A] [Module R A] [IsScalarTower R A A] [SMulCommClass R A A] : Prop where
@@ -79,6 +98,14 @@ section cfcₙHom
 
 variable {a : A} (ha : p a)
 
+/-- The non-unital star algebra homomorphism underlying a instance of the continuous functional
+calculus for non-unital algebras; a version for continuous functions on the quasispectrum.
+
+In this case, the user must supply the fact that `a` satisfies the predicate `p`.
+
+While `NonUnitalContinuousFunctionalCalculus` is stated in terms of these homomorphisms, in practice
+the user should instead prefer `cfcₙ` over `cfcₙHom`.
+-/
 noncomputable def cfcₙHom : C(σₙ R a, R)₀ →⋆ₙₐ[R] A :=
   (NonUnitalContinuousFunctionalCalculus.exists_cfc_of_predicate a ha).choose
 
@@ -132,13 +159,14 @@ end cfcₙHom
 section CFCn
 
 open Classical in
-/-- This is the (non-unital) *continuous functional calculus* of an element `a : A` applied to bare
-functions.  When either `a` does not satisfy the predicate `p` (i.e., `a` is not `IsStarNormal`,
-`IsSelfAdjoint`, or `0 ≤ a` when `R` is `ℂ`, `ℝ`, or `ℝ≥0`, respectively), or when `f : R → R` is
-not continuous on the σₙ of `a` or `f 0 ≠ 0`, then `cfc a f` returns the junk value `0`.
+/-- This is the *continuous functional calculus* of an element `a : A` in a non-unital algebra
+applied to bare functions.  When either `a` does not satisfy the predicate `p` (i.e., `a` is not
+`IsStarNormal`, `IsSelfAdjoint`, or `0 ≤ a` when `R` is `ℂ`, `ℝ`, or `ℝ≥0`, respectively), or when
+`f : R → R` is not continuous on the σₙ of `a` or `f 0 ≠ 0`, then `cfc a f` returns the junk
+value `0`.
 
-This is the primary declaration intended for widespread use of the (non-unital) continuous
-functional calculus, and all the API applies to this declaration. For more information, see the
+This is the primary declaration intended for widespread use of the continuous functional calculus
+for non-unital algebras, and all the API applies to this declaration. For more information, see the
 module documentation for `Topology.ContinuousFunction.FunctionalCalculus`. -/
 noncomputable irreducible_def cfcₙ (a : A) (f : R → R) : A :=
   if h : p a ∧ ContinuousOn f (σₙ R a) ∧ f 0 = 0
