@@ -54,13 +54,19 @@ In Mathlib, the quasispectrum is the domain of the continuous functions associat
 
 -/
 
+/-- A type synonym for non-unital rings where an alternative monoid structure is introduced.
+If `R` is a non-unital semiring, then `Quasiregular R` is equipped with the monoid structure
+with binary operation `fun x y ↦ y + x + x * y` and identity `0`. Elements of `R` which are
+invertible in this moonoid satisfy the predicate `IsQuasiregular`. -/
 structure Quasiregular (R : Type*) where
+  /-- The value wrapped into a term of `Quasiregular`. -/
   val : R
 
 namespace Quasiregular
 
 variable {R : Type*} [NonUnitalSemiring R]
 
+/-- The identity map between `R` and `Quasiregular R`. -/
 @[simps]
 def equiv : R ≃ Quasiregular R where
   toFun := .mk
@@ -126,7 +132,9 @@ lemma unitsFstOne_val_inv_val_fst (x : (unitsFstOne R A)) : x.val⁻¹.val.fst =
   mem_unitsFstOne.mp x⁻¹.property
 
 variable (R) in
-/-- this whole thing is gross -/
+/-- If `A` is a non-unital `R`-algebra, then the subgroup of units of `Unitization R A` whose
+scalar part is `1 : R` (i.e., `Unitization.unitsFstOne`) is isomorphic to the group of units of
+`Quasiregular A`. -/
 @[simps]
 def unitsFstOne_mulEquiv_unitsQuasiregular : unitsFstOne R A ≃* (Quasiregular A)ˣ where
   toFun x :=
@@ -155,13 +163,7 @@ def unitsFstOne_mulEquiv_unitsQuasiregular : unitsFstOne R A ≃* (Quasiregular 
       property := by simp }
   left_inv x := Subtype.ext <| Units.ext <| by simpa using x.val.val.inl_fst_add_inr_snd_eq
   right_inv x := Units.ext <| by simp [-equiv_symm_apply]
-  map_mul' x y := by
-    ext
-    simp only [Submonoid.coe_mul, Subgroup.coe_toSubmonoid, Units.val_mul, snd_mul,
-      InvMemClass.coe_inv]
-    apply equiv.symm.injective
-    rw [x.property, y.property, one_smul, one_smul R]
-    simp
+  map_mul' x y := Units.ext <| equiv.symm.injective <| by simp
 
 end Unitization
 
@@ -171,6 +173,8 @@ open Quasiregular
 
 variable {R : Type*} [NonUnitalSemiring R]
 
+/-- In a non-unital semiring `R`, an element `x : R` satisfies `IsQuasiregular` if it is a unit
+under the monoid operation `fun x y ↦ y + x + x * y`. -/
 def IsQuasiregular (x : R) : Prop :=
   ∃ u : (Quasiregular R)ˣ, equiv.symm u.val = x
 
@@ -226,34 +230,51 @@ lemma isQuasiregular_iff_isUnit' (R : Type*) {A : Type*} [CommSemiring R] [NonUn
     exact (Unitization.unitsFstOne_mulEquiv_unitsQuasiregular R).symm u |>.val.isUnit
   · exact ⟨(Unitization.unitsFstOne_mulEquiv_unitsQuasiregular R) ⟨hx.unit, by simp⟩, by simp⟩
 
-variable (R : Type*) {A : Type*} [Semifield R] [NonUnitalRing A]
+variable (R : Type*) {A : Type*} [CommSemiring R] [NonUnitalRing A]
   [Module R A] [IsScalarTower R A A] [SMulCommClass R A A]
 
-def quasiSpectrum (a : A) : Set R := { r : R | r = 0 ∨ ¬ IsQuasiregular (-(r⁻¹ • a)) }
+--/-- If `A` is a non-unital `R`-algebra, the `R`-quasispectrum of `a : A` consists of ....-/
+--def quasiSpectrum' (a : A) : Set R := { r : R | r = 0 ∨ ¬ IsQuasiregular (-(↑r⁻¹ • a)) }
 
-lemma quasiSpectrum.zero_mem (a : A) : 0 ∈ quasiSpectrum R a := by
-  rw [quasiSpectrum]; simp
+/-- If `A` is a non-unital `R`-algebra, the `R`-quasispectrum of `a : A` consists of ....-/
+def quasiSpectrum (a : A) : Set R :=
+  {r : R | (hr : IsUnit r) → ¬ IsQuasiregular (-(hr.unit⁻¹ • a))}
 
-instance quasiSpectrum.instZero (a : A) : Zero (quasiSpectrum R a) where
-  zero := ⟨0, quasiSpectrum.zero_mem R a⟩
+variable {R} in
+lemma quasiSpectrum.not_isUnit_mem (a : A) {r : R} (hr : ¬ IsUnit r) : r ∈ quasiSpectrum R a :=
+  fun hr' ↦ (hr hr').elim
 
 @[simp]
-lemma quasiSpectrum.coe_zero (a : A) : (0 : quasiSpectrum R a) = (0 : R) := rfl
+lemma quasiSpectrum.zero_mem [Nontrivial R] (a : A) : 0 ∈ quasiSpectrum R a :=
+  quasiSpectrum.not_isUnit_mem a <| by simp
 
-lemma quasiSpectrum.mem_of_not_quasiregular (a : A) {r : R} (hr : ¬ IsQuasiregular (-(r⁻¹ • a))) :
-    r ∈ quasiSpectrum R a :=
-  .inr hr
+instance quasiSpectrum.instZero [Nontrivial R] (a : A) : Zero (quasiSpectrum R a) where
+  zero := ⟨0, quasiSpectrum.zero_mem R a⟩
 
-lemma quasiSpectrum_eq_spectrum_union (R : Type*) {A : Type*} [Semifield R] [Ring A] [Algebra R A]
-    (a : A) : quasiSpectrum R a = spectrum R a ∪ {0} := by
+variable {R}
+
+@[simp]
+lemma quasiSpectrum.coe_zero [Nontrivial R] (a : A) : (0 : quasiSpectrum R a) = (0 : R) := rfl
+
+lemma quasiSpectrum.mem_of_not_quasiregular (a : A) {r : Rˣ}
+    (hr : ¬ IsQuasiregular (-(r⁻¹ • a))) : (r : R) ∈ quasiSpectrum R a :=
+  fun _ ↦ by simpa using hr
+
+lemma quasiSpectrum_eq_spectrum_union (R : Type*) {A : Type*} [CommSemiring R]
+    [Ring A] [Algebra R A] (a : A) : quasiSpectrum R a = spectrum R a ∪ {r : R | ¬ IsUnit r} := by
   ext r
   rw [quasiSpectrum]
-  simp only [Set.union_singleton, Set.mem_insert_iff, Set.mem_setOf_eq, spectrum.mem_iff]
-  apply or_congr_right' fun (hr : r ≠ 0) ↦ ?_
-  rw [not_iff_not, isQuasiregular_iff_isUnit, ← sub_eq_add_neg]
-  lift r to Rˣ using hr.isUnit
-  rw [← r.val_inv_eq_inv_val, Algebra.algebraMap_eq_smul_one]
-  exact (IsUnit.smul_sub_iff_sub_inv_smul r a).symm
+  simp only [Set.mem_setOf_eq, Set.mem_union, ← imp_iff_or_not, spectrum.mem_iff]
+  congr! 1 with hr
+  rw [not_iff_not, isQuasiregular_iff_isUnit, ← sub_eq_add_neg, Algebra.algebraMap_eq_smul_one]
+  exact (IsUnit.smul_sub_iff_sub_inv_smul hr.unit a).symm
+
+
+lemma quasiSpectrum_eq_spectrum_union_zero (R : Type*) {A : Type*} [Semifield R] [Ring A]
+    [Algebra R A] (a : A) : quasiSpectrum R a = spectrum R a ∪ {0} := by
+  convert quasiSpectrum_eq_spectrum_union R a
+  ext x
+  simpa using isUnit_iff_ne_zero |>.symm |> not_iff_not.mpr
 
 -- MOVE ME to `Algebra.Algebra.Unitization`
 instance Unitization.instCanLift :
@@ -274,6 +295,6 @@ lemma Unitization.quasiSpectrum_eq_spectrum_union (R S : Type*) {A : Type*} [Sem
     [SMulCommClass S A A] [Module R A] [IsScalarTower R S A] (a : A) :
     quasiSpectrum R a = spectrum R (a : Unitization S A) ∪ {0} := by
   ext r
-  rw [← _root_.quasiSpectrum_eq_spectrum_union]
-  apply or_congr_right
-  rw [not_iff_not, ← inr_smul, ← inr_neg, isQuasiregular_inr_iff]
+  rw [← _root_.quasiSpectrum_eq_spectrum_union_zero]
+  apply forall_congr' fun x ↦ ?_
+  rw [not_iff_not, Units.smul_def, Units.smul_def, ← inr_smul, ← inr_neg, isQuasiregular_inr_iff]
