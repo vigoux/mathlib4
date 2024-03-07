@@ -14,12 +14,22 @@ theorem wish (u v : ℕ → ℂ → ℂ) (hu : ∀ s, 1 < s.re → Summable (fun
   refine (IsEquivalent.tendsto_nhds_iff ?_).mp hc
   sorry
 
+example (u : ℕ → ℝ → ℝ) (h₀ : ∀ s ∈ Set.Ioi 0, Summable (fun k ↦ u k s)) {ε : ℝ} (hε : 0 < ε) :
+    ∀ᶠ s in (𝓝[>] 0), ∀ᶠ k₀ in atTop,
+      ‖s * ∑' k, u k s - s * (∑' k, if k₀ ≤ k then u k s else 0)‖ < ε := sorry
+
 example (u v : ℕ → ℝ → ℝ)
-    (h₀ : ∀ s, Summable (fun k ↦ u k s))
+    (h₀ : ∀ s ∈ Set.Ioi 0, Summable (fun k ↦ u k s))
     (h₁ : ∀ ε > 0, ∀ᶠ s in (𝓝[>] 0), ∀ᶠ k in atTop, ‖ v k s  - u k s‖ < ε * (u k s))
     (h₂ : Tendsto (fun s ↦ s * ∑' k, u k s) (𝓝[>] 0) (𝓝 1)) :
     Tendsto (fun s ↦ s * ∑' k, v k s) (𝓝[>] 0) (𝓝 1) := by
-  have h₃ : ∀ s, Summable (fun k ↦ v k s) := sorry
+  have h₃ : ∀ s ∈ Set.Ioi 0, Summable (fun k ↦ v k s) := sorry
+  have h₄ : ∀ s ∈ Set.Ioi 0, Summable (fun k ↦ s * (v k s - u k s)) := sorry
+  suffices Tendsto (fun s ↦ s * ∑' k, (v k s - u k s)) (𝓝[>] 0) (𝓝 0) by
+    sorry
+
+#exit
+
   suffices Tendsto (fun s ↦ s * ∑' k, (v k s - u k s)) (𝓝[>] 0) (𝓝 0) by
     simp_rw [tsum_sub sorry sorry, mul_sub] at this
     have := Filter.Tendsto.add this h₂
