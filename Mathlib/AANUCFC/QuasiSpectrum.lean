@@ -244,10 +244,6 @@ lemma quasiSpectrum.mem_of_not_quasiregular (a : A) {r : R} (hr : ¬ IsQuasiregu
     r ∈ quasiSpectrum R a :=
   .inr hr
 
-lemma smul_left_cancel_iff₀ {G α : Type*} [GroupWithZero G] [MulAction G α] {a b : α} {g : G}
-    (hg : g ≠ 0) : g • a = g • b ↔ a = b :=
-  hg.isUnit.smul_left_cancel
-
 lemma quasiSpectrum_eq_spectrum_union (R : Type*) {A : Type*} [Semifield R] [Ring A] [Algebra R A]
     (a : A) : quasiSpectrum R a = spectrum R a ∪ {0} := by
   ext r
