@@ -275,13 +275,6 @@ lemma cfcₙ_mul (f g : R → R)
     congr
   · simp [cfcₙ_apply_of_not_predicate a ha]
 
--- :sad: no `ppow` yet
---lemma cfcₙ_pow (f : R → R) (n : ℕ) (ha : p a := by cfc_tac)
-    --(hf : ContinuousOn f (σₙ R a) := by cfc_cont_tac) (h0 : f 0 = 0 := by cfc_zero_tac) :
-    --cfcₙ a (fun x ↦ (f x) ^ n) = cfcₙ a f ^ n := by
-  --rw [cfcₙ_apply a f, ← map_pow, cfcₙ_apply a _]
-  --congr
-
 lemma cfcₙ_add (f g : R → R)
     (hf : ContinuousOn f (σₙ R a) := by cfc_cont_tac) (hf0 : f 0 = 0 := by cfc_zero_tac)
     (hg : ContinuousOn g (σₙ R a) := by cfc_cont_tac) (hg0 : g 0 = 0 := by cfc_zero_tac) :
@@ -322,10 +315,6 @@ lemma cfcₙ_star (f : R → R) : cfcₙ a (fun x ↦ star (f x)) = star (cfcₙ
     · rw [cfcₙ_apply_of_not_map_zero a h0, cfcₙ_apply_of_not_map_zero, star_zero]
       exact fun hf0 ↦ h0 <| by simpa using congr(star $(hf0))
 
--- :sad: no `ppow`
---lemma cfcₙ_pow_id (n : ℕ) (ha : p a := by cfc_tac) : cfcₙ a (· ^ n : R → R) = a ^ n := by
-  --rw [cfcₙ_pow a _, cfcₙ_id' R a]
-
 lemma cfcₙ_smul_id {S : Type*} [SMulZeroClass S R] [ContinuousConstSMul S R]
     [SMulZeroClass S A] [IsScalarTower S R A] [IsScalarTower S R (R → R)]
     (s : S) (ha : p a := by cfc_tac) : cfcₙ a (s • · : R → R) = s • a := by
@@ -336,8 +325,6 @@ lemma cfcₙ_const_mul_id (r : R) (ha : p a := by cfc_tac) : cfcₙ a (r * ·) =
 
 lemma cfcₙ_star_id (ha : p a := by cfc_tac) : cfcₙ a (star · : R → R) = star a := by
   rw [cfcₙ_star a _, cfcₙ_id' R a]
-
--- section polynomial -- needs no constant term
 
 variable [UniqueNonUnitalContinuousFunctionalCalculus R A]
 
@@ -363,12 +350,6 @@ lemma cfcₙ_comp' (g f : R → R) (ha : p a := by cfc_tac)
     (hf : ContinuousOn f (σₙ R a) := by cfc_cont_tac) (hf0 : f 0 = 0 := by cfc_zero_tac) :
     cfcₙ a (g <| f ·) = cfcₙ (cfcₙ a f) g :=
   cfcₙ_comp a g f
-
--- :sad: no `ppow`
---lemma cfcₙ_comp_pow (n : ℕ) (f : R → R) (ha : p a := by cfc_tac)
-    --(hf : ContinuousOn f ((· ^ n) '' (σₙ R a)) := by cfc_cont_tac) :
-    --cfcₙ a (f <| · ^ n) = cfcₙ (a ^ n) f := by
-  --rw [cfcₙ_comp' a f (· ^ n), cfcₙ_pow_id a n]
 
 lemma cfcₙ_comp_smul {S : Type*} [SMulZeroClass S R] [ContinuousConstSMul S R]
     [SMulZeroClass S A] [IsScalarTower S R A] [IsScalarTower S R (R → R)]
