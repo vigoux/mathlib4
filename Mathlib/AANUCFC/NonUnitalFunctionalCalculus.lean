@@ -1,8 +1,48 @@
+/-
+Copyright (c) 2024 Jireh Loreaux. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Jireh Loreaux
+-/
 import Mathlib.AANUCFC.QuasiSpectrum
 import Mathlib.AANUCFC.ContinuousMapZero
 import Mathlib.Topology.ContinuousFunction.FunctionalCalculus
 
-local notation "σₙ" => quasiSpectrum
+/-!
+# The continuous functional calculus for non-unital algebras
+
+This file defines a generic API for the *continuous functional calculus* in *non-unital* algebras
+which is suitable in a wide range of settings. The design is intended to match as closely as
+possible that for unital algebras in `Topology.ContinuousFunction.FunctionalCalculus`. Changes to
+either file should be mirrored in its counterpart whenever possible. The underlying reasons for the
+design decisions in the unital case apply equally in the non-unital case. See that module
+documentation in that file for more information.
+
+A continuous functional calculus for an element `a : A` in a non-unital topological `R`-algebra is
+a continuous extension of the polynomial functional calculus (i.e., `Polynomial.aeval`) for
+polynomials with no constant term to continuous `R`-valued functions on `quasispectrum R a` which
+vanish at zero. More precisely, it is a continuous star algebra homomorphism
+`C(quasispectrum R a, R)₀ →⋆ₙₐ[R] A` that sends `(ContinuousMap.id R).restrict (quasispectrum R a)`
+to `a`. In all cases of interest (e.g., when `quasispectrum R a` is compact and `R` is `ℝ≥0`, `ℝ`,
+or `ℂ`), this is sufficient to uniquely determine the continuous functional calculus which is
+encoded in the `UniqueNonUnitalContinuousFunctionalCalculus` class.
+
+## Main declarations
+
++ `NonUnitalContinuousFunctionalCalculus R (p : A → Prop)`: a class stating that every `a : A`
+  satisfying `p a` has a non-unital star algebra homomorphism from the continuous `R`-valued
+  functions on the `R`-quasispectrum of `a` vanishing at zero into the algebra `A`. This map is a
+  closed embedding, and satisfies the **spectral mapping theorem**.
++ `cfcₙHom : p a → C(quasispectrum R a, R)₀ →⋆ₐ[R] A`: the underlying star algebra homomorphism for
+  an element satisfying property `p`.
++ `cfcₙ : A → (R → R) → A`: an unbundled version of `cfcₙHom` which takes the junk value `0` when
+  `cfcₙHom` is not defined.
+
+## Main theorems
+
++ `cfcₙ_comp : cfcₙ a (x ↦ g (f x)) = cfcₙ (cfcₙ a f) g`
+
+-/
+local notation "σₙ" => quasispectrum
 
 open scoped ContinuousMapZero
 
@@ -51,7 +91,7 @@ lemma cfcₙHom_id :
   (NonUnitalContinuousFunctionalCalculus.exists_cfc_of_predicate a ha).choose_spec.2.1
 
 /-- The **spectral mapping theorem** for the continuous functional calculus. -/
-lemma cfcₙHom_map_quasiSpectrum (f : C(σₙ R a, R)₀) :
+lemma cfcₙHom_map_quasispectrum (f : C(σₙ R a, R)₀) :
     σₙ R (cfcₙHom ha f) = Set.range f :=
   (NonUnitalContinuousFunctionalCalculus.exists_cfc_of_predicate a ha).choose_spec.2.2.1 f
 
@@ -144,10 +184,10 @@ lemma cfcₙ_id' (ha : p a := by cfc_tac) : cfcₙ a (fun x : R ↦ x) = a :=
   cfcₙ_id R a
 
 /-- The **spectral mapping theorem** for the continuous functional calculus. -/
-lemma cfc_map_quasiSpectrum (f : R → R) (ha : p a := by cfc_tac)
+lemma cfc_map_quasispectrum (f : R → R) (ha : p a := by cfc_tac)
     (hf : ContinuousOn f (σₙ R a) := by cfc_cont_tac) (h0 : f 0 = 0 := by cfc_zero_tac) :
     σₙ R (cfcₙ a f) = f '' σₙ R a := by
-  simp [cfcₙ_apply a f, cfcₙHom_map_quasiSpectrum (p := p)]
+  simp [cfcₙ_apply a f, cfcₙHom_map_quasispectrum (p := p)]
 
 lemma cfcₙ_predicate (f : R → R) (ha : p a := by cfc_tac)
     (hf : ContinuousOn f (σₙ R a) := by cfc_cont_tac) (h0 : f 0 = 0 := by cfc_zero_tac) :
@@ -157,7 +197,7 @@ lemma cfcₙ_predicate (f : R → R) (ha : p a := by cfc_tac)
 lemma cfcₙ_congr {f g : R → R} (hfg : (σₙ R a).EqOn f g) :
     cfcₙ a f = cfcₙ a g := by
   by_cases h : p a ∧ ContinuousOn g (σₙ R a) ∧ g 0 = 0
-  · rw [cfcₙ_apply a f h.1 (h.2.1.congr hfg) (hfg (quasiSpectrum.zero_mem R a) ▸ h.2.2),
+  · rw [cfcₙ_apply a f h.1 (h.2.1.congr hfg) (hfg (quasispectrum.zero_mem R a) ▸ h.2.2),
       cfcₙ_apply a g h.1 h.2.1 h.2.2]
     congr
     exact Set.restrict_eq_iff.mpr hfg
@@ -167,7 +207,7 @@ lemma cfcₙ_congr {f g : R → R} (hfg : (σₙ R a).EqOn f g) :
     · rw [cfcₙ_apply_of_not_continuousOn a hg, cfcₙ_apply_of_not_continuousOn]
       exact fun hf ↦ hg (hf.congr hfg.symm)
     · rw [cfcₙ_apply_of_not_map_zero a h0, cfcₙ_apply_of_not_map_zero]
-      exact fun hf ↦ h0 (hfg (quasiSpectrum.zero_mem R a) ▸ hf)
+      exact fun hf ↦ h0 (hfg (quasispectrum.zero_mem R a) ▸ hf)
 
 lemma eqOn_of_cfcₙ_eq_cfcₙ {f g : R → R} (h : cfcₙ a f = cfcₙ a g) (ha : p a := by cfc_tac)
     (hf : ContinuousOn f (σₙ R a) := by cfc_cont_tac) (hf0 : f 0 = 0 := by cfc_zero_tac)
@@ -280,7 +320,7 @@ lemma cfcₙ_comp (g f : R → R) (ha : p a := by cfc_tac)
   have := hg.comp hf <| (σₙ R a).mapsTo_image f
   have sp_eq :
       σₙ R (cfcₙHom (show p a from ha) ⟨ContinuousMap.mk _ hf.restrict, hf0⟩) = f '' (σₙ R a) := by
-    rw [cfcₙHom_map_quasiSpectrum (by exact ha) _]
+    rw [cfcₙHom_map_quasispectrum (by exact ha) _]
     ext
     simp
   rw [cfcₙ_apply .., cfcₙ_apply a f,
@@ -322,7 +362,7 @@ lemma cfcₙ_comp_star (f : R → R) (ha : p a := by cfc_tac)
     cfcₙ a (f <| star ·) = cfcₙ (star a) f := by
   rw [cfcₙ_comp' a f star, cfcₙ_star_id a]
 
-lemma eq_zero_of_quasiSpectrum_eq_zero (h_spec : σₙ R a = {0}) (ha : p a := by cfc_tac) :
+lemma eq_zero_of_quasispectrum_eq_zero (h_spec : σₙ R a = {0}) (ha : p a := by cfc_tac) :
     a = 0 := by
   simpa [cfcₙ_id R a] using cfcₙ_congr a (f := id) (g := fun _ : R ↦ 0) <| by rw [h_spec]; simp
 
