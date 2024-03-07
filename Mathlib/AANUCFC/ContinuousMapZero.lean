@@ -17,12 +17,14 @@ Of course, one could generalize to maps between pointed topological spaces, but 
 the purpose of this type.
 -/
 
+/-- The type of continuous maps which map zero to zero. -/
 structure ContinuousMapZero (X R : Type*) [Zero X] [Zero R] [TopologicalSpace X]
     [TopologicalSpace R] extends C(X, R) where
   map_zero' : toContinuousMap 0 = 0
 
 namespace ContinuousMapZero
 
+@[inherit_doc]
 scoped notation "C(" X ", " R ")₀" => ContinuousMapZero X R
 
 section Basic
@@ -51,6 +53,7 @@ lemma ext {f g : C(X, R)₀} (h : ∀ x, f x = g x) : f = g := DFunLike.ext f g 
 @[simp]
 lemma coe_mk {f : C(X, R)} {h0 : f 0 = 0} : ⇑(mk f h0) = f := rfl
 
+/-- Composition of continuous maps which map zero to zero. -/
 def comp (g : C(Y, R)₀) (f : C(X, Y)₀) : C(X, R)₀ where
   toContinuousMap := g.toContinuousMap.comp f.toContinuousMap
   map_zero' := show g (f 0) = 0 from map_zero f ▸ map_zero g
