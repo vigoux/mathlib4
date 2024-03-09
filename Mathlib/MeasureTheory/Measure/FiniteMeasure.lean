@@ -121,7 +121,7 @@ def _root_.MeasureTheory.FiniteMeasure (Ω : Type*) [MeasurableSpace Ω] : Type 
   { μ : Measure Ω // IsFiniteMeasure μ }
 #align measure_theory.finite_measure MeasureTheory.FiniteMeasure
 
--- porting note: as with other subtype synonyms (e.g., `ℝ≥0`, we need a new function for the
+-- Porting note: as with other subtype synonyms (e.g., `ℝ≥0`, we need a new function for the
 -- coercion instead of relying on `Subtype.val`.
 /-- Coercion from `MeasureTheory.FiniteMeasure Ω` to `MeasureTheory.Measure Ω`. -/
 @[coe]
@@ -138,7 +138,7 @@ instance isFiniteMeasure (μ : FiniteMeasure Ω) : IsFiniteMeasure (μ : Measure
 instance instCoeFun : CoeFun (FiniteMeasure Ω) fun _ => Set Ω → ℝ≥0 :=
   ⟨fun μ s => ((μ : Measure Ω) s).toNNReal⟩
 
--- porting note: now a syntactic tautology because of the way coercions work in Lean 4
+-- Porting note: now a syntactic tautology because of the way coercions work in Lean 4
 #noalign measure_theory.finite_measure.coe_fn_eq_to_nnreal_coe_fn_to_measure
 
 @[simp]
@@ -222,19 +222,19 @@ variable {R : Type*} [SMul R ℝ≥0] [SMul R ℝ≥0∞] [IsScalarTower R ℝ�
 instance instSMul : SMul R (FiniteMeasure Ω) where
   smul (c : R) μ := ⟨c • (μ : Measure Ω), MeasureTheory.isFiniteMeasureSMulOfNNRealTower⟩
 
--- porting note: with `simp` here the `coeFn` lemmas below fall prey to `simpNF`: the LHS simplifies
+-- Porting note: with `simp` here the `coeFn` lemmas below fall prey to `simpNF`: the LHS simplifies
 @[norm_cast]
 theorem toMeasure_zero : ((↑) : FiniteMeasure Ω → Measure Ω) 0 = 0 :=
   rfl
 #align measure_theory.finite_measure.coe_zero MeasureTheory.FiniteMeasure.toMeasure_zero
 
--- porting note: with `simp` here the `coeFn` lemmas below fall prey to `simpNF`: the LHS simplifies
+-- Porting note: with `simp` here the `coeFn` lemmas below fall prey to `simpNF`: the LHS simplifies
 @[norm_cast]
 theorem toMeasure_add (μ ν : FiniteMeasure Ω) : ↑(μ + ν) = (↑μ + ↑ν : Measure Ω) :=
   rfl
 #align measure_theory.finite_measure.coe_add MeasureTheory.FiniteMeasure.toMeasure_add
 
--- porting note: with `simp` here the `coeFn` lemmas below fall prey to `simpNF`: the LHS simplifies
+-- Porting note: with `simp` here the `coeFn` lemmas below fall prey to `simpNF`: the LHS simplifies
 @[norm_cast]
 theorem toMeasure_smul (c : R) (μ : FiniteMeasure Ω) : ↑(c • μ) = c • (μ : Measure Ω) :=
   rfl
@@ -248,7 +248,7 @@ theorem coeFn_zero : (⇑(0 : FiniteMeasure Ω) : Set Ω → ℝ≥0) = (0 : Set
 @[simp, norm_cast]
 theorem coeFn_add (μ ν : FiniteMeasure Ω) : (⇑(μ + ν) : Set Ω → ℝ≥0) = (⇑μ + ⇑ν : Set Ω → ℝ≥0) := by
   funext
-  simp only [Pi.add_apply, ← ENNReal.coe_eq_coe, ne_eq, ennreal_coeFn_eq_coeFn_toMeasure,
+  simp only [Pi.add_apply, ← ENNReal.coe_inj, ne_eq, ennreal_coeFn_eq_coeFn_toMeasure,
     ENNReal.coe_add]
   norm_cast
 #align measure_theory.finite_measure.coe_fn_add MeasureTheory.FiniteMeasure.coeFn_add
@@ -257,7 +257,7 @@ theorem coeFn_add (μ ν : FiniteMeasure Ω) : (⇑(μ + ν) : Set Ω → ℝ≥
 theorem coeFn_smul [IsScalarTower R ℝ≥0 ℝ≥0] (c : R) (μ : FiniteMeasure Ω) :
     (⇑(c • μ) : Set Ω → ℝ≥0) = c • (⇑μ : Set Ω → ℝ≥0) := by
   funext
-  simp only [Pi.smul_apply, ← ENNReal.coe_eq_coe, ne_eq, ennreal_coeFn_eq_coeFn_toMeasure,
+  simp only [Pi.smul_apply, ← ENNReal.coe_inj, ne_eq, ennreal_coeFn_eq_coeFn_toMeasure,
     ENNReal.coe_smul]
   norm_cast
 #align measure_theory.finite_measure.coe_fn_smul MeasureTheory.FiniteMeasure.coeFn_smul
@@ -276,11 +276,11 @@ def toMeasureAddMonoidHom : FiniteMeasure Ω →+ Measure Ω where
 instance {Ω : Type*} [MeasurableSpace Ω] : Module ℝ≥0 (FiniteMeasure Ω) :=
   Function.Injective.module _ toMeasureAddMonoidHom toMeasure_injective toMeasure_smul
 
--- porting note: `@[simp]` breaks the LHS of `coeFn_smul`
+-- Porting note: `@[simp]` breaks the LHS of `coeFn_smul`
 theorem coeFn_smul_apply [IsScalarTower R ℝ≥0 ℝ≥0] (c : R) (μ : FiniteMeasure Ω) (s : Set Ω) :
     (c • μ) s = c • μ s := by
   rw [coeFn_smul, Pi.smul_apply]
-  -- porting note: why doesn't `simp only` work in place of `rw` here?
+  -- Porting note: why doesn't `simp only` work in place of `rw` here?
 #align measure_theory.finite_measure.coe_fn_smul_apply MeasureTheory.FiniteMeasure.coeFn_smul_apply
 
 /-- Restrict a finite measure μ to a set A. -/
@@ -343,7 +343,7 @@ theorem testAgainstNN_coe_eq {μ : FiniteMeasure Ω} {f : Ω →ᵇ ℝ≥0} :
 
 theorem testAgainstNN_const (μ : FiniteMeasure Ω) (c : ℝ≥0) :
     μ.testAgainstNN (BoundedContinuousFunction.const Ω c) = c * μ.mass := by
-  simp [← ENNReal.coe_eq_coe]
+  simp [← ENNReal.coe_inj]
 #align measure_theory.finite_measure.test_against_nn_const MeasureTheory.FiniteMeasure.testAgainstNN_const
 
 theorem testAgainstNN_mono (μ : FiniteMeasure Ω) {f g : Ω →ᵇ ℝ≥0} (f_le_g : (f : Ω → ℝ≥0) ≤ g) :
@@ -387,7 +387,7 @@ variable [OpensMeasurableSpace Ω]
 
 theorem testAgainstNN_add (μ : FiniteMeasure Ω) (f₁ f₂ : Ω →ᵇ ℝ≥0) :
     μ.testAgainstNN (f₁ + f₂) = μ.testAgainstNN f₁ + μ.testAgainstNN f₂ := by
-  simp only [← ENNReal.coe_eq_coe, BoundedContinuousFunction.coe_add, ENNReal.coe_add, Pi.add_apply,
+  simp only [← ENNReal.coe_inj, BoundedContinuousFunction.coe_add, ENNReal.coe_add, Pi.add_apply,
     testAgainstNN_coe_eq]
   exact lintegral_add_left (BoundedContinuousFunction.measurable_coe_ennreal_comp _) _
 #align measure_theory.finite_measure.test_against_nn_add MeasureTheory.FiniteMeasure.testAgainstNN_add
@@ -395,7 +395,7 @@ theorem testAgainstNN_add (μ : FiniteMeasure Ω) (f₁ f₂ : Ω →ᵇ ℝ≥0
 theorem testAgainstNN_smul [IsScalarTower R ℝ≥0 ℝ≥0] [PseudoMetricSpace R] [Zero R]
     [BoundedSMul R ℝ≥0] (μ : FiniteMeasure Ω) (c : R) (f : Ω →ᵇ ℝ≥0) :
     μ.testAgainstNN (c • f) = c • μ.testAgainstNN f := by
-  simp only [← ENNReal.coe_eq_coe, BoundedContinuousFunction.coe_smul, testAgainstNN_coe_eq,
+  simp only [← ENNReal.coe_inj, BoundedContinuousFunction.coe_smul, testAgainstNN_coe_eq,
     ENNReal.coe_smul]
   simp_rw [← smul_one_smul ℝ≥0∞ c (f _ : ℝ≥0∞), ← smul_one_smul ℝ≥0∞ c (lintegral _ _ : ℝ≥0∞),
     smul_eq_mul]
