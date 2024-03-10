@@ -4,15 +4,162 @@ section Asymptotics
 
 open BigOperators Asymptotics Filter Topology Set
 
-theorem wish (u v : ℕ → ℂ → ℂ) (hu : ∀ s, 1 < s.re → Summable (fun k ↦ u k s))
-    (ha : ∀ s, ((fun k ↦ u k s) ~[atTop] fun k ↦ v k s)) {c : ℂ}
-    (hc : Tendsto (fun s ↦ (s - 1) * ∑' k, u k s) (𝓝[{s | 1 < s.re}] 1) (𝓝 c)) :
-    Tendsto (fun s ↦ (s - 1) * ∑' k, v k s) (𝓝[{s | 1 < s.re}] 1) (𝓝 c) := by
-  have : ∀ s, 1 < s.re → Summable (fun k ↦ v k s) := by
-    intro s hs
-    refine summable_of_isEquivalent_nat (hu s hs) (ha s).symm
-  refine (IsEquivalent.tendsto_nhds_iff ?_).mp hc
+-- This is stupidly complicated, just need the finite sum tends to zero
+theorem toto1 {u : ℕ → ℝ → ℝ} {V : Set ℝ} (h₀ : ∀ s ∈ V, Summable (fun k ↦ u k s))
+    (t : Finset ℕ) {a : ℝ} (h₁ : ∀ k ∈ t, ContinuousWithinAt (fun s ↦ u k s) V a)
+    {l : ℝ} (h : Tendsto (fun s ↦ (s - a) * ∑' k, u k s) (𝓝[V] a) (𝓝 l)) :
+    Tendsto (fun s ↦ (s - a) * ∑' (k : {k // k ∉ t}), u k s) (𝓝[V] a) (𝓝 l) := by
+  have t₀ : ∀ k ∈ t, Tendsto (fun s ↦ (s - a) * u k s) (𝓝[V] a) (𝓝 0) := by
+    intro k hk
+    rw [show 𝓝 (0:ℝ) = 𝓝 (0 * u k a) by rw [zero_mul]]
+    refine Tendsto.mul ?_ ?_
+    · have : Tendsto (fun s ↦ s - a) (𝓝 a) (𝓝 0) := by
+        exact tendsto_sub_nhds_zero_iff.mpr fun _ s ↦ s
+      refine Tendsto.mono_left this nhdsWithin_le_nhds
+    · exact ContinuousWithinAt.tendsto (h₁ k hk)
+  have t₁ : Tendsto (fun s ↦ - ((s - a) * ∑ k in t, u k s)) (𝓝[V] a) (𝓝 0) := by
+    rw [show 𝓝 (0:ℝ) = 𝓝 (-0) by rw [neg_zero]]
+    refine Tendsto.neg ?_
+    convert tendsto_finset_sum t t₀
+    · rw [Finset.mul_sum]
+    · rw [Finset.sum_const_zero]
+  have t₄ : Tendsto (fun s ↦ (s - a) * ∑ k in t, u k s +
+      (s - a) * ∑' (k : { k // k ∉ t }), u k s) (𝓝[V] a) (𝓝 l) := by
+    refine Tendsto.congr' ?_ h
+    rw [eventuallyEq_nhdsWithin_iff]
+    filter_upwards with s hs
+    rw [← sum_add_tsum_subtype_compl ?_ t, mul_add]
+    exact h₀ s hs
+  have t₃ := Tendsto.add t₄ t₁
+  simp_rw [add_neg_cancel_comm, add_zero] at t₃
+  exact t₃
+
+example {u : ℕ → ℝ → ℝ} {V : Set ℝ} (t : Finset ℕ) {a : ℝ} :
+    Tendsto (fun s ↦ (s - a) * ∑ k in t, u k s) (𝓝[V] a) (𝓝 0) := by
   sorry
+
+theorem toto2 {u : ℕ → ℝ → ℝ} {V : Set ℝ} (h₀ : ∀ s ∈ V, Summable (fun k ↦ u k s))
+    (t : Finset ℕ) {a : ℝ} (h₁ : ∀ k ∈ t, ContinuousWithinAt (fun s ↦ u k s) V a)
+    {l : ℝ} (h : Tendsto (fun s ↦ (s - a) * ∑' (k : {k // k ∉ t}), u k s) (𝓝[V] a) (𝓝 l)) :
+    Tendsto (fun s ↦ (s - a) * ∑' k, u k s) (𝓝[V] a) (𝓝 l) := by
+  sorry
+
+theorem toto3 {u : ℕ → ℝ → ℝ} {V : Set ℝ} (h₀ : ∀ s ∈ V, Summable (fun k ↦ u k s))
+    (t : Finset ℕ) {a : ℝ} (h₁ : ∀ k ∈ t, ContinuousWithinAt (fun s ↦ u k s) V a) :
+    (fun s ↦ (s - a) * ∑' k, u k s) ~[𝓝[V] a] fun s ↦ (s - a) * ∑' (k : {k // k ∉ t}), u k s := by
+  sorry
+
+example (u v : ℕ → ℝ) {V : Set ℝ} (h₁ : Tendsto (fun k ↦ u k / (v k)) atTop (𝓝 1))
+    (h₂ : ∀ s ∈ V, Summable (fun k ↦ (v k) ^ s))
+    (h₃ : Tendsto (fun s ↦ (s - 1) * ∑' k, (v k) ^ s) (𝓝[V] 1) (𝓝 1)) :
+    Tendsto (fun s ↦ (s - 1) * ∑' k, (u k) ^ s) (𝓝[V] 1) (𝓝 1) := by
+  suffices ∀ ε > 0, 1 - ε ≤ liminf (fun s ↦ (s - 1) * ∑' k, (u k) ^ s) (𝓝[V] 1) ∧
+      limsup (fun s ↦ (s - 1) * ∑' k, (u k) ^ s) (𝓝[V] 1) ≤ 1 + ε by
+    have l₁ : liminf (fun s ↦ (s - 1) * ∑' k, (u k) ^ s) (𝓝[V] 1) = 1 := sorry
+    have l₂ : limsup (fun s ↦ (s - 1) * ∑' k, (u k) ^ s) (𝓝[V] 1) = 1 := sorry
+    refine tendsto_of_liminf_eq_limsup l₁ l₂ ?_ ?_
+    ·
+      sorry
+    ·
+      sorry
+  sorry
+
+example (u v : ℕ → ℝ → ℝ) {V : Set ℝ}
+    {a : ℝ} {l : ℝ} (c : ℕ → ℝ) (hc₁ : Summable c)
+    (hc₂ :  ∀ k, ∀ s ∈ V, ‖v k s - u k s‖ ≤ c k) -- cannot be true in our case?
+    (h₂ : Tendsto (fun s ↦ (s - a) * ∑' k, u k s) (𝓝[V] a) (𝓝 l)) :
+    Tendsto (fun s ↦ (s - a) * ∑' k, v k s) (𝓝[V] a) (𝓝 l) := by
+  let V' := V ∪ {a}
+  have hc₃ : ∀ k, ∀ s ∈ V', ‖(s - a) * (v k s - u k s)‖ ≤ c k := sorry
+  have t₁ := tendstoUniformlyOn_tsum hc₁ hc₃
+  have t₂ := TendstoUniformlyOn.continuousOn t₁ sorry
+  have t₃ := ContinuousOn.continuousWithinAt t₂ (mem_union_right V rfl : a ∈ V')
+  have := ContinuousWithinAt.tendsto t₃
+  simp only [sub_self, zero_mul, tsum_zero] at this
+  have := tendsto_nhdsWithin_mono_left (subset_union_left _ _ : V ⊆ V') this
+  simp_rw [tsum_mul_left] at this
+  suffices Tendsto (fun s ↦ (s - a) * ∑' k, (v k s - u k s)) (𝓝[V] a) (𝓝 0) by
+    simp_rw [tsum_sub sorry sorry, mul_sub] at this
+    have := Filter.Tendsto.add this h₂
+    simp_rw [sub_add_cancel, zero_add] at this
+    exact this
+  exact this
+
+  -- suffices Tendsto (fun s ↦ (s - a) * ∑' k, (v k s - u k s)) (𝓝[U] a) (𝓝 0) by
+  --   simp_rw [tsum_sub sorry sorry, mul_sub] at this
+  --   have := Filter.Tendsto.add this h₂
+  --   simp_rw [sub_add_cancel, zero_add] at this
+  --   exact this
+  -- have h₅ := tendsto_tsum_compl_atTop_zero c
+  -- rw [Metric.tendsto_nhdsWithin_nhds]
+  -- rw [Metric.tendsto_atTop] at h₅
+  -- intro ε hε
+  -- specialize h₅ (ε / 2) sorry
+  -- obtain ⟨t, ht⟩ := h₅
+  -- specialize ht t le_rfl
+  -- have h₆ : ∀ s ∈ U, Summable (fun k ↦ v k s - u k s) := sorry
+  -- have h₇ := toto1 h₆ t (a := a) (l := 0) ?_ ?_
+  -- rw [Metric.tendsto_nhdsWithin_nhds] at h₇
+  -- specialize h₇ (ε / 2) sorry
+  -- obtain ⟨δ, hδ₁, hδ₂⟩ := h₇
+  -- refine ⟨δ, hδ₁, ?_⟩
+  -- intro s hs₁ hs₂
+  -- specialize hδ₂ hs₁ hs₂
+  -- rw [dist_zero_right]  at ht hδ₂ ⊢
+  -- rw [← sum_add_tsum_subtype_compl (h₆ s hs₁) t, mul_add]
+  -- refine lt_of_le_of_lt (norm_add_le _ _) ?_
+  -- have t₁ := Summable.subtype (h₆ s hs₁) t
+
+  -- have := tsum_mono (h₆ s hs₁) ?_ (hc₂ s hs₁)
+
+
+example (u v : ℕ → ℝ → ℝ) {U : Set ℝ} (h₀ : ∀ s ∈ U, Summable (fun k ↦ u k s))
+    {a : ℝ} (h₁ : ∀ k, ContinuousWithinAt (fun s ↦ u k s) U a)
+    {l : ℝ} (h₂ : Tendsto (fun s ↦ (s - a) * ∑' k, u k s) (𝓝[U] a) (𝓝 l)) :
+    -- Missing a relation between u and v! : uniform conv of v - u
+    Tendsto (fun s ↦ (s - a) * ∑' k, v k s) (𝓝[U] a) (𝓝 l) := by
+  suffices Tendsto (fun s ↦ (s - a) * ∑' k, (v k s - u k s)) (𝓝[U] a) (𝓝 0) by
+    simp_rw [tsum_sub sorry sorry, mul_sub] at this
+    have := Filter.Tendsto.add this h₂
+    simp_rw [sub_add_cancel, zero_add] at this
+    exact this
+  have h₅ := fun s ↦ tendsto_tsum_compl_atTop_zero (f := fun k ↦ (s - a) * (v k s - u k s))
+  have h₆ : ∀ s ∈ U, Summable (fun k ↦ v k s - u k s) := sorry
+  have h₇ := fun t ↦ toto1 h₆ t (a := a) (l := 0) ?_ ?_
+  specialize h₅ 1
+  rw [Metric.tendsto_nhdsWithin_nhds]
+  rw [Metric.tendsto_atTop] at h₅
+  intro ε hε
+  specialize h₅ ε hε
+  obtain ⟨t, ht⟩ := h₅
+  specialize h₇ t
+  rw [Metric.tendsto_nhdsWithin_nhds] at h₇
+  specialize h₇ ε hε
+
+  sorry
+  sorry
+
+
+
+  -- have h₇ := toto2 h₆ ?_ (a := a) (l := 0) ?_ ?_
+  -- ·
+  --   simp_rw [Metric.tendsto_nhdsWithin_nhds] at h₇ ⊢
+  --   intro ε hε
+  --   specialize h₇ ε sorry
+
+  --   specialize h₇ (ε / 2) sorry
+  --   obtain ⟨δ, hδ₁, hδ₂⟩ := h₇
+  --   refine ⟨δ, hδ₁, ?_⟩
+  --   intro s hs₁ hs₂
+
+
+
+
+  sorry
+
+
+
+
 
 example (u : ℕ → ℝ → ℝ) (h₀ : ∀ s ∈ Set.Ioi 0, Summable (fun k ↦ u k s)) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ s in (𝓝[>] 0), ∀ᶠ k₀ in atTop,
@@ -20,7 +167,7 @@ example (u : ℕ → ℝ → ℝ) (h₀ : ∀ s ∈ Set.Ioi 0, Summable (fun k �
 
 example (u v : ℕ → ℝ → ℝ)
     (h₀ : ∀ s ∈ Set.Ioi 0, Summable (fun k ↦ u k s))
-    (h₁ : ∀ ε > 0, ∀ᶠ s in (𝓝[>] 0), ∀ᶠ k in atTop, ‖ v k s  - u k s‖ < ε * (u k s))
+    (h₁ : ∀ ε > 0, ∀ᶠ s in (𝓝[>] 0), ∀ᶠ k in atTop, ‖v k s  - u k s‖ < ε * (u k s))
     (h₂ : Tendsto (fun s ↦ s * ∑' k, u k s) (𝓝[>] 0) (𝓝 1)) :
     Tendsto (fun s ↦ s * ∑' k, v k s) (𝓝[>] 0) (𝓝 1) := by
   have h₃ : ∀ s ∈ Set.Ioi 0, Summable (fun k ↦ v k s) := sorry
@@ -28,7 +175,7 @@ example (u v : ℕ → ℝ → ℝ)
   suffices Tendsto (fun s ↦ s * ∑' k, (v k s - u k s)) (𝓝[>] 0) (𝓝 0) by
     sorry
 
-#exit
+
 
   suffices Tendsto (fun s ↦ s * ∑' k, (v k s - u k s)) (𝓝[>] 0) (𝓝 0) by
     simp_rw [tsum_sub sorry sorry, mul_sub] at this
@@ -63,7 +210,7 @@ example (u v : ℕ → ℝ → ℝ)
 
 
 
-#exit
+
 
 
 example (u v : ℕ → ℝ → ℝ)
@@ -84,7 +231,7 @@ example (u v : ℕ → ℝ → ℝ)
 
 end Asymptotics
 
-#exit
+
 
 section analysis
 
@@ -103,18 +250,7 @@ example :
   exact congr_arg ((s - 1) * ·) (zeta_eq_tsum_one_div_nat_cpow hs)
 
 variable {x : ℕ → ℝ} (h₁ : Monotone x) (h₂ : Tendsto x atTop atTop) {l : ℝ}
-  (h₃ : Tendsto (fun c : ℝ ↦ Nat.card {i | x i ≤ c} / c) atTop (𝓝 l))
-
-example : Tendsto (fun s ↦ (s - 1) * ∑' i, (x i) ^ (- s)) (𝓝[{s | 1 < s}] 1) (nhds l) := by
-  refine wish ?_ _ ?_ ?_ ?_
-  · exact fun k s ↦ l ^ s * (k + 1) ^ (- s)
-  · intro s hs
-    refine Summable.mul_left _ ?_
-    sorry
-  · sorry
-  · sorry
-
-#exit
+    (h₃ : Tendsto (fun c : ℝ ↦ Nat.card {i | x i ≤ c} / c) atTop (𝓝 l))
 
 theorem lemma1 (B : ℝ) : Set.Finite {i | x i ≤ B} := by
   simp_rw [show ∀ i, x i ≤ B ↔ ¬ x i > B by aesop]
