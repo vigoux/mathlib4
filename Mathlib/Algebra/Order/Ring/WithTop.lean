@@ -64,7 +64,7 @@ lemma top_mul' : ∀ (b : WithTop α), ⊤ * b = if b = 0 then 0 else ⊤
 
 lemma mul_def (a b : WithTop α) :
     a * b = if a = 0 ∨ b = 0 then 0 else WithTop.map₂ (· * ·) a b := by
-  cases a <;> cases b <;> aesop (add simp [none_eq_top, some_eq_coe])
+  induction a using WithTop.recTopCoe <;> induction b using WithTop.recTopCoe <;> aesop
 #align with_top.mul_def WithTop.mul_def
 
 lemma mul_eq_top_iff : a * b = ⊤ ↔ a ≠ 0 ∧ b = ⊤ ∨ a = ⊤ ∧ b ≠ 0 := by rw [mul_def]; aesop
@@ -164,7 +164,7 @@ instance instMonoidWithZero : MonoidWithZero (WithTop α) where
     | ⊤, 0 => 1
     | ⊤, _n + 1 => ⊤
   npow_zero a := by cases a <;> simp
-  npow_succ n a := by cases n <;> cases a <;> simp [none_eq_top, some_eq_coe, pow_succ]
+  npow_succ n a := by cases n <;> induction a using WithTop.recTopCoe <;> simp [pow_succ]
 
 @[simp, norm_cast] lemma coe_pow (a : α) (n : ℕ) : (↑(a ^ n) : WithTop α) = a ^ n := rfl
 
@@ -242,8 +242,8 @@ lemma bot_mul' : ∀ (b : WithBot α), ⊥ * b = if b = 0 then 0 else ⊥
 #align with_bot.bot_mul_bot WithBot.bot_mul_bot
 
 lemma mul_def (a b : WithBot α) :
-    a * b = if a = 0 ∨ b = 0 then 0 else WithBot.map₂ (· * ·) a b := by
-  cases a <;> cases b <;> aesop (add simp [none_eq_bot, some_eq_coe])
+    a * b = if a = 0 ∨ b = 0 then 0 else WithBot.map₂ (· * ·) a b :=
+  WithTop.mul_def a b
 #align with_bot.mul_def WithBot.mul_def
 
 lemma mul_eq_bot_iff : a * b = ⊥ ↔ a ≠ 0 ∧ b = ⊥ ∨ a = ⊥ ∧ b ≠ 0 := by rw [mul_def]; aesop
