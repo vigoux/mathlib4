@@ -1,5 +1,25 @@
 import Mathlib
 
+section analysis
+
+open Filter BigOperators Topology
+
+example :
+    Tendsto (fun s : ℂ ↦ (s - 1) * ∑' (n : ℕ), 1 / (n:ℂ) ^ s)
+      (𝓝[{s | 1 < s.re}] 1) (𝓝 1) := by
+  have : Tendsto (fun s : ℂ ↦ (s - 1) * riemannZeta s) (𝓝[{s | 1 < s.re}] 1) (𝓝 1) := by
+    refine Filter.Tendsto.mono_left riemannZeta_residue_one ?_
+    refine nhdsWithin_mono _ ?_
+    aesop
+  refine Tendsto.congr' ?_ this
+  rw [eventuallyEq_nhdsWithin_iff]
+  refine eventually_of_forall (fun s hs ↦ ?_)
+  exact congr_arg ((s - 1) * ·) (zeta_eq_tsum_one_div_nat_cpow hs)
+
+end analysis
+
+#exit
+
 section Asymptotics
 
 open BigOperators Asymptotics Filter Topology Set
