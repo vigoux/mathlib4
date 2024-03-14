@@ -4,7 +4,7 @@ section analysis
 
 open Filter BigOperators Topology
 
-example :
+theorem toto :
     Tendsto (fun s : ℂ ↦ (s - 1) * ∑' (n : ℕ), 1 / (n:ℂ) ^ s)
       (𝓝[{s | 1 < s.re}] 1) (𝓝 1) := by
   have : Tendsto (fun s : ℂ ↦ (s - 1) * riemannZeta s) (𝓝[{s | 1 < s.re}] 1) (𝓝 1) := by
@@ -16,6 +16,78 @@ example :
   refine eventually_of_forall (fun s hs ↦ ?_)
   exact congr_arg ((s - 1) * ·) (zeta_eq_tsum_one_div_nat_cpow hs)
 
+theorem toto1 {R α : Type*} [Ring R] [UniformSpace R] [UniformAddGroup R] [ContinuousMul R]
+    [CompleteSpace R] [T2Space R] (u : α → R → R) {V : Set R}
+    (h₀ : ∀ s ∈ V, Summable (fun k ↦ u k s))
+    (t : Finset α) {a : R} (h₁ : ∀ k ∈ t, ContinuousWithinAt (fun s ↦ u k s) V a)
+    (v : R → R) {l : R} (h₂ : Tendsto v (𝓝[V] a) (𝓝 0))
+    (h₃ : Tendsto (fun s ↦ (v s) * ∑' k, u k s) (𝓝[V] a) (𝓝 l)) :
+    Tendsto (fun s ↦ (v s) * ∑' (k : {k // k ∉ t}), u k s) (𝓝[V] a) (𝓝 l) := by
+  have t₀ : ∀ k ∈ t, Tendsto (fun s ↦ (v s) * u k s) (𝓝[V] a) (𝓝 0) := by
+    intro k hk
+    rw [show 𝓝 (0:R) = 𝓝 (0 * u k a) by rw [zero_mul]]
+    refine Tendsto.mul ?_ ?_
+    · exact h₂
+    · exact ContinuousWithinAt.tendsto (h₁ k hk)
+  have t₁ : Tendsto (fun s ↦ - ((v s) * ∑ k in t, u k s)) (𝓝[V] a) (𝓝 0) := by
+    rw [show 𝓝 (0:R) = 𝓝 (-0) by rw [neg_zero]]
+    refine Tendsto.neg ?_
+    convert tendsto_finset_sum t t₀
+    · rw [Finset.mul_sum]
+    · rw [Finset.sum_const_zero]
+  have t₄ : Tendsto (fun s ↦ (v s) * ∑ k in t, u k s +
+      (v s) * ∑' (k : { k // k ∉ t }), u k s) (𝓝[V] a) (𝓝 l) := by
+    refine Tendsto.congr' ?_ h₃
+    rw [eventuallyEq_nhdsWithin_iff]
+    filter_upwards with s hs
+    rw [← sum_add_tsum_subtype_compl ?_ t, mul_add]
+    exact h₀ s hs
+  have t₃ := Tendsto.add t₄ t₁
+  simp_rw [add_neg_cancel_comm, add_zero] at t₃
+  exact t₃
+
+example (a : ℕ → ℝ) (h : Tendsto (fun k ↦ k / (a k)) atTop (𝓝 1)) (ε : ℝ) (hε : 0 < ε)
+  (hε' : ε < 1) :
+  ∃ t : Finset ℕ, ∀ s : ℝ, 1 < s →
+    (1 - ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), 1/ (k:ℝ) ^ s ≤
+      (s - 1) * ∑' (k : {k // k ∉ t}), 1 / a k ^ s ∧
+    (s - 1) * ∑' (k : {k // k ∉ t}), 1 / a k ^ s ≤
+      (1 + ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), 1/ (k:ℝ) ^ s := by
+  rw [Metric.tendsto_atTop] at h
+  specialize h ε hε
+  obtain ⟨k₀, hk₀⟩ := h
+  refine ⟨Finset.Ico 0 k₀, fun s hs ↦ ?_⟩
+  
+
+#exit
+
+example (t : Finset ℕ) :
+    Tendsto (fun s : ℂ ↦ (s - 1) * ∑' (k : {k // k ∉ t}), 1 / (k:ℂ) ^ s)
+      (𝓝[{s | 1 < s.re}] 1) (𝓝 1) := by
+  refine toto1 (u := fun k s ↦ 1 / (k:ℂ) ^ s) ?_ t ?_ toto
+  · intro s hs
+    sorry
+  · intro k _
+    sorry
+
+#exit
+
+  have t₁ : Tendsto (fun s : ℂ ↦ - (s - 1) * ∑ k in t,  1 / (k:ℂ) ^ s)
+    (𝓝[{s | 1 < s.re}] 1) (𝓝 0) := sorry
+  have t₂ := toto
+  have t₃ := Tendsto.add t₁ t₂
+  have := fun s : ℂ ↦ sum_add_tsum_subtype_compl (f := fun n : ℕ ↦ 1 / (n:ℂ) ^ s) ?_ t
+  simp_rw [← this, mul_add, neg_mul, neg_add_cancel_left, zero_add] at t₃
+  exact t₃
+
+
+#exit
+
+  have t1 := toto
+  have := fun s : ℂ ↦ sum_add_tsum_subtype_compl (f := fun n : ℕ ↦ 1 / (n:ℂ) ^ s) ?_ t
+  simp_rw [← this] at t1
+
+
 end analysis
 
 #exit
@@ -24,35 +96,7 @@ section Asymptotics
 
 open BigOperators Asymptotics Filter Topology Set
 
--- This is stupidly complicated, just need the finite sum tends to zero
-theorem toto1 {u : ℕ → ℝ → ℝ} {V : Set ℝ} (h₀ : ∀ s ∈ V, Summable (fun k ↦ u k s))
-    (t : Finset ℕ) {a : ℝ} (h₁ : ∀ k ∈ t, ContinuousWithinAt (fun s ↦ u k s) V a)
-    {l : ℝ} (h : Tendsto (fun s ↦ (s - a) * ∑' k, u k s) (𝓝[V] a) (𝓝 l)) :
-    Tendsto (fun s ↦ (s - a) * ∑' (k : {k // k ∉ t}), u k s) (𝓝[V] a) (𝓝 l) := by
-  have t₀ : ∀ k ∈ t, Tendsto (fun s ↦ (s - a) * u k s) (𝓝[V] a) (𝓝 0) := by
-    intro k hk
-    rw [show 𝓝 (0:ℝ) = 𝓝 (0 * u k a) by rw [zero_mul]]
-    refine Tendsto.mul ?_ ?_
-    · have : Tendsto (fun s ↦ s - a) (𝓝 a) (𝓝 0) := by
-        exact tendsto_sub_nhds_zero_iff.mpr fun _ s ↦ s
-      refine Tendsto.mono_left this nhdsWithin_le_nhds
-    · exact ContinuousWithinAt.tendsto (h₁ k hk)
-  have t₁ : Tendsto (fun s ↦ - ((s - a) * ∑ k in t, u k s)) (𝓝[V] a) (𝓝 0) := by
-    rw [show 𝓝 (0:ℝ) = 𝓝 (-0) by rw [neg_zero]]
-    refine Tendsto.neg ?_
-    convert tendsto_finset_sum t t₀
-    · rw [Finset.mul_sum]
-    · rw [Finset.sum_const_zero]
-  have t₄ : Tendsto (fun s ↦ (s - a) * ∑ k in t, u k s +
-      (s - a) * ∑' (k : { k // k ∉ t }), u k s) (𝓝[V] a) (𝓝 l) := by
-    refine Tendsto.congr' ?_ h
-    rw [eventuallyEq_nhdsWithin_iff]
-    filter_upwards with s hs
-    rw [← sum_add_tsum_subtype_compl ?_ t, mul_add]
-    exact h₀ s hs
-  have t₃ := Tendsto.add t₄ t₁
-  simp_rw [add_neg_cancel_comm, add_zero] at t₃
-  exact t₃
+
 
 example {u : ℕ → ℝ → ℝ} {V : Set ℝ} (t : Finset ℕ) {a : ℝ} :
     Tendsto (fun s ↦ (s - a) * ∑ k in t, u k s) (𝓝[V] a) (𝓝 0) := by
