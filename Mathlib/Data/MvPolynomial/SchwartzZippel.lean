@@ -43,6 +43,7 @@ lemma and_or_and_not_iff (p q : Prop) : ((p ∧ q) ∨ (p ∧ ¬ q)) ↔ p := by
 lemma and_and_and_not_iff (p q : Prop) : ((p ∧ q) ∧ (p ∧ ¬ q)) ↔ false := by
   tauto
 
+-- https://github.com/leanprover-community/mathlib4/pull/11401
 @[simp]
 lemma MvPolynomial.support_nonempty_iff {F σ} [CommSemiring F] (p : MvPolynomial σ F) :
     (MvPolynomial.support p).Nonempty ↔ p ≠ 0 := by
