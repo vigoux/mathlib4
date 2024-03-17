@@ -47,7 +47,7 @@ lemma and_and_and_not_iff (p q : Prop) : ((p ∧ q) ∧ (p ∧ ¬ q)) ↔ false 
 @[simp]
 lemma MvPolynomial.support_nonempty_iff {F σ} [CommSemiring F] (p : MvPolynomial σ F) :
     (MvPolynomial.support p).Nonempty ↔ p ≠ 0 := by
-  rw [ne_eq, ←MvPolynomial.support_eq_empty, Finset.nonempty_iff_ne_empty]
+  rw [ne_eq, ← MvPolynomial.support_eq_empty, Finset.nonempty_iff_ne_empty]
 
 -- https://github.com/leanprover-community/mathlib4/pull/7898
 lemma Finset.card_filter_piFinset_eq' {n : ℕ} {α : Fin (n + 1) → Type*}
@@ -55,7 +55,7 @@ lemma Finset.card_filter_piFinset_eq' {n : ℕ} {α : Fin (n + 1) → Type*}
     (S : (i : Fin (n + 1)) → Finset (α i)) :
     Finset.card (Finset.filter (fun r ↦ p (fun x ↦ r $ Fin.succ x)) (Fintype.piFinset S))
       = Finset.card ((S 0) ×ˢ Finset.filter p (Fintype.piFinset (fun x ↦ S $ Fin.succ x))) := by
-  rw [←Finset.card_map ((Equiv.piFinSuccAbove α 0).toEmbedding)]
+  rw [← Finset.card_map ((Equiv.piFinSuccAbove α 0).toEmbedding)]
   congr
   ext ⟨x, f⟩
   simp? [Fin.forall_fin_succ] says simp only [Fin.zero_succAbove, Fintype.mem_piFinset,
@@ -117,10 +117,10 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
     set p_i' := Polynomial.coeff p' i with hp_i'
     have h0 : p_i'.totalDegree + i ≤ (p.totalDegree) := by
       apply MvPolynomial.totalDegree_coeff_finSuccEquiv_add_le
-      rw [←Polynomial.leadingCoeff, Polynomial.leadingCoeff_ne_zero]
+      rw [← Polynomial.leadingCoeff, Polynomial.leadingCoeff_ne_zero]
       exact Iff.mpr (AddEquivClass.map_ne_zero_iff (MvPolynomial.finSuccEquiv F n)) p_nonzero
     have h1 : p_i' ≠ 0 := by
-      rw [hp_i', hi, ←Polynomial.leadingCoeff, Polynomial.leadingCoeff_ne_zero]
+      rw [hp_i', hi, ← Polynomial.leadingCoeff, Polynomial.leadingCoeff_ne_zero]
       exact Iff.mpr (AddEquivClass.map_ne_zero_iff (MvPolynomial.finSuccEquiv F n)) p_nonzero
     -- We use the inductive hypothesis on p_i'
     replace ih := ih p_i' h1 S
@@ -158,7 +158,7 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
       -- evaluation
       -- on r of p_i' is a nonzero univariate polynomial of degree i.
       -- There can therefore only be at most i zeros per r value.
-      rw [←Finset.card_map (Equiv.toEmbedding (Equiv.piFinSucc n F)), Finset.map_filter,
+      rw [← Finset.card_map (Equiv.toEmbedding (Equiv.piFinSucc n F)), Finset.map_filter,
         Finset.card_eq_sum_ones, Finset.sum_finset_product_right _
             (s := (Finset.filter (fun r ↦ (MvPolynomial.eval (r)) p_i' ≠ 0)
               (Fintype.piFinset (fun _ => S))))
@@ -166,7 +166,7 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
             -- can be more simply written with Fin.cons
             (t := fun r => Finset.filter
                     (fun f => (MvPolynomial.eval ((Equiv.piFinSucc n F).invFun (f, r))) p = 0) S)]
-      · simp_rw [←Finset.card_eq_sum_ones]
+      · simp_rw [← Finset.card_eq_sum_ones]
         apply le_trans (Finset.sum_le_sum (g := fun _ => i) _)
         · rw [Finset.sum_const, smul_eq_mul, mul_comm]
           apply Nat.mul_le_mul_left
@@ -177,8 +177,8 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
         · intros r hr
           simp only [Equiv.invFun_as_coe, Equiv.piFinSucc_symm_apply]
           simp_rw [MvPolynomial.eval_eq_eval_mv_eval']
-          rw [←hp']
-          simp only [←hp',
+          rw [← hp']
+          simp only [← hp',
             Fintype.mem_piFinset, Finset.mem_filter] at hr
           -- hr2 is in wikipedia P_i(r_2, ... , r_n) ≠ 0
           rcases hr with ⟨_, hr2⟩
@@ -186,15 +186,15 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           save
           set p_r := (Polynomial.map (MvPolynomial.eval r) p') with hp_r
           have : p_r.natDegree = i := by
-            -- rw [←hi] at hr2
+            -- rw [← hi] at hr2
             rw [hp_r]
             rw [hi]
             apply Polynomial.natDegree_map_of_leadingCoeff_ne_zero
             -- rw [Polynomial.natDegree_map_eq_iff (f := MvPolynomial.eval r) p']
             unfold Polynomial.leadingCoeff
             exact hr2
-          -- rw [←hi]
-          rw [←this]
+          -- rw [← hi]
+          rw [← this]
           apply le_trans _ (Polynomial.card_roots' _)
           apply le_trans _ (Multiset.toFinset_card_le _)
           apply Finset.card_le_card
@@ -206,15 +206,15 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           rw [Polynomial.IsRoot.def]
           rw [hxr]
           -- rw [refl]
-          simp only [←hp_r, and_true]
+          simp only [← hp_r, and_true]
           intro hpr_zero
           contrapose! hr2
-          -- rw [←hp'] at *
+          -- rw [← hp'] at *
           -- rw [hpr_zero] at this
           -- rw [Polynomial.natDegree_zero] at this
-          rw [hp_i',  ←this, hpr_zero, Polynomial.natDegree_zero]
+          rw [hp_i', ← this, hpr_zero, Polynomial.natDegree_zero]
           have hp_r0 : p_r.coeff 0 = 0 := by simp [hpr_zero]
-          rw [←hp_r0]
+          rw [← hp_r0]
           rw [Polynomial.coeff_map]
       · simp? [Fin.forall_fin_succ] says simp only [Polynomial.coeff_natDegree,
           MvPolynomial.finSuccEquiv_apply, MvPolynomial.coe_eval₂Hom, ne_eq,
@@ -247,10 +247,9 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
       )
       * Finset.card S := by
         congr
-        rw [←Finset.card_union_add_card_inter]
+        rw [← Finset.card_union_add_card_inter]
         rw [Finset.filter_union_right]
-        -- todo note filter_or is the symm of this. Golf that proof.
-        rw [←Finset.filter_and]
+        rw [← Finset.filter_and]
         simp only [ne_eq, and_or_and_not_iff, and_and_and_not_iff]
         simp only [Finset.filter_False, Finset.card_empty, add_zero]
       -- Pr [B] + Pr [A ∩ Bᶜ]
@@ -287,9 +286,9 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
       _ ≤
       MvPolynomial.totalDegree p * Finset.card S ^ Nat.succ n := by
         rw [Nat.pow_succ]
-        rw [←mul_assoc]
+        rw [← mul_assoc]
         apply Nat.mul_le_mul_right
-        rw [←add_mul]
+        rw [← add_mul]
         apply Nat.mul_le_mul_right
         apply le_of_eq
         apply Nat.sub_add_cancel
