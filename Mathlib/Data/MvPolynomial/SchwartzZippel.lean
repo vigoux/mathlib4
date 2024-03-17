@@ -55,7 +55,7 @@ lemma Finset.card_filter_piFinset_eq' {n : ℕ} {α : Fin (n + 1) → Type*}
     (S : (i : Fin (n + 1)) → Finset (α i)) :
     Finset.card (Finset.filter (fun r ↦ p (fun x ↦ r $ Fin.succ x)) (Fintype.piFinset S))
       = Finset.card ((S 0) ×ˢ Finset.filter p (Fintype.piFinset (fun x ↦ S $ Fin.succ x))) := by
-  rw [←Finset.card_map ((Equiv.piFinSuccAboveEquiv α 0).toEmbedding)]
+  rw [←Finset.card_map ((Equiv.piFinSuccAbove α 0).toEmbedding)]
   congr
   ext ⟨x, f⟩
   simp? [Fin.forall_fin_succ] says simp only [Fin.zero_succAbove, Fintype.mem_piFinset,
@@ -186,14 +186,15 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           save
           set p_r := (Polynomial.map (MvPolynomial.eval r) p') with hp_r
           have : p_r.natDegree = i := by
-            rw [←hi] at hr2
+            -- rw [←hi] at hr2
             rw [hp_r]
             rw [hi]
             apply Polynomial.natDegree_map_of_leadingCoeff_ne_zero
             -- rw [Polynomial.natDegree_map_eq_iff (f := MvPolynomial.eval r) p']
             unfold Polynomial.leadingCoeff
             exact hr2
-          rw [←hi, ←this]
+          -- rw [←hi]
+          rw [←this]
           apply le_trans _ (Polynomial.card_roots' _)
           apply le_trans _ (Multiset.toFinset_card_le _)
           apply Finset.card_le_of_subset
@@ -211,7 +212,7 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           -- rw [←hp'] at *
           -- rw [hpr_zero] at this
           -- rw [Polynomial.natDegree_zero] at this
-          rw [←hi, ←this, hpr_zero, Polynomial.natDegree_zero]
+          rw [hp_i',  ←this, hpr_zero, Polynomial.natDegree_zero]
           have hp_r0 : p_r.coeff 0 = 0 := by simp [hpr_zero]
           rw [←hp_r0]
           rw [Polynomial.coeff_map]
