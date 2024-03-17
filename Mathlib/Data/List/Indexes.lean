@@ -60,8 +60,8 @@ protected theorem oldMapIdxCore_eq (l : List α) (f : ℕ → α → β) (n : �
 theorem list_reverse_induction (p : List α → Prop) (base : p [])
     (ind : ∀ (l : List α) (e : α), p l → p (l ++ [e])) : (∀ (l : List α), p l) := by
   let q := fun l ↦ p (reverse l)
-  have pq : ∀ l, p (reverse l) → q l := by simp only [reverse_reverse]; intro; exact id
-  have qp : ∀ l, q (reverse l) → p l := by simp only [reverse_reverse]; intro; exact id
+  have pq : ∀ l, p (reverse l) → q l := by simp only [q, reverse_reverse]; intro; exact id
+  have qp : ∀ l, q (reverse l) → p l := by simp only [q, reverse_reverse]; intro; exact id
   intro l
   apply qp
   generalize (reverse l) = l
@@ -192,6 +192,10 @@ theorem length_mapIdx {α β} (l : List α) (f : ℕ → α → β) : (l.mapIdx 
   · simp [IH]
 #align list.length_map_with_index List.length_mapIdx
 
+@[simp]
+theorem mapIdx_eq_nil {α β} {f : ℕ → α → β} {l : List α} : List.mapIdx f l = [] ↔ l = [] := by
+  rw [List.mapIdx_eq_enum_map, List.map_eq_nil, List.enum_eq_nil]
+
 @[simp, deprecated]
 theorem nthLe_mapIdx {α β} (l : List α) (f : ℕ → α → β) (i : ℕ) (h : i < l.length)
     (h' : i < (l.mapIdx f).length := h.trans_le (l.length_mapIdx f).ge) :
@@ -238,13 +242,15 @@ end FoldrIdx
 
 theorem indexesValues_eq_filter_enum (p : α → Prop) [DecidablePred p] (as : List α) :
     indexesValues p as = filter (p ∘ Prod.snd) (enum as) := by
-  simp [indexesValues, foldrIdx_eq_foldr_enum, uncurry, filter_eq_foldr]
+  simp (config := { unfoldPartialApp := true }) [indexesValues, foldrIdx_eq_foldr_enum, uncurry,
+    filter_eq_foldr]
 #align list.indexes_values_eq_filter_enum List.indexesValues_eq_filter_enum
 
 theorem findIdxs_eq_map_indexesValues (p : α → Prop) [DecidablePred p] (as : List α) :
     findIdxs p as = map Prod.fst (indexesValues p as) := by
-  simp only [indexesValues_eq_filter_enum, map_filter_eq_foldr, findIdxs, uncurry,
-    foldrIdx_eq_foldr_enum, decide_eq_true_eq, comp_apply, Bool.cond_decide]
+  simp (config := { unfoldPartialApp := true }) only [indexesValues_eq_filter_enum,
+    map_filter_eq_foldr, findIdxs, uncurry, foldrIdx_eq_foldr_enum, decide_eq_true_eq, comp_apply,
+    Bool.cond_decide]
 #align list.find_indexes_eq_map_indexes_values List.findIdxs_eq_map_indexesValues
 
 section FoldlIdx
@@ -281,7 +287,8 @@ variable {m : Type u → Type v} [Monad m]
 
 theorem foldrIdxM_eq_foldrM_enum {α β} (f : ℕ → α → β → m β) (b : β) (as : List α) [LawfulMonad m] :
     foldrIdxM f b as = foldrM (uncurry f) b (enum as) := by
-  simp only [foldrIdxM, foldrM_eq_foldr, foldrIdx_eq_foldr_enum, uncurry]
+  simp (config := { unfoldPartialApp := true }) only [foldrIdxM, foldrM_eq_foldr,
+    foldrIdx_eq_foldr_enum, uncurry]
 #align list.mfoldr_with_index_eq_mfoldr_enum List.foldrIdxM_eq_foldrM_enum
 
 theorem foldlIdxM_eq_foldlM_enum [LawfulMonad m] {α β} (f : ℕ → β → α → m β) (b : β) (as : List α) :

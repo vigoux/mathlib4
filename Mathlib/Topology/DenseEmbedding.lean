@@ -28,8 +28,7 @@ has to be `DenseInducing` (not necessarily injective).
 noncomputable section
 
 open Set Filter
-
-open Classical Topology Filter
+open scoped Topology
 
 variable {α : Type*} {β : Type*} {γ : Type*} {δ : Type*}
 
@@ -109,7 +108,8 @@ protected theorem separableSpace [SeparableSpace α] : SeparableSpace β :=
 
 variable [TopologicalSpace δ] {f : γ → α} {g : γ → δ} {h : δ → β}
 
-/-- ```
+/--
+```
  γ -f→ α
 g↓     ↓e
  δ -h→ β
@@ -177,8 +177,8 @@ theorem extend_eq' [T2Space γ] {f : α → γ} (di : DenseInducing i)
 theorem extend_unique_at [T2Space γ] {b : β} {f : α → γ} {g : β → γ} (di : DenseInducing i)
     (hf : ∀ᶠ x in comap i (𝓝 b), g (i x) = f x) (hg : ContinuousAt g b) : di.extend f b = g b := by
   refine' di.extend_eq_of_tendsto fun s hs => mem_map.2 _
-  suffices : ∀ᶠ x : α in comap i (𝓝 b), g (i x) ∈ s
-  exact hf.mp (this.mono fun x hgx hfx => hfx ▸ hgx)
+  suffices ∀ᶠ x : α in comap i (𝓝 b), g (i x) ∈ s from
+    hf.mp (this.mono fun x hgx hfx => hfx ▸ hgx)
   clear hf f
   refine' eventually_comap.2 ((hg.eventually hs).mono _)
   rintro _ hxs x rfl
@@ -201,8 +201,7 @@ theorem continuousAt_extend [T3Space γ] {b : β} {f : α → γ} (di : DenseInd
   have V₁_in : V₁ ∈ 𝓝 b := by
     filter_upwards [hf]
     rintro x ⟨c, hc⟩
-    unfold_let φ
-    rwa [di.extend_eq_of_tendsto hc]
+    rwa [← di.extend_eq_of_tendsto hc] at hc
   obtain ⟨V₂, V₂_in, V₂_op, hV₂⟩ : ∃ V₂ ∈ 𝓝 b, IsOpen V₂ ∧ ∀ x ∈ i ⁻¹' V₂, f x ∈ V' := by
     simpa [and_assoc] using
       ((nhds_basis_opens' b).comap i).tendsto_left_iff.mp (mem_of_mem_nhds V₁_in : b ∈ V₁) V' V'_in

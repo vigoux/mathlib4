@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kevin Buzzard, Sidharth Hariharan
 -/
 import Mathlib.Data.Polynomial.Div
-import Mathlib.Data.ZMod.Basic
 import Mathlib.Logic.Function.Basic
 import Mathlib.RingTheory.Localization.FractionRing
 import Mathlib.Tactic.FieldSimp
@@ -51,7 +50,7 @@ variable (K : Type) [Field K] [Algebra R[X] K] [IsFractionRing R[X] K]
 
 section TwoDenominators
 
---Porting note: added for scoped `Algebra.cast` instance
+-- Porting note: added for scoped `Algebra.cast` instance
 open algebraMap
 
 /-- Let R be an integral domain and f, g₁, g₂ ∈ R[X]. Let g₁ and g₂ be monic and coprime.
@@ -69,10 +68,10 @@ theorem div_eq_quo_add_rem_div_add_rem_div (f : R[X]) {g₁ g₂ : R[X]} (hg₁ 
       degree_modByMonic_lt _ hg₂, _⟩
   have hg₁' : (↑g₁ : K) ≠ 0 := by
     norm_cast
-    exact hg₁.ne_zero_of_ne zero_ne_one
+    exact hg₁.ne_zero
   have hg₂' : (↑g₂ : K) ≠ 0 := by
     norm_cast
-    exact hg₂.ne_zero_of_ne zero_ne_one
+    exact hg₂.ne_zero
   have hfc := modByMonic_add_div (f * c) hg₂
   have hfd := modByMonic_add_div (f * d) hg₁
   field_simp
@@ -86,7 +85,7 @@ section NDenominators
 
 open BigOperators
 
---Porting note: added for scoped `Algebra.cast` instance
+-- Porting note: added for scoped `Algebra.cast` instance
 open algebraMap
 
 /-- Let R be an integral domain and f ∈ R[X]. Let s be a finite index set.

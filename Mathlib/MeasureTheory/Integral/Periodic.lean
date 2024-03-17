@@ -111,7 +111,7 @@ theorem volume_closedBall {x : AddCircle T} (ε : ℝ) :
     (AddCircle.measurePreserving_mk T (-(T / 2))).measure_preimage measurableSet_closedBall]
   by_cases hε : ε < T / 2
   · simp [hε, min_eq_right (by linarith : 2 * ε ≤ T)]
-  · simp [hε, min_eq_left (by linarith : T ≤ 2 * ε)]
+  · simp [I, hε, min_eq_left (by linarith : T ≤ 2 * ε)]
 #align add_circle.volume_closed_ball AddCircle.volume_closedBall
 
 instance : IsUnifLocDoublingMeasure (volume : Measure (AddCircle T)) := by
@@ -142,6 +142,7 @@ noncomputable def measurableEquivIco (a : ℝ) : AddCircle T ≃ᵐ Ico a (a + T
   measurable_invFun := AddCircle.measurable_mk'.comp measurable_subtype_coe
 #align add_circle.measurable_equiv_Ico AddCircle.measurableEquivIco
 
+attribute [local instance] Subtype.measureSpace in
 /-- The lower integral of a function over `AddCircle T` is equal to the lower integral over an
 interval (t, t + T] in `ℝ` of its lift to `ℝ`. -/
 protected theorem lintegral_preimage (t : ℝ) (f : AddCircle T → ℝ≥0∞) :
@@ -164,6 +165,7 @@ protected theorem lintegral_preimage (t : ℝ) (f : AddCircle T → ℝ≥0∞) 
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
 
+attribute [local instance] Subtype.measureSpace in
 /-- The integral of an almost-everywhere strongly measurable function over `AddCircle T` is equal
 to the integral over an interval (t, t + T] in `ℝ` of its lift to `ℝ`. -/
 protected theorem integral_preimage (t : ℝ) (f : AddCircle T → E) :
@@ -172,7 +174,7 @@ protected theorem integral_preimage (t : ℝ) (f : AddCircle T → E) :
   have := integral_map_equiv (μ := volume) (measurableEquivIoc T t).symm f
   simp only [measurableEquivIoc, equivIoc, QuotientAddGroup.equivIocMod, MeasurableEquiv.symm_mk,
     MeasurableEquiv.coe_mk, Equiv.coe_fn_symm_mk] at this
-  rw [← (AddCircle.measurePreserving_mk T t).map_eq, set_integral_eq_subtype m, ← this]
+  rw [← (AddCircle.measurePreserving_mk T t).map_eq, ← integral_subtype m, ← this]
   have : ((↑) : Ioc t (t + T) → AddCircle T) = ((↑) : ℝ → AddCircle T) ∘ ((↑) : _ → ℝ) := by
     ext1 x; rfl
   simp_rw [this]
@@ -194,7 +196,6 @@ namespace UnitAddCircle
 
 attribute [local instance] Real.fact_zero_lt_one
 
-@[simp]
 protected theorem measure_univ : volume (Set.univ : Set UnitAddCircle) = 1 := by simp
 #align unit_add_circle.measure_univ UnitAddCircle.measure_univ
 

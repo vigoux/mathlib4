@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Floris van Doorn
 -/
 import Mathlib.MeasureTheory.Constructions.Prod.Basic
+import Mathlib.MeasureTheory.Integral.DominatedConvergence
 import Mathlib.MeasureTheory.Integral.SetIntegral
 
 #align_import measure_theory.constructions.prod.integral from "leanprover-community/mathlib"@"fd5edc43dc4f10b85abfe544b88f82cf13c5f844"
@@ -24,6 +25,9 @@ In this file we prove Fubini's theorem.
   Tonelli's theorem (see `MeasureTheory.lintegral_prod`). The lemma
   `MeasureTheory.Integrable.integral_prod_right` states that the inner integral of the right-hand
   side is integrable.
+* `MeasureTheory.integral_integral_swap_of_hasCompactSupport`: a version of Fubini theorem for
+  continuous functions with compact support, which does not assume that the measures are σ-finite
+  contrary to all the usual versions of Fubini.
 
 ## Tags
 
@@ -92,7 +96,7 @@ theorem MeasureTheory.StronglyMeasurable.integral_prod_right [SigmaFinite ν] �
     simp only [SimpleFunc.integral_eq_sum_of_subset (this _)]
     refine' Finset.stronglyMeasurable_sum _ fun x _ => _
     refine' (Measurable.ennreal_toReal _).stronglyMeasurable.smul_const _
-    simp (config := { singlePass := true }) only [SimpleFunc.coe_comp, preimage_comp]
+    simp only [s', SimpleFunc.coe_comp, preimage_comp]
     apply measurable_measure_prod_mk_left
     exact (s n).measurableSet_fiber x
   have h2f' : Tendsto f' atTop (𝓝 fun x : α => ∫ y : β, f x y ∂ν) := by
@@ -101,8 +105,8 @@ theorem MeasureTheory.StronglyMeasurable.integral_prod_right [SigmaFinite ν] �
     · have : ∀ n, Integrable (s' n x) ν := by
         intro n; apply (hfx.norm.add hfx.norm).mono' (s' n x).aestronglyMeasurable
         apply eventually_of_forall; intro y
-        simp_rw [SimpleFunc.coe_comp]; exact SimpleFunc.norm_approxOn_zero_le _ _ (x, y) n
-      simp only [hfx, SimpleFunc.integral_eq_integral _ (this _), indicator_of_mem,
+        simp_rw [s', SimpleFunc.coe_comp]; exact SimpleFunc.norm_approxOn_zero_le _ _ (x, y) n
+      simp only [f', hfx, SimpleFunc.integral_eq_integral _ (this _), indicator_of_mem,
         mem_setOf_eq]
       refine'
         tendsto_integral_of_dominated_convergence (fun y => ‖f x y‖ + ‖f x y‖)
@@ -117,7 +121,7 @@ theorem MeasureTheory.StronglyMeasurable.integral_prod_right [SigmaFinite ν] �
         · simp
         apply subset_closure
         simp [-uncurry_apply_pair]
-    · simp [hfx, integral_undef]
+    · simp [f', hfx, integral_undef]
   exact stronglyMeasurable_of_tendsto _ hf' h2f'
 #align measure_theory.strongly_measurable.integral_prod_right MeasureTheory.StronglyMeasurable.integral_prod_right
 
@@ -235,7 +239,7 @@ theorem hasFiniteIntegral_prod_iff ⦃f : α × β → E⦄ (h1f : StronglyMeasu
       (∀ᵐ x ∂μ, HasFiniteIntegral (fun y => f (x, y)) ν) ∧
         HasFiniteIntegral (fun x => ∫ y, ‖f (x, y)‖ ∂ν) μ := by
   simp only [HasFiniteIntegral]
-  -- Porting note: was `simp`
+  -- porting note (#10745): was `simp`
   rw [lintegral_prod_of_measurable _ h1f.ennnorm]
   have : ∀ x, ∀ᵐ y ∂ν, 0 ≤ ‖f (x, y)‖ := fun x => eventually_of_forall fun y => norm_nonneg _
   simp_rw [integral_eq_lintegral_of_nonneg_ae (this _)
@@ -511,7 +515,7 @@ theorem set_integral_prod (f : α × β → E) {s : Set α} {t : Set β}
 
 theorem integral_prod_smul {𝕜 : Type*} [IsROrC 𝕜] [NormedSpace 𝕜 E] (f : α → 𝕜) (g : β → E) :
     ∫ z, f z.1 • g z.2 ∂μ.prod ν = (∫ x, f x ∂μ) • ∫ y, g y ∂ν := by
-  by_cases hE : CompleteSpace E; swap; simp [integral, hE]
+  by_cases hE : CompleteSpace E; swap; · simp [integral, hE]
   by_cases h : Integrable (fun z : α × β => f z.1 • g z.2) (μ.prod ν)
   · rw [integral_prod _ h]
     simp_rw [integral_smul, integral_smul_const]
@@ -539,5 +543,60 @@ theorem integral_fun_snd (f : β → E) : ∫ z, f z.2 ∂μ.prod ν = (μ univ)
 theorem integral_fun_fst (f : α → E) : ∫ z, f z.1 ∂μ.prod ν = (ν univ).toReal • ∫ x, f x ∂μ := by
   rw [← integral_prod_swap]
   apply integral_fun_snd
+
+section
+
+variable {X Y : Type*}
+    [TopologicalSpace X] [TopologicalSpace Y] [MeasurableSpace X] [MeasurableSpace Y]
+    [OpensMeasurableSpace X] [OpensMeasurableSpace Y]
+
+/-- A version of *Fubini theorem* for continuous functions with compact support: one may swap
+the order of integration with respect to locally finite measures. One does not assume that the
+measures are σ-finite, contrary to the usual Fubini theorem. -/
+lemma integral_integral_swap_of_hasCompactSupport
+    {f : X → Y → E} (hf : Continuous f.uncurry) (h'f : HasCompactSupport f.uncurry)
+    {μ : Measure X} {ν : Measure Y} [IsFiniteMeasureOnCompacts μ] [IsFiniteMeasureOnCompacts ν] :
+    ∫ x, (∫ y, f x y ∂ν) ∂μ = ∫ y, (∫ x, f x y ∂μ) ∂ν := by
+  let U := Prod.fst '' (tsupport f.uncurry)
+  have : Fact (μ U < ∞) := ⟨(IsCompact.image h'f continuous_fst).measure_lt_top⟩
+  let V := Prod.snd '' (tsupport f.uncurry)
+  have : Fact (ν V < ∞) := ⟨(IsCompact.image h'f continuous_snd).measure_lt_top⟩
+  calc
+  ∫ x, (∫ y, f x y ∂ν) ∂μ = ∫ x, (∫ y in V, f x y ∂ν) ∂μ := by
+    congr 1 with x
+    apply (set_integral_eq_integral_of_forall_compl_eq_zero (fun y hy ↦ ?_)).symm
+    contrapose! hy
+    have : (x, y) ∈ Function.support f.uncurry := hy
+    exact mem_image_of_mem _ (subset_tsupport _ this)
+  _ = ∫ x in U, (∫ y in V, f x y ∂ν) ∂μ := by
+    apply (set_integral_eq_integral_of_forall_compl_eq_zero (fun x hx ↦ ?_)).symm
+    have : ∀ y, f x y = 0 := by
+      intro y
+      contrapose! hx
+      have : (x, y) ∈ Function.support f.uncurry := hx
+      exact mem_image_of_mem _ (subset_tsupport _ this)
+    simp [this]
+  _ = ∫ y in V, (∫ x in U, f x y ∂μ) ∂ν := by
+    apply integral_integral_swap
+    apply (integrableOn_iff_integrable_of_support_subset (subset_tsupport f.uncurry)).mp
+    refine ⟨(h'f.stronglyMeasurable_of_prod hf).aestronglyMeasurable, ?_⟩
+    obtain ⟨C, hC⟩ : ∃ C, ∀ p, ‖f.uncurry p‖ ≤ C := hf.bounded_above_of_compact_support h'f
+    exact hasFiniteIntegral_of_bounded (C := C) (eventually_of_forall hC)
+  _ = ∫ y, (∫ x in U, f x y ∂μ) ∂ν := by
+    apply set_integral_eq_integral_of_forall_compl_eq_zero (fun y hy ↦ ?_)
+    have : ∀ x, f x y = 0 := by
+      intro x
+      contrapose! hy
+      have : (x, y) ∈ Function.support f.uncurry := hy
+      exact mem_image_of_mem _ (subset_tsupport _ this)
+    simp [this]
+  _ = ∫ y, (∫ x, f x y ∂μ) ∂ν := by
+    congr 1 with y
+    apply set_integral_eq_integral_of_forall_compl_eq_zero (fun x hx ↦ ?_)
+    contrapose! hx
+    have : (x, y) ∈ Function.support f.uncurry := hx
+    exact mem_image_of_mem _ (subset_tsupport _ this)
+
+end
 
 end MeasureTheory
