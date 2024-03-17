@@ -40,7 +40,7 @@ section find_home
 lemma and_or_and_not_iff (p q : Prop) : ((p ∧ q) ∨ (p ∧ ¬ q)) ↔ p := by
   tauto
 
-lemma and_and_and_not_iff (p q : Prop) : ((p ∧ q) ∧ (p ∧ ¬ q)) ↔ false := by
+lemma and_and_and_not_iff (p q r : Prop) : ((p ∧ q) ∧ (r ∧ ¬ q)) ↔ false := by
   tauto
 
 -- https://github.com/leanprover-community/mathlib4/pull/11401
@@ -175,25 +175,20 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           rw [Fintype.card_piFinset]
           simp only [Finset.prod_const, Finset.card_fin]
         · intros r hr
-          simp only [Equiv.invFun_as_coe, Equiv.piFinSucc_symm_apply]
-          simp_rw [MvPolynomial.eval_eq_eval_mv_eval']
+          simp_rw [Equiv.invFun_as_coe, Equiv.piFinSucc_symm_apply,
+            MvPolynomial.eval_eq_eval_mv_eval']
           rw [← hp']
           simp only [← hp',
             Fintype.mem_piFinset, Finset.mem_filter] at hr
           -- hr2 is in wikipedia P_i(r_2, ... , r_n) ≠ 0
           rcases hr with ⟨_, hr2⟩
-          -- my pr is wikis P(x_1, r_2, ... r_n) = ∑ x_1^i P_i(r_2, ... r_n)
-          save
+          -- This proof is wikis P(x_1, r_2, ... r_n) = ∑ x_1^i P_i(r_2, ... r_n)
           set p_r := (Polynomial.map (MvPolynomial.eval r) p') with hp_r
           have : p_r.natDegree = i := by
-            -- rw [← hi] at hr2
-            rw [hp_r]
-            rw [hi]
+            rw [hp_r, hi]
             apply Polynomial.natDegree_map_of_leadingCoeff_ne_zero
-            -- rw [Polynomial.natDegree_map_eq_iff (f := MvPolynomial.eval r) p']
             unfold Polynomial.leadingCoeff
             exact hr2
-          -- rw [← hi]
           rw [← this]
           apply le_trans _ (Polynomial.card_roots' _)
           apply le_trans _ (Multiset.toFinset_card_le _)
@@ -205,13 +200,9 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           intros _ hxr
           rw [Polynomial.IsRoot.def]
           rw [hxr]
-          -- rw [refl]
           simp only [← hp_r, and_true]
           intro hpr_zero
           contrapose! hr2
-          -- rw [← hp'] at *
-          -- rw [hpr_zero] at this
-          -- rw [Polynomial.natDegree_zero] at this
           rw [hp_i', ← this, hpr_zero, Polynomial.natDegree_zero]
           have hp_r0 : p_r.coeff 0 = 0 := by simp [hpr_zero]
           rw [← hp_r0]
