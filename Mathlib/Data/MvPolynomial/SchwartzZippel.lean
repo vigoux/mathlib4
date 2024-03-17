@@ -187,7 +187,7 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           have : p_r.natDegree = i := by
             rw [hp_r, hi]
             apply Polynomial.natDegree_map_of_leadingCoeff_ne_zero
-            unfold Polynomial.leadingCoeff
+            -- unfold Polynomial.leadingCoeff
             exact hr2
           rw [← this]
           apply le_trans _ (Polynomial.card_roots' _)
@@ -198,15 +198,13 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           rw [Finset.mem_filter,
             Multiset.mem_toFinset, Polynomial.mem_roots', ne_eq, and_imp]
           intros _ hxr
-          rw [Polynomial.IsRoot.def]
-          rw [hxr]
+          rw [Polynomial.IsRoot.def, hxr]
           simp only [← hp_r, and_true]
           intro hpr_zero
           contrapose! hr2
           rw [hp_i', ← this, hpr_zero, Polynomial.natDegree_zero]
           have hp_r0 : p_r.coeff 0 = 0 := by simp [hpr_zero]
-          rw [← hp_r0]
-          rw [Polynomial.coeff_map]
+          rw [← hp_r0, Polynomial.coeff_map]
       · simp only [Polynomial.coeff_natDegree,
           MvPolynomial.finSuccEquiv_apply, MvPolynomial.coe_eval₂Hom, ne_eq,
           Equiv.piFinSucc_symm_apply, Finset.mem_map_equiv, Fintype.mem_piFinset,
@@ -238,9 +236,7 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
       )
       * Finset.card S := by
         congr
-        rw [← Finset.card_union_add_card_inter]
-        rw [Finset.filter_union_right]
-        rw [← Finset.filter_and]
+        rw [← Finset.card_union_add_card_inter, Finset.filter_union_right, ← Finset.filter_and]
         simp only [ne_eq, and_or_and_not_iff, and_and_and_not_iff]
         simp only [Finset.filter_False, Finset.card_empty, add_zero]
       -- Pr [B] + Pr [A ∩ Bᶜ]
@@ -276,8 +272,7 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
         exact h_second_half
       _ ≤
       MvPolynomial.totalDegree p * Finset.card S ^ Nat.succ n := by
-        rw [Nat.pow_succ]
-        rw [← mul_assoc]
+        rw [Nat.pow_succ, ← mul_assoc]
         apply Nat.mul_le_mul_right
         rw [← add_mul]
         apply Nat.mul_le_mul_right
