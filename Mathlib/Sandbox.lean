@@ -46,8 +46,9 @@ theorem toto1 {R α : Type*} [Ring R] [UniformSpace R] [UniformAddGroup R] [Cont
   simp_rw [add_neg_cancel_comm, add_zero] at t₃
   exact t₃
 
-example (a : ℕ → ℝ) (h : Tendsto (fun k ↦ k / (a k)) atTop (𝓝 1)) (ε : ℝ) (hε : 0 < ε)
-  (hε' : ε < 1) :
+theorem toto2 (a : ℕ → ℝ) (h : Tendsto (fun k ↦ k / (a k)) atTop (𝓝 1)) (ε : ℝ) (hε : 0 < ε)
+  (hε' : ε < 1)
+  (ha : ∀ k, 0 < a k) : -- this could be infered automatically eventually
   ∃ t : Finset ℕ, ∀ s : ℝ, 1 < s →
     (1 - ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), 1/ (k:ℝ) ^ s ≤
       (s - 1) * ∑' (k : {k // k ∉ t}), 1 / a k ^ s ∧
@@ -56,8 +57,96 @@ example (a : ℕ → ℝ) (h : Tendsto (fun k ↦ k / (a k)) atTop (𝓝 1)) (ε
   rw [Metric.tendsto_atTop] at h
   specialize h ε hε
   obtain ⟨k₀, hk₀⟩ := h
-  refine ⟨Finset.Ico 0 k₀, fun s hs ↦ ?_⟩
-  
+  simp_rw [ge_iff_le, dist_eq_norm, Real.norm_eq_abs, abs_lt, sub_lt_iff_lt_add',
+    lt_sub_iff_add_lt', ← sub_eq_add_neg] at hk₀
+  conv at hk₀ =>
+    ext k
+    rw [← inv_div_inv, lt_div_iff sorry, div_lt_iff sorry]
+  refine ⟨Finset.Ico 0 k₀, fun s hs ↦ ⟨?_, ?_⟩⟩
+  · rw [mul_comm _ (s - 1), mul_assoc, mul_le_mul_iff_of_pos_left sorry]
+    rw [← tsum_mul_left]
+    refine tsum_mono sorry sorry (fun ⟨k, hk⟩ ↦ ?_)
+    dsimp only
+    rw [one_div, one_div, ← Real.inv_rpow sorry, ← Real.inv_rpow sorry, ← Real.mul_rpow sorry sorry,
+      Real.rpow_le_rpow_iff sorry sorry sorry]
+    specialize hk₀ k sorry
+    exact le_of_lt hk₀.1
+  · rw [mul_comm _ (s - 1), mul_assoc, mul_le_mul_iff_of_pos_left sorry]
+    rw [← tsum_mul_left]
+    refine tsum_mono sorry sorry (fun ⟨k, hk⟩ ↦ ?_)
+    dsimp only
+    rw [one_div, one_div, ← Real.inv_rpow sorry, ← Real.inv_rpow sorry, ← Real.mul_rpow sorry sorry,
+      Real.rpow_le_rpow_iff sorry sorry sorry]
+    specialize hk₀ k sorry
+    exact le_of_lt hk₀.2
+
+theorem zap1 (a : ℕ → ℝ) :
+    IsBounded (fun x y ↦ x ≤ y) (map (fun s : ℝ ↦ (s - 1) * ∑' (k : ℕ), (a k ^ s)⁻¹) (𝓝[>] 1)) := by
+  sorry
+
+theorem zap2 (a : ℕ → ℝ) :
+    IsBounded (fun x y ↦ y ≤ x) (map (fun s : ℝ ↦ (s - 1) * ∑' (k : ℕ), (a k ^ s)⁻¹) (𝓝[>] 1)) := by
+  sorry
+
+theorem toto3 (a : ℕ → ℝ) (ε : ℝ) (hε : 0 < ε)
+    (hm : ∃ t : Finset ℕ, ∀ s : ℝ, 1 < s →
+      (1 - ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), 1/ (k:ℝ) ^ s ≤
+        (s - 1) * ∑' (k : {k // k ∉ t}), 1 / a k ^ s ∧
+      (s - 1) * ∑' (k : {k // k ∉ t}), 1 / a k ^ s ≤
+        (1 + ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), 1/ (k:ℝ) ^ s) :
+      1 - ε ≤ Filter.liminf (fun s : ℝ ↦ (s - 1) * ∑' k, 1 / a k ^ s) (𝓝[>] 1) := by
+  obtain ⟨t, ht⟩ := hm
+  have : ∀ᶠ s in (𝓝[>] 1), (1 - ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), 1/ (k:ℝ) ^ s ≤
+        (s - 1) * ∑' (k : {k // k ∉ t}), 1 / a k ^ s := sorry
+  convert Filter.liminf_le_liminf this sorry sorry
+
+#exit
+  refine  Filter.le_liminf_of_le ?_ ?_
+  · simp
+    apply Filter.IsBounded.isCobounded_flip
+    exact zap1 _
+  · rw [eventually_nhdsWithin_iff]
+    filter_upwards
+    intro s hs
+
+    specialize ht s hs
+    replace ht := ht.1
+
+    refine le_of_tendsto_of_tendsto ?_ ?_ ?_
+    sorry
+
+theorem toto4 (a : ℕ → ℝ) (ε : ℝ) (hε : 0 < ε)
+    (hm : ∃ t : Finset ℕ, ∀ s : ℝ, 1 < s →
+      (1 - ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), 1/ (k:ℝ) ^ s ≤
+        (s - 1) * ∑' (k : {k // k ∉ t}), 1 / a k ^ s ∧
+      (s - 1) * ∑' (k : {k // k ∉ t}), 1 / a k ^ s ≤
+        (1 + ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), 1/ (k:ℝ) ^ s) :
+    Filter.limsup (fun s: ℝ ↦ (s - 1) * ∑' k, 1 / a k ^ s) (𝓝[>] 1) ≤ 1 + ε := by
+  refine  Filter.limsup_le_of_le ?_ ?_
+  · simp
+    apply Filter.IsBounded.isCobounded_flip
+    exact zap2 _
+  ·
+    sorry
+
+theorem toto5 (a : ℕ → ℝ)
+    (hm : ∀ ε > 0, ∃ t : Finset ℕ, ∀ s : ℝ, 1 < s →
+      (1 - ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), 1/ (k:ℝ) ^ s ≤
+        (s - 1) * ∑' (k : {k // k ∉ t}), 1 / a k ^ s ∧
+      (s - 1) * ∑' (k : {k // k ∉ t}), 1 / a k ^ s ≤
+        (1 + ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), 1/ (k:ℝ) ^ s) :
+    Tendsto (fun s : ℝ ↦ (s - 1) * ∑' k, 1 / a k ^ s) (𝓝[>] 1) (𝓝 1) := by
+  refine tendsto_of_le_liminf_of_limsup_le ?_ ?_ ?_ ?_
+  · refine le_of_forall_sub_le (fun ε hε ↦ ?_)
+    refine toto3 _ ε hε ?_
+    exact hm _ hε
+  · refine le_of_forall_pos_le_add (fun ε hε ↦ ?_)
+    refine toto4 _ ε hε ?_
+    exact hm _ hε
+  · simp
+    exact zap1 _
+  · simp
+    exact zap2 _
 
 #exit
 
