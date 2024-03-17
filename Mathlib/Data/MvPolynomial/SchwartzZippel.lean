@@ -181,7 +181,7 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           simp only [←hp',
             Fintype.mem_piFinset, Finset.mem_filter] at hr
           -- hr2 is in wikipedia P_i(r_2, ... , r_n) ≠ 0
-          rcases hr with ⟨hr1, hr2⟩
+          rcases hr with ⟨_, hr2⟩
           -- my pr is wikis P(x_1, r_2, ... r_n) = ∑ x_1^i P_i(r_2, ... r_n)
           save
           set p_r := (Polynomial.map (MvPolynomial.eval r) p') with hp_r
@@ -197,12 +197,12 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           rw [←this]
           apply le_trans _ (Polynomial.card_roots' _)
           apply le_trans _ (Multiset.toFinset_card_le _)
-          apply Finset.card_le_of_subset
+          apply Finset.card_le_card
           rw [Finset.subset_iff]
           intro x
           rw [Finset.mem_filter,
             Multiset.mem_toFinset, Polynomial.mem_roots', ne_eq, and_imp]
-          intros XS hxr
+          intros _ hxr
           rw [Polynomial.IsRoot.def]
           rw [hxr]
           -- rw [refl]
@@ -267,7 +267,7 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
       * Finset.card S := by
         apply Nat.mul_le_mul_right
         rw [add_le_add_iff_right]
-        apply Finset.card_le_of_subset
+        apply Finset.card_le_card
         apply Finset.monotone_filter_right
         rw [Pi.le_def]
         intro i
