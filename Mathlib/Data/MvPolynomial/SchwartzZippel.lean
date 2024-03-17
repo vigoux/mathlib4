@@ -58,7 +58,7 @@ lemma Finset.card_filter_piFinset_eq' {n : ℕ} {α : Fin (n + 1) → Type*}
   rw [← Finset.card_map ((Equiv.piFinSuccAbove α 0).toEmbedding)]
   congr
   ext ⟨x, f⟩
-  simp? [Fin.forall_fin_succ] says simp only [Fin.zero_succAbove, Fintype.mem_piFinset,
+  simp only [Fin.zero_succAbove, Fintype.mem_piFinset,
       Fin.forall_fin_succ, and_imp, mem_map_equiv, mem_filter, mem_product]
   tauto
 
@@ -207,7 +207,7 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           have hp_r0 : p_r.coeff 0 = 0 := by simp [hpr_zero]
           rw [← hp_r0]
           rw [Polynomial.coeff_map]
-      · simp? [Fin.forall_fin_succ] says simp only [Polynomial.coeff_natDegree,
+      · simp only [Polynomial.coeff_natDegree,
           MvPolynomial.finSuccEquiv_apply, MvPolynomial.coe_eval₂Hom, ne_eq,
           Equiv.piFinSucc_symm_apply, Finset.mem_map_equiv, Fintype.mem_piFinset,
           Fin.forall_fin_succ, Fin.cons_zero, Fin.cons_succ, Function.comp_apply, and_imp,
