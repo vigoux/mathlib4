@@ -16,69 +16,52 @@ theorem toto :
   refine eventually_of_forall (fun s hs ↦ ?_)
   exact congr_arg ((s - 1) * ·) (zeta_eq_tsum_one_div_nat_cpow hs)
 
-theorem toto1 {R α : Type*} [Ring R] [UniformSpace R] [UniformAddGroup R] [ContinuousMul R]
-    [CompleteSpace R] [T2Space R] (u : α → R → R) {V : Set R}
+variable {R α : Type*} (u : α → R → R) (v : R → R) (a : R) (V : Set R) (t : Finset α)
+
+theorem toto1 [Ring R] [TopologicalSpace R] [ContinuousMul R]
+    [ContinuousAdd R] (h₁ : ∀ k ∈ t, ContinuousWithinAt (fun s ↦ u k s) V a)
+    (h₂ : Tendsto v (𝓝[V] a) (𝓝 0)) :
+    Tendsto (fun s ↦ (v s) * (∑ k in t, u k s)) (𝓝[V] a) (𝓝 0) := by
+  convert h₂.mul (tendsto_finset_sum t fun k hk ↦ h₁ k hk)
+  rw [zero_mul]
+
+theorem toto12 [Ring R] [UniformSpace R] [UniformAddGroup R] [ContinuousMul R]
+    [CompleteSpace R] [T2Space R]
     (h₀ : ∀ s ∈ V, Summable (fun k ↦ u k s))
-    (t : Finset α) {a : R} (h₁ : ∀ k ∈ t, ContinuousWithinAt (fun s ↦ u k s) V a)
-    (v : R → R) {l : R} (h₂ : Tendsto v (𝓝[V] a) (𝓝 0))
+    (h₁ : ∀ k ∈ t, ContinuousWithinAt (fun s ↦ u k s) V a)
+    (l : R) (h₂ : Tendsto v (𝓝[V] a) (𝓝 0))
     (h₃ : Tendsto (fun s ↦ (v s) * ∑' k, u k s) (𝓝[V] a) (𝓝 l)) :
     Tendsto (fun s ↦ (v s) * ∑' (k : {k // k ∉ t}), u k s) (𝓝[V] a) (𝓝 l) := by
-  have t₀ : ∀ k ∈ t, Tendsto (fun s ↦ (v s) * u k s) (𝓝[V] a) (𝓝 0) := by
-    intro k hk
-    rw [show 𝓝 (0:R) = 𝓝 (0 * u k a) by rw [zero_mul]]
-    refine Tendsto.mul ?_ ?_
-    · exact h₂
-    · exact ContinuousWithinAt.tendsto (h₁ k hk)
-  have t₁ : Tendsto (fun s ↦ - ((v s) * ∑ k in t, u k s)) (𝓝[V] a) (𝓝 0) := by
-    rw [show 𝓝 (0:R) = 𝓝 (-0) by rw [neg_zero]]
-    refine Tendsto.neg ?_
-    convert tendsto_finset_sum t t₀
-    · rw [Finset.mul_sum]
-    · rw [Finset.sum_const_zero]
-  have t₄ : Tendsto (fun s ↦ (v s) * ∑ k in t, u k s +
-      (v s) * ∑' (k : { k // k ∉ t }), u k s) (𝓝[V] a) (𝓝 l) := by
-    refine Tendsto.congr' ?_ h₃
-    rw [eventuallyEq_nhdsWithin_iff]
-    filter_upwards with s hs
-    rw [← sum_add_tsum_subtype_compl ?_ t, mul_add]
-    exact h₀ s hs
-  have t₃ := Tendsto.add t₄ t₁
-  simp_rw [add_neg_cancel_comm, add_zero] at t₃
-  exact t₃
+  have := toto1 u v a V t h₁ h₂
+  have := Tendsto.sub h₃ this
+  rw [sub_zero] at this
+  refine tendsto_nhdsWithin_congr (fun s hs ↦ ?_) this
+  rw [← mul_sub, ← sum_add_tsum_subtype_compl ?_ t, add_sub_cancel']
+  exact h₀ s hs
 
-theorem toto2 (a : ℕ → ℝ) (h : Tendsto (fun k ↦ k / (a k)) atTop (𝓝 1)) (ε : ℝ) (hε : 0 < ε)
-  (hε' : ε < 1)
-  (ha : ∀ k, 0 < a k) : -- this could be infered automatically eventually
-  ∃ t : Finset ℕ, ∀ s : ℝ, 1 < s →
-    (1 - ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), 1/ (k:ℝ) ^ s ≤
-      (s - 1) * ∑' (k : {k // k ∉ t}), 1 / a k ^ s ∧
-    (s - 1) * ∑' (k : {k // k ∉ t}), 1 / a k ^ s ≤
-      (1 + ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), 1/ (k:ℝ) ^ s := by
-  rw [Metric.tendsto_atTop] at h
+theorem toto2 (a : ℕ → ℝ) (ε : ℝ) (hε : 0 < ε)
+    (h : Tendsto (fun k ↦ k / (a k)) atTop (𝓝 1)) :
+    ∃ t : Finset ℕ, ∀ s : ℝ, 1 < s →
+      (1 - ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), 1/ (k:ℝ) ^ s ≤
+        (s - 1) * ∑' (k : {k // k ∉ t}), 1 / a k ^ s ∧
+      (s - 1) * ∑' (k : {k // k ∉ t}), 1 / a k ^ s ≤
+        (1 + ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), 1/ (k:ℝ) ^ s := by
+  rw [NormedAddCommGroup.tendsto_atTop] at h
   specialize h ε hε
   obtain ⟨k₀, hk₀⟩ := h
-  simp_rw [ge_iff_le, dist_eq_norm, Real.norm_eq_abs, abs_lt, sub_lt_iff_lt_add',
-    lt_sub_iff_add_lt', ← sub_eq_add_neg] at hk₀
+  simp_rw [Real.norm_eq_abs, abs_lt, sub_lt_iff_lt_add', lt_sub_iff_add_lt',
+    ← sub_eq_add_neg] at hk₀
   conv at hk₀ =>
     ext k
     rw [← inv_div_inv, lt_div_iff sorry, div_lt_iff sorry]
-  refine ⟨Finset.Ico 0 k₀, fun s hs ↦ ⟨?_, ?_⟩⟩
-  · rw [mul_comm _ (s - 1), mul_assoc, mul_le_mul_iff_of_pos_left sorry]
-    rw [← tsum_mul_left]
-    refine tsum_mono sorry sorry (fun ⟨k, hk⟩ ↦ ?_)
-    dsimp only
-    rw [one_div, one_div, ← Real.inv_rpow sorry, ← Real.inv_rpow sorry, ← Real.mul_rpow sorry sorry,
-      Real.rpow_le_rpow_iff sorry sorry sorry]
-    specialize hk₀ k sorry
-    exact le_of_lt hk₀.1
-  · rw [mul_comm _ (s - 1), mul_assoc, mul_le_mul_iff_of_pos_left sorry]
-    rw [← tsum_mul_left]
-    refine tsum_mono sorry sorry (fun ⟨k, hk⟩ ↦ ?_)
-    dsimp only
-    rw [one_div, one_div, ← Real.inv_rpow sorry, ← Real.inv_rpow sorry, ← Real.mul_rpow sorry sorry,
-      Real.rpow_le_rpow_iff sorry sorry sorry]
-    specialize hk₀ k sorry
-    exact le_of_lt hk₀.2
+  refine ⟨Finset.Ico 0 k₀, fun s hs ↦ ?_⟩
+  simp_rw [mul_comm _ (s - 1), mul_assoc, mul_le_mul_iff_of_pos_left sorry, ← tsum_mul_left,
+    one_div, ← Real.inv_rpow sorry, ← Real.mul_rpow sorry sorry]
+  refine ⟨tsum_mono sorry sorry (fun ⟨k, hk⟩ ↦ ?_), tsum_mono sorry sorry (fun ⟨k, hk⟩ ↦ ?_)⟩
+  · rw [Real.rpow_le_rpow_iff sorry sorry sorry]
+    exact le_of_lt (hk₀ k sorry).1
+  · rw [Real.rpow_le_rpow_iff sorry sorry sorry]
+    exact le_of_lt (hk₀ k sorry).2
 
 theorem zap1 (a : ℕ → ℝ) :
     IsBounded (fun x y ↦ x ≤ y) (map (fun s : ℝ ↦ (s - 1) * ∑' (k : ℕ), (a k ^ s)⁻¹) (𝓝[>] 1)) := by
@@ -87,6 +70,70 @@ theorem zap1 (a : ℕ → ℝ) :
 theorem zap2 (a : ℕ → ℝ) :
     IsBounded (fun x y ↦ y ≤ x) (map (fun s : ℝ ↦ (s - 1) * ∑' (k : ℕ), (a k ^ s)⁻¹) (𝓝[>] 1)) := by
   sorry
+
+theorem toto3 (a : ℕ → ℝ) (ε : ℝ) (hε : 0 < ε)
+    (h : Tendsto (fun k ↦ k / (a k)) atTop (𝓝 1)) :
+     1 - ε ≤ Filter.liminf (fun s : ℝ ↦ (s - 1) * ∑' k, 1 / a k ^ s) (𝓝[>] 1) := by
+  obtain ⟨t, ht⟩ := toto2 a ε hε h
+  have : ∀ᶠ s in (𝓝[>] 1), _ := eventually_nhdsWithin_of_forall (a := 1) (fun s hs ↦ (ht s hs).1)
+  conv at this =>
+    congr
+    ext s
+    rw [← add_le_add_iff_left ((s - 1) * (∑ k in t, 1 / (a k) ^ s)), ← mul_add,
+      sum_add_tsum_subtype_compl sorry, mul_assoc]
+  convert Filter.liminf_le_liminf this sorry sorry
+  refine (Filter.Tendsto.liminf_eq ?_).symm
+  rw [show 𝓝 (1 - ε) = 𝓝 (0 + (1 - ε) * 1) by sorry]
+  refine Tendsto.add ?_ (Tendsto.mul ?_ ?_)
+  · have := toto1 (fun (k : ℕ) (s : ℝ) ↦ 1 / (a k) ^ s) (fun s ↦ s - 1) 1 (Set.Ioi 1) t sorry ?_
+    exact this
+    have : Tendsto (fun s : ℝ ↦ s - 1) (𝓝 1) (𝓝 0) := by
+      refine tendsto_sub_nhds_zero_iff.mpr ?_
+      exact Filter.tendsto_id
+    refine Filter.Tendsto.mono_left this ?_
+    exact nhdsWithin_le_nhds
+  · sorry
+  · have := toto12 (fun (k : ℕ) (s : ℝ) ↦ 1 / k ^ s) (fun s ↦ s - 1) 1 (Set.Ioi 1) t sorry
+      sorry 1 sorry sorry
+    exact this
+
+theorem toto4 (a : ℕ → ℝ) (ε : ℝ) (hε : 0 < ε)
+    (h : Tendsto (fun k ↦ k / (a k)) atTop (𝓝 1)) :
+    Filter.limsup (fun s: ℝ ↦ (s - 1) * ∑' k, 1 / a k ^ s) (𝓝[>] 1) ≤ 1 + ε := by
+  obtain ⟨t, ht⟩ := toto2 a ε hε h
+  have : ∀ᶠ s in (𝓝[>] 1), _ := eventually_nhdsWithin_of_forall (a := 1) (fun s hs ↦ (ht s hs).2)
+  conv at this =>
+    congr
+    ext s
+    rw [← add_le_add_iff_left ((s - 1) * (∑ k in t, 1 / (a k) ^ s)), ← mul_add,
+      sum_add_tsum_subtype_compl sorry, mul_assoc]
+  convert Filter.limsup_le_limsup this sorry sorry
+  refine (Filter.Tendsto.limsup_eq ?_).symm
+  rw [show 𝓝 (1 + ε) = 𝓝 (0 + (1 + ε) * 1) by sorry]
+  refine Tendsto.add ?_ (Tendsto.mul ?_ ?_)
+  · have := toto1 (fun (k : ℕ) (s : ℝ) ↦ 1 / (a k) ^ s) (fun s ↦ s - 1) 1 (Set.Ioi 1) t sorry ?_
+    exact this
+    have : Tendsto (fun s : ℝ ↦ s - 1) (𝓝 1) (𝓝 0) := by
+      refine tendsto_sub_nhds_zero_iff.mpr ?_
+      exact Filter.tendsto_id
+    refine Filter.Tendsto.mono_left this ?_
+    exact nhdsWithin_le_nhds
+  · sorry
+  · have := toto12 (fun (k : ℕ) (s : ℝ) ↦ 1 / k ^ s) (fun s ↦ s - 1) 1 (Set.Ioi 1) t sorry
+      sorry 1 sorry sorry
+    exact this
+
+theorem toto5 (a : ℕ → ℝ)
+    (h : Tendsto (fun k ↦ k / (a k)) atTop (𝓝 1)) :
+    Tendsto (fun s : ℝ ↦ (s - 1) * ∑' k, 1 / a k ^ s) (𝓝[>] 1) (𝓝 1) := by
+  refine tendsto_of_le_liminf_of_limsup_le ?_ ?_ sorry sorry
+  · refine le_of_forall_sub_le (fun ε hε ↦ ?_)
+    exact toto3 (fun k ↦ a k) ε hε h
+  · refine le_of_forall_pos_le_add (fun ε hε ↦ ?_)
+    exact toto4 (fun k ↦ a k) ε hε h
+
+#exit
+
 
 theorem toto3 (a : ℕ → ℝ) (ε : ℝ) (hε : 0 < ε)
     (hm : ∃ t : Finset ℕ, ∀ s : ℝ, 1 < s →
@@ -98,7 +145,10 @@ theorem toto3 (a : ℕ → ℝ) (ε : ℝ) (hε : 0 < ε)
   obtain ⟨t, ht⟩ := hm
   have : ∀ᶠ s in (𝓝[>] 1), (1 - ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), 1/ (k:ℝ) ^ s ≤
         (s - 1) * ∑' (k : {k // k ∉ t}), 1 / a k ^ s := sorry
-  convert Filter.liminf_le_liminf this sorry sorry
+  convert Filter.liminf_le_liminf this sorry sorry using 1
+  sorry
+  sorry
+
 
 #exit
   refine  Filter.le_liminf_of_le ?_ ?_
