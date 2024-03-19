@@ -2,7 +2,65 @@ import Mathlib
 
 section analysis
 
-open Filter BigOperators Topology
+open Filter BigOperators Asymptotics Topology
+
+open scoped NNReal
+
+variable (u v : ℕ → ℝ) (h_eq : u ~[atTop] v) {a l : ℝ} (ha : 0 ≤ a)
+  (hv₀ : ∀ s, a < s → Summable (fun k ↦ (v k) ^ s))
+  (hv₁ : ∀ᶠ k in atTop, 0 < v k)
+  (hv₂ : Tendsto (fun s : ℝ ↦ (s - a) * ∑' k, v k ^ s) (𝓝[>] a) (𝓝 l))
+  (hu : ∀ᶠ k in atTop, 0 < u k)
+
+example : Tendsto (fun s : ℝ ↦ (s - a) * ∑' k, u k ^ s) (𝓝[>] a) (𝓝 l) := by
+  have h_sum : ∀ s, a < s → Summable (fun k ↦ (u k) ^ s) := by
+    intro s hs
+    refine (IsEquivalent.summable_iff_nat ?_).mpr (hv₀ s hs)
+    rw [isEquivalent_iff_tendsto_one] at h_eq ⊢
+    · refine Filter.Tendsto.congr' ?_ <|
+        Real.one_rpow _ ▸ h_eq.rpow_const (p := s) (Or.inl one_ne_zero)
+      filter_upwards [hv₁, hu] with k hv hu
+      rw [Pi.div_apply, Real.div_rpow (le_of_lt hu) (le_of_lt hv), Pi.div_apply]
+    · filter_upwards [hv₁] with k hk using ne_of_gt (Real.rpow_pos_of_pos hk s)
+    · filter_upwards [hv₁] with k hk using ne_of_gt hk
+  have h_sineq : ∀ ⦃ε : ℝ⦄, 0 < ε → ∀ᶠ k₀ in atTop, ∀ s, a < s →
+    (1 - ε) ^ s * ∑' (k : {k : ℕ // k₀ ≤ k}), (v k) ^ s ≤ ∑' (k : {k // k₀ ≤ k}), (u k) ^ s ∧
+      ∑' (k : {k // k₀ ≤ k}), (u k) ^ s ≤ (1 + ε) ^ s * ∑' (k : {k // k₀ ≤ k}), (v k) ^ s := by
+    have h_ineq := isLittleO_iff.mp h_eq.isLittleO
+    simp_rw [Real.norm_eq_abs, abs_le, Pi.sub_apply, le_sub_iff_add_le', sub_le_iff_le_add',
+    ← sub_eq_add_neg] at h_ineq
+    intro ε hε
+--    intro s hs ε hε
+    filter_upwards [eventually_forall_ge_atTop.mpr (h_ineq hε),
+      eventually_forall_ge_atTop.mpr hv₁] with k₀ hk₁ hk₂
+    intro s hs
+    simp_rw [← tsum_mul_left]
+    refine ⟨tsum_mono ?_ ?_ (fun ⟨k, hk⟩ ↦ ?_), tsum_mono ?_ ?_ (fun ⟨k, hk⟩ ↦ ?_)⟩
+    · exact Summable.subtype (Summable.mul_left ((1 - ε) ^ s) (hv₀ s hs)) _
+    · exact Summable.subtype (h_sum s hs) _
+    · rw [← Real.mul_rpow, Real.rpow_le_rpow_iff]
+      specialize hk₁ k hk
+      rw [show |v k| = v k by sorry] at hk₁
+      convert hk₁.1 using 1
+      · rw [sub_mul, one_mul]
+      · sorry
+      · sorry
+      · sorry
+      · sorry
+      · sorry
+    · sorry
+  refine tendsto_of_le_liminf_of_limsup_le ?_ ?_ ?_ ?_
+  · refine le_of_forall_sub_le (fun ε hε ↦ ?_)
+    specialize h_sineq hε
+
+
+    convert Filter.liminf_le_liminf ?_ sorry sorry
+    
+    sorry
+  · refine le_of_forall_pos_le_add (fun ε hε ↦ ?_)
+    sorry
+  · sorry
+  · sorry
 
 theorem toto :
     Tendsto (fun s : ℂ ↦ (s - 1) * ∑' (n : ℕ), 1 / (n:ℂ) ^ s)
