@@ -480,6 +480,14 @@ theorem differentiableAt_Gamma (s : ℂ) (hs : ∀ m : ℕ, s ≠ -m) : Differen
   apply Gamma_eq_GammaAux; linarith
 #align complex.differentiable_at_Gamma Complex.differentiableAt_Gamma
 
+/-- Special case of `differentiableAt_Gamma` under hypotheses which are less general, but often
+quicker to verify. -/
+lemma differentiableAt_Gamma_of_re_pos {s : ℂ} (hs : 0 < re s) : DifferentiableAt ℂ Gamma s := by
+  apply differentiableAt_Gamma
+  intro m h
+  rw [h, neg_re, nat_cast_re] at hs
+  linarith
+
 end GammaHasDeriv
 
 /-- At `s = 0`, the Gamma function has a simple pole with residue 1. -/
