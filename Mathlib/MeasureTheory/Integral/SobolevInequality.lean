@@ -413,7 +413,6 @@ variable {p : ℝ}
     T μ p f ∅ x = f x ^ (1 + p) := by
   simp [T]
 
-set_option maxHeartbeats 500000 in
 /-- The main inductive step in the grid-lines lemma for the Gagliardo-Nirenberg-Sobolev inequality.
 
 The grid-lines operation `GridLines.T` on a nonnegative function on a finitary product type is
