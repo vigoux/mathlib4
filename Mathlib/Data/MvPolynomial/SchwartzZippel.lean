@@ -24,6 +24,7 @@ of the field. This lemma is useful as a probabilistic polynomial identity test.
 * Generalize to noncommutative rings? Is that even possible?
 * Generalize to subset of the ring being different for each variable.
   * What does the theorem say in thic case?
+  * Note that the schwartz paper covers this case
 * Reexpress in terms of probabilities.
 * Then generalize to polynomials over arbitrary variable types
 * Write a tactic to apply this lemma to a given polynomial
@@ -153,7 +154,6 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
       ≤
       (i) * (Finset.card S) ^ n := by
       clear h_first_half
-
       -- In this case, given r on which p_i' does not evaluate to zero, p' mapped over the
       -- evaluation
       -- on r of p_i' is a nonzero univariate polynomial of degree i.
