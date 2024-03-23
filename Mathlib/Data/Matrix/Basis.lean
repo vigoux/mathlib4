@@ -169,48 +169,45 @@ theorem trace_eq : trace (stdBasisMatrix i i c) = c := by
   simp [trace, -diag_apply]
 #align matrix.std_basis_matrix.trace_eq Matrix.StdBasisMatrix.trace_eq
 
+end
+
+section
+
+variable [Fintype m]
+
 @[simp]
-theorem mul_left_apply_same (b : n) (M : Matrix n n α) :
+theorem mul_left_apply_same (i : l) (j : m) (c : α) (b : n) (M : Matrix m n α) :
     (stdBasisMatrix i j c * M) i b = c * M j b := by simp [mul_apply, stdBasisMatrix]
 #align matrix.std_basis_matrix.mul_left_apply_same Matrix.StdBasisMatrix.mul_left_apply_same
 
 @[simp]
-theorem mul_right_apply_same (a : n) (M : Matrix n n α) :
-    (M * stdBasisMatrix i j c) a j = M a i * c := by simp [mul_apply, stdBasisMatrix, mul_comm]
+theorem mul_right_apply_same (i : m) (j : n) (c : α) (a : l) (M : Matrix l m α) :
+    (M * stdBasisMatrix i j c) a j = M a i * c := by simp [mul_apply, stdBasisMatrix]
 #align matrix.std_basis_matrix.mul_right_apply_same Matrix.StdBasisMatrix.mul_right_apply_same
 
 @[simp]
-theorem mul_left_apply_of_ne (a b : n) (h : a ≠ i) (M : Matrix n n α) :
-    (stdBasisMatrix i j c * M) a b = 0 := by simp [mul_apply, h.symm]
+theorem mul_left_apply_of_ne (i : l) (j : m) (c : α) (a : l) (b : n) (h : a ≠ i)
+    (M : Matrix m n α) : (stdBasisMatrix i j c * M) a b = 0 := by simp [mul_apply, h.symm]
 #align matrix.std_basis_matrix.mul_left_apply_of_ne Matrix.StdBasisMatrix.mul_left_apply_of_ne
 
 @[simp]
-theorem mul_right_apply_of_ne (a b : n) (hbj : b ≠ j) (M : Matrix n n α) :
-    (M * stdBasisMatrix i j c) a b = 0 := by simp [mul_apply, hbj.symm]
+theorem mul_right_apply_of_ne (i : m) (j : n) (c : α) (a : l) (b : n) (h : b ≠ j)
+    (M : Matrix l m α) : (M * stdBasisMatrix i j c) a b = 0 := by simp [mul_apply, h.symm]
 #align matrix.std_basis_matrix.mul_right_apply_of_ne Matrix.StdBasisMatrix.mul_right_apply_of_ne
 
 @[simp]
-theorem mul_same (k : n) (d : α) :
+theorem mul_same (i : l) (j : m) (c : α) (k : n) (d : α):
     stdBasisMatrix i j c * stdBasisMatrix j k d = stdBasisMatrix i k (c * d) := by
   ext a b
-  simp only [mul_apply, stdBasisMatrix, boole_mul]
+  simp only [mul_apply, stdBasisMatrix]
   by_cases h₁ : i = a <;> by_cases h₂ : k = b <;> simp [h₁, h₂]
 #align matrix.std_basis_matrix.mul_same Matrix.StdBasisMatrix.mul_same
 
 @[simp]
-theorem mul_of_ne {k l : n} (h : j ≠ k) (d : α) :
-    stdBasisMatrix i j c * stdBasisMatrix k l d = 0 := by
+theorem mul_of_ne (i : l) (j : m) (c : α) {i' : m} {j' : n} (h : j ≠ i') (d : α) :
+    stdBasisMatrix i j c * stdBasisMatrix i' j' d = 0 := by
   ext a b
-  simp only [mul_apply, boole_mul, stdBasisMatrix]
-  by_cases h₁ : i = a
-  -- porting note (#10745): was `simp [h₁, h, h.symm]`
-  · simp only [h₁, true_and, mul_ite, ite_mul, zero_mul, mul_zero, ← ite_and, zero_apply]
-    refine Finset.sum_eq_zero (fun x _ => ?_)
-    apply if_neg
-    rintro ⟨⟨rfl, rfl⟩, h⟩
-    contradiction
-  · simp only [h₁, false_and, ite_false, mul_ite, zero_mul, mul_zero, ite_self,
-      Finset.sum_const_zero, zero_apply]
+  by_cases h₁ : a = i <;> simp [h₁, h.symm]
 #align matrix.std_basis_matrix.mul_of_ne Matrix.StdBasisMatrix.mul_of_ne
 
 end
