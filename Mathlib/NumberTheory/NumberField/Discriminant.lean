@@ -111,13 +111,13 @@ theorem exists_ne_zero_mem_ideal_of_norm_le_mul_sqrt_discr (I : (FractionalIdeal
   have h_le : (minkowskiBound K I) ≤ volume (convexBodySum K B) := by
     refine le_of_eq ?_
     rw [convexBodySum_volume, ← ENNReal.ofReal_pow (by positivity), ← Real.rpow_nat_cast,
-      ← Real.rpow_mul toReal_nonneg, div_mul_cancel, Real.rpow_one, ofReal_toReal, mul_comm,
+      ← Real.rpow_mul toReal_nonneg, div_mul_cancel₀, Real.rpow_one, ofReal_toReal, mul_comm,
       mul_assoc, ← coe_mul, inv_mul_cancel (convexBodySumFactor_ne_zero K), ENNReal.coe_one,
       mul_one]
     · exact mul_ne_top (ne_of_lt (minkowskiBound_lt_top K I)) coe_ne_top
     · exact (Nat.cast_ne_zero.mpr (ne_of_gt finrank_pos))
   convert exists_ne_zero_mem_ideal_of_norm_le K I h_le
-  rw [div_pow B, ← Real.rpow_nat_cast B, ← Real.rpow_mul (by positivity), div_mul_cancel _
+  rw [div_pow B, ← Real.rpow_nat_cast B, ← Real.rpow_mul (by positivity), div_mul_cancel₀ _
     (Nat.cast_ne_zero.mpr <| ne_of_gt finrank_pos), Real.rpow_one, mul_comm_div, mul_div_assoc']
   congr 1
   rw [eq_comm]
@@ -168,7 +168,7 @@ theorem abs_discr_ge (h : 1 < finrank ℚ K) :
   -- on `sqrt |discr K|`.
   obtain ⟨x, h_nz, h_bd⟩ := exists_ne_zero_mem_ringOfIntegers_of_norm_le_mul_sqrt_discr K
   have h_nm : (1:ℝ) ≤ |(Algebra.norm ℚ) (x:K)| := by
-    rw [← Algebra.coe_norm_int, ← Int.cast_one, ← Int.cast_abs, Rat.cast_coe_int, Int.cast_le]
+    rw [← Algebra.coe_norm_int, ← Int.cast_one, ← Int.cast_abs, Rat.cast_intCast, Int.cast_le]
     exact Int.one_le_abs (Algebra.norm_ne_zero_iff.mpr h_nz)
   replace h_bd := le_trans h_nm h_bd
   rw [← inv_mul_le_iff (by positivity), inv_div, mul_one, Real.le_sqrt (by positivity)

@@ -418,9 +418,8 @@ lemma jacobiTheta₂'_add_left' (z τ : ℂ) :
       cexp (-π * I * (τ + 2 * z)) * (jacobiTheta₂'_term (n + 1) z τ -
       2 * π * I * jacobiTheta₂_term (n + 1) z τ):= by
     simp only [jacobiTheta₂'_term, jacobiTheta₂_term]
-    rw [← sub_mul]
-    conv_rhs => rw [mul_comm, mul_assoc, ← Complex.exp_add, Int.cast_add, Int.cast_one,
-      mul_add, mul_one, add_sub_cancel]
+    conv_rhs => rw [← sub_mul, mul_comm, mul_assoc, ← Complex.exp_add, Int.cast_add, Int.cast_one,
+      mul_add, mul_one, add_sub_cancel_right]
     congr 2
     ring
   rw [jacobiTheta₂', funext this, tsum_mul_left, ← (Equiv.subRight (1 : ℤ)).tsum_eq]

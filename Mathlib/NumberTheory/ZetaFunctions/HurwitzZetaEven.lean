@@ -69,7 +69,8 @@ lemma evenKernel_def (a x : ℝ) :
     ↑(evenKernel ↑a x) = cexp (-π * a ^ 2 * x) * jacobiTheta₂ (a * I * x) (I * x) := by
   rw [evenKernel, Function.Periodic.lift_coe]
   simp_rw [push_cast, Complex.re_eq_add_conj, jacobiTheta₂_conj, map_mul, conj_I, conj_ofReal,
-    mul_neg, neg_mul, jacobiTheta₂_neg_left, neg_neg, ← mul_two, mul_div_cancel _ (two_ne_zero' ℂ)]
+    mul_neg, neg_mul, jacobiTheta₂_neg_left, neg_neg, ← mul_two,
+    mul_div_cancel_right₀ _ (two_ne_zero' ℂ)]
 
 /-- For `x ≤ 0` the defining sum diverges, so the kernel is 0. -/
 lemma evenKernel_undef (a : UnitAddCircle) {x : ℝ} (hx : x ≤ 0) : evenKernel a x = 0 := by
@@ -86,7 +87,7 @@ lemma evenKernel_undef (a : UnitAddCircle) {x : ℝ} (hx : x ≤ 0) : evenKernel
 lemma cosKernel_def (a x : ℝ) : ↑(cosKernel ↑a x) = jacobiTheta₂ a (I * x) := by
   rw [cosKernel, Function.Periodic.lift_coe]
   simp_rw [Complex.re_eq_add_conj, jacobiTheta₂_conj, map_mul, conj_ofReal, conj_I, neg_mul,
-    neg_neg, ← mul_two, mul_div_cancel _ (two_ne_zero' ℂ)]
+    neg_neg, ← mul_two, mul_div_cancel_right₀ _ (two_ne_zero' ℂ)]
 
 lemma cosKernel_undef (a : UnitAddCircle) {x : ℝ} (hx : x ≤ 0) : cosKernel a x = 0 := by
   induction' a using QuotientAddGroup.induction_on' with a'
@@ -214,7 +215,7 @@ lemma hasSum_nat_cosKernel₀ (a : ℝ) {t : ℝ} (ht : 0 < t) :
     ← sub_eq_add_neg, mul_neg] at this
   convert this with n
   push_cast
-  rw [Complex.cos, mul_div_cancel' _ two_ne_zero]
+  rw [Complex.cos, mul_div_cancel₀ _ two_ne_zero]
   ring_nf
 
 -- do we need a `nat` version for evenKernel?
@@ -320,10 +321,10 @@ lemma completedHurwitzZetaEven_eq (a : UnitAddCircle) (s : ℂ) :
   congr 1
   · change completedHurwitzZetaEven₀ a s - (1 / (s / 2)) • (if a = 0 then 1 else 0) / 2 =
       completedHurwitzZetaEven₀ a s - (if a = 0 then 1 else 0) / s
-    rw [smul_eq_mul, mul_comm, mul_div_assoc, div_div, div_mul_cancel _ two_ne_zero, mul_one_div]
+    rw [smul_eq_mul, mul_comm, mul_div_assoc, div_div, div_mul_cancel₀ _ two_ne_zero, mul_one_div]
   · change (1 / (↑(1 / 2 : ℝ) - s / 2)) • 1 / 2 = 1 / (1 - s)
     push_cast
-    rw [smul_eq_mul, mul_one, ← sub_div, div_div, div_mul_cancel _ two_ne_zero]
+    rw [smul_eq_mul, mul_one, ← sub_div, div_div, div_mul_cancel₀ _ two_ne_zero]
 
 /--
 The meromorphic function of `s` which agrees with
@@ -343,10 +344,10 @@ lemma completedCosZeta_eq (a : UnitAddCircle) (s : ℂ) :
   rw [completedCosZeta, WeakFEPair.Λ, sub_div, sub_div]
   congr 1
   · rw [ completedCosZeta₀, WeakFEPair.symm, hurwitzEvenFEPair, smul_eq_mul, mul_one, div_div,
-      div_mul_cancel _ (two_ne_zero' ℂ)]
+      div_mul_cancel₀ _ (two_ne_zero' ℂ)]
   · simp_rw [WeakFEPair.symm, hurwitzEvenFEPair, push_cast, inv_one, smul_eq_mul,
       mul_comm _ (if _ then _ else _), mul_div_assoc, div_div, ← sub_div,
-      div_mul_cancel _ (two_ne_zero' ℂ), mul_one_div]
+      div_mul_cancel₀ _ (two_ne_zero' ℂ), mul_one_div]
 
 /-!
 ## Parity and functional equations
@@ -574,7 +575,7 @@ lemma differentiableAt_update_of_residue
   have c2 : Tendsto (fun s : ℂ ↦ Λ s / Gammaℝ s) (𝓝[≠] 0) (𝓝 <| L / 2) := by
     refine Tendsto.congr' ?_ (h_lim.div Gammaℝ_residue_zero two_ne_zero)
     filter_upwards [self_mem_nhdsWithin] with s (hs : s ≠ 0)
-    rw [Pi.div_apply, ← div_div, mul_div_cancel_left _ hs]
+    rw [Pi.div_apply, ← div_div, mul_div_cancel_left₀ _ hs]
   · -- The hard case: `s = 0`.
     simp_rw [← c2.limUnder_eq]
     have S_nhds : {(1 : ℂ)}ᶜ ∈ 𝓝 (0 : ℂ) := isOpen_compl_singleton.mem_nhds hs'
@@ -745,7 +746,7 @@ lemma hasSum_int_cosZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
   rw [cosZeta, Function.update_noteq (not_lt.mpr zero_le_one <| zero_re ▸ · ▸ hs)]
   convert (hasSum_int_completedCosZeta a hs).div_const (Gammaℝ s) using 2 with n
   rw [mul_div_assoc _ (cexp _), div_right_comm _ (2 : ℂ),
-    mul_div_cancel_left _ (Gammaℝ_ne_zero_of_re_pos (zero_lt_one.trans hs))]
+    mul_div_cancel_left₀ _ (Gammaℝ_ne_zero_of_re_pos (zero_lt_one.trans hs))]
 
 /-- Formula for `cosZeta` as a Dirichlet series in the convergence range, with sum over `ℕ`. -/
 lemma hasSum_nat_cosZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :

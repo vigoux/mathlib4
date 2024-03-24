@@ -80,7 +80,7 @@ lemma hasSum_int_oddKernel (a : ℝ) {x : ℝ} (hx : 0 < x) :
   have h1 := hasSum_jacobiTheta₂_term (a * I * x) (by rwa [I_mul_im, ofReal_re] : 0 < im (I * x))
   have h2 := hasSum_jacobiTheta₂'_term (a * I * x) (by rwa [I_mul_im, ofReal_re] : 0 < im (I * x))
   convert ((h2.div_const (2 * π * I)).add (h1.mul_left ↑a)).mul_left _ using 2 with n
-  rw [jacobiTheta₂'_term, mul_assoc (2 * π * I), mul_div_cancel_left, ← add_mul,
+  rw [jacobiTheta₂'_term, mul_assoc (2 * π * I), mul_div_cancel_left₀, ← add_mul,
     ← mul_assoc, mul_comm _ (n + a : ℂ), mul_assoc (n + a : ℂ), jacobiTheta₂_term,
     ← Complex.exp_add]
   · push_cast
@@ -463,7 +463,7 @@ lemma hasSum_int_hurwitzZetaOdd (a : ℝ) {s : ℂ} (hs : 1 < re s) :
   rw [hurwitzZetaOdd]
   convert (hasSum_int_completedHurwitzZetaOdd a hs).div_const (Gammaℝ (s + 1)) using 2 with n
   simp_rw [div_right_comm _ _ (Gammaℝ _)]
-  rw [mul_div_cancel_left _ (Gammaℝ_ne_zero_of_re_pos ?_)]
+  rw [mul_div_cancel_left₀ _ (Gammaℝ_ne_zero_of_re_pos ?_)]
   rw [add_re, one_re]
   positivity
 
@@ -499,7 +499,7 @@ lemma hasSum_int_sinZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
   rw [sinZeta]
   convert (hasSum_int_completedSinZeta a hs).div_const (Gammaℝ (s + 1)) using 2 with n
   simp_rw [mul_assoc, div_right_comm _ _ (Gammaℝ _)]
-  rw [mul_div_cancel_left _ (Gammaℝ_ne_zero_of_re_pos (?_ : 0 < (s + 1).re))]
+  rw [mul_div_cancel_left₀ _ (Gammaℝ_ne_zero_of_re_pos (?_ : 0 < (s + 1).re))]
   rw [add_re, one_re]
   positivity
 
