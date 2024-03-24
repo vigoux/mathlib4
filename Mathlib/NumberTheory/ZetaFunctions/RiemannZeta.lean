@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: David Loeffler
 -/
 import Mathlib.Analysis.SpecialFunctions.Gamma.Beta
-import Mathlib.NumberTheory.ZetaFunctions.HurwitzZetaEven
+import Mathlib.NumberTheory.ZetaFunctions.HurwitzZeta
 import Mathlib.Analysis.Complex.RemovableSingularity
 
 #align_import number_theory.zeta_function from "leanprover-community/mathlib"@"57f9349f2fe19d2de7207e99b0341808d977cdcf"
@@ -128,6 +128,15 @@ lemma hurwitzZetaEven_zero : hurwitzZetaEven 0 = riemannZeta := rfl
 lemma cosZeta_zero : cosZeta 0 = riemannZeta := by
   simp_rw [cosZeta, riemannZeta, hurwitzZetaEven, if_true, completedHurwitzZetaEven_zero,
     completedCosZeta_zero]
+
+lemma hurwitzZeta_zero : hurwitzZeta 0 = riemannZeta := by
+  ext1 s
+  simpa [hurwitzZeta, hurwitzZetaEven_zero] using hurwitzZetaOdd_neg 0 s
+
+lemma expZeta_zero : expZeta 0 = riemannZeta := by
+  ext1 s
+  rw [expZeta, cosZeta_zero, add_right_eq_self, mul_eq_zero, eq_false_intro I_ne_zero, false_or,
+    ← eq_neg_self_iff, ← sinZeta_neg, neg_zero]
 
 /-- The Riemann zeta function is differentiable away from `s = 1`. -/
 theorem differentiableAt_riemannZeta {s : ℂ} (hs' : s ≠ 1) : DifferentiableAt ℂ riemannZeta s :=
