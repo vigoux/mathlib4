@@ -39,7 +39,7 @@ def pUnitCocone : Cocone (constPUnitFunctor.{w} C) where
 /-- If `C` is connected, the cocone on `constPUnitFunctor` with cone point `PUnit` is a colimit
     cocone. -/
 noncomputable def isColimitPUnitCocone [IsConnected C] : IsColimit (pUnitCocone.{w} C) where
-  desc s := s.ι.app (Classical.ofNonempty)
+  desc s := s.ι.app Classical.ofNonempty
   fac s j := by
     ext ⟨⟩
     apply constant_of_preserves_morphisms (s.ι.app · PUnit.unit)
