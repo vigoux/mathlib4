@@ -1,10 +1,557 @@
 import Mathlib
 
+open Filter BigOperators Asymptotics Topology
+
+section Eventually
+
+theorem le_of_eventually_sub_le {α : Type*} [LinearOrderedField α] [TopologicalSpace α] {a b : α}
+    (h : ∀ᶠ ε in 𝓝[>] 0, b - ε ≤ a) : b ≤ a := by
+  contrapose! h
+  
+
+end Eventually
+
+section IsBounded
+
+@[to_additive]
+theorem IsBoundedUnder_le_mul_right {α β : Type*} [OrderedCommGroup α] {f : Filter β} {u : β → α}
+    (a : α) (hu : IsBoundedUnder (· ≤ ·) f u) :
+    IsBoundedUnder (· ≤ ·) f (fun x ↦ u x * a) :=
+  (OrderIso.mulRight a).isBoundedUnder_le_comp.mpr hu
+
+@[to_additive]
+theorem IsBoundedUnder_le_mul_left {α β : Type*} [OrderedCommGroup α] {f : Filter β} {u : β → α}
+    (a : α) (hu : IsBoundedUnder (· ≤ ·) f u) :
+    IsBoundedUnder (· ≤ ·) f (fun x ↦ a * u x) :=
+  (OrderIso.mulLeft a).isBoundedUnder_le_comp.mpr hu
+
+@[to_additive]
+theorem IsBoundedUnder_le_mul {α β : Type*} [OrderedCommGroup α] {f : Filter β} {u v : β → α}
+    (hu : IsBoundedUnder (· ≤ ·) f u) (hv : IsBoundedUnder (· ≤ ·) f v) :
+    IsBoundedUnder (· ≤ ·) f (u * v) := by
+  obtain ⟨bu, hu⟩ := hu
+  obtain ⟨bv, hv⟩ := hv
+  refine ⟨bu * bv, ?_⟩
+  rw [eventually_map] at hu hv ⊢
+  filter_upwards [hu, hv] with _ h₁ h₂ using mul_le_mul' h₁ h₂
+
+@[to_additive]
+theorem IsBoundedUnder_ge_mul_right {α β : Type*} [OrderedCommGroup α] {f : Filter β} {u : β → α}
+    (a : α) (hu : IsBoundedUnder (· ≥ ·) f u) :
+    IsBoundedUnder (· ≥ ·) f (fun x ↦ u x * a) :=
+  (OrderIso.mulRight a).isBoundedUnder_ge_comp.mpr hu
+
+@[to_additive]
+theorem IsBoundedUnder_ge_mul_left {α β : Type*} [OrderedCommGroup α] {f : Filter β} {u : β → α}
+    (a : α) (hu : IsBoundedUnder (· ≥ ·) f u) :
+    IsBoundedUnder (· ≥ ·) f (fun x ↦ a * u x) :=
+  (OrderIso.mulLeft a).isBoundedUnder_ge_comp.mpr hu
+
+@[to_additive]
+theorem IsBoundedUnder_ge_mul {α β : Type*} [OrderedCommGroup α] {f : Filter β} {u v : β → α}
+    (hu : IsBoundedUnder (· ≥ ·) f u) (hv : IsBoundedUnder (· ≥ ·) f v) :
+    IsBoundedUnder (· ≥ ·) f (u * v) := by
+  obtain ⟨bu, hu⟩ := hu
+  obtain ⟨bv, hv⟩ := hv
+  refine ⟨bu * bv, ?_⟩
+  rw [eventually_map] at hu hv ⊢
+  filter_upwards [hu, hv] with _ h₁ h₂ using mul_le_mul' h₁ h₂
+
+theorem IsBoundedUnder_le_mul_right₀ {α β : Type*} [LinearOrderedSemifield α] {f : Filter β}
+    {u : β → α} {a : α} (ha : 0 < a) (hu : IsBoundedUnder (· ≤ ·) f u) :
+    IsBoundedUnder (· ≤ ·) f (fun x ↦ u x * a) :=
+  (OrderIso.mulRight₀ a ha).isBoundedUnder_le_comp.mpr hu
+
+theorem IsBoundedUnder_le_mul_left₀ {α β : Type*} [LinearOrderedSemifield α] {f : Filter β}
+    {u : β → α} {a : α} (ha : 0 < a) (hu : IsBoundedUnder (· ≤ ·) f u) :
+    IsBoundedUnder (· ≤ ·) f (fun x ↦ a * u x) :=
+  (OrderIso.mulLeft₀ a ha).isBoundedUnder_le_comp.mpr hu
+
+theorem IsBoundedUnder_ge_mul_right₀ {α β : Type*} [LinearOrderedSemifield α] {f : Filter β}
+    {u : β → α} {a : α} (ha : 0 < a) (hu : IsBoundedUnder (· ≥ ·) f u) :
+    IsBoundedUnder (· ≥ ·) f (fun x ↦ u x * a) :=
+  (OrderIso.mulRight₀ a ha).isBoundedUnder_ge_comp.mpr hu
+
+theorem IsBoundedUnder_ge_mul_left₀ {α β : Type*} [LinearOrderedSemifield α] {f : Filter β}
+    {u : β → α} {a : α} (ha : 0 < a) (hu : IsBoundedUnder (· ≥ ·) f u) :
+    IsBoundedUnder (· ≥ ·) f (fun x ↦ a * u x) :=
+  (OrderIso.mulLeft₀ a ha).isBoundedUnder_ge_comp.mpr hu
+
+-- theorem IsBoundedUnder_le_mul_of_nonneg_left {α β : Type*} [LinearOrderedSemifield α] {f : Filter β}
+--     {u v : β → α} (hu : ∀ᶠ x in f, 0 ≤ v x) (hv : IsBoundedUnder (· ≤ ·) f v) :
+--     IsBoundedUnder (· ≤ ·) f (u * v) := by
+--   obtain ⟨bv, hv⟩ := hv
+--   rw [eventually_map]
+
+--   refine ⟨bu * bv, ?_⟩
+--   rw [eventually_map] at hu hv ⊢
+--   filter_upwards [hu, hv] with _ h₁ h₂ using mul_le_mul' h₁ h₂
+
+end IsBounded
+
+-- First prove the result for 0 < v and 0 ≤ u. The general result will follow from it by deleting
+-- the negative terms
+variable (u v : ℕ → ℝ) (h_main : Tendsto (u / v) atTop (𝓝 1))
+  (h_sum : ∀ ⦃s⦄, (1:ℝ) < s → Summable (fun k ↦ (v k) ^ s))
+  (hv : ∀ k, 0 < v k)
+  (hu : ∀ k, 0 ≤ u k)
+  (h_res : Tendsto (fun s : ℝ ↦ (s - 1) * ∑' k, v k ^ s) (𝓝[>] 1) (𝓝 1))
+
+theorem fact0 {s : ℝ} : Tendsto (u ^ s / v ^ s) atTop (𝓝 1) := by
+  have := Tendsto.comp (Real.continuousAt_rpow_const 1 s (Or.inl one_ne_zero)) h_main
+  simp_rw [Real.one_rpow] at this
+  refine Tendsto.congr (fun _ ↦ ?_) this
+  rw [Function.comp_apply, Pi.div_apply, Pi.div_apply, Pi.pow_apply, Pi.pow_apply,
+    Real.div_rpow (hu _) (le_of_lt (hv _))]
+
+theorem fact1 {s : ℝ} (hs : 1 < s) : (fun k ↦ u k ^ s) ~[atTop] (fun k ↦ v k ^ s) := by
+  refine (isEquivalent_iff_tendsto_one ?_).mpr (fact0 u v h_main hv hu)
+  refine eventually_of_forall (fun _ ↦ ?_)
+  rw [ne_eq, Real.rpow_eq_zero (le_of_lt (hv _)) (ne_of_gt (lt_trans zero_lt_one hs))]
+  exact ne_of_gt (hv _)
+
+theorem fact2 {s : ℝ} (hs : 1 < s) : Summable (fun k ↦ (u k) ^ s) := by
+  refine (IsEquivalent.summable_iff_nat (fact1 u v h_main hv hu hs)).mpr (h_sum hs)
+
+theorem fact3 (x : ℝ) : Tendsto (fun s : ℝ ↦ x ^ s) (𝓝[>] 1) (𝓝 x) := by
+  convert Tendsto.rpow tendsto_const_nhds (tendsto_id.mono_left nhdsWithin_le_nhds)
+      (Or.inr zero_lt_one)
+  rw [Real.rpow_one]
+
+theorem fact4 (w : ℕ → ℝ) (t : Finset ℕ) :
+    Tendsto (fun s : ℝ ↦ (s - 1) * ∑ k in t, w k ^ s) (𝓝[>] 1) (𝓝 0) := by
+  have h₁ : Tendsto (fun s : ℝ ↦ s - 1) (𝓝[>] 1) (𝓝 0) :=
+    (tendsto_sub_nhds_zero_iff.mpr tendsto_id).mono_left nhdsWithin_le_nhds
+  convert h₁.mul (tendsto_finset_sum t fun k _ ↦ fact3 (w k))
+  rw [zero_mul]
+
+theorem fact5 (t : Finset ℕ) :
+    Tendsto (fun s : ℝ ↦ (s - 1) * ∑' (k : {k // k ∉ t}), v k ^ s) (𝓝[>] 1) (𝓝 1) := by
+  refine tendsto_nhdsWithin_congr (fun s hs ↦ ?_) <|
+    (sub_zero (1:ℝ)) ▸ Tendsto.sub h_res (fact4 v t)
+  rw [ ← sum_add_tsum_subtype_compl (h_sum hs) t, mul_add, add_sub_cancel']
+
+-- This is a bit trivial, right?
+theorem fact6 (x : ℝ) {ε : ℝ} (hε : 0 < ε) : ∀ᶠ y in 𝓝[>] x, y - ε < x := by
+  refine Eventually.filter_mono nhdsWithin_le_nhds ?_
+  refine Metric.eventually_nhds_iff.mpr ⟨ε, hε, fun _ hy ↦ ?_⟩
+  rw [Real.dist_eq, abs_lt, sub_lt_iff_lt_add', ← sub_lt_iff_lt_add] at hy
+  exact hy.2
+
+-- Use: Filter.Tendsto.isBoundedUnder_ge and Filter.Tendsto.isBoundedUnder_le?
+-- Some BoundedUnder can be deduced from others using lemma_5
+theorem fact7 {ε : ℝ} (t : Finset ℕ) :
+  IsBoundedUnder (· ≥ ·) (𝓝[>] 1)
+    fun s : ℝ ↦ (s - 1) * ∑ k in t, u k ^ s +
+      (1 - ε) ^ s * (s - 1) * ∑' (k : { k // k ∉ t }), v k ^ s := by
+  refine IsBoundedUnder_ge_add (α := ℝ) ?_ ?_
+  · refine Filter.Tendsto.isBoundedUnder_ge (a := 0) ?_
+    exact fact4 u t
+  · refine Filter.Tendsto.isBoundedUnder_ge (a := (1 - ε) * 1) ?_
+    simp_rw [mul_assoc]
+    refine Tendsto.mul ?_ ?_
+    exact fact3 (1 - ε)
+    exact fact5 v h_sum h_res t
+
+theorem fact10 {ε : ℝ} (t : Finset ℕ) :
+    IsBoundedUnder (fun x y ↦ x ≤ y) (𝓝[>] 1)
+      fun s : ℝ ↦ (s - 1) * ∑ k in t, u k ^ s +
+        (1 + ε) ^ s * (s - 1) * ∑' (k : { k // k ∉ t }), v k ^ s := by
+    refine IsBoundedUnder_le_add (α := ℝ) ?_ ?_
+    · refine Filter.Tendsto.isBoundedUnder_le (a := 0) ?_
+      exact fact4 (fun k ↦ u k) t
+    · refine Filter.Tendsto.isBoundedUnder_le (a := (1 + ε) * 1) ?_
+      simp_rw [mul_assoc]
+      refine Tendsto.mul ?_ ?_
+      exact fact3 (1 + ε)
+      exact fact5 v h_sum h_res t
+
+theorem lemma_1 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) : ∀ᶠ k in atTop, ∀ ⦃s⦄, (1:ℝ) < s →
+    (1 - ε) ^ s < (u k / v k) ^ s ∧ (u k / v k) ^ s < (1 + ε) ^ s := by
+  filter_upwards [(Metric.tendsto_nhds.mp h_main) ε hε] with k _ s hs
+  have : 0 < s := lt_trans zero_lt_one hs
+  have : 0 ≤ u k / v k := div_nonneg (hu k) (le_of_lt (hv k))
+  rwa [Real.rpow_lt_rpow_iff this, Real.rpow_lt_rpow_iff (sub_nonneg_of_le hε'), sub_eq_add_neg,
+    ← sub_lt_iff_lt_add', ← lt_sub_iff_add_lt', ← abs_lt]
+  all_goals positivity
+
+theorem lemma_2 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) :
+    ∀ᶠ k in atTop, ∀ ⦃s⦄, (1:ℝ) < s →
+      (1 - ε) ^ s * v k ^ s < u k ^ s ∧ u k ^ s < (1 + ε) ^ s * v k ^ s := by
+  filter_upwards [lemma_1 u v h_main hv hu hε hε'] with k hk s hs
+  specialize hk hs
+  rwa [← div_lt_iff (Real.rpow_pos_of_pos (hv k) _), ← lt_div_iff (Real.rpow_pos_of_pos (hv k) _),
+    ← Real.div_rpow (hu k) (le_of_lt (hv k))]
+
+theorem lemma_3 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) :
+    ∃ t : Finset ℕ, ∀ ⦃s⦄, (1:ℝ) < s →
+    (1 - ε) ^ s * ∑' (k : {k // k ∉ t}), v k ^ s ≤ ∑' (k : {k // k ∉ t}), u k ^ s ∧
+    ∑' (k : {k // k ∉ t}), u k ^ s ≤ (1 + ε) ^ s * ∑' (k : {k // k ∉ t}), v k ^ s := by
+  obtain ⟨k₀, hk₀⟩ := eventually_atTop.mp <| lemma_2 u v h_main hv hu hε hε'
+  simp_rw [← tsum_mul_left]
+  refine ⟨Finset.Iio k₀, fun s hs ↦
+    ⟨tsum_mono ?_ ?_ (fun ⟨k, hk⟩ ↦ ?_), tsum_mono ?_ ?_ (fun ⟨k, hk⟩ ↦ ?_)⟩⟩
+  · exact Summable.mul_left _ (Summable.subtype (h_sum hs) _)
+  · exact Summable.subtype (fact2 u v h_main h_sum hv hu hs) _
+  · exact le_of_lt (hk₀ k (Nat.not_lt.mp (Finset.mem_Iio.not.mp hk)) hs).1
+  · exact Summable.subtype (fact2 u v h_main h_sum hv hu hs) _
+  · exact Summable.mul_left _ (Summable.subtype (h_sum hs) _)
+  · exact le_of_lt (hk₀ k (Nat.not_lt.mp (Finset.mem_Iio.not.mp hk)) hs).2
+
+theorem lemma_4 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) :
+    ∃ t : Finset ℕ, ∀ ⦃s⦄, (1:ℝ) < s →
+    ∑  k in t, u k ^ s + (1 - ε) ^ s * ∑' (k : {k // k ∉ t}), v k ^ s ≤ ∑' k, u k ^ s ∧
+    ∑' k, u k ^ s ≤ ∑  k in t, u k ^ s + (1 + ε) ^ s * ∑' (k : {k // k ∉ t}), v k ^ s := by
+  obtain ⟨t, ht⟩ := lemma_3 u v h_main h_sum hv hu hε hε'
+  refine ⟨t, fun _ hs ↦ ⟨?_, ?_⟩⟩
+  · rw [← sum_add_tsum_subtype_compl (fact2 u v h_main h_sum hv hu hs) t, add_le_add_iff_left]
+    exact (ht hs).1
+  · rw [← sum_add_tsum_subtype_compl (fact2 u v h_main h_sum hv hu hs) t, add_le_add_iff_left]
+    exact (ht hs).2
+
+theorem lemma_5 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) :
+    ∃ t : Finset ℕ, ∀ ⦃s⦄, (1:ℝ) < s →
+    (s - 1) * ∑  k in t, u k ^ s + (1 - ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), v k ^ s ≤
+      (s - 1) * ∑' k, u k ^ s ∧
+    (s - 1) * ∑' k, u k ^ s ≤
+      (s - 1) * ∑  k in t, u k ^ s + (1 + ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), v k ^ s := by
+  obtain ⟨t, ht⟩ := lemma_4 u v h_main h_sum hv hu hε hε'
+  refine ⟨t, fun s hs ↦ ⟨?_, ?_⟩⟩
+  · rw [mul_comm _ (s - 1), mul_assoc, ← mul_add, mul_le_mul_left (sub_pos.mpr hs)]
+    exact (ht hs).1
+  · rw [mul_comm _ (s - 1), mul_assoc, ← mul_add, mul_le_mul_left (sub_pos.mpr hs)]
+    exact (ht hs).2
+
+theorem lemma_6 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) :
+    1 - ε ≤ Filter.liminf (fun s : ℝ ↦ (s - 1) * ∑' k, u k ^ s) (𝓝[>] 1) := by
+  obtain ⟨t, ht⟩ := lemma_5 u v h_main h_sum hv hu hε hε'
+  have h₁ : ∀ᶠ s : ℝ in (𝓝[>] 1), _ := eventually_nhdsWithin_of_forall (fun s hs ↦ (ht hs).1)
+  have h₂ : ∀ᶠ s : ℝ in (𝓝[>] 1), _ := eventually_nhdsWithin_of_forall (fun s hs ↦ (ht hs).2)
+  convert Filter.liminf_le_liminf h₁ ?_ ?_
+  · refine (Filter.Tendsto.liminf_eq ?_).symm
+    simp_rw [show 𝓝 (1 - ε) = 𝓝 (0 + (1 - ε) * 1) by ring_nf, mul_assoc]
+    exact Tendsto.add (fact4 u t) (Tendsto.mul (fact3 (1 - ε)) (fact5 v h_sum h_res t))
+  · exact fact7 (fun k ↦ u k) v h_sum h_res t
+  · refine IsBounded.isCobounded_ge ?_
+    refine IsBoundedUnder.mono_le ?_ h₂
+    exact fact10 (fun k ↦ u k) v h_sum h_res t
+
+theorem lemma_7 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) :
+    Filter.limsup (fun s : ℝ ↦ (s - 1) * ∑' k, u k ^ s) (𝓝[>] 1) ≤ 1 + ε := by
+  obtain ⟨t, ht⟩ := lemma_5 u v h_main h_sum hv hu hε hε'
+  have h₁ : ∀ᶠ s : ℝ in (𝓝[>] 1), _ := eventually_nhdsWithin_of_forall (fun s hs ↦ (ht hs).1)
+  have h₂ : ∀ᶠ s : ℝ in (𝓝[>] 1), _ := eventually_nhdsWithin_of_forall (fun s hs ↦ (ht hs).2)
+  convert Filter.limsup_le_limsup h₂ ?_ ?_
+  · refine (Filter.Tendsto.limsup_eq ?_).symm
+    simp_rw [show 𝓝 (1 + ε) = 𝓝 (0 + (1 + ε) * 1) by ring_nf, mul_assoc]
+    exact Tendsto.add (fact4 u t) (Tendsto.mul (fact3 (1 + ε)) (fact5 v h_sum h_res t))
+  · refine IsBounded.isCobounded_le ?_
+    refine IsBoundedUnder.mono_ge ?_ h₁
+    exact fact7 (fun k ↦ u k) v h_sum h_res t
+  · exact fact10 (fun k ↦ u k) v h_sum h_res t
+
+
+
+theorem lemma_8 :
+    Tendsto (fun s : ℝ ↦ (s - 1) * ∑' (k : ℕ), u k ^ s) (𝓝[>] 1) (𝓝 1) := by
+  refine tendsto_of_le_liminf_of_limsup_le ?_ ?_ ?_ ?_
+  · refine le_of_forall_sub_le (fun ε hε ↦ ?_)
+    specialize h_sineq hε
+    obtain ⟨k₀, hk₀⟩ := h_sineq
+    convert Filter.liminf_le_liminf hk₀ sorry sorry
+
+
+    sorry
+  · refine le_of_forall_sub_le (fun ε hε ↦ ?_)
+
+#exit
+
+theorem fact0 : ∀ᶠ k in atTop, 0 ≤ u k / v k := by
+  filter_upwards [(Metric.tendsto_nhds.mp h_main) 1 Real.zero_lt_one] with k hk
+  rw [Pi.div_apply, Real.dist_eq, abs_lt, lt_sub_iff_add_lt', add_right_neg] at hk
+  exact le_of_lt hk.1
+
+theorem fact1 : ∀ᶠ k in atTop, 0 ≤ u k := by
+  filter_upwards [h_pos, fact0 u v h_main] with _ h₁ h₂
+  exact nonneg_of_mul_nonneg_left h₂ (inv_pos.mpr h₁)
+
+theorem fact2 {s : ℝ} : Tendsto (u ^ s / v ^ s) atTop (𝓝 1) := by
+  have := Tendsto.comp (Real.continuousAt_rpow_const 1 s (Or.inl one_ne_zero)) h_main
+  simp_rw [Real.one_rpow] at this
+  refine Tendsto.congr' ?_ this
+  filter_upwards [h_pos, fact1 u v h_main h_pos] with _ _ _
+  rw [Function.comp_apply, Pi.div_apply, Pi.div_apply, Pi.pow_apply, Pi.pow_apply,
+    Real.div_rpow (by positivity) (by positivity)]
+
+theorem fact3 {s : ℝ} (hs : 1 < s) : (fun k ↦ u k ^ s) ~[atTop] (fun k ↦ v k ^ s) := by
+  refine (isEquivalent_iff_tendsto_one ?_).mpr (fact2 u v h_main h_pos)
+  filter_upwards [h_pos] with k hv
+  rw [ne_eq, Real.rpow_eq_zero (le_of_lt hv) (ne_of_gt (lt_trans zero_lt_one hs))]
+  exact ne_of_gt hv
+
+theorem fact4 {s : ℝ} (hs : 1 < s) : Summable (fun k ↦ (u k) ^ s) := by
+  refine (IsEquivalent.summable_iff_nat (fact3 u v h_main h_pos hs)).mpr (h_sum hs)
+
+theorem fact5 (x : ℝ) : Tendsto (fun s : ℝ ↦ x ^ s) (𝓝[>] 1) (𝓝 x) := by
+  convert Tendsto.rpow tendsto_const_nhds (tendsto_id.mono_left nhdsWithin_le_nhds)
+      (Or.inr zero_lt_one)
+  rw [Real.rpow_one]
+
+theorem fact6 (w : ℕ → ℝ) (t : Finset ℕ) :
+    Tendsto (fun s : ℝ ↦ (s - 1) * ∑ k in t, w k ^ s) (𝓝[>] 1) (𝓝 0) := by
+  have h₁ : Tendsto (fun s : ℝ ↦ s - 1) (𝓝[>] 1) (𝓝 0) :=
+    (tendsto_sub_nhds_zero_iff.mpr tendsto_id).mono_left nhdsWithin_le_nhds
+  convert h₁.mul (tendsto_finset_sum t fun k _ ↦ fact5 (w k))
+  rw [zero_mul]
+
+theorem fact7 (t : Finset ℕ) :
+    Tendsto (fun s : ℝ ↦ (s - 1) * ∑' (k : {k // k ∉ t}), v k ^ s) (𝓝[>] 1) (𝓝 1) := by
+  refine tendsto_nhdsWithin_congr (fun s hs ↦ ?_) <|
+    (sub_zero (1:ℝ)) ▸ Tendsto.sub h_res (fact6 v t)
+  rw [ ← sum_add_tsum_subtype_compl (h_sum hs) t, mul_add, add_sub_cancel']
+
+-- This is a bit trivial, right?
+theorem fact8 (x : ℝ) {ε : ℝ} (hε : 0 < ε) : ∀ᶠ y in 𝓝[>] x, y - ε < x := by
+  refine Eventually.filter_mono nhdsWithin_le_nhds ?_
+  refine Metric.eventually_nhds_iff.mpr ⟨ε, hε, fun _ hy ↦ ?_⟩
+  rw [Real.dist_eq, abs_lt, sub_lt_iff_lt_add', ← sub_lt_iff_lt_add] at hy
+  exact hy.2
+
+theorem fact9 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) (t : Finset ℕ) :
+  IsBoundedUnder (· ≥ ·) (𝓝[>] 1)
+    fun s : ℝ ↦ (s - 1) * ∑ k in t, u k ^ s +
+      (1 - ε) ^ s * (s - 1) * ∑' (k : { k // k ∉ t }), v k ^ s := by
+  refine IsBoundedUnder_ge_add (α := ℝ) ?_ ?_
+  · simp_rw [IsBoundedUnder, IsBounded, eventually_map]
+    sorry
+  · simp_rw [IsBoundedUnder, IsBounded, eventually_map]
+    sorry
+
+theorem fact10 :
+    IsCoboundedUnder (fun x y ↦ x ≥ y) (𝓝[>] 1) fun s : ℝ ↦ (s - 1) * ∑' (k : ℕ), u k ^ s := by
+  refine IsBounded.isCobounded_ge ?_
+  simp_rw [IsBounded, eventually_map]
+  sorry
+  -- obtain ⟨k₀, hk₀⟩ := eventually_atTop.mp h_pos
+  -- let S := ∑ k in Finset.Ico 0 k₀, u k
+  -- refine ⟨S, ?_⟩
+  -- simp only [eventually_map]
+
+theorem fact11 :
+    IsCoboundedUnder (fun x y ↦ x ≤ y) (𝓝[>] 1) fun s : ℝ ↦ (s - 1) * ∑' (k : ℕ), u k ^ s := by
+  refine IsBounded.isCobounded_le ?_
+  simp_rw [IsBounded, eventually_map]
+  sorry
+  -- obtain ⟨k₀, hk₀⟩ := eventually_atTop.mp h_pos
+  -- refine ⟨∑ k in Finset.Ico 0 k₀, u k, ?_⟩
+  -- simp only [eventually_map]
+  -- filter_upwards [fact8 (1:ℝ) zero_lt_one] with s hs
+
+theorem fact12 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) (t : Finset ℕ) :
+    IsBoundedUnder (fun x y ↦ x ≤ y) (𝓝[>] 1)
+      fun s : ℝ ↦ (s - 1) * ∑ k in t, u k ^ s +
+        (1 + ε) ^ s * (s - 1) * ∑' (k : { k // k ∉ t }), v k ^ s := by
+    refine IsBoundedUnder_le_add (α := ℝ) ?_ ?_
+    · simp_rw [IsBoundedUnder, IsBounded, eventually_map]
+      sorry
+    · simp_rw [IsBoundedUnder, IsBounded, eventually_map]
+      sorry
+
+theorem lemma_1 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) : ∀ᶠ k in atTop, ∀ ⦃s⦄, (1:ℝ) < s →
+    (1 - ε) ^ s < (u k / v k) ^ s ∧ (u k / v k) ^ s < (1 + ε) ^ s := by
+  filter_upwards [(Metric.tendsto_nhds.mp h_main) ε hε, fact0 u v h_main] with _ _ h s hs
+  have : 0 < s := lt_trans zero_lt_one hs
+  rwa [Real.rpow_lt_rpow_iff h, Real.rpow_lt_rpow_iff (sub_nonneg_of_le hε'), sub_eq_add_neg,
+    ← sub_lt_iff_lt_add', ← lt_sub_iff_add_lt', ← abs_lt]
+  all_goals positivity
+
+theorem lemma_2 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) :
+    ∀ᶠ k in atTop, ∀ ⦃s⦄, (1:ℝ) < s →
+    (1 - ε) ^ s * v k ^ s < u k ^ s ∧ u k ^ s < (1 + ε) ^ s * v k ^ s := by
+  filter_upwards [lemma_1 u v h_main hε hε', h_pos, fact1 u v h_main h_pos] with _ h _ _ _ hs
+  specialize h hs
+  rwa [← div_lt_iff, ← lt_div_iff, ← Real.div_rpow]
+  all_goals positivity
+
+theorem lemma_3 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) :
+    ∃ t : Finset ℕ, ∀ ⦃s⦄, (1:ℝ) < s →
+    (1 - ε) ^ s * ∑' (k : {k // k ∉ t}), v k ^ s ≤ ∑' (k : {k // k ∉ t}), u k ^ s ∧
+    ∑' (k : {k // k ∉ t}), u k ^ s ≤ (1 + ε) ^ s * ∑' (k : {k // k ∉ t}), v k ^ s := by
+  obtain ⟨k₀, hk₀⟩ := eventually_atTop.mp <| lemma_2 u v h_main h_pos hε hε'
+  simp_rw [← tsum_mul_left]
+  refine ⟨Finset.Iio k₀, fun s hs ↦
+    ⟨tsum_mono ?_ ?_ (fun ⟨k, hk⟩ ↦ ?_), tsum_mono ?_ ?_ (fun ⟨k, hk⟩ ↦ ?_)⟩⟩
+  · exact Summable.mul_left _ (Summable.subtype (h_sum hs) _)
+  · exact Summable.subtype (fact4 u v h_main h_sum  h_pos hs) _
+  · exact le_of_lt (hk₀ k (Nat.not_lt.mp (Finset.mem_Iio.not.mp hk)) hs).1
+  · exact Summable.subtype (fact4 u v h_main h_sum  h_pos hs) _
+  · exact Summable.mul_left _ (Summable.subtype (h_sum hs) _)
+  · exact le_of_lt (hk₀ k (Nat.not_lt.mp (Finset.mem_Iio.not.mp hk)) hs).2
+
+theorem lemma_4 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) :
+    ∃ t : Finset ℕ, ∀ ⦃s⦄, (1:ℝ) < s →
+    ∑  k in t, u k ^ s + (1 - ε) ^ s * ∑' (k : {k // k ∉ t}), v k ^ s ≤ ∑' k, u k ^ s ∧
+    ∑' k, u k ^ s ≤ ∑  k in t, u k ^ s + (1 + ε) ^ s * ∑' (k : {k // k ∉ t}), v k ^ s := by
+  obtain ⟨t, ht⟩ := lemma_3 u v h_main h_sum h_pos hε hε'
+  refine ⟨t, fun _ hs ↦ ⟨?_, ?_⟩⟩
+  · rw [← sum_add_tsum_subtype_compl (fact4 u v h_main h_sum h_pos hs) t, add_le_add_iff_left]
+    exact (ht hs).1
+  · rw [← sum_add_tsum_subtype_compl (fact4 u v h_main h_sum h_pos hs) t, add_le_add_iff_left]
+    exact (ht hs).2
+
+theorem lemma_5 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) :
+    ∃ t : Finset ℕ, ∀ ⦃s⦄, (1:ℝ) < s →
+    (s - 1) * ∑  k in t, u k ^ s + (1 - ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), v k ^ s ≤
+      (s - 1) * ∑' k, u k ^ s ∧
+    (s - 1) * ∑' k, u k ^ s ≤
+      (s - 1) * ∑  k in t, u k ^ s + (1 + ε) ^ s * (s - 1) * ∑' (k : {k // k ∉ t}), v k ^ s := by
+  obtain ⟨t, ht⟩ := lemma_4 u v h_main h_sum h_pos hε hε'
+  refine ⟨t, fun s hs ↦ ⟨?_, ?_⟩⟩
+  · rw [mul_comm _ (s - 1), mul_assoc, ← mul_add, mul_le_mul_left (sub_pos.mpr hs)]
+    exact (ht hs).1
+  · rw [mul_comm _ (s - 1), mul_assoc, ← mul_add, mul_le_mul_left (sub_pos.mpr hs)]
+    exact (ht hs).2
+
+theorem lemma_6 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) :
+    1 - ε ≤ Filter.liminf (fun s : ℝ ↦ (s - 1) * ∑' k, u k ^ s) (𝓝[>] 1) := by
+  obtain ⟨t, ht⟩ := lemma_5 u v h_main h_sum h_pos hε hε'
+  have : ∀ᶠ s : ℝ in (𝓝[>] 1), _ := eventually_nhdsWithin_of_forall (fun s hs ↦ (ht hs).1)
+  convert Filter.liminf_le_liminf this ?_ ?_
+  · refine (Filter.Tendsto.liminf_eq ?_).symm
+    simp_rw [show 𝓝 (1 - ε) = 𝓝 (0 + (1 - ε) * 1) by ring_nf, mul_assoc]
+    exact Tendsto.add (fact6 u t) (Tendsto.mul (fact5 (1 - ε)) (fact7 v h_sum h_res t))
+  · exact fact9 u v hε hε' t
+  · exact fact10 u
+
+theorem lemma_7 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) :
+    Filter.limsup (fun s : ℝ ↦ (s - 1) * ∑' k, u k ^ s) (𝓝[>] 1) ≤ 1 + ε := by
+  obtain ⟨t, ht⟩ := lemma_5 u v h_main h_sum h_pos hε hε'
+  have : ∀ᶠ s : ℝ in (𝓝[>] 1), _ := eventually_nhdsWithin_of_forall (fun s hs ↦ (ht hs).2)
+  convert Filter.limsup_le_limsup this ?_ ?_
+  · refine (Filter.Tendsto.limsup_eq ?_).symm
+    simp_rw [show 𝓝 (1 + ε) = 𝓝 (0 + (1 + ε) * 1) by ring_nf, mul_assoc]
+    exact Tendsto.add (fact6 u t) (Tendsto.mul (fact5 (1 + ε)) (fact7 v h_sum h_res t))
+  · exact fact11 u
+  · exact fact12 u v hε hε' t
+
+#exit
+
+theorem zap1 (u : ℝ → ℕ → ℝ) {ε : ℝ}
+    (h_inf : ∀ᶠ s in 𝓝[>] (1:ℝ), ENNReal.ofReal (1 - ε) ≤ ENNReal.ofReal (∑' k, u s k)) :
+    ENNReal.ofReal (1 - ε) ≤ liminf (fun s : ℝ ↦ ENNReal.ofReal (∑' k, u s k)) (𝓝[>] 1) := by
+  convert Filter.liminf_le_liminf h_inf
+  simp
+
+theorem zap2 (u : ℝ → ℕ → ℝ) {ε : ℝ}
+    (h_sup : ∀ᶠ s in 𝓝[>] (1:ℝ), 1 - ε ≤ ∑' k, u s k ) :
+    1 - ε ≤ liminf (fun s : ℝ ↦ ∑' k, u s k) (𝓝[>] 1) := by
+  have : ∀ᶠ s in 𝓝[>] (1:ℝ), ENNReal.ofReal (1 - ε) ≤ ENNReal.ofReal (∑' k, u s k) := by
+    filter_upwards [h_sup] with s hs
+    exact ENNReal.ofReal_le_ofReal hs
+  have := zap1 u this
+  have := ENNReal.toReal_mono ?_ this
+  rw [ENNReal.toReal_ofReal] at this
+  -- erw [Filter.liminf_comp] at this
+  convert this
+  · rw [Monotone.map_liminf_of_continuousAt (f := ENNReal.toReal)]
+    sorry
+    · intro x y h
+      exact?
+    have : Continuous ENNReal.toReal := sorry
+
+
+
+
+
+#exit
+
+  have : ∀ᶠ s in (𝓝[>] 1), _ := eventually_nhdsWithin_of_forall (a := 1) (fun s hs ↦ (ht s hs).1)
+  conv at this =>
+    congr
+    ext s
+    rw [← add_le_add_iff_left ((s - 1) * (∑ k in t, 1 / (a k) ^ s)), ← mul_add,
+      sum_add_tsum_subtype_compl sorry, mul_assoc]
+  convert Filter.liminf_le_liminf this sorry sorry
+  refine (Filter.Tendsto.liminf_eq ?_).symm
+  rw [show 𝓝 (1 - ε) = 𝓝 (0 + (1 - ε) * 1) by sorry]
+  refine Tendsto.add ?_ (Tendsto.mul ?_ ?_)
+  · have := toto1 (fun (k : ℕ) (s : ℝ) ↦ 1 / (a k) ^ s) (fun s ↦ s - 1) 1 (Set.Ioi 1) t sorry ?_
+    exact this
+    have : Tendsto (fun s : ℝ ↦ s - 1) (𝓝 1) (𝓝 0) := by
+      refine tendsto_sub_nhds_zero_iff.mpr ?_
+      exact Filter.tendsto_id
+    refine Filter.Tendsto.mono_left this ?_
+    exact nhdsWithin_le_nhds
+  · sorry
+  · have := toto12 (fun (k : ℕ) (s : ℝ) ↦ 1 / k ^ s) (fun s ↦ s - 1) 1 (Set.Ioi 1) t sorry
+      sorry 1 sorry sorry
+    exact this
+
+#exit
+
+  have := sum_add_tsum_subtype_compl (fact4 u v h_main ha h_sum h_pos hs) t
+  refine ⟨t, ?_⟩
+
+
+#exit
+
 section analysis
 
 open Filter BigOperators Asymptotics Topology
 
+theorem Asymptotics.IsEquivalent.map' {α β γ : Type*} [NormedField β] [NormedField γ]
+    {l : Filter α} {u v : α → β} (hv : ∀ᶠ x in l, v x ≠ 0) {f : β → γ}
+    (hf₁ : Tendsto f (𝓝 1) (𝓝 1)) (hf₂ : ∀ᶠ k in l, f (u k / v k) = f (u k) / f (v k))
+    (hf₃ : ∀ᶠ k in l, (f ∘ v) k ≠ 0) (h : u ~[l] v) :
+    f ∘ u ~[l] f ∘ v :=
+  (isEquivalent_iff_tendsto_one hf₃).mpr <| Filter.Tendsto.congr' (by
+      filter_upwards [hf₂] using by simp)
+    (hf₁.comp ((isEquivalent_iff_tendsto_one hv).mp h))
+
+theorem  Asymptotics.IsEquivalent.map {α β γ : Type*} [NormedField β] [NormedField γ]
+    {l : Filter α} {u v : α → β} {f : β →*₀ γ} (hf : ContinuousAt f 1)
+    (hv : ∀ᶠ x in l, v x ≠ 0) (h : u ~[l] v) :
+    f ∘ u ~[l] f ∘ v := by
+  refine h.map' hv ?_ ?_ ?_
+  · rwa [ContinuousAt, map_one] at hf
+  · exact eventually_of_forall (by simp_rw [division_def, map_mul, map_inv₀, implies_true])
+  · exact hv.mono (fun _ h ↦ (map_ne_zero f).mpr h)
+
+theorem Asymptotics.IsEquivalent.rpow {α : Type*} {u v : α → ℝ} {f : Filter α}
+    (hu : ∀ᶠ k in f, 0 ≤ u k) (hv : ∀ᶠ k in f, 0 < v k) (s : ℝ) (h_eq : u ~[f] v) :
+    u ^ s ~[f] v ^ s := by
+  by_cases hs : s = 0
+  · simp_rw [hs, Pi.pow_def, Real.rpow_zero]
+    exact Asymptotics.IsEquivalent.refl
+  · refine Asymptotics.IsEquivalent.map' (f := fun x : ℝ ↦ x ^ s) ?_ ?_ ?_ ?_ h_eq
+    · exact Filter.Eventually.mono hv (fun _ h ↦ ne_of_gt h)
+    · have := Real.continuousAt_rpow_const 1 s (Or.inl one_ne_zero)
+      rwa [ContinuousAt, Real.one_rpow] at this
+    · filter_upwards [hu, hv] with k hu hv using by rw [Real.div_rpow hu (le_of_lt hv)]
+    · refine Filter.Eventually.mono hv (fun _ h ↦ ?_)
+      rw [Function.comp_apply, ne_eq, Real.rpow_eq_zero (le_of_lt h) hs, ← ne_eq]
+      exact ne_of_gt h
+
+theorem zap0 :
+    Tendsto (fun s : ℂ ↦ (s - 1) * ∑' (n : ℕ), 1 / (n:ℂ) ^ s)
+      (𝓝[{s | 1 < s.re}] 1) (𝓝 1) := by
+  have : Tendsto (fun s : ℂ ↦ (s - 1) * riemannZeta s) (𝓝[{s | 1 < s.re}] 1) (𝓝 1) := by
+    refine Filter.Tendsto.mono_left riemannZeta_residue_one ?_
+    refine nhdsWithin_mono _ ?_
+    aesop
+  refine Tendsto.congr' ?_ this
+  rw [eventuallyEq_nhdsWithin_iff]
+  refine eventually_of_forall (fun s hs ↦ ?_)
+  exact congr_arg ((s - 1) * ·) (zeta_eq_tsum_one_div_nat_cpow hs)
+
 open scoped NNReal
+
+theorem toto0 {R α : Type*} (u : α → R → R) (v : R → R) (a : R) (V : Set R) (t : Finset α) [Ring R]
+    [TopologicalSpace R] [ContinuousMul R] [ContinuousAdd R]
+    (h₁ : ∀ k ∈ t, ContinuousWithinAt (fun s ↦ u k s) V a) (h₂ : Tendsto v (𝓝[V] a) (𝓝 0)) :
+    Tendsto (fun s ↦ (v s) * (∑ k in t, u k s)) (𝓝[V] a) (𝓝 0) := by
+  convert h₂.mul (tendsto_finset_sum t fun k hk ↦ h₁ k hk)
+  rw [zero_mul]
 
 variable (u v : ℕ → ℝ) (h_eq : u ~[atTop] v) {a l : ℝ} (ha : 0 ≤ a)
   (hv₀ : ∀ s, a < s → Summable (fun k ↦ (v k) ^ s))
@@ -12,55 +559,86 @@ variable (u v : ℕ → ℝ) (h_eq : u ~[atTop] v) {a l : ℝ} (ha : 0 ≤ a)
   (hv₂ : Tendsto (fun s : ℝ ↦ (s - a) * ∑' k, v k ^ s) (𝓝[>] a) (𝓝 l))
   (hu : ∀ᶠ k in atTop, 0 < u k)
 
-example : Tendsto (fun s : ℝ ↦ (s - a) * ∑' k, u k ^ s) (𝓝[>] a) (𝓝 l) := by
-  have h_sum : ∀ s, a < s → Summable (fun k ↦ (u k) ^ s) := by
-    intro s hs
-    refine (IsEquivalent.summable_iff_nat ?_).mpr (hv₀ s hs)
-    rw [isEquivalent_iff_tendsto_one] at h_eq ⊢
-    · refine Filter.Tendsto.congr' ?_ <|
-        Real.one_rpow _ ▸ h_eq.rpow_const (p := s) (Or.inl one_ne_zero)
-      filter_upwards [hv₁, hu] with k hv hu
-      rw [Pi.div_apply, Real.div_rpow (le_of_lt hu) (le_of_lt hv), Pi.div_apply]
-    · filter_upwards [hv₁] with k hk using ne_of_gt (Real.rpow_pos_of_pos hk s)
-    · filter_upwards [hv₁] with k hk using ne_of_gt hk
-  have h_sineq : ∀ ⦃ε : ℝ⦄, 0 < ε → ∀ᶠ k₀ in atTop, ∀ s, a < s →
-    (1 - ε) ^ s * ∑' (k : {k : ℕ // k₀ ≤ k}), (v k) ^ s ≤ ∑' (k : {k // k₀ ≤ k}), (u k) ^ s ∧
-      ∑' (k : {k // k₀ ≤ k}), (u k) ^ s ≤ (1 + ε) ^ s * ∑' (k : {k // k₀ ≤ k}), (v k) ^ s := by
+theorem toto1 {s : ℝ} (hs : a < s) : Summable (fun k ↦ (u k) ^ s) := by
+  refine (IsEquivalent.summable_iff_nat (h_eq.rpow ?_ hv₁ s)).mpr (hv₀ s hs)
+  exact hu.mono (fun _ h ↦ le_of_lt h)
+
+theorem lemma_1 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) {s : ℝ} (hs : a < s) : ∃ k₀, ∀ k, k₀ ≤ k →
+    (1 - ε) ^ s * v k ^ s ≤ u k ^ s ∧ u k ^ s ≤ (1 + ε) ^ s * v k ^ s := by
+  rw [← eventually_atTop]
+  filter_upwards [hv₁, hu, isLittleO_iff.mp h_eq.isLittleO hε] with k hv hu h
+  rw [← Real.mul_rpow, ← Real.mul_rpow, Real.rpow_le_rpow_iff, Real.rpow_le_rpow_iff, sub_mul,
+    add_mul, one_mul, sub_eq_add_neg, ← sub_le_iff_le_add', ← le_sub_iff_add_le', ← abs_le]
+  · convert h
+    exact (abs_eq_self.mpr (le_of_lt hv)).symm
+  any_goals positivity
+  any_goals exact lt_of_le_of_lt ha hs
+  any_goals exact sub_nonneg_of_le hε'
+  any_goals exact mul_nonneg (sub_nonneg_of_le hε') (le_of_lt hv)
+
+theorem lemma_2 {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) {s : ℝ} (hs : a < s) : ∃ t : Finset ℕ,
+    (1 - ε) ^ s * ∑' (k : {k // k ∉ t}), v k ^ s ≤ ∑' (k : {k // k ∉ t}), u k ^ s ∧
+    ∑' (k : {k // k ∉ t}), u k ^ s ≤ (1 + ε) ^ s * ∑' (k : {k // k ∉ t}), v k ^ s := by
+  simp_rw [← tsum_mul_left]
+  have h₁ : u ^ s ~[atTop] v ^ s := (h_eq).rpow (hu.mono (fun _ h ↦ le_of_lt h)) hv₁ s
+  obtain ⟨k₀, hk₀⟩ := lemma_1 u v h_eq ha hv₁ hu hε hε' hs
+  refine ⟨Finset.Iio k₀, ⟨tsum_mono ?_ ?_ (fun ⟨k, hk⟩ ↦ ?_), tsum_mono ?_ ?_ (fun ⟨k, hk⟩ ↦ ?_)⟩⟩
+  · exact Summable.mul_left _ (Summable.subtype (hv₀ s hs) _)
+  · exact Summable.subtype (summable_of_isEquivalent_nat (hv₀ s hs) h₁) _
+  · exact (hk₀ k (Nat.not_lt.mp (Finset.mem_Iio.not.mp hk))).1
+  · exact Summable.subtype (summable_of_isEquivalent_nat (hv₀ s hs) h₁) _
+  · exact Summable.mul_left _ (Summable.subtype (hv₀ s hs) _)
+  · exact (hk₀ k (Nat.not_lt.mp (Finset.mem_Iio.not.mp hk))).2
+
+#exit
+
+example : Tendsto (fun s : ℝ ↦ (s - a) * ∑' k, u k ^ s) (𝓝[<] a) (𝓝 l) := by
+  have h_sineq : ∀ ⦃ε : ℝ⦄, 0 < ε → ∃ k₀, ∀ᶠ s in 𝓝[<] a,
+    (l - ε) ^ s * (s - a) * ∑' (k : {k : ℕ // k₀ ≤ k}), (v k) ^ s +
+      (s - a) * (∑ k in Finset.Ico 0 k₀, (u k) ^ s) ≤
+      (s - a) * ∑' k, (u k) ^ s
+    -- ∧
+    --  ∑' (k : {k // k₀ ≤ k}), (u k) ^ s ≤ (1 + ε) ^ s * ∑' (k : {k // k₀ ≤ k}), (v k) ^ s
+    := by
     have h_ineq := isLittleO_iff.mp h_eq.isLittleO
     simp_rw [Real.norm_eq_abs, abs_le, Pi.sub_apply, le_sub_iff_add_le', sub_le_iff_le_add',
     ← sub_eq_add_neg] at h_ineq
     intro ε hε
 --    intro s hs ε hε
-    filter_upwards [eventually_forall_ge_atTop.mpr (h_ineq hε),
-      eventually_forall_ge_atTop.mpr hv₁] with k₀ hk₁ hk₂
-    intro s hs
-    simp_rw [← tsum_mul_left]
-    refine ⟨tsum_mono ?_ ?_ (fun ⟨k, hk⟩ ↦ ?_), tsum_mono ?_ ?_ (fun ⟨k, hk⟩ ↦ ?_)⟩
-    · exact Summable.subtype (Summable.mul_left ((1 - ε) ^ s) (hv₀ s hs)) _
-    · exact Summable.subtype (h_sum s hs) _
-    · rw [← Real.mul_rpow, Real.rpow_le_rpow_iff]
-      specialize hk₁ k hk
-      rw [show |v k| = v k by sorry] at hk₁
-      convert hk₁.1 using 1
-      · rw [sub_mul, one_mul]
-      · sorry
-      · sorry
-      · sorry
-      · sorry
-      · sorry
-    · sorry
+--    filter_upwards [eventually_forall_ge_atTop.mpr (h_ineq hε),
+--      eventually_forall_ge_atTop.mpr hv₁] with k₀ hk₁ hk₂
+    sorry
+    -- intro s hs
+    -- simp_rw [← tsum_mul_left]
+    -- refine ⟨tsum_mono ?_ ?_ (fun ⟨k, hk⟩ ↦ ?_), tsum_mono ?_ ?_ (fun ⟨k, hk⟩ ↦ ?_)⟩
+    -- · exact Summable.subtype (Summable.mul_left ((1 - ε) ^ s) (hv₀ s hs)) _
+    -- · refine Summable.subtype (toto1 u v h_eq hv₀ hv₁ hu hs) _
+    -- · rw [← Real.mul_rpow, Real.rpow_le_rpow_iff]
+    --   specialize hk₁ k hk
+    --   rw [show |v k| = v k by sorry] at hk₁
+    --   convert hk₁.1 using 1
+    --   · rw [sub_mul, one_mul]
+    --   · sorry
+    --   · sorry
+    --   · sorry
+    --   · sorry
+    --   · sorry
+    -- · sorry
+
   refine tendsto_of_le_liminf_of_limsup_le ?_ ?_ ?_ ?_
   · refine le_of_forall_sub_le (fun ε hε ↦ ?_)
     specialize h_sineq hε
+    obtain ⟨k₀, hk₀⟩ := h_sineq
+    convert Filter.liminf_le_liminf hk₀ sorry sorry
 
 
-    convert Filter.liminf_le_liminf ?_ sorry sorry
-    
     sorry
   · refine le_of_forall_pos_le_add (fun ε hε ↦ ?_)
     sorry
   · sorry
   · sorry
+
+#exit
 
 theorem toto :
     Tendsto (fun s : ℂ ↦ (s - 1) * ∑' (n : ℕ), 1 / (n:ℂ) ^ s)
