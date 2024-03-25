@@ -92,12 +92,6 @@ lemma differentiable_Gammaℝ_inv : Differentiable ℂ (fun s ↦ (Gammaℝ s)�
     exact Or.inl (ofReal_ne_zero.mpr pi_ne_zero)
   · exact differentiable_one_div_Gamma.comp (differentiable_id.div_const _)
 
-lemma differentiableAt_Gammaℝ_of_re_pos {s : ℂ} (hs : 0 < re s) : DifferentiableAt ℂ Gammaℝ s := by
-  apply DifferentiableAt.mul
-  · exact (differentiableAt_id.neg.div_const _).const_cpow <| Or.inl (ofReal_ne_zero.mpr pi_ne_zero)
-  · refine (differentiableAt_Gamma_of_re_pos ?_).comp _ (differentiableAt_id.div_const _)
-    exact (div_ofNat_re s 2).symm ▸ div_pos hs two_pos
-
 lemma Gammaℝ_residue_zero : Tendsto (fun s ↦ s * Gammaℝ s) (𝓝[≠] 0) (𝓝 2) := by
   have h : Tendsto (fun z : ℂ ↦ z / 2 * Gamma (z / 2)) (𝓝[≠] 0) (𝓝 1) := by
     refine tendsto_self_mul_Gamma_nhds_zero.comp ?_
