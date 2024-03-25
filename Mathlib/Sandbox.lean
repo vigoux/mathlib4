@@ -20,6 +20,11 @@ end RiemannZeta
 
 section Eventually
 
+example {α : Type*} [TopologicalSpace α] [LinearOrder α]  [ClosedIciTopology α]
+    (a b : α) (h : a < b) :
+    ∀ᶠ x in 𝓝[>] a, x < b :=
+  eventually_iff_exists_mem.mpr ⟨Set.Ioo a b, Ioo_mem_nhdsWithin_Ioi' h, fun _ h ↦ h.2⟩
+
 theorem le_of_frequently_sub_le {α : Type*} [LinearOrderedField α] [TopologicalSpace α]
     [OrderTopology α] {a b : α} (h : ∃ᶠ ε in 𝓝[>] 0, b - ε ≤ a) : b ≤ a := by
   contrapose! h
@@ -81,6 +86,9 @@ theorem IsBoundedUnder_ge_mul {α β : Type*} [OrderedCommGroup α] {f : Filter 
   rw [eventually_map] at hu hv ⊢
   filter_upwards [hu, hv] with _ h₁ h₂ using mul_le_mul' h₁ h₂
 
+-- Mathlib.Order.LiminfLimsup
+-- #find_home IsBoundedUnder_ge_mul
+
 theorem IsBoundedUnder_le_mul_right₀ {α β : Type*} [LinearOrderedSemifield α] {f : Filter β}
     {u : β → α} {a : α} (ha : 0 < a) (hu : IsBoundedUnder (· ≤ ·) f u) :
     IsBoundedUnder (· ≤ ·) f (fun x ↦ u x * a) :=
@@ -101,17 +109,120 @@ theorem IsBoundedUnder_ge_mul_left₀ {α β : Type*} [LinearOrderedSemifield α
     IsBoundedUnder (· ≥ ·) f (fun x ↦ a * u x) :=
   (OrderIso.mulLeft₀ a ha).isBoundedUnder_ge_comp.mpr hu
 
+-- Mathlib.Topology.Algebra.Order.LiminfLimsup
+-- #find_home IsBoundedUnder_ge_mul_left₀
+
 end IsBounded
 
 section Analysis
 
 -- First prove the result for 0 < v and 0 ≤ u. The general result will follow from it by deleting
 -- the negative terms
-variable (u v : ℕ → ℝ) (h_main : Tendsto (u / v) atTop (𝓝 1))
+variable {u v : ℕ → ℝ} (h_main : Tendsto (u / v) atTop (𝓝 1))
   (h_sum : ∀ ⦃s⦄, (1:ℝ) < s → Summable (fun k ↦ (v k) ^ s))
-  (hv : ∀ k, 0 < v k)
   (hu : ∀ k, 0 ≤ u k)
+  (hv : ∀ k, 0 < v k)
   (h_res : Tendsto (fun s : ℝ ↦ (s - 1) * ∑' k, v k ^ s) (𝓝[>] 1) (𝓝 1))
+
+theorem tendsto_mul_tsum_of_tendsto_mul_tsum_aux {ε : ℝ} (hε : 0 < ε) (hε' : ε ≤ 1) :
+  ∃ t : Finset ℕ, ∀ ⦃s⦄, (1:ℝ) < s →
+    (s - 1) * ∑  k in t, u k ^ s + (1 - ε) ^ s * ((s - 1) * ∑' (k : {k // k ∉ t}), v k ^ s) ≤
+      (s - 1) * ∑' k, u k ^ s ∧
+    (s - 1) * ∑' k, u k ^ s ≤
+      (s - 1) * ∑  k in t, u k ^ s + (1 + ε) ^ s * ((s - 1) * ∑' (k : {k // k ∉ t}), v k ^ s) := by
+  have h_sum' : ∀ ⦃s : ℝ⦄, 1 < s → Summable (fun k ↦ (u k) ^ s) := by
+    refine fun s hs ↦ (IsEquivalent.summable_iff_nat ?_).mpr (h_sum hs)
+    refine (isEquivalent_iff_tendsto_one (eventually_of_forall (fun _ ↦ ?_))).mpr ?_
+    · refine (Real.rpow_eq_zero (le_of_lt (hv _)) (by linarith)).not.mpr <| ne_of_gt (hv _)
+    · convert Tendsto.congr (fun _ ↦ ?_)
+        (Tendsto.comp (Real.continuousAt_rpow_const 1 s (Or.inl one_ne_zero)) h_main)
+      · simp_rw [Real.one_rpow]
+      · rw [Function.comp_apply, Pi.div_apply, Pi.div_apply, Real.div_rpow (hu _) (le_of_lt (hv _))]
+  rsuffices ⟨k₀, hk₀⟩ : ∃ k₀, ∀ k ≥ k₀, ∀ ⦃s : ℝ⦄, 1 < s →
+      (1 - ε) ^ s * v k ^ s ≤ u k ^ s ∧ u k ^ s ≤ (1 + ε) ^ s * v k ^ s := by
+    obtain ⟨k₀, hk₀⟩ := Metric.tendsto_atTop.mp h_main ε hε
+    refine ⟨k₀, fun k hk s hs ↦ ?_⟩
+    -- We remind Lean of some facts so that positivity works later on
+    have : 0 < v k := hv k
+    have : 0 ≤ u k := hu k
+    have : 0 ≤ 1 - ε := sub_nonneg_of_le hε'
+    rw [← Real.mul_rpow, ← Real.mul_rpow, Real.rpow_le_rpow_iff, Real.rpow_le_rpow_iff, sub_mul,
+      add_mul, one_mul, ← sub_le_iff_le_add', sub_eq_add_neg, ← le_sub_iff_add_le', ← neg_mul,
+      ← div_le_iff, ← le_div_iff, sub_div, div_self, ← abs_le]
+    exact le_of_lt (hk₀ k hk)
+    any_goals positivity
+  refine ⟨Finset.Iio k₀, fun s hs ↦ ⟨?_, ?_⟩⟩
+  · rw [mul_left_comm, ← mul_add, mul_le_mul_left (sub_pos.mpr hs),
+      ← sum_add_tsum_subtype_compl (h_sum' hs), add_le_add_iff_left, ← tsum_mul_left]
+    refine tsum_mono ?_ ?_ (fun ⟨k, hk⟩ ↦ ?_)
+    · exact Summable.mul_left _ (Summable.subtype (h_sum hs) _)
+    · exact Summable.subtype (h_sum' hs) _
+    · exact (hk₀ k (not_lt.mp (Finset.mem_Iio.not.mp hk)) hs).1
+  · rw [mul_left_comm, ← mul_add, mul_le_mul_left (sub_pos.mpr hs),
+      ← sum_add_tsum_subtype_compl (h_sum' hs), add_le_add_iff_left, ← tsum_mul_left]
+    refine tsum_mono ?_ ?_ (fun ⟨k, hk⟩ ↦ ?_)
+    · exact Summable.subtype (h_sum' hs) _
+    · exact Summable.mul_left _ (Summable.subtype (h_sum hs) _)
+    · exact (hk₀ k (not_lt.mp (Finset.mem_Iio.not.mp hk)) hs).2
+
+theorem tendsto_mul_tsum_of_tendsto_mul_tsum :
+    Tendsto (fun s : ℝ ↦ (s - 1) * ∑' k, u k ^ s) (𝓝[>] 1) (𝓝 1) := by
+  -- We first need to prove some basic facts
+  have h_lim_eq_self : ∀ x : ℝ, Tendsto (fun s : ℝ ↦ x ^ s) (𝓝[>] 1) (𝓝 x) := fun x ↦ by
+    convert Tendsto.rpow tendsto_const_nhds (tendsto_id.mono_left nhdsWithin_le_nhds)
+      (Or.inr zero_lt_one)
+    rw [Real.rpow_one]
+  have h_tendsto_zero : ∀ (w : ℕ → ℝ) (t : Finset ℕ),
+      Tendsto (fun s : ℝ ↦ (s - 1) * ∑ k in t, w k ^ s) (𝓝[>] 1) (𝓝 0) := fun w t ↦ by
+    convert Tendsto.mul (a := 0) ?_ (tendsto_finset_sum t fun k _ ↦ h_lim_eq_self (w k))
+    · rw [zero_mul]
+    · exact (tendsto_sub_nhds_zero_iff.mpr tendsto_id).mono_left nhdsWithin_le_nhds
+  have h_tendsto_one : ∀ (t : Finset ℕ),
+      Tendsto (fun s : ℝ ↦ (s - 1) * ∑' (k : {k // k ∉ t}), v k ^ s) (𝓝[>] 1) (𝓝 1) := fun t ↦ by
+    refine tendsto_nhdsWithin_congr (fun s hs ↦ ?_) <| (sub_zero (1:ℝ)) ▸
+      Tendsto.sub h_res (h_tendsto_zero v t)
+    rw [ ← sum_add_tsum_subtype_compl (h_sum hs) t, mul_add, add_sub_cancel_left]
+  have h_bdu_le : ∀ (ε : ℝ) (t : Finset ℕ),
+      IsBoundedUnder (· ≤ ·) (𝓝[>] 1) fun s : ℝ ↦ (s - 1) * ∑ k in t, u k ^ s +
+        (1 + ε) ^ s * ((s - 1) * ∑' (k : { k // k ∉ t }), v k ^ s) := fun ε t ↦ by
+    refine IsBoundedUnder_le_add (h_tendsto_zero u t).isBoundedUnder_le ?_
+    exact (Tendsto.mul (h_lim_eq_self (1 + ε)) (h_tendsto_one t)).isBoundedUnder_le
+  have h_bdu_ge : ∀ (ε : ℝ) (t : Finset ℕ),
+      IsBoundedUnder (· ≥ ·) (𝓝[>] 1) fun s : ℝ ↦ (s - 1) * ∑ k in t, u k ^ s +
+        (1 - ε) ^ s * ((s - 1) * ∑' (k : { k // k ∉ t }), v k ^ s) := fun ε t ↦ by
+    refine IsBoundedUnder_ge_add (h_tendsto_zero u t).isBoundedUnder_ge ?_
+    exact (Tendsto.mul (h_lim_eq_self (1 - ε)) (h_tendsto_one t)).isBoundedUnder_ge
+  have h_εbdd : ∀ᶠ (ε : ℝ) in 𝓝[>] 0, 0 < ε ∧ ε ≤ 1 :=
+    eventually_iff_exists_mem.mpr ⟨Set.Ioc 0 1, Ioc_mem_nhdsWithin_Ioi' zero_lt_one, fun _ h ↦ h⟩
+  -- We then prove bounds on liminf and limsup
+  have h_bdd : ∀ ⦃ε : ℝ⦄, 0 < ε → ε ≤ 1 →
+      1 - ε ≤ liminf (fun s : ℝ ↦ (s - 1) * ∑' k, u k ^ s) (𝓝[>] 1) ∧
+        limsup (fun s : ℝ ↦ (s - 1) * ∑' k, u k ^ s) (𝓝[>] 1) ≤ 1 + ε := fun ε hε hε' ↦ by
+    obtain ⟨t, ht⟩ := tendsto_mul_tsum_of_tendsto_mul_tsum_aux h_main h_sum hu hv hε hε'
+    have h₁ : ∀ᶠ (s : ℝ) in 𝓝[>] 1, _ := eventually_nhdsWithin_of_forall (fun s hs ↦ (ht hs).1)
+    have h₂ : ∀ᶠ (s : ℝ) in 𝓝[>] 1, _ := eventually_nhdsWithin_of_forall (fun s hs ↦ (ht hs).2)
+    refine ⟨?_, ?_⟩
+    · convert liminf_le_liminf h₁ (h_bdu_ge ε t) ?_
+      · refine (Tendsto.liminf_eq ?_).symm
+        simp_rw [show 𝓝 (1 - ε) = 𝓝 (0 + (1 - ε) * 1) by ring_nf]
+        exact (h_tendsto_zero u t).add  <| Tendsto.mul (h_lim_eq_self (1 - ε)) (h_tendsto_one t)
+      · exact IsBounded.isCobounded_ge <| IsBoundedUnder.mono_le (h_bdu_le ε t) h₂
+    · convert limsup_le_limsup h₂ ?_ (h_bdu_le ε t)
+      · refine (Tendsto.limsup_eq ?_).symm
+        simp_rw [show 𝓝 (1 + ε) = 𝓝 (0 + (1 + ε) * 1) by ring_nf]
+        exact (h_tendsto_zero u t).add  <| Tendsto.mul (h_lim_eq_self (1 + ε)) (h_tendsto_one t)
+      · exact IsBounded.isCobounded_le <| IsBoundedUnder.mono_ge (h_bdu_ge ε t) h₁
+  -- Finally we get the result by proving that liminf and limsup are equal
+  obtain ⟨t, ht⟩ := tendsto_mul_tsum_of_tendsto_mul_tsum_aux h_main h_sum hu hv zero_lt_one le_rfl
+  refine tendsto_of_le_liminf_of_limsup_le ?_ ?_ ?_ ?_
+  · refine le_of_frequently_sub_le (Eventually.frequently ?_)
+    filter_upwards [h_εbdd] with ε ⟨hε, hε'⟩ using (h_bdd hε hε').1
+  · refine le_of_frequently_le_add (Eventually.frequently ?_)
+    filter_upwards [h_εbdd] with ε ⟨hε, hε'⟩ using (h_bdd hε hε').2
+  · exact (h_bdu_le 1 t).mono_le  (eventually_nhdsWithin_of_forall fun s hs ↦ (ht hs).2)
+  · exact (h_bdu_ge 1 t).mono_ge  (eventually_nhdsWithin_of_forall fun s hs ↦ (ht hs).1)
+
+#exit
 
 theorem fact0 {s : ℝ} : Tendsto (u ^ s / v ^ s) atTop (𝓝 1) := by
   have := Tendsto.comp (Real.continuousAt_rpow_const 1 s (Or.inl one_ne_zero)) h_main
@@ -131,7 +242,7 @@ theorem fact2 {s : ℝ} (hs : 1 < s) : Summable (fun k ↦ (u k) ^ s) := by
 
 theorem fact3 (x : ℝ) : Tendsto (fun s : ℝ ↦ x ^ s) (𝓝[>] 1) (𝓝 x) := by
   convert Tendsto.rpow tendsto_const_nhds (tendsto_id.mono_left nhdsWithin_le_nhds)
-      (Or.inr zero_lt_one)
+    (Or.inr zero_lt_one)
   rw [Real.rpow_one]
 
 theorem fact4 (w : ℕ → ℝ) (t : Finset ℕ) :
@@ -294,6 +405,8 @@ theorem lemma_8 :
     refine fact7 u v h_sum h_res t
 
 end Analysis
+
+#exit
 
 section Box
 
