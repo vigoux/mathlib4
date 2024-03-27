@@ -219,8 +219,6 @@ theorem tendsto_mul_tsum_of_tendsto_mul_tsum :
 
 end Analysis
 
-#exit
-
 section Box
 
 theorem BoxIntegral.Box.IsBounded_Icc {ι : Type*} [Fintype ι] (B : BoxIntegral.Box ι) :
@@ -347,7 +345,7 @@ theorem UnitBoxIndex_setFinite_of_finite_measure {s : Set (ι → ℝ)} (hm : Nu
     aesop
 
 def UnitBoxIndexAdmissible (B : Box ι) : Finset (ι → ℤ) := by
-  let A := { ν : ι → ℤ | UnitBoxPart n ν ≤ B}
+  let A := {ν : ι → ℤ | UnitBoxPart n ν ≤ B}
   refine Set.Finite.toFinset (s := A) ?_
   refine UnitBoxIndex_setFinite_of_finite_measure n ?_ ?_
   · exact B.measurableSet_coe.nullMeasurableSet
@@ -355,16 +353,27 @@ def UnitBoxIndexAdmissible (B : Box ι) : Finset (ι → ℤ) := by
     refine IsBounded.measure_lt_top ?_
     exact Box.IsBounded B
 
-theorem UnitBoxIndex_mem_admissible (B : Box ι) (ν : ι → ℤ) :
+variable {n} in
+theorem UnitBoxIndexAdmissible_def {B : Box ι} {ν : ι → ℤ} :
     ν ∈ UnitBoxIndexAdmissible n B ↔ UnitBoxPart n ν ≤ B := by
   rw [UnitBoxIndexAdmissible, Set.Finite.mem_toFinset, Set.mem_setOf_eq]
+
+variable {n} in
+theorem UnitBoxIndex_memAdmissible_iff {x : ι → ℝ} {B : Box ι} :
+  UnitBoxIndex n x ∈ UnitBoxIndexAdmissible n B ↔
+    ∀ i, n * B.lower i + 1 ≤ Int.ceil (n * x i) ∧ Int.ceil (n * x i) ≤ n * B.upper i  := by
+  simp_rw [UnitBoxIndexAdmissible_def, Box.le_iff_bounds, UnitBoxPart, UnitBoxIndex, Pi.le_def,
+    ← forall_and]
+  have : (0:ℝ) < n := Nat.cast_pos.mpr n.pos
+  simp_rw [Int.cast_sub, Int.cast_one, ← add_div, le_div_iff' this, div_le_iff' this,
+    sub_add_cancel, le_sub_iff_add_le]
 
 open Classical in
 def UnitBoxTaggedPrepartition (B : Box ι) : BoxIntegral.TaggedPrepartition B where
   boxes := Finset.image (fun ν ↦ UnitBoxPart n ν) (UnitBoxIndexAdmissible n B)
   le_of_mem' _ hB := by
     obtain ⟨_, hν, rfl⟩ := Finset.mem_image.mp hB
-    exact (UnitBoxIndex_mem_admissible n B _).mp hν
+    exact UnitBoxIndexAdmissible_def.mp hν
   pairwiseDisjoint := by
     intro _ hB _ hB' h
     obtain ⟨_, _, rfl⟩ := Finset.mem_image.mp hB
@@ -379,7 +388,7 @@ def UnitBoxTaggedPrepartition (B : Box ι) : BoxIntegral.TaggedPrepartition B wh
     intro B'
     split_ifs with hB'
     · have := hB'.choose_spec.1
-      rw [UnitBoxIndex_mem_admissible] at this
+      rw [UnitBoxIndexAdmissible_def] at this
       refine Box.coe_subset_Icc ?_
       refine this ?_
       exact UnitBoxTag_mem_unitBoxPart n (Exists.choose hB')
@@ -408,20 +417,46 @@ theorem UnitBoxTaggedPrepartition_isHenstock (B : Box ι) :
   rw [UnitBoxTaggedPrepartition_tag_eq n B hν]
   exact BoxIntegral.Box.coe_subset_Icc (UnitBoxTag_mem_unitBoxPart n ν)
 
-def IsThick_at (B : Box ι) : Prop :=
-  ∀ x : ι → ℝ, x ∈ B → UnitBoxPart n (UnitBoxIndex n x) ≤ B
+def HasIntegralVertices (B : Box ι) : Prop :=
+  ∃ l u : ι → ℤ, (∀ i, B.lower i = l i) ∧ (∀ i, B.upper i = u i)
 
-def IsThick (B : Box ι) : Prop := ∀ n, IsThick_at n B
+theorem UnixBoxPart_le_ofHasIntegralVertices {B : Box ι} (hB : HasIntegralVertices B)
+    {x : ι → ℝ} (h : x ∈ B) :
+    UnitBoxIndex n x ∈ UnitBoxIndexAdmissible n B := by
+  obtain ⟨l, u, hl, hu⟩ := hB
+  simp_rw [Box.mem_def, Set.mem_Ioc, hl, hu] at h
+  rw [UnitBoxIndex_memAdmissible_iff]
+  intro i
+  rw [hl i, hu i]
+  have t0 : (0:ℝ) < n := sorry
+  refine ⟨?_, ?_⟩
+  ·
+    refine Int.ceil_le.mp ?_
 
-theorem UnitBoxTaggedPrepartition_isPartition {B : Box ι} (hB : IsThick_at n B) :
+
+    have := (h i).1
+    rw [← mul_lt_mul_iff_of_pos_left t0] at this
+    
+    apply Int.ceil_le_ceil
+    have := (h i).1
+    rw [← mul_lt_mul_iff_of_pos_left t0] at this
+    refine le_trans ?_ (le_of_lt this)
+
+
+
+    sorry
+  ·
+    sorry
+
+
+theorem UnitBoxTaggedPrepartition_isPartition {B : Box ι} (hB : HasIntegralVertices B) :
     (UnitBoxTaggedPrepartition n B).IsPartition := by
   intro x hx
   use UnitBoxPart n (UnitBoxIndex n x)
   refine ⟨?_, ?_⟩
   · rw [BoxIntegral.TaggedPrepartition.mem_toPrepartition, UnitBoxTaggedPrepartition_mem_iff]
     refine ⟨UnitBoxIndex n x, ?_, rfl⟩
-    rw [UnitBoxIndex_mem_admissible]
-    exact hB x hx
+    exact UnixBoxPart_le_ofHasIntegralVertices n hB hx
   · exact UnitBoxPart_mem_iff_index_eq.mpr rfl
 
 theorem UnitBoxTaggedPrepartition_isSubordinate (B : Box ι) {r : ℝ} (hr : 0 < r) (hn : 1 / r ≤ n) :
