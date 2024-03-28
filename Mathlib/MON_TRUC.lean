@@ -1,4 +1,5 @@
 import Mathlib.AlgebraicTopology.CechNerve
+import Mathlib.CategoryTheory.Sites.Sieves
 import Mathlib.CategoryTheory.Sites.Grothendieck
 
 open CategoryTheory
@@ -19,6 +20,6 @@ variable (X:C)
 
 variable (F:Cᵒᵖ⥤A)
 
-variable (R:Presieve X )
+variable (U:Presieve X)
 
-#check CategoryTheory.Arrow.cechNerve
+def R: Sieve X:= Sieve.generate U
