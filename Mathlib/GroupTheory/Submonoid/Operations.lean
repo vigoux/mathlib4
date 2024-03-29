@@ -1423,8 +1423,8 @@ section MulOneClass
 variable [MulOneClass M']
 
 @[to_additive]
-instance smul [SMul M' α] (S : Submonoid M') : SMul S α :=
-  SMul.comp _ S.subtype
+instance smul [SMul M' α] {F : Type*} [SetLike F M'] [SubmonoidClass F M'] (S : F) : SMul S α :=
+  SMul.comp _ (SubmonoidClass.subtype S)
 
 @[to_additive]
 instance smulCommClass_left [SMul M' β] [SMul α β] [SMulCommClass M' α β]
