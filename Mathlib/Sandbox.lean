@@ -1086,6 +1086,67 @@ theorem main :
     rfl
   · rw [set_integral_const, smul_eq_mul, mul_one]
 
+end BoxIntegral
+
+section Counting
+
+variable {x : ℕ → ℝ} (h₁ : Monotone x) (h₂ : Tendsto x atTop atTop) {l : ℝ}
+    (h₃ : Tendsto (fun c : ℝ ↦ Nat.card {i | x i ≤ c} / c) atTop (𝓝 l))
+
+theorem lemma1 (B : ℝ) : Set.Finite {i | x i ≤ B} := by
+  simp_rw [show ∀ i, x i ≤ B ↔ ¬ x i > B by aesop]
+  rw [← Filter.eventually_cofinite, Nat.cofinite_eq_atTop]
+  exact Tendsto.eventually_gt_atTop h₂ B
+
+theorem lemma2 :
+    Tendsto (fun k ↦ Nat.card {i | x i ≤ x k - 1} / x k) atTop (𝓝 l) := by
+  rw [tendsto_iff_seq_tendsto] at h₃
+  specialize h₃ (fun k ↦ x k - 1) (tendsto_atTop_add_const_right atTop _ h₂)
+  have : Tendsto (fun k ↦ 1 - (x k)⁻¹) atTop (𝓝 1) := by
+    have t1 : Tendsto (fun k ↦ - (x k)⁻¹) atTop (𝓝 0) := by
+      rw [show (0:ℝ) = - 0 from neg_zero.symm]
+      exact h₂.inv_tendsto_atTop.neg
+    convert Tendsto.const_add 1 t1 using 2
+    rw [add_zero]
+  refine Tendsto.congr' ?_ (mul_one l ▸ (Tendsto.mul h₃ this))
+  have h₄ : ∀ᶠ k in atTop, x k - 1 ≠ 0 :=
+    (tendsto_atTop_add_const_right atTop _ h₂).eventually_ne_atTop _
+  have h₅ : ∀ᶠ k in atTop, x k ≠ 0 := h₂.eventually_ne_atTop _
+  filter_upwards [h₄, h₅] with k hk hk'
+  simp only [Set.coe_setOf, Function.comp_apply]
+  rw [← one_div, one_sub_div hk', div_mul_div_cancel _ hk]
+
+theorem lemma3 : Tendsto (fun k ↦ (k + 1) / x k) atTop (𝓝 l) := by
+  have h₅ : ∀ᶠ k in atTop, 0 < x k := Tendsto.eventually_gt_atTop h₂ _
+  have lim₁ := lemma2 h₂ h₃
+  have lim₂ : Tendsto (fun k ↦ Nat.card {i | x i ≤ x k} / x k) atTop (𝓝 l) := by
+    rw [tendsto_iff_seq_tendsto] at h₃
+    specialize h₃ (fun k ↦ x k) h₂
+    exact h₃
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' lim₁ lim₂ ?_ ?_
+  · filter_upwards [h₅] with k hk
+    rw [div_le_div_right hk,  ← Nat.cast_add_one, Nat.cast_le,
+      show k + 1 = Nat.card (Set.Icc 0 k) by simp]
+    refine Nat.card_mono ?_ ?_
+    · exact Set.finite_Icc 0 k
+    · intro i hi
+      simp only [Set.mem_Icc, zero_le, true_and]
+      contrapose! hi
+      have := h₁ (le_of_lt hi)
+      simp
+      refine lt_of_lt_of_le ?_ this
+      norm_num
+  · filter_upwards [h₅] with k hk
+    rw [div_le_div_right hk, ← Nat.cast_add_one, Nat.cast_le,
+      show k + 1 = Nat.card (Set.Icc 0 k) by simp]
+    refine Nat.card_mono ?_ ?_
+    · exact lemma1 h₂ (x k)
+    · exact fun i hi ↦ by
+        simp only [Set.mem_setOf_eq]
+        exact h₁ hi.2
+
+end Counting
+
 noncomputable section general
 
 open MeasureTheory MeasureTheory.Measure Submodule Filter Fintype
