@@ -357,7 +357,7 @@ theorem affine_openCover_TFAE {X Y : Scheme.{u}} [IsAffine Y] (f : X ⟶ Y) :
   tfae
     1 → 4
     | H, U, g, _, hg => by
-        specialize H ⟨⟨_, hg.base_open.isOpen_range⟩, rangeIsAffineOpenOfOpenImmersion g⟩
+      specialize H ⟨⟨_, hg.base_open.isOpen_range⟩, rangeIsAffineOpenOfOpenImmersion g⟩
       rw [← hP.respectsIso.cancel_right_isIso _ (Scheme.Γ.map (IsOpenImmersion.isoOfRangeEq g
         (X.ofRestrict (Opens.openEmbedding ⟨_, hg.base_open.isOpen_range⟩))
         Subtype.range_coe.symm).hom.op),
