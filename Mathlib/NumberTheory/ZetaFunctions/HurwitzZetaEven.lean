@@ -516,7 +516,7 @@ lemma hasSum_int_completedCosZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
   · apply (((summable_one_div_int_add_rpow 0 s.re).mpr hs).div_const 2).of_norm_bounded
     intro i
     simp only [c, (by { push_cast; ring } : 2 * π * I * a * i = ↑(2 * π * a * i) * I), norm_div,
-      IsROrC.norm_ofNat, norm_norm, Complex.norm_exp_ofReal_mul_I, add_zero, norm_one,
+      RCLike.norm_ofNat, norm_norm, Complex.norm_exp_ofReal_mul_I, add_zero, norm_one,
       norm_of_nonneg (by positivity : 0 ≤ |(i : ℝ)| ^ s.re), div_right_comm, le_rfl]
 
 /-- Formula for `completedCosZeta` as a Dirichlet series in the convergence range

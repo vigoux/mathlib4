@@ -362,7 +362,7 @@ lemma hasSum_int_completedSinZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
   let c (n : ℤ) : ℂ := -I * cexp (2 * π * I * a * n) / 2
   have hc (n : ℤ) : ‖c n‖ = 1 / 2 := by
     simp_rw [c, (by { push_cast; ring } : 2 * π * I * a * n = ↑(2 * π * a * n) * I), norm_div,
-      IsROrC.norm_ofNat, norm_mul, norm_neg, norm_I, one_mul, Complex.norm_exp_ofReal_mul_I]
+      RCLike.norm_ofNat, norm_mul, norm_neg, norm_I, one_mul, Complex.norm_exp_ofReal_mul_I]
   have hF t (ht : 0 < t) :
       HasSum (fun n ↦ c n * n * rexp (-π * n ^ 2 * t)) (sinKernel a t / 2) := by
     convert (hasSum_int_sinKernel a ht).div_const 2 using 2 with n

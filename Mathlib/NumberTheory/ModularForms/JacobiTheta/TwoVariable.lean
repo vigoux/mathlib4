@@ -153,19 +153,20 @@ lemma summable_jacobiTheta₂_term_iff (z τ : ℂ) : Summable (jacobiTheta₂_t
 
 lemma norm_jacobiTheta₂_term_fderiv_le (n : ℤ) (z τ : ℂ) : ‖jacobiTheta₂_term_fderiv n z τ‖
     ≤ 3 * π * |n| ^ 2 * ‖jacobiTheta₂_term n z τ‖ := by
-  rw [jacobiTheta₂_term_fderiv, jacobiTheta₂_term, norm_smul, mul_comm _ ‖cexp _‖,
-    (by norm_num : (3 : ℝ) = 2 + 1), add_mul, add_mul]
+  rw [jacobiTheta₂_term_fderiv, jacobiTheta₂_term, norm_smul (α := ℂ) (β := (ℂ × ℂ) →L[ℂ] ℂ),
+    mul_comm _ ‖cexp _‖, (by norm_num : (3 : ℝ) = 2 + 1), add_mul, add_mul]
   refine mul_le_mul_of_nonneg_left ((norm_add_le _ _).trans (add_le_add ?_ ?_)) (norm_nonneg _)
-  · simp_rw [norm_smul, norm_mul, ← ofReal_ofNat, ← ofReal_int_cast, norm_real,
-      norm_of_nonneg zero_le_two, Real.norm_of_nonneg pi_pos.le, norm_I, mul_one, Real.norm_eq_abs,
-      Int.cast_abs, mul_assoc]
+  · simp_rw [norm_smul (α := ℂ) (β := (ℂ × ℂ) →L[ℂ] ℂ), norm_mul, ← ofReal_ofNat, ← ofReal_int_cast,
+      norm_real, norm_of_nonneg zero_le_two, Real.norm_of_nonneg pi_pos.le, norm_I, mul_one,
+      Real.norm_eq_abs, Int.cast_abs, mul_assoc]
     refine mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left ?_ pi_pos.le) two_pos.le
     refine le_trans ?_ (?_ : |(n : ℝ)| ≤ |(n : ℝ)| ^ 2)
     · exact mul_le_of_le_one_right (abs_nonneg _) (ContinuousLinearMap.norm_fst_le ..)
     · rw [← Int.cast_abs, ← Int.cast_natAbs, ← Nat.cast_pow, Nat.cast_le]
       apply Nat.le_self_pow two_ne_zero
-  · simp_rw [norm_smul, norm_mul, one_mul, norm_I, mul_one, norm_real, norm_of_nonneg pi_pos.le,
-      ← ofReal_int_cast, ← ofReal_pow, norm_real, Real.norm_eq_abs, Int.cast_abs, _root_.abs_pow]
+  · simp_rw [norm_smul (α := ℂ) (β := (ℂ × ℂ) →L[ℂ] ℂ), norm_mul, one_mul, norm_I, mul_one,
+      norm_real, norm_of_nonneg pi_pos.le, ← ofReal_int_cast, ← ofReal_pow, norm_real,
+      Real.norm_eq_abs, Int.cast_abs, _root_.abs_pow]
     apply mul_le_of_le_one_right (mul_nonneg pi_pos.le (pow_nonneg (abs_nonneg _) _))
     exact ContinuousLinearMap.norm_snd_le ..
 
