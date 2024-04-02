@@ -5,6 +5,7 @@ Authors: Josha Dekker, Devon Tuma, Kexing Ying
 -/
 import Mathlib.Probability.Notation
 import Mathlib.Probability.Density
+import Mathlib.Probability.ConditionalProbability
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
 
 /-!
@@ -15,11 +16,16 @@ This file defines two related notions of uniform distributions, which will be un
 
 Defines the uniform distribution for any set with finite measure.
 
+## Main definitions
+* `IsUniform X s ℙ μ` : A random variable `X` has uniform distribution on `s` under `ℙ` if the
+  push-forward measure agrees with the rescaled restricted measure `μ`.
+
 # Uniform probability mass functions
 
 This file defines a number of uniform `PMF` distributions from various inputs,
   uniformly drawing from the corresponding object.
 
+## Main definitions
 `PMF.uniformOfFinset` gives each element in the set equal probability,
   with `0` probability for elements not in the set.
 
@@ -28,35 +34,38 @@ This file defines a number of uniform `PMF` distributions from various inputs,
 
 `PMF.ofMultiset` draws randomly from the given `Multiset`, treating duplicate values as distinct.
   Each probability is given by the count of the element divided by the size of the `Multiset`
+
+# To Do:
+* Refactor the `PMF` definitions to come from a `uniformMeasure` on a `Finset`/`Fintype`/`Multiset`.
 -/
 
 open scoped Classical MeasureTheory BigOperators NNReal ENNReal
 
-open TopologicalSpace MeasureTheory.Measure
+-- TODO: We can't `open ProbabilityTheory` without opening the `ProbabilityTheory` locale :(
+open TopologicalSpace MeasureTheory.Measure PMF
+
+noncomputable section
 
 namespace MeasureTheory
 
 variable {E : Type*} [MeasurableSpace E] {m : Measure E} {μ : Measure E}
-variable {Ω : Type*} {_ : MeasurableSpace Ω} {ℙ : Measure Ω}
-
-
-section
-
-/-! **Uniform Distribution based on a measure** -/
 
 namespace pdf
 
+variable {Ω : Type*}
+variable {_ : MeasurableSpace Ω} {ℙ : Measure Ω}
+
 /-- A random variable `X` has uniform distribution on `s` if its push-forward measure is
 `(μ s)⁻¹ • μ.restrict s`. -/
-def IsUniform (X : Ω → E) (support : Set E) (ℙ : Measure Ω) (μ : Measure E := by volume_tac) :=
-  map X ℙ = (μ support)⁻¹ • μ.restrict support
+def IsUniform (X : Ω → E) (s : Set E) (ℙ : Measure Ω) (μ : Measure E := by volume_tac) :=
+  map X ℙ = ProbabilityTheory.cond μ s
 #align measure_theory.pdf.is_uniform MeasureTheory.pdf.IsUniform
 
 namespace IsUniform
 
 theorem aemeasurable {X : Ω → E} {s : Set E} (hns : μ s ≠ 0) (hnt : μ s ≠ ∞)
     (hu : IsUniform X s ℙ μ) : AEMeasurable X ℙ := by
-  dsimp [IsUniform] at hu
+  dsimp [IsUniform, ProbabilityTheory.cond] at hu
   by_contra h
   rw [map_of_not_aemeasurable h] at hu
   apply zero_ne_one' ℝ≥0∞
@@ -66,17 +75,13 @@ theorem aemeasurable {X : Ω → E} {s : Set E} (hns : μ s ≠ 0) (hnt : μ s �
       Set.univ_inter, smul_eq_mul, ENNReal.inv_mul_cancel hns hnt]
 
 theorem absolutelyContinuous {X : Ω → E} {s : Set E} (hu : IsUniform X s ℙ μ) : map X ℙ ≪ μ := by
-  intro t ht
-  rw [hu, smul_apply, smul_eq_mul]
-  apply mul_eq_zero.mpr
-  refine Or.inr (le_antisymm ?_ (zero_le _))
-  exact ht ▸ restrict_apply_le s t
+  rw [hu]; exact ProbabilityTheory.cond_absolutelyContinuous
 
 theorem measure_preimage {X : Ω → E} {s : Set E} (hns : μ s ≠ 0) (hnt : μ s ≠ ∞)
     (hu : IsUniform X s ℙ μ) {A : Set E} (hA : MeasurableSet A) :
     ℙ (X ⁻¹' A) = μ (s ∩ A) / μ s := by
-  rw [← map_apply_of_aemeasurable (hu.aemeasurable hns hnt) hA, hu, smul_apply, restrict_apply hA,
-    ENNReal.div_eq_inv_mul, smul_eq_mul, Set.inter_comm]
+   rwa [← map_apply_of_aemeasurable (hu.aemeasurable hns hnt) hA, hu, ProbabilityTheory.cond_apply',
+    ENNReal.div_eq_inv_mul.symm]
 #align measure_theory.pdf.is_uniform.measure_preimage MeasureTheory.pdf.IsUniform.measure_preimage
 
 theorem isProbabilityMeasure {X : Ω → E} {s : Set E} (hns : μ s ≠ 0) (hnt : μ s ≠ ∞)
@@ -89,12 +94,13 @@ theorem isProbabilityMeasure {X : Ω → E} {s : Set E} (hns : μ s ≠ 0) (hnt 
 
 theorem toMeasurable_iff {X : Ω → E} {s : Set E} :
     IsUniform X (toMeasurable μ s) ℙ μ ↔ IsUniform X s ℙ μ := by
-  by_cases hnt : μ s = ∞
-  · simp [IsUniform, hnt]
-  · simp [IsUniform, restrict_toMeasurable hnt]
+  unfold IsUniform
+  rw [ProbabilityTheory.cond_toMeasurable_eq]
 
 protected theorem toMeasurable {X : Ω → E} {s : Set E} (hu : IsUniform X s ℙ μ) :
-    IsUniform X (toMeasurable μ s) ℙ μ := toMeasurable_iff.2 hu
+    IsUniform X (toMeasurable μ s) ℙ μ := by
+  unfold IsUniform at *
+  rwa [ProbabilityTheory.cond_toMeasurable_eq]
 
 theorem hasPDF {X : Ω → E} {s : Set E} (hns : μ s ≠ 0) (hnt : μ s ≠ ∞)
     (hu : IsUniform X s ℙ μ) : HasPDF X ℙ μ := by
@@ -103,14 +109,16 @@ theorem hasPDF {X : Ω → E} {s : Set E} (hns : μ s ≠ 0) (hnt : μ s ≠ ∞
     (measurable_one.aemeasurable.const_smul (μ t)⁻¹).indicator (measurableSet_toMeasurable μ s)
   rw [hu, withDensity_indicator (measurableSet_toMeasurable μ s), withDensity_smul _ measurable_one,
     withDensity_one, restrict_toMeasurable hnt, measure_toMeasurable]
+  rfl
 #align measure_theory.pdf.is_uniform.has_pdf MeasureTheory.pdf.IsUniform.hasPDF
 
 theorem pdf_eq_zero_of_measure_eq_zero_or_top {X : Ω → E} {s : Set E}
     (hu : IsUniform X s ℙ μ) (hμs : μ s = 0 ∨ μ s = ∞) : pdf X ℙ μ =ᵐ[μ] 0 := by
   rcases hμs with H|H
-  · simp only [IsUniform, H, ENNReal.inv_zero, restrict_eq_zero.mpr H, smul_zero] at hu
+  · simp only [IsUniform, ProbabilityTheory.cond, H, ENNReal.inv_zero, restrict_eq_zero.mpr H,
+    smul_zero] at hu
     simp [pdf, hu]
-  · simp only [IsUniform, H, ENNReal.inv_top, zero_smul] at hu
+  · simp only [IsUniform, ProbabilityTheory.cond, H, ENNReal.inv_top, zero_smul] at hu
     simp [pdf, hu]
 
 theorem pdf_eq {X : Ω → E} {s : Set E} (hms : MeasurableSet s)
@@ -124,7 +132,9 @@ theorem pdf_eq {X : Ω → E} {s : Set E} (hms : MeasurableSet s)
   have : HasPDF X ℙ μ := hasPDF hns hnt hu
   have : IsProbabilityMeasure ℙ := isProbabilityMeasure hns hnt hu
   apply (eq_of_map_eq_withDensity _ _).mp
-  · rw [hu, withDensity_indicator hms, withDensity_smul _ measurable_one, withDensity_one]
+  · rw [hu, withDensity_indicator hms,
+    withDensity_smul _ measurable_one, withDensity_one]
+    rfl
   · exact (measurable_one.aemeasurable.const_smul (μ s)⁻¹).indicator hms
 
 theorem pdf_toReal_ae_eq {X : Ω → E} {s : Set E} (hms : MeasurableSet s)
@@ -152,7 +162,7 @@ theorem mul_pdf_integrable (hcs : IsCompact s) (huX : IsUniform X s ℙ) :
   set ind := (volume s)⁻¹ • (1 : ℝ → ℝ≥0∞)
   have : ∀ x, ↑‖x‖₊ * s.indicator ind x = s.indicator (fun x => ‖x‖₊ * ind x) x := fun x =>
     (s.indicator_mul_right (fun x => ↑‖x‖₊) ind).symm
-  simp only [this, lintegral_indicator _ hcs.measurableSet, mul_one, Algebra.id.smul_eq_mul,
+  simp only [ind, this, lintegral_indicator _ hcs.measurableSet, mul_one, Algebra.id.smul_eq_mul,
     Pi.one_apply, Pi.smul_apply]
   rw [lintegral_mul_const _ measurable_nnnorm.coe_nnreal_ennreal]
   exact (ENNReal.mul_lt_top (set_lintegral_lt_top_of_isCompact hnt.2 hcs continuous_nnnorm).ne
@@ -163,7 +173,9 @@ theorem mul_pdf_integrable (hcs : IsCompact s) (huX : IsUniform X s ℙ) :
 `(λ s)⁻¹ * ∫ x in s, x ∂λ` where `λ` is the Lebesgue measure. -/
 theorem integral_eq (huX : IsUniform X s ℙ) :
     ∫ x, X x ∂ℙ = (volume s)⁻¹.toReal * ∫ x in s, x := by
-  rw [← smul_eq_mul, ← integral_smul_measure, ← huX]
+  rw [← smul_eq_mul, ← integral_smul_measure]
+  dsimp only [IsUniform, ProbabilityTheory.cond] at huX
+  rw [← huX]
   by_cases hX : AEMeasurable X ℙ
   · exact (integral_map hX aestronglyMeasurable_id).symm
   · rw [map_of_not_aemeasurable hX, integral_zero_measure, integral_non_aestronglyMeasurable]
@@ -172,9 +184,33 @@ theorem integral_eq (huX : IsUniform X s ℙ) :
 
 end IsUniform
 
-end pdf
+variable {X : Ω → E}
 
-end
+lemma IsUniform.cond {s : Set E} :
+    IsUniform (id : E → E) s (ProbabilityTheory.cond μ s) μ := by
+  unfold IsUniform
+  rw [Measure.map_id]
+
+/-- The density of the uniform measure on a set with respect to itself. This allows us to abstract
+away the choice of random variable and probability space. -/
+def uniformPDF (s : Set E) (x : E) (μ : Measure E := by volume_tac) : ℝ≥0∞ :=
+  s.indicator ((μ s)⁻¹ • (1 : E → ℝ≥0∞)) x
+
+/-- Check that indeed any uniform random variable has the uniformPDF. -/
+lemma uniformPDF_eq_pdf {s : Set E} (hs : MeasurableSet s) (hu : pdf.IsUniform X s ℙ μ) :
+    (fun x ↦ uniformPDF s x μ) =ᵐ[μ] pdf X ℙ μ := by
+  unfold uniformPDF
+  exact Filter.EventuallyEq.trans (pdf.IsUniform.pdf_eq hs hu).symm (ae_eq_refl _)
+
+/-- Alternative way of writing the uniformPDF. -/
+lemma uniformPDF_ite {s : Set E} {x : E} :
+    uniformPDF s x μ = if x ∈ s then (μ s)⁻¹ else 0 := by
+  unfold uniformPDF
+  unfold Set.indicator
+  rename_i inst x_1
+  simp_all only [Pi.smul_apply, Pi.one_apply, smul_eq_mul, mul_one]
+
+end pdf
 
 end MeasureTheory
 
@@ -193,9 +229,9 @@ def uniformOfFinset (s : Finset α) (hs : s.Nonempty) : PMF α := by
   refine' ofFinset (fun a => if a ∈ s then s.card⁻¹ else 0) s _ _
   · simp only [Finset.sum_ite_mem, Finset.inter_self, Finset.sum_const, nsmul_eq_mul]
     have : (s.card : ℝ≥0∞) ≠ 0 := by
-      simpa only [Ne.def, Nat.cast_eq_zero, Finset.card_eq_zero] using
+      simpa only [Ne, Nat.cast_eq_zero, Finset.card_eq_zero] using
         Finset.nonempty_iff_ne_empty.1 hs
-    refine' ENNReal.mul_inv_cancel this <| ENNReal.nat_ne_top s.card
+    exact ENNReal.mul_inv_cancel this <| ENNReal.nat_ne_top s.card
   · exact fun x hx => by simp only [hx, if_false]
 #align pmf.uniform_of_finset PMF.uniformOfFinset
 
