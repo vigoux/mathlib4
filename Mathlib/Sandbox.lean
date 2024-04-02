@@ -1,5 +1,184 @@
 import Mathlib
 
+section Algebra
+
+open Algebra
+
+theorem Algebra.norm_smul {K : Type*} [Field K] {L : Type*} [Ring L] [Algebra K L] (x : L) (c : K) :
+    Algebra.norm K (c • x) = c ^ FiniteDimensional.finrank K L * Algebra.norm K x := by
+  classical
+  rw [norm_apply, map_smul, LinearMap.det_smul, ← norm_apply]
+
+end Algebra
+
+noncomputable section NumberTheory
+
+variable {K : Type*} [Field K] [NumberField K]
+
+open NumberField.Units NumberField.Units.dirichletUnitTheorem NumberField NumberField.InfinitePlace
+  FiniteDimensional MeasureTheory MeasureTheory.Measure
+
+example (x : (𝓞 K)ˣ) : |Algebra.norm ℚ (x : K)| = 1 :=
+  NumberField.isUnit_iff_norm.mp (Units.isUnit x)
+
+open scoped BigOperators Classical
+
+local notation "E" K =>
+  ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℂ)
+
+@[simp]
+theorem NumberField.InfinitePlace.norm_embedding_eq_of_isReal {K : Type*} [Field K]
+    {w : NumberField.InfinitePlace K} (hw : NumberField.InfinitePlace.IsReal w) (x : K) :
+    ‖embedding_of_isReal hw x‖ = w x := by
+  rw [← norm_embedding_eq, ← embedding_of_isReal_apply hw, Complex.norm_real]
+
+set_option maxHeartbeats 1000000 in
+-- @[simps! smul_coe_apply]
+instance : MulAction K (E K) where
+  smul := fun x v ↦ (mixedEmbedding K x) * v
+  one_smul := fun _ ↦ by
+    ext
+    apply?
+
+    sorry
+    sorry
+  mul_smul := fun _ _ _ ↦ sorry
+
+#exit
+
+def mixedEmbedding.norm : (E K) → ℝ := fun x ↦ (∏ w, ‖x.1 w‖) * ∏ w, ‖x.2 w‖ ^ 2
+
+theorem mixedEmbedding.norm_ne_zero (x : E K) :
+    norm x ≠ 0 ↔ (∀ w, x.1 w ≠ 0) ∧ (∀ w, x.2 w ≠ 0) := by
+  simp_rw [norm, mul_ne_zero_iff, Finset.prod_ne_zero_iff, Finset.mem_univ, forall_true_left,
+    pow_ne_zero_iff two_ne_zero, norm_ne_zero_iff]
+
+theorem mixedEmbedding.norm_smul (x : E K) (c : ℝ) :
+    mixedEmbedding.norm (c • x) = |c| ^ finrank ℚ K * (mixedEmbedding.norm x) := by
+  simp_rw [norm, Prod.smul_fst, Prod.smul_snd, Pi.smul_apply, Complex.real_smul, smul_eq_mul,
+    norm_mul, Real.norm_eq_abs, Complex.norm_eq_abs, Complex.abs_ofReal, mul_pow,
+    ← Finset.pow_card_mul_prod, ← pow_mul, ← card_add_two_mul_card_eq_rank, Finset.card_univ,
+    pow_add]
+  ring
+
+@[simp]
+theorem mixedEmbedding.norm_eq_norm (x : K) :
+    mixedEmbedding.norm (mixedEmbedding K x) = |Algebra.norm ℚ x| := by
+  simp_rw [← prod_eq_abs_norm, mixedEmbedding.norm, mixedEmbedding, RingHom.prod_apply,
+    Pi.ringHom_apply, norm_embedding_eq, norm_embedding_eq_of_isReal]
+  rw [← Fintype.prod_subtype_mul_prod_subtype (fun w : InfinitePlace K ↦ IsReal w)]
+  congr 1
+  · exact Finset.prod_congr rfl (fun w _ ↦ by rw [mult, if_pos w.prop, pow_one])
+  · refine (Fintype.prod_equiv (Equiv.subtypeEquivRight ?_) _ _ (fun w ↦ ?_)).symm
+    · exact fun _ ↦ not_isReal_iff_isComplex
+    · rw [Equiv.subtypeEquivRight_apply_coe, mult, if_neg w.prop]
+
+def mixedEmbedding.logMap : (E K) → ({w : InfinitePlace K // w ≠ w₀} → ℝ) := by
+  intro x w
+  exact if hw : IsReal w.val then
+      Real.log ‖x.1 ⟨w.val, hw⟩‖ - Real.log (mixedEmbedding.norm x) * (finrank ℚ K : ℝ)⁻¹
+    else
+      2 * (Real.log ‖x.2 ⟨w.val, not_isReal_iff_isComplex.mp hw⟩‖ -
+        Real.log (mixedEmbedding.norm x) * (finrank ℚ K : ℝ)⁻¹)
+
+theorem mixedEmbedding.logMap_mul {x : E K} {c : ℝ} (hx : norm x ≠ 0) (hc : 0 < c) :
+    mixedEmbedding.logMap (c • x) = mixedEmbedding.logMap x := by
+  sorry
+  -- have h₁ : ∀ w, ‖x.1 w‖ ≠ 0 := sorry
+  -- have h₂ : ∀ w, ‖x.2 w‖ ≠ 0 := sorry
+  -- have hr : (finrank ℚ K : ℝ) ≠ 0 :=  Nat.cast_ne_zero.mpr (ne_of_gt finrank_pos)
+  -- ext w
+  -- dsimp only [mixedEmbedding.logMap]
+  -- simp_rw [mixedEmbedding.norm_smul, Prod.smul_fst, Prod.smul_snd, Pi.smul_apply, smul_eq_mul,
+  --   Complex.real_smul, norm_mul]
+  -- conv =>
+  --   congr; congr; ext hw
+  --   rw [Real.log_mul (norm_ne_zero_iff.mpr (ne_of_gt hc)) (h₁ ⟨_, hw⟩),
+  --     Real.log_mul (pow_ne_zero _ (ne_of_gt hc)) hx]
+  -- conv =>
+  --   congr; congr; rfl; ext hw
+  --   rw [Real.log_mul (norm_ne_zero_iff.mpr (Complex.ofReal_ne_zero.mpr (ne_of_gt hc)))
+  --     (h₂ ⟨_, not_isReal_iff_isComplex.mp hw⟩), Real.log_mul (pow_ne_zero _ (ne_of_gt hc)) hx]
+  -- simp_rw [Real.log_pow, add_mul, mul_comm, inv_mul_cancel_left₀ hr, Complex.norm_eq_abs,
+  --   Complex.abs_ofReal, Real.norm_eq_abs, abs_eq_self.mpr (le_of_lt hc), add_sub_add_left_eq_sub]
+
+theorem mixedEmbedding.logEmbedding_eq_logEmbedding (x : (𝓞 K)ˣ) :
+    mixedEmbedding.logMap (mixedEmbedding K x) = logEmbedding K x := by
+  ext w
+  rw [mixedEmbedding.logMap, mixedEmbedding.norm_eq_norm, show |(Algebra.norm ℚ) (x : K)| = 1
+    by exact NumberField.isUnit_iff_norm.mp (Units.isUnit x)]
+  simp_rw [Rat.cast_one, Real.log_one, zero_mul, sub_zero, mixedEmbedding, logEmbedding, mult,
+    RingHom.prod_apply, Pi.ringHom_apply, AddMonoidHom.coe_mk, ZeroHom.coe_mk]
+  split_ifs with hw
+  · rw [norm_embedding_eq_of_isReal hw, Nat.cast_one, one_mul]
+    rfl
+  · rw [Nat.cast_ofNat, norm_embedding_eq]
+    rfl
+
+variable (K) in
+def mixedEmbedding.Cone : Set (E K) := by
+  let B₀ := Module.Free.chooseBasis ℤ (unitLattice K)
+  let F := Zspan.fundamentalDomain (B₀.ofZlatticeBasis ℝ _)
+  exact mixedEmbedding.logMap⁻¹' F
+
+theorem mixedEmbedding.norm_ne_zero_of_mem_Cone {x : E K} (hx : x ∈ Cone K) : norm x ≠ 0 := sorry
+
+theorem mixedEmbedding.mul_mem_Cone_of_mem_Cone {x : E K} (hx : x ∈ Cone K) {c : ℝ} (hc : 0 < c) :
+    c • x ∈ Cone K := by
+  rwa [Cone, Set.mem_preimage, mixedEmbedding.logMap_mul (norm_ne_zero_of_mem_Cone hx) hc]
+
+open Submodule mixedEmbedding
+
+variable (K) in
+def conePoints : Set (E K) := (Cone K) ∩ (span ℤ (Set.range (latticeBasis K)))
+
+theorem zap₁ (x : 𝓞 K) :
+    mixedEmbedding K x ∈ conePoints K ↔
+def coneToPrincipalIdeal (x : conePoints K) : {I : Ideal (𝓞 K) // IsPrincipal I} := sorry
+
+theorem coneToPrincipalIdeal_norm_eq (x : conePoints K) :
+    mixedEmbedding.norm (x : E K) = Ideal.absNorm (coneToPrincipalIdeal x).val := sorry
+
+theorem coneToPrincipalIdeal_surjective :
+    Function.Surjective (coneToPrincipalIdeal (K := K)) := sorry
+
+-- This result actually implies the previous one
+theorem coneToPrincipalIdeal_card_fiber_eq (I : {I : Ideal (𝓞 K) // IsPrincipal I}) :
+    Nat.card {x : conePoints K | coneToPrincipalIdeal x = I} = Fintype.card (torsion K) := sorry
+
+example (k : ℕ) :
+    Nat.card {x : conePoints K // mixedEmbedding.norm (x : E K) ≤ k} =
+      Fintype.card (torsion K) *
+        Nat.card {I : Ideal (𝓞 K) | IsPrincipal I ∧ Ideal.absNorm I ≤ k} := by
+  rw [← Nat.card_eq_fintype_card, ← Nat.card_prod]
+  refine Nat.card_congr ?_
+
+
+
+
+
+example (I : Ideal (𝓞 K)) [hI : IsPrincipal I] : (𝓞 K)ˣ := by
+  let x := (IsPrincipal.principal I).choose
+  let y := mixedEmbedding.logMap (mixedEmbedding K x)
+  let B₀ := Module.Free.chooseBasis ℤ (unitLattice K)
+  let B := B₀.ofZlatticeBasis ℝ _
+  have := Zspan.exist_unique_vadd_mem_fundamentalDomain B y
+  let v := this.choose
+  have : ↑v ∈ unitLattice K := by
+    simp_rw [← B₀.ofZlatticeBasis_span ℝ (unitLattice K)]
+    exact SetLike.coe_mem v
+  let u := this.choose
+  exact u
+
+
+
+
+
+
+end NumberTheory
+
+#exit
+
 open Filter BigOperators Asymptotics Topology
 
 section RiemannZeta
