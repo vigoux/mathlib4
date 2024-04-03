@@ -160,7 +160,7 @@ lemma Fin.snoc_mem_piFinset_snoc_iff {n : ℕ} {α : Fin (n + 1) → Type*}
     Fin.snoc xs x ∈ Fintype.piFinset (Fin.snoc Sᵢ Sₙ) ↔ xs ∈ Fintype.piFinset Sᵢ ∧ x ∈ Sₙ := by
   simp_rw [Fin.mem_piFinset_succ_iff', init_snoc, snoc_last]
 
-lemma Finset.map_piFinSuccAbove_filter_piFinset_succAbove {n : ℕ} (k : Fin (n + 1))
+lemma Finset.map_piFinSuccAbove_filter_piFinset_succAbove {n : ℕ} {k : Fin (n + 1)}
     {α : Fin (n + 1) → Type*}
     {p : ((i : Fin n) → α (Fin.succAbove k i)) → Prop} [DecidablePred p]
     {S : (i : Fin (n + 1)) → Finset (α i)} :
@@ -181,7 +181,7 @@ lemma Finset.map_piFinSuccAbove_filter_piFinset {n : ℕ} {α : Fin (n + 1) → 
     ((Fintype.piFinset S).filter fun r ↦ p (Fin.tail r)).map
       (Equiv.piFinSuccAbove α 0).toEmbedding
     = S 0 ×ˢ (Fintype.piFinset (Fin.tail S)).filter p :=
-  Finset.map_piFinSuccAbove_filter_piFinset_succAbove 0
+  Finset.map_piFinSuccAbove_filter_piFinset_succAbove
 
 lemma Finset.filter_piFinset_eq_map_piFinSuccAbove_symm {n : ℕ} {α : Fin (n + 1) → Type*}
     {p : ((i : Fin n) → α i.succ) → Prop} [DecidablePred p]
