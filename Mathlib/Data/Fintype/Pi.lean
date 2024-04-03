@@ -143,8 +143,8 @@ lemma Fin.mem_piFinset_succ_iff {n : ℕ} {α : Fin (n + 1) → Type*} {p : (i :
   simp only [Fintype.mem_piFinset, forall_fin_succ, Fin.tail]
 
 lemma Fin.cons_mem_piFinset_cons_iff {n : ℕ} {α : Fin (n + 1) → Type*}
-    (x : α 0) (xs : (i : Fin n) → α i.succ)
-    (S₀ : Finset (α 0)) (Sᵢ : (i : Fin n) → Finset (α i.succ)) :
+    {x : α 0} {xs : (i : Fin n) → α i.succ}
+    {S₀ : Finset (α 0)} {Sᵢ : (i : Fin n) → Finset (α i.succ)} :
     Fin.cons x xs ∈ Fintype.piFinset (Fin.cons S₀ Sᵢ) ↔ x ∈ S₀ ∧ xs ∈ Fintype.piFinset Sᵢ := by
   simp_rw [Fin.mem_piFinset_succ_iff, cons_zero, tail_cons]
 
