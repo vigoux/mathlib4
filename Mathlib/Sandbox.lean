@@ -16,7 +16,7 @@ noncomputable section NumberTheory
 variable {K : Type*} [Field K] [NumberField K]
 
 open NumberField.Units NumberField.Units.dirichletUnitTheorem NumberField NumberField.InfinitePlace
-  FiniteDimensional MeasureTheory MeasureTheory.Measure
+  FiniteDimensional -- MeasureTheory MeasureTheory.Measure
 
 example (x : (𝓞 K)ˣ) : |Algebra.norm ℚ (x : K)| = 1 :=
   NumberField.isUnit_iff_norm.mp (Units.isUnit x)
@@ -26,46 +26,46 @@ open scoped BigOperators Classical
 local notation "E" K =>
   ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℂ)
 
-@[simp]
 theorem NumberField.InfinitePlace.norm_embedding_eq_of_isReal {K : Type*} [Field K]
     {w : NumberField.InfinitePlace K} (hw : NumberField.InfinitePlace.IsReal w) (x : K) :
     ‖embedding_of_isReal hw x‖ = w x := by
   rw [← norm_embedding_eq, ← embedding_of_isReal_apply hw, Complex.norm_real]
 
-set_option maxHeartbeats 1000000 in
--- @[simps! smul_coe_apply]
-instance : MulAction K (E K) where
-  smul := fun x v ↦ (mixedEmbedding K x) * v
-  one_smul := fun _ ↦ by
-    ext
-    apply?
+namespace NumberField
 
-    sorry
-    sorry
-  mul_smul := fun _ _ _ ↦ sorry
+def mixedEmbedding.norm : (E K) →*₀ ℝ where
+  toFun := fun x ↦ (∏ w, ‖x.1 w‖) * ∏ w, ‖x.2 w‖ ^ 2
+  map_one' := by simp only [Prod.fst_one, Pi.one_apply, norm_one, Finset.prod_const_one,
+    Prod.snd_one, one_pow, mul_one]
+  map_zero' := by
+    simp_rw [Prod.fst_zero, Prod.snd_zero, Pi.zero_apply, norm_zero, zero_pow (two_ne_zero),
+      mul_eq_zero, Finset.prod_const, pow_eq_zero_iff', true_and, Finset.card_univ]
+    by_contra!
+    have : finrank ℚ K = 0 := by
+      rw [← card_add_two_mul_card_eq_rank, NrRealPlaces, NrComplexPlaces, this.1, this.2]
+    exact ne_of_gt finrank_pos this
+  map_mul' _ _ := by simp only [Prod.fst_mul, Pi.mul_apply, norm_mul, Real.norm_eq_abs,
+      Finset.prod_mul_distrib, Prod.snd_mul, Complex.norm_eq_abs, mul_pow]; ring
 
-#exit
-
-def mixedEmbedding.norm : (E K) → ℝ := fun x ↦ (∏ w, ‖x.1 w‖) * ∏ w, ‖x.2 w‖ ^ 2
-
-theorem mixedEmbedding.norm_ne_zero (x : E K) :
+theorem mixedEmbedding.norm_ne_zero {x : E K} :
     norm x ≠ 0 ↔ (∀ w, x.1 w ≠ 0) ∧ (∀ w, x.2 w ≠ 0) := by
-  simp_rw [norm, mul_ne_zero_iff, Finset.prod_ne_zero_iff, Finset.mem_univ, forall_true_left,
-    pow_ne_zero_iff two_ne_zero, norm_ne_zero_iff]
+  simp_rw [norm, MonoidWithZeroHom.coe_mk, ZeroHom.coe_mk, mul_ne_zero_iff, Finset.prod_ne_zero_iff,
+    Finset.mem_univ, forall_true_left, pow_ne_zero_iff two_ne_zero, norm_ne_zero_iff]
 
-theorem mixedEmbedding.norm_smul (x : E K) (c : ℝ) :
-    mixedEmbedding.norm (c • x) = |c| ^ finrank ℚ K * (mixedEmbedding.norm x) := by
-  simp_rw [norm, Prod.smul_fst, Prod.smul_snd, Pi.smul_apply, Complex.real_smul, smul_eq_mul,
-    norm_mul, Real.norm_eq_abs, Complex.norm_eq_abs, Complex.abs_ofReal, mul_pow,
-    ← Finset.pow_card_mul_prod, ← pow_mul, ← card_add_two_mul_card_eq_rank, Finset.card_univ,
-    pow_add]
+theorem mixedEmbedding.norm_smul (c : ℝ) (x : E K) :
+    norm (c • x) = |c| ^ finrank ℚ K * (norm x) := by
+  simp_rw [norm, MonoidWithZeroHom.coe_mk, ZeroHom.coe_mk, Prod.smul_fst, Prod.smul_snd,
+    Pi.smul_apply, Complex.real_smul, smul_eq_mul, norm_mul, Real.norm_eq_abs, Complex.norm_eq_abs,
+    Complex.abs_ofReal, mul_pow, ← Finset.pow_card_mul_prod, ← pow_mul,
+    ← card_add_two_mul_card_eq_rank, Finset.card_univ, pow_add]
   ring
 
 @[simp]
 theorem mixedEmbedding.norm_eq_norm (x : K) :
-    mixedEmbedding.norm (mixedEmbedding K x) = |Algebra.norm ℚ x| := by
+    norm (mixedEmbedding K x) = |Algebra.norm ℚ x| := by
   simp_rw [← prod_eq_abs_norm, mixedEmbedding.norm, mixedEmbedding, RingHom.prod_apply,
-    Pi.ringHom_apply, norm_embedding_eq, norm_embedding_eq_of_isReal]
+    MonoidWithZeroHom.coe_mk, ZeroHom.coe_mk, Pi.ringHom_apply, norm_embedding_eq,
+    norm_embedding_eq_of_isReal]
   rw [← Fintype.prod_subtype_mul_prod_subtype (fun w : InfinitePlace K ↦ IsReal w)]
   congr 1
   · exact Finset.prod_congr rfl (fun w _ ↦ by rw [mult, if_pos w.prop, pow_one])
@@ -73,64 +73,378 @@ theorem mixedEmbedding.norm_eq_norm (x : K) :
     · exact fun _ ↦ not_isReal_iff_isComplex
     · rw [Equiv.subtypeEquivRight_apply_coe, mult, if_neg w.prop]
 
-def mixedEmbedding.logMap : (E K) → ({w : InfinitePlace K // w ≠ w₀} → ℝ) := by
-  intro x w
-  exact if hw : IsReal w.val then
-      Real.log ‖x.1 ⟨w.val, hw⟩‖ - Real.log (mixedEmbedding.norm x) * (finrank ℚ K : ℝ)⁻¹
+theorem mixedEmbedding.norm_unit (u : (𝓞 K)ˣ) :
+    norm (mixedEmbedding K u) = 1 := by
+  rw [norm_eq_norm, show |(Algebra.norm ℚ) (u : K)| = 1
+      by exact NumberField.isUnit_iff_norm.mp (Units.isUnit u), Rat.cast_one]
+
+def mixedEmbedding.logMap (x : E K) : {w : InfinitePlace K // w ≠ w₀} → ℝ :=
+  fun w ↦
+    if hw : IsReal w.val then
+      Real.log ‖x.1 ⟨w.val, hw⟩‖ - Real.log (norm x) * (finrank ℚ K : ℝ)⁻¹
     else
       2 * (Real.log ‖x.2 ⟨w.val, not_isReal_iff_isComplex.mp hw⟩‖ -
-        Real.log (mixedEmbedding.norm x) * (finrank ℚ K : ℝ)⁻¹)
+        Real.log (norm x) * (finrank ℚ K : ℝ)⁻¹)
 
-theorem mixedEmbedding.logMap_mul {x : E K} {c : ℝ} (hx : norm x ≠ 0) (hc : 0 < c) :
-    mixedEmbedding.logMap (c • x) = mixedEmbedding.logMap x := by
-  sorry
-  -- have h₁ : ∀ w, ‖x.1 w‖ ≠ 0 := sorry
-  -- have h₂ : ∀ w, ‖x.2 w‖ ≠ 0 := sorry
-  -- have hr : (finrank ℚ K : ℝ) ≠ 0 :=  Nat.cast_ne_zero.mpr (ne_of_gt finrank_pos)
-  -- ext w
-  -- dsimp only [mixedEmbedding.logMap]
-  -- simp_rw [mixedEmbedding.norm_smul, Prod.smul_fst, Prod.smul_snd, Pi.smul_apply, smul_eq_mul,
-  --   Complex.real_smul, norm_mul]
-  -- conv =>
-  --   congr; congr; ext hw
-  --   rw [Real.log_mul (norm_ne_zero_iff.mpr (ne_of_gt hc)) (h₁ ⟨_, hw⟩),
-  --     Real.log_mul (pow_ne_zero _ (ne_of_gt hc)) hx]
-  -- conv =>
-  --   congr; congr; rfl; ext hw
-  --   rw [Real.log_mul (norm_ne_zero_iff.mpr (Complex.ofReal_ne_zero.mpr (ne_of_gt hc)))
-  --     (h₂ ⟨_, not_isReal_iff_isComplex.mp hw⟩), Real.log_mul (pow_ne_zero _ (ne_of_gt hc)) hx]
-  -- simp_rw [Real.log_pow, add_mul, mul_comm, inv_mul_cancel_left₀ hr, Complex.norm_eq_abs,
-  --   Complex.abs_ofReal, Real.norm_eq_abs, abs_eq_self.mpr (le_of_lt hc), add_sub_add_left_eq_sub]
+-- theorem mixedEmbedding.logMap_apply_of_isReal (x : E K) (w : {w : InfinitePlace K // w ≠ w₀})
+--     (hw : IsReal w.val) : logMap x w =
+--       Real.log ‖x.1 ⟨w.val, hw⟩‖ - Real.log (mixedEmbedding.norm x) * (finrank ℚ K : ℝ)⁻¹ := by
+--   rw [logMap, dif_pos hw]
 
-theorem mixedEmbedding.logEmbedding_eq_logEmbedding (x : (𝓞 K)ˣ) :
-    mixedEmbedding.logMap (mixedEmbedding K x) = logEmbedding K x := by
+-- theorem mixedEmbedding.logMap_apply_of_isComplex (x : E K) (w : {w : InfinitePlace K // w ≠ w₀})
+--     (hw : IsComplex w.val) : logMap x w = 2 * (Real.log ‖x.2 ⟨w.val, hw⟩‖ -
+--       Real.log (mixedEmbedding.norm x) * (finrank ℚ K : ℝ)⁻¹) := by
+--   rw [logMap, dif_neg (not_isReal_iff_isComplex.mpr hw)]
+
+theorem mixedEmbedding.logMap_zero : logMap (0 : E K) = 0 := by
+  ext
+  simp_rw [mixedEmbedding.logMap, Prod.fst_zero, Prod.snd_zero, map_zero, Pi.zero_apply, norm_zero,
+    Real.log_zero, zero_mul, sub_zero, mul_zero, dite_eq_ite, ite_self]
+
+theorem mixedEmbedding.logMap_mul {x y : E K} (hx : norm x ≠ 0) (hy : norm y ≠ 0) :
+    logMap (x * y) = logMap x + logMap y := by
   ext w
-  rw [mixedEmbedding.logMap, mixedEmbedding.norm_eq_norm, show |(Algebra.norm ℚ) (x : K)| = 1
-    by exact NumberField.isUnit_iff_norm.mp (Units.isUnit x)]
-  simp_rw [Rat.cast_one, Real.log_one, zero_mul, sub_zero, mixedEmbedding, logEmbedding, mult,
-    RingHom.prod_apply, Pi.ringHom_apply, AddMonoidHom.coe_mk, ZeroHom.coe_mk]
+  simp_rw [Pi.add_apply, logMap]
   split_ifs with hw
-  · rw [norm_embedding_eq_of_isReal hw, Nat.cast_one, one_mul]
-    rfl
-  · rw [Nat.cast_ofNat, norm_embedding_eq]
-    rfl
+  · rw [Prod.fst_mul, Pi.mul_apply, norm_mul, map_mul, Real.log_mul, Real.log_mul hx hy, add_mul]
+    ring
+    exact norm_ne_zero_iff.mpr <| (mixedEmbedding.norm_ne_zero.mp hx).1 ⟨_, hw⟩
+    exact norm_ne_zero_iff.mpr <| (mixedEmbedding.norm_ne_zero.mp hy).1 ⟨_, hw⟩
+  · replace hw := not_isReal_iff_isComplex.mp hw
+    rw [Prod.snd_mul, Pi.mul_apply, norm_mul, map_mul, Real.log_mul, Real.log_mul hx hy, add_mul]
+    ring
+    exact norm_ne_zero_iff.mpr <| (mixedEmbedding.norm_ne_zero.mp hx).2 ⟨_, hw⟩
+    exact norm_ne_zero_iff.mpr <| (mixedEmbedding.norm_ne_zero.mp hy).2 ⟨_, hw⟩
+
+theorem mixedEmbedding.logMap_eq_logEmbedding (u : (𝓞 K)ˣ) :
+    logMap (mixedEmbedding K u) = logEmbedding K u := by
+  ext
+  simp_rw [logMap, norm_unit, Real.log_one, zero_mul, sub_zero, logEmbedding, AddMonoidHom.coe_mk,
+    ZeroHom.coe_mk, mult, Nat.cast_ite, ite_mul, Nat.cast_one, one_mul, Nat.cast_ofNat,
+    mixedEmbedding, RingHom.prod_apply, Pi.ringHom_apply, norm_embedding_eq,
+    norm_embedding_eq_of_isReal]
+  rfl
+
+instance : MulAction (𝓞 K)ˣ (E K) where
+  smul := fun u x ↦ (mixedEmbedding K u) * x
+  one_smul := fun _ ↦ by simp_rw [HSMul.hSMul, Units.coe_one, map_one, one_mul]
+  mul_smul := fun _ _ _ ↦ by simp_rw [HSMul.hSMul, Units.coe_mul, map_mul, mul_assoc]
+
+-- For some reason, Lean cannot deduce that by itself
+instance : SMul (𝓞 K)ˣ (E K) := MulAction.toSMul
+
+theorem unit_smul_def (u : (𝓞 K)ˣ) (x : E K) : u • x = (mixedEmbedding K u) * x := rfl
+
+theorem mixedEmbedding.logMap_unit_smul_eq (u : (𝓞 K)ˣ) {x : E K} (hx : norm x ≠ 0) :
+    logMap (u • x) = logEmbedding K u + logMap x := by
+  rw [unit_smul_def, logMap_mul (by rw [norm_unit]; norm_num) hx, logMap_eq_logEmbedding]
+
+theorem mixedEmbedding.logMap_smul_eq_self {x : E K} {c : ℝ} (hx : norm x ≠ 0) (hc : c ≠ 0) :
+    logMap (c • x) = logMap x := by
+  have hr : (finrank ℚ K : ℝ) ≠ 0 :=  Nat.cast_ne_zero.mpr (ne_of_gt finrank_pos)
+  ext w
+  rw [logMap, logMap, norm_smul, Real.log_mul (pow_ne_zero _ (abs_ne_zero.mpr hc)) hx,
+    Real.log_pow, add_mul, mul_comm, inv_mul_cancel_left₀ hr, Prod.smul_fst, Prod.smul_snd]
+  simp_rw [Pi.smul_apply, Complex.real_smul, smul_eq_mul, norm_mul]
+  simp_rw [Real.norm_eq_abs, Complex.norm_eq_abs, Complex.abs_ofReal]
+  congr with hw
+  · rw [Real.log_mul (abs_ne_zero.mpr hc) (abs_ne_zero.mpr ((norm_ne_zero.mp hx).1 ⟨w, hw⟩))]
+    ring
+  · rw [Real.log_mul (abs_ne_zero.mpr hc)
+      (AbsoluteValue.ne_zero _ ((norm_ne_zero.mp hx).2 ⟨w, not_isReal_iff_isComplex.mp hw⟩))]
+    ring
 
 variable (K) in
-def mixedEmbedding.Cone : Set (E K) := by
-  let B₀ := Module.Free.chooseBasis ℤ (unitLattice K)
-  let F := Zspan.fundamentalDomain (B₀.ofZlatticeBasis ℝ _)
-  exact mixedEmbedding.logMap⁻¹' F
+def mixedEmbedding.cone : Set (E K) := by
+  let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
+  exact logMap⁻¹' (Zspan.fundamentalDomain B)
 
-theorem mixedEmbedding.norm_ne_zero_of_mem_Cone {x : E K} (hx : x ∈ Cone K) : norm x ≠ 0 := sorry
+variable (K) in
+theorem mixedEmbedding.cone_zero_mem : 0 ∈ cone K := by
+  simp_rw [cone, Set.mem_preimage, Zspan.mem_fundamentalDomain, logMap_zero, map_zero,
+    Finsupp.coe_zero, Pi.zero_apply, Set.left_mem_Ico, zero_lt_one, implies_true]
 
-theorem mixedEmbedding.mul_mem_Cone_of_mem_Cone {x : E K} (hx : x ∈ Cone K) {c : ℝ} (hc : 0 < c) :
-    c • x ∈ Cone K := by
-  rwa [Cone, Set.mem_preimage, mixedEmbedding.logMap_mul (norm_ne_zero_of_mem_Cone hx) hc]
+theorem mixedEmbedding.exists_unit_mul_mem_cone {x : E K} (hx : norm x ≠ 0) :
+    ∃ u : (𝓞 K)ˣ, u • x ∈ cone K := by
+  let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ
+  rsuffices ⟨⟨_, ⟨u, _, rfl⟩⟩, hu⟩ : ∃ e : unitLattice K, e + logMap x ∈ Zspan.fundamentalDomain B
+  · exact ⟨u, by rwa [cone, Set.mem_preimage, logMap_unit_smul_eq u hx]⟩
+  · obtain ⟨⟨e, h₁⟩, h₂, -⟩ := Zspan.exist_unique_vadd_mem_fundamentalDomain B (logMap x)
+    exact ⟨⟨e, by rwa [← Basis.ofZlatticeBasis_span ℝ (unitLattice K)]⟩, h₂⟩
+
+theorem mixedEmbedding.torsion_smul_mem_cone_of_mem_cone {x : E K} (hx : norm x ≠ 0)
+    (hx' : x ∈ cone K) {ζ : (𝓞 K)ˣ} (hζ : ζ ∈ torsion K) : ζ • x ∈ cone K := by
+  rwa [cone, Set.mem_preimage, logMap_unit_smul_eq _ hx, logEmbedding_eq_zero_iff.mpr hζ, zero_add]
+
+theorem mixedEmbedding.smul_mem_cone_iff {x : E K} {u : (𝓞 K)ˣ} (hx : norm x ≠ 0)
+    (hx' : x ∈ cone K) :
+    u • x ∈ cone K ↔ u ∈ torsion K := by
+  refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
+  · rw [← logEmbedding_eq_zero_iff]
+    let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ
+    refine (Subtype.mk_eq_mk (h := ?_) (h' := ?_)).mp <|
+      ExistsUnique.unique (Zspan.exist_unique_vadd_mem_fundamentalDomain B (logMap x)) ?_ ?_
+    · change logEmbedding K u ∈ (Submodule.span ℤ (Set.range B)).toAddSubgroup
+      rw [Basis.ofZlatticeBasis_span ℝ (unitLattice K)]
+      exact ⟨u, trivial, rfl⟩
+    · exact zero_mem _
+    · rwa [cone, Set.mem_preimage, logMap_unit_smul_eq _ hx] at h
+    · rw [AddSubmonoid.mk_vadd, vadd_eq_add, zero_add]
+      rwa [cone, Set.mem_preimage] at hx'
+  · exact torsion_smul_mem_cone_of_mem_cone hx hx' h
+
+theorem mixedEmbedding.mul_mem_cone_of_mem_cone {x : E K} (hx : norm x ≠ 0)
+    (hx' : x ∈ cone K) {c : ℝ} (hc : c ≠ 0) :
+    c • x ∈ cone K := by rwa [cone, Set.mem_preimage, logMap_smul_eq_self hx hc]
+
+variable (K) in
+def conePoint : Set (𝓞 K) := { x | mixedEmbedding K x ∈ mixedEmbedding.cone K}
+
+theorem mem_conePoint_iff {x : 𝓞 K} :
+    x ∈ conePoint K ↔ mixedEmbedding K x ∈ mixedEmbedding.cone K := by rfl
+
+variable (K) in
+theorem zero_mem_conePoint : 0 ∈ conePoint K := by
+  rw [mem_conePoint_iff, ZeroMemClass.coe_zero, map_zero]
+  exact mixedEmbedding.cone_zero_mem K
+
+theorem generators_in_conePoint_eq_range {I : Ideal (𝓞 K)} {g : 𝓞 K} (hg₁ : Ideal.span {g} = I)
+    (hg₂ : g ∈ conePoint K) :
+      {x : 𝓞 K | Ideal.span {x} = I} ∩ conePoint K =
+        Set.range (fun ζ : torsion K ↦ ζ.val⁻¹ * g) := by
+  by_cases hg₀ : g = 0
+  · rw [hg₀, Set.singleton_zero, Ideal.span_zero] at hg₁
+    simp_rw [← hg₁, hg₀, mul_zero, Set.range_const, Ideal.span_singleton_eq_bot,
+      Set.setOf_eq_eq_singleton, Set.inter_eq_left]
+    exact Set.singleton_subset_iff.mpr (zero_mem_conePoint K)
+  · ext x
+    simp_rw [← hg₁, Ideal.span_singleton_eq_span_singleton, Set.mem_inter_iff, mem_conePoint_iff]
+    refine ⟨fun ⟨⟨u, hu⟩, hx⟩ ↦ ⟨⟨u, ?_⟩, ?_⟩, fun ⟨⟨ζ, hζ⟩, hx⟩ ↦ ⟨⟨ζ, ?_⟩, ?_⟩⟩
+    · rw [← mixedEmbedding.smul_mem_cone_iff ?_ hx]
+      rwa [unit_smul_def, ← map_mul, ← Submonoid.coe_mul, mul_comm, hu, ← mem_conePoint_iff]
+      rw [mul_comm, eq_comm, ← Units.inv_mul_eq_iff_eq_mul] at hu
+      rw [← hu]
+      simp [hg₀]
+    · rwa [Units.inv_mul_eq_iff_eq_mul, mul_comm, eq_comm]
+    · rwa [mul_comm, ← Units.eq_inv_mul_iff_mul_eq, eq_comm]
+    · rw [← hx, Submonoid.coe_mul, map_mul, ← unit_smul_def]
+      refine mixedEmbedding.torsion_smul_mem_cone_of_mem_cone ?_ ?_ ?_
+      · simp [hg₀]
+      · exact mem_conePoint_iff.mp hg₂
+      · exact inv_mem hζ
+
+open Submodule
+
+theorem exists_generator_in_conePoint {I : Ideal (𝓞 K)} (hI : IsPrincipal I) :
+    ∃ g ∈ conePoint K, Ideal.span {g} = I := by
+  obtain ⟨x, hx⟩ := hI.principal
+  rw [Ideal.submodule_span_eq] at hx
+  by_cases hx₀ : x = 0
+  · exact ⟨0, zero_mem_conePoint K, by rw [hx, hx₀]⟩
+  · obtain ⟨u, hu⟩ := mixedEmbedding.exists_unit_mul_mem_cone (x := mixedEmbedding K x) (by simpa)
+    refine ⟨u * x, ?_, ?_⟩
+    · rwa [mem_conePoint_iff, Submonoid.coe_mul, map_mul, ← unit_smul_def]
+    · rw [hx, Ideal.span_singleton_eq_span_singleton]
+      exact ⟨u⁻¹, by rw [mul_comm, Units.inv_mul_cancel_left]⟩
+
+
+#exit
+
+  refine ⟨fun ⟨⟨u, hu⟩, hx⟩ ↦ ?_, fun ⟨⟨ζ, hζ⟩, hx⟩ ↦ ⟨⟨ζ, ?_⟩, ?_⟩⟩
+  · refine ⟨⟨?_, ?_⟩, ?_⟩
+
+    sorry
+  · rwa [mul_comm, ← Units.eq_inv_mul_iff_mul_eq, eq_comm]
+  · rw [mem_conePoint_iff, ← hx, Submonoid.coe_mul, map_mul, ← unit_smul_def]
+    refine mixedEmbedding.torsion_smul_mem_cone_of_mem_cone ?_ ?_ ?_
+    · simp [hg₀]
+    · exact mem_conePoint_iff.mp hg₂
+    · exact inv_mem hζ
+
+#exit
+
+
+  refine ⟨fun ⟨h₁, h₂⟩ ↦ ?_, fun ⟨⟨ζ, hζ⟩, hx⟩ ↦ ⟨?_, ?_⟩⟩
+
+
+#exit
+
+  · refine ⟨⟨?_, ?_⟩, ?_⟩
+    · rw [← hg₁] at h₁
+
+      sorry
+    ·
+      sorry
+    ·
+      sorry
+  · -- refine Ideal.span_singleton_eq_span_singleton.mpr ⟨ζ, ?_⟩
+    rwa [mul_comm, ← Units.eq_inv_mul_iff_mul_eq, eq_comm]
+  . rw [mem_conePoint_iff, ← hx, Submonoid.coe_mul, map_mul, ← unit_smul_def]
+    refine mixedEmbedding.torsion_smul_mem_cone_of_mem_cone ?_ ?_ ?_
+    · rw [mixedEmbedding.norm_eq_norm, Rat.cast_ne_zero, abs_ne_zero, Algebra.norm_ne_zero_iff]
+      exact_mod_cast hg₀
+    · rw [← mem_conePoint_iff]
+      exact hg₂
+    · exact inv_mem hζ
+
+#exit
+
+open scoped nonZeroDivisors
+
+def reducedModUnit (x : (𝓞 K)) : 𝓞 K := by
+  by_cases hx : x = 0
+  · exact 0
+  · have := mixedEmbedding.exists_unit_mul_mem_cone (x := mixedEmbedding K x) (by simpa)
+    exact this.choose * x
+
+theorem reducedModUnit_zero : reducedModUnit (0 : 𝓞 K) = 0 := by simp [reducedModUnit]
+
+theorem associated_reducedModUnit (x : (𝓞 K)) : Associated x (reducedModUnit x) := by
+  by_cases hx : x = 0
+  · exact ⟨1, by rw [Units.val_one, mul_one, hx, reducedModUnit_zero]⟩
+  · have := mixedEmbedding.exists_unit_mul_mem_cone (x := mixedEmbedding K x) (by simpa)
+    refine ⟨this.choose, ?_⟩
+    rw [mul_comm, reducedModUnit, dif_neg hx]
+
+theorem reducedModUnit_conePoint (x : (𝓞 K)) :
+    reducedModUnit x ∈ conePoint K := by
+  rw [mem_conePoint_iff]
+  by_cases hx : x = 0
+  · rw [hx, reducedModUnit_zero, ZeroMemClass.coe_zero, map_zero]
+    exact mixedEmbedding.cone_zero_mem K
+  · have := mixedEmbedding.exists_unit_mul_mem_cone (x := mixedEmbedding K x) (by simpa)
+    rw [reducedModUnit, dif_neg hx, Submonoid.coe_mul, map_mul]
+    exact this.choose_spec
 
 open Submodule mixedEmbedding
 
-variable (K) in
-def conePoints : Set (E K) := (Cone K) ∩ (span ℤ (Set.range (latticeBasis K)))
+theorem reducedGenerators {I : Ideal (𝓞 K)} (hI : IsPrincipal I) :
+    {x : 𝓞 K | Ideal.span {x} = I} ∩ conePoint K =
+      Set.range (fun ζ : torsion K ↦ ζ.val⁻¹ * (reducedModUnit hI.generator)) := by
+  ext x
+  refine ⟨fun ⟨h₁, h₂⟩ ↦ ?_, ?_⟩
+  · have := Ideal.span_singleton_eq_span_singleton.mpr (associated_reducedModUnit hI.generator)
+    have t1 : Ideal.span {x} = I := by exact h₁
+    rw [Ideal.span_singleton_generator] at this
+    have := Eq.trans t1 this -- seems that we have to do it the hard way
+    rw [Ideal.span_singleton_eq_span_singleton] at this
+    let u := this.choose
+    let hu := this.choose_spec
+    refine ⟨⟨u, ?_⟩, ?_⟩
+    · rw [mem_conePoint_iff] at h₂
+      have : u • mixedEmbedding K x ∈ cone K := by
+        rw [unit_smul_def, mul_comm, ← map_mul, ← Submonoid.coe_mul, ← mem_conePoint_iff, hu]
+        exact reducedModUnit_conePoint _
+      exact (mixedEmbedding.smul_mem_cone_iff sorry h₂).mp this
+    · dsimp?
+      rw [← hu]
+      field_simp
+
+#exit
+    have : span (𝓞 K) {reducedModUnit hI.generator} = I := sorry
+
+    have := Ideal.span_singleton_eq_span_singleton.mp
+
+    sorry
+  ·
+    sorry
+
+
+#exit
+
+    rw [Rat.cast_ne_zero, abs_ne_zero, Algebra.norm_ne_zero_iff]
+
+def mixedEmbedding.generator {I : (Ideal (𝓞 K))⁰} (hI : IsPrincipal I.val) :
+    conePoint K := by
+  have := mixedEmbedding.exists_unit_mul_mem_cone (x := mixedEmbedding K hI.generator) ?_
+  · refine ⟨this.choose * hI.generator, ?_, ?_⟩
+    · rw [Set.mem_setOf_eq, Set.mem_preimage, Submonoid.coe_mul, map_mul]
+      exact this.choose_spec
+    ·
+      simp only [Set.mem_preimage, ne_eq, Zspan.mem_fundamentalDomain, Set.mem_Ico,
+        Set.mem_singleton_iff, mul_eq_zero, Units.ne_zero, false_or]
+      sorry
+  · sorry
+
+#exit
+
+def mixedEmbedding.conePoint : Set (E K) := cone K ∩ mixedEmbedding K '' (𝓞 K)
+
+def mixedEmbedding.associatedConePoint (x : 𝓞 K) : conePoint K := by
+  by_cases hx : x = 0
+  · have : 0 ∈ conePoint K := by
+      refine ⟨?_, ?_⟩
+      exact cone_zero_mem
+      refine ⟨0, ?_, ?_⟩
+      exact zero_mem (𝓞 K)
+      rw [map_zero]
+    exact ⟨0, this⟩
+  · have h := mixedEmbedding.exists_unit_mul_mem_cone (x := mixedEmbedding K x) ?_
+    · refine ⟨h.choose • mixedEmbedding K x, h.choose_spec, ?_⟩
+      · refine ⟨h.choose * x, ?_, ?_⟩
+        · refine mul_mem ?_ ?_
+          exact SetLike.coe_mem h.choose.val
+          exact SetLike.coe_mem x
+        · rw [smul_def, map_mul]
+    rw [norm_eq_norm, Rat.cast_ne_zero, abs_ne_zero, Algebra.norm_ne_zero_iff]
+    exact_mod_cast hx
+
+#exit
+
+open Submodule
+
+example (x y : (𝓞 K)) (h : span (𝓞 K) { x } = span (𝓞 K) { y }) : Associated x y := by
+  exact Ideal.span_singleton_eq_span_singleton.mp h
+
+def mixedEmbedding.associatedPoint {I : Ideal (𝓞 K)} (hI : IsPrincipal I) : conePoints K := by
+  let α := hI.generator
+  have := mixedEmbedding.exists_unit_mul_mem_cone (x := mixedEmbedding K α) ?_
+  let u := this.choose
+  refine ⟨u • mixedEmbedding K α, ?_, ?_⟩
+  exact this.choose_spec
+  refine ⟨u * α, ?_, ?_⟩
+  · simp only [SetLike.mem_coe]
+    refine mul_mem ?_ ?_
+    exact SetLike.coe_mem u.val
+    exact SetLike.coe_mem α
+  · rw [smul_def, map_mul]
+  sorry
+
+
+
+
+
+
+
+
+
+#exit
+
+open Submodule mixedEmbedding
+
+open scoped nonZeroDivisors
+
+variable (K)
+
+
+
+def Gen (I : (Ideal (𝓞 K))⁰) [hI : IsPrincipal I.val] : 𝓞 K := sorry
+
+theorem Gen_span (I : (Ideal (𝓞 K))⁰) [hI : IsPrincipal I.val] :
+    span (𝓞 K) { Gen K I } = I.val := sorry
+
+theorem Gen_mem_conePoints (I : (Ideal (𝓞 K))⁰) [hI : IsPrincipal I.val] :
+    mixedEmbedding K (Gen K I) ∈ conePoints K := sorry
+
+def conePoints_equiv :
+    {I : (Ideal (𝓞 K))⁰ // IsPrincipal I.val} × (torsion K) ≃ conePoints K := by
+
+
+  sorry
+
+
+
+#exit
 
 theorem zap₁ (x : 𝓞 K) :
     mixedEmbedding K x ∈ conePoints K ↔
