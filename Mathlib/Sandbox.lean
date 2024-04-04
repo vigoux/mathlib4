@@ -208,17 +208,15 @@ theorem zero_mem_conePoint : 0 ∈ conePoint K := by
   rw [mem_conePoint_iff, ZeroMemClass.coe_zero, map_zero]
   exact mixedEmbedding.cone_zero_mem K
 
-theorem generators_in_conePoint_eq_range {I : Ideal (𝓞 K)} {g : 𝓞 K} (hg₁ : Ideal.span {g} = I)
-    (hg₂ : g ∈ conePoint K) :
-      {x : 𝓞 K | Ideal.span {x} = I} ∩ conePoint K =
+theorem span_eq_span_in_conePoint_eq_range {g : 𝓞 K} (hg : g ∈ conePoint K) :
+      {x : 𝓞 K | Ideal.span {x} = Ideal.span {g}} ∩ conePoint K =
         Set.range (fun ζ : torsion K ↦ ζ.val⁻¹ * g) := by
   by_cases hg₀ : g = 0
-  · rw [hg₀, Set.singleton_zero, Ideal.span_zero] at hg₁
-    simp_rw [← hg₁, hg₀, mul_zero, Set.range_const, Ideal.span_singleton_eq_bot,
-      Set.setOf_eq_eq_singleton, Set.inter_eq_left]
+  · simp_rw [hg₀, Set.singleton_zero, Ideal.span_zero, mul_zero, Set.range_const,
+      Ideal.span_singleton_eq_bot, Set.setOf_eq_eq_singleton, Set.inter_eq_left]
     exact Set.singleton_subset_iff.mpr (zero_mem_conePoint K)
   · ext x
-    simp_rw [← hg₁, Ideal.span_singleton_eq_span_singleton, Set.mem_inter_iff, mem_conePoint_iff]
+    simp_rw [Ideal.span_singleton_eq_span_singleton, Set.mem_inter_iff, mem_conePoint_iff]
     refine ⟨fun ⟨⟨u, hu⟩, hx⟩ ↦ ⟨⟨u, ?_⟩, ?_⟩, fun ⟨⟨ζ, hζ⟩, hx⟩ ↦ ⟨⟨ζ, ?_⟩, ?_⟩⟩
     · rw [← mixedEmbedding.smul_mem_cone_iff ?_ hx]
       rwa [unit_smul_def, ← map_mul, ← Submonoid.coe_mul, mul_comm, hu, ← mem_conePoint_iff]
@@ -230,7 +228,7 @@ theorem generators_in_conePoint_eq_range {I : Ideal (𝓞 K)} {g : 𝓞 K} (hg�
     · rw [← hx, Submonoid.coe_mul, map_mul, ← unit_smul_def]
       refine mixedEmbedding.torsion_smul_mem_cone_of_mem_cone ?_ ?_ ?_
       · simp [hg₀]
-      · exact mem_conePoint_iff.mp hg₂
+      · exact mem_conePoint_iff.mp hg
       · exact inv_mem hζ
 
 open Submodule
@@ -247,6 +245,98 @@ theorem exists_generator_in_conePoint {I : Ideal (𝓞 K)} (hI : IsPrincipal I) 
     · rw [hx, Ideal.span_singleton_eq_span_singleton]
       exact ⟨u⁻¹, by rw [mul_comm, Units.inv_mul_cancel_left]⟩
 
+theorem toto {n : ℕ} (hn : 1 ≤ n) :
+    Nat.card {I : Ideal (𝓞 K) // IsPrincipal I ∧ Ideal.absNorm I = n} * (torsionOrder K) =
+      Nat.card {x // x ∈ conePoint K ∧ |mixedEmbedding.norm (mixedEmbedding K x)| = n} := by
+  rw [torsionOrder, PNat.mk_coe, ← Nat.card_eq_fintype_card, ← Nat.card_prod]
+  refine Nat.card_congr ?_
+  refine (Equiv.Set.prod _ _).symm.trans ?_
+  refine Set.BijOn.equiv ?_ ⟨?_, ?_, ?_⟩
+  · intro ⟨I, u⟩
+    exact if hI : IsPrincipal I then u * (exists_generator_in_conePoint hI).choose else 0
+  · rintro ⟨I, ζ⟩ ⟨⟨hI₁, hI₂⟩ , hζ⟩
+    dsimp only
+    rw [dif_pos hI₁]
+    refine ⟨?_, ?_⟩
+    · sorry
+    · sorry
+  · rintro ⟨I, ζ⟩ ⟨⟨hI₁, hI₂⟩, hζ⟩  ⟨J, η⟩ ⟨⟨hJ₁, hJ₂⟩, hη⟩ h
+    dsimp only at h
+    rw [dif_pos hI₁, dif_pos hJ₁] at h
+    have : I = J := by
+      sorry
+    simp_rw [this] at h
+    rw [mul_left_inj', Units.eq_iff] at h
+    rw [this, h]
+    sorry
+  · rintro a ⟨ha₁, ha₂⟩
+    have hI : IsPrincipal (Ideal.span {a}) := ⟨a, by rw [Ideal.submodule_span_eq]⟩
+    have hg := exists_generator_in_conePoint hI
+    let g := hg.choose
+    have hζ : g ∈ {x | Ideal.span {x} = Ideal.span {a}} ∩ conePoint K :=
+      ⟨by rw [Set.mem_setOf, ← hg.choose_spec.2], hg.choose_spec.1⟩
+    rw [span_eq_span_in_conePoint_eq_range ha₁] at hζ
+    let ζ := hζ.choose
+    refine ⟨⟨Ideal.span {a}, ζ⟩, ⟨⟨hI, ?_⟩, SetLike.coe_mem ζ⟩, ?_⟩
+    · sorry
+    · dsimp only
+      rw [dif_pos hI, ← Units.eq_inv_mul_iff_mul_eq, eq_comm]
+      exact hζ.choose_spec
+
+#exit
+
+
+    · have hg := exists_generator_in_conePoint (I := Ideal.span {a})
+        ⟨a, by rw [Ideal.submodule_span_eq]⟩
+      have : hg.choose ∈ {x | Ideal.span {x} = Ideal.span {a}} ∩ conePoint K := sorry
+      rw [span_eq_span_in_conePoint_eq_range ha₁] at this
+      exact (this.choose : (𝓞 K)ˣ)
+    · dsimp
+      refine ⟨?_, ?_⟩
+      · sorry
+      ·
+
+
+#exit
+  refine Equiv.ofBijective ?_ ?_
+  · rintro ⟨⟨I, hI₁, hI₂⟩, ⟨ζ, hζ⟩⟩
+    have hI₃ := exists_generator_in_conePoint hI₁
+    refine ⟨ζ * hI₃.choose, ?_, ?_⟩
+    · rw [mem_conePoint_iff, Submonoid.coe_mul, map_mul]
+      refine mixedEmbedding.torsion_smul_mem_cone_of_mem_cone ?_ ?_ hζ
+      · sorry
+      · exact hI₃.choose_spec.1
+    · rwa [Submonoid.coe_mul, map_mul, map_mul, abs_mul, mixedEmbedding.norm_unit, abs_one, one_mul,
+        mixedEmbedding.norm_eq_norm, ← Algebra.coe_norm_int, ← Int.cast_abs, ← Int.cast_natAbs,
+        ← Ideal.absNorm_span_singleton, hI₃.choose_spec.2, Rat.cast_natCast, Nat.abs_cast,
+        Nat.cast_inj]
+  ·
+#exit
+  rintro ⟨⟨I, _⟩, ζ⟩ ⟨⟨J, _⟩, η⟩ h
+    dsimp at h
+    have := Subtype.val_injective h
+#exit
+
+    rw [Subtype.ext_iff_val, Subtype.ext_iff_val] at h
+
+
+    rw [ Subtype.mk_eq_mk, Subtype.mk_eq_mk] at h
+--    simp at h
+
+    rw [Subtype.ext_iff_val] at h
+    simp? at h
+
+
+
+    simp only [Prod.mk.injEq, Subtype.mk.injEq]
+
+
+#exit
+
+    have hI₃ := exists_generator_in_conePoint hI₁
+    have : f ()
+    sorry
+  · sorry
 
 #exit
 
@@ -272,11 +362,6 @@ theorem exists_generator_in_conePoint {I : Ideal (𝓞 K)} (hI : IsPrincipal I) 
   · refine ⟨⟨?_, ?_⟩, ?_⟩
     · rw [← hg₁] at h₁
 
-      sorry
-    ·
-      sorry
-    ·
-      sorry
   · -- refine Ideal.span_singleton_eq_span_singleton.mpr ⟨ζ, ?_⟩
     rwa [mul_comm, ← Units.eq_inv_mul_iff_mul_eq, eq_comm]
   . rw [mem_conePoint_iff, ← hx, Submonoid.coe_mul, map_mul, ← unit_smul_def]
