@@ -18,8 +18,6 @@ variable {K : Type*} [Field K] [NumberField K]
 open NumberField.Units NumberField.Units.dirichletUnitTheorem NumberField NumberField.InfinitePlace
   FiniteDimensional -- MeasureTheory MeasureTheory.Measure
 
-example (x : (𝓞 K)ˣ) : |Algebra.norm ℚ (x : K)| = 1 :=
-  NumberField.isUnit_iff_norm.mp (Units.isUnit x)
 
 open scoped BigOperators Classical
 
