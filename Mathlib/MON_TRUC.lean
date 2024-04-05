@@ -7,7 +7,6 @@ import Mathlib.CategoryTheory.Functor.Category
 
 open CategoryTheory
 
---open CategoryTheory.Limits
 
 noncomputable section
 
@@ -25,10 +24,35 @@ variable (U:Presieve X)
 
 local notation "R" => Sieve.generate U
 
+--variable (W:C)
+--variable (f:@U W)
 
 def Y : Cᵒᵖ⥤Type v := ∐ (fun (Z : C) => ∐ (fun (f : @U Z) => yoneda.obj Z))
 
-def τ:  Y ⟶ (Sieve.functor R):= sorry
+
+def tau_Z_f (Z:C) (f: @U Z): yoneda.obj Z ⟶ (Sieve.functor R ) where
+  app W:= by
+    apply Set.codRestrict (fun h => h ≫ f)
+    intro x
+    use Z, x, f
+    constructor
+
+    sorry
+
+    sorry
+
+  naturality := by
+    intros V W h
+    unfold yoneda
+    simp
+    rw [Set.val_codRestrict_apply]
+
+    sorry
+
+def τ:  (Y X U) ⟶ (Sieve.functor R ) := (Limits.Sigma.desc (fun (Z:C) => Limits.Sigma.desc fun (f : @U Z) => (tau_Z_f X U Z f)))
+
+
+def machin2:  (Y X U) ⟶ (Sieve.functor R ):= (Limits.Sigma.desc (fun (Z:C) => Limits.Sigma.desc fun (f : @U Z) => (Set.codRestrict (yoneda.map (f : Z⟶ X)) _ _)))-/
 
 lemma tau_epi: Epi (τ X U):= sorry
 
