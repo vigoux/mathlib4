@@ -126,7 +126,7 @@ end Sized
 
 section Slice
 
-variable {𝒜 : Finset (Finset α)} {A A₁ A₂ : Finset α} {r r₁ r₂ : ℕ}
+variable {𝒜 ℬ: Finset (Finset α)} {A A₁ A₂ : Finset α} {r r₁ r₂ : ℕ}
 
 /-- The `r`-th slice of a set family is the subset of its elements which have cardinality `r`. -/
 def slice (𝒜 : Finset (Finset α)) (r : ℕ) : Finset (Finset α) :=
@@ -152,12 +152,12 @@ theorem slice_subset : 𝒜 # r ⊆ 𝒜 :=
 theorem sized_slice : (𝒜 # r : Set (Finset α)).Sized r := fun _ => And.right ∘ mem_slice.mp
 #align finset.sized_slice Finset.sized_slice
 
-theorem eq_of_mem_slice (h₁ : A ∈ 𝒜 # r₁) (h₂ : A ∈ 𝒜 # r₂) : r₁ = r₂ :=
+theorem eq_of_mem_slice (h₁ : A ∈ 𝒜 # r₁) (h₂ : A ∈ ℬ # r₂) : r₁ = r₂ :=
   (sized_slice h₁).symm.trans <| sized_slice h₂
 #align finset.eq_of_mem_slice Finset.eq_of_mem_slice
 
 /-- Elements in distinct slices must be distinct. -/
-theorem ne_of_mem_slice (h₁ : A₁ ∈ 𝒜 # r₁) (h₂ : A₂ ∈ 𝒜 # r₂) : r₁ ≠ r₂ → A₁ ≠ A₂ :=
+theorem ne_of_mem_slice (h₁ : A₁ ∈ 𝒜 # r₁) (h₂ : A₂ ∈ ℬ # r₂) : r₁ ≠ r₂ → A₁ ≠ A₂ :=
   mt fun h => (sized_slice h₁).symm.trans ((congr_arg card h).trans (sized_slice h₂))
 #align finset.ne_of_mem_slice Finset.ne_of_mem_slice
 
