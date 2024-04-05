@@ -36,8 +36,9 @@ def tau_Z_f (Z:C) (f: @U Z): yoneda.obj Z ⟶ (Sieve.functor R ) where
     intro x
     use Z, x, f
     constructor
-
+    --exact (@U Z f)
     sorry
+
 
     sorry
 
