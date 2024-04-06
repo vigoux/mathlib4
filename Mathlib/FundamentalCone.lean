@@ -1,5 +1,28 @@
 import Mathlib.NumberTheory.NumberField.Units
 
+noncomputable section Ideal
+
+open nonZeroDivisors
+
+variable {R : Type*} [CommRing R] [IsDomain R]
+
+example {R : Type*} [CommRing R] [IsDomain R] :
+    Quotient (MulAction.orbitRel Rˣ R) ≃ {I : Ideal R | Submodule.IsPrincipal I} := by
+  have h_main : ∀ ⦃x : R⦄, ∀ ⦃y:R⦄,
+      y ∈ MulAction.orbit Rˣ x ↔ Ideal.span {x} = Ideal.span {y} := fun x y ↦ by
+    simp_rw [Ideal.span_singleton_eq_span_singleton, MulAction.orbit, Set.mem_range, Associated,
+    mul_comm x _]
+    rfl
+  refine Equiv.ofBijective ?_ ⟨?_, fun ⟨I, hI⟩ ↦ ?_⟩
+  · exact Quotient.lift (fun x ↦ ⟨Ideal.span {x}, ⟨x, rfl⟩⟩)
+      fun _ _ h ↦ Subtype.mk_eq_mk.mpr (h_main.mp h).symm
+  · rintro ⟨_⟩ ⟨_⟩ h
+    exact Quotient.sound <| h_main.mpr ((Subtype.mk_eq_mk.mp h).symm)
+  · obtain ⟨x, hx⟩ := hI
+    exact ⟨⟦x⟧, Subtype.mk_eq_mk.mpr hx.symm⟩
+
+end Ideal
+
 variable {K : Type*} [Field K] [NumberField K]
 
 open NumberField NumberField.InfinitePlace NumberField.Units.dirichletUnitTheorem FiniteDimensional
@@ -75,27 +98,23 @@ end Basic
 
 noncomputable section UnitSMul
 
-instance : MulAction (𝓞 K)ˣ (E K) where
+instance : SMul (𝓞 K)ˣ (E K) where
   smul := fun u x ↦ (mixedEmbedding K u) * x
-  one_smul := fun _ ↦ by simp_rw [HSMul.hSMul, Units.coe_one, map_one, one_mul]
-  mul_smul := fun _ _ _ ↦ by simp_rw [HSMul.hSMul, Units.coe_mul, map_mul, mul_assoc]
 
--- For some reason, Lean cannot deduce that by itself
-instance : SMul (𝓞 K)ˣ (E K) := MulAction.toSMul
+instance : MulAction (𝓞 K)ˣ (E K) where
+  one_smul := fun _ ↦ by simp_rw [HSMul.hSMul, SMul.smul, Units.coe_one, map_one, one_mul]
+  mul_smul := fun _ _ _ ↦ by simp_rw [HSMul.hSMul, SMul.smul, Units.coe_mul, map_mul, mul_assoc]
 
 theorem NumberField.mixedEmbedding.unitSMul_def (u : (𝓞 K)ˣ) (x : E K) :
     u • x = (mixedEmbedding K u) * x := rfl
-
---- MulAction.orbit
-
---- MulAction.orbitRel
-
 
 end UnitSMul
 
 namespace NumberField.mixedEmbedding
 
 noncomputable section logMap
+
+open NumberField.Units
 
 def logMap (x : E K) : {w : InfinitePlace K // w ≠ w₀} → ℝ :=
   fun w ↦
@@ -118,6 +137,15 @@ theorem logMap_zero : logMap (0 : E K) = 0 := by
   ext
   simp_rw [logMap, Prod.fst_zero, Prod.snd_zero, map_zero, Pi.zero_apply, norm_zero, Real.log_zero,
     zero_mul, sub_zero, mul_zero, dite_eq_ite, ite_self]
+
+theorem logMap_torsion_unitSMul_eq (x : E K) {ζ : (𝓞 K)ˣ} (hζ : ζ ∈ torsion K) :
+    logMap (ζ • x) = logMap x := by
+  ext
+  simp_rw [logMap, unitSMul_def, Prod.fst_mul, Prod.snd_mul, Pi.mul_apply, norm_mul, map_mul,
+    norm_eq_norm, mixedEmbedding, RingHom.prod_apply, Pi.ringHom_apply,
+    show |(Algebra.norm ℚ) (ζ : K)| = 1 by exact NumberField.isUnit_iff_norm.mp (Units.isUnit ζ),
+    Rat.cast_one, one_mul, norm_embedding_eq, norm_embedding_eq_of_isReal, (mem_torsion K).mp hζ,
+    one_mul]
 
 theorem logMap_mul {x y : E K} (hx : norm x ≠ 0) (hy : norm y ≠ 0) :
     logMap (x * y) = logMap x + logMap y := by
@@ -163,9 +191,46 @@ theorem fundamentalCone_zero_mem : 0 ∈ fundamentalCone K := by
   simp_rw [fundamentalCone, Set.mem_preimage, Zspan.mem_fundamentalDomain, logMap_zero, map_zero,
     Finsupp.coe_zero, Pi.zero_apply, Set.left_mem_Ico, zero_lt_one, implies_true]
 
+variable {K}
+
 theorem fundamentalCone_smul_mem_of_mem {x : E K} (hx : norm x ≠ 0) (hx' : x ∈ fundamentalCone K)
     (c : ℝ) : c • x ∈ fundamentalCone K := by
   by_cases hc : c = 0
   · rw [hc, zero_smul]
     exact  fundamentalCone_zero_mem K
   · rwa [fundamentalCone, Set.mem_preimage, logMap_smul_eq_self hx hc]
+
+theorem fundamentalCone_exists_unitSMul_mem {x : E K} (hx : norm x ≠ 0) :
+    ∃ u : (𝓞 K)ˣ, u • x ∈ fundamentalCone K := by
+  let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ
+  rsuffices ⟨⟨_, ⟨u, _, rfl⟩⟩, hu⟩ : ∃ e : unitLattice K, e + logMap x ∈ Zspan.fundamentalDomain B
+  · exact ⟨u, by rwa [fundamentalCone, Set.mem_preimage, logMap_unitSMul_eq u hx]⟩
+  · obtain ⟨⟨e, h₁⟩, h₂, -⟩ := Zspan.exist_unique_vadd_mem_fundamentalDomain B (logMap x)
+    exact ⟨⟨e, by rwa [← Basis.ofZlatticeBasis_span ℝ (unitLattice K)]⟩, h₂⟩
+
+theorem fundamentalCone_torsion_unitSMul_mem_of_mem' {x : E K} (hx : norm x ≠ 0)
+    (hx' : x ∈ fundamentalCone K) {ζ : (𝓞 K)ˣ} (hζ : ζ ∈ torsion K) :
+    ζ • x ∈ fundamentalCone K := by
+  rwa [fundamentalCone, Set.mem_preimage, logMap_unitSMul_eq _ hx,
+    logEmbedding_eq_zero_iff.mpr hζ, zero_add]
+
+theorem fundamentalCone_torsion_unitSMul_mem_of_mem {x : E K}
+    (hx' : x ∈ fundamentalCone K) {ζ : (𝓞 K)ˣ} (hζ : ζ ∈ torsion K) :
+    ζ • x ∈ fundamentalCone K := by
+  rwa [fundamentalCone, Set.mem_preimage, logMap_torsion_unitSMul_eq _ hζ]
+
+theorem fundamentalCone_unitSMul_mem_iff {x : E K} (hx : norm x ≠ 0) (hx' : x ∈ fundamentalCone K)
+    (u : (𝓞 K)ˣ) : u • x ∈ fundamentalCone K ↔ u ∈ torsion K := by
+  refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
+  · rw [← logEmbedding_eq_zero_iff]
+    let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ
+    refine (Subtype.mk_eq_mk (h := ?_) (h' := ?_)).mp <|
+      ExistsUnique.unique (Zspan.exist_unique_vadd_mem_fundamentalDomain B (logMap x)) ?_ ?_
+    · change logEmbedding K u ∈ (Submodule.span ℤ (Set.range B)).toAddSubgroup
+      rw [Basis.ofZlatticeBasis_span ℝ (unitLattice K)]
+      exact ⟨u, trivial, rfl⟩
+    · exact zero_mem _
+    · rwa [fundamentalCone, Set.mem_preimage, logMap_unitSMul_eq _ hx] at h
+    · rw [AddSubmonoid.mk_vadd, vadd_eq_add, zero_add]
+      rwa [fundamentalCone, Set.mem_preimage] at hx'
+  · exact fundamentalCone_torsion_unitSMul_mem_of_mem hx' h
