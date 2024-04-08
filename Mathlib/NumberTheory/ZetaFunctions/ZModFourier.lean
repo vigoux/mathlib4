@@ -1,8 +1,4 @@
-import Mathlib.Analysis.RCLike.Basic
-import Mathlib.Topology.Instances.AddCircle
-import Mathlib.NumberTheory.LegendreSymbol.AddCharacter
-import Mathlib.Analysis.Complex.Circle
-import Mathlib.Analysis.Fourier.AddCircle
+import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 import Mathlib.Analysis.Fourier.FourierTransform
 
 open scoped Real
@@ -57,7 +53,7 @@ open BigOperators MeasureTheory
 namespace ZMod
 
 /-- Auxiliary lemma to translate integrability statements into summability -/
-lemma integrable_count_iff {𝓚 G : Type*} [NormedAddCommGroup G] [NormedSpace ℝ G]
+lemma integrable_count_iff {𝓚 G : Type*} [NormedAddCommGroup G]
     [SecondCountableTopology G] {f : 𝓚 → G} :
     Integrable f (@Measure.count _ ⊤) ↔ Summable (fun k ↦ ‖f k‖) := by
   letI : MeasurableSpace G := borel G
@@ -71,11 +67,14 @@ lemma Finite.summable {α M : Type*} [Finite α] [AddCommMonoid M] [TopologicalS
     (f : α → M) : Summable f :=
   summable_of_finite_support <| Set.finite_univ.subset (Set.subset_univ _)
 
-local instance (N : ℕ+) : MeasurableSpace (ZMod N) := ⊤
+/-- The discrete measurable space structure (every set is measurable). -/
+local instance instMeasurableSpaceZMod (N : ℕ+) : MeasurableSpace (ZMod N) := ⊤
 
+/-- The discrete Fourier transform on `ℤ / Nℤ`. -/
 noncomputable def discreteFourierTransform {N : ℕ+} (Φ : ZMod N → ℂ) (k : ZMod N) : ℂ :=
   Fourier.fourierIntegral ZMod.toCircle Measure.count Φ k
 
+@[inherit_doc]
 scoped notation "𝓕" => discreteFourierTransform
 
 lemma discreteFourierTransform_def {N : ℕ+} (Φ : ZMod N → ℂ) (k : ZMod N) :
