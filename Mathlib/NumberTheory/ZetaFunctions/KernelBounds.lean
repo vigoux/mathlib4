@@ -55,7 +55,7 @@ lemma summable_f_nat (k : ℕ) (a : ℝ) {t : ℝ} (ht : 0 < t) : Summable (f_na
     refine (((summable_pow_mul_jacobiTheta₂_term_bound (|a| * t) ht k).mul_right
       (rexp (-π * a ^ 2 * t))).comp_injective Nat.cast_injective).of_norm_bounded _ (fun n ↦ ?_)
     simp_rw [mul_assoc, Function.comp_apply, ← Real.exp_add, norm_mul, norm_pow, Int.cast_abs,
-      Int.cast_ofNat, norm_eq_abs, Nat.abs_cast, abs_exp]
+      Int.cast_natCast, norm_eq_abs, Nat.abs_cast, abs_exp]
     refine mul_le_mul_of_nonneg_left ?_ (pow_nonneg (Nat.cast_nonneg _) _)
     rw [exp_le_exp, ← sub_nonneg]
     ring_nf
@@ -186,7 +186,7 @@ def f_int (k : ℕ) (a t : ℝ) (n : ℤ) : ℝ := |n + a| ^ k * exp (-π * (n +
 
 lemma f_int_ofNat (k : ℕ) {a : ℝ} (ha : 0 ≤ a) (t : ℝ) (n : ℕ) :
     f_int k a t (Int.ofNat n) = f_nat k a t n := by
-  rw [f_int, f_nat, Int.ofNat_eq_coe, Int.cast_ofNat, abs_of_nonneg (by positivity)]
+  rw [f_int, f_nat, Int.ofNat_eq_coe, Int.cast_natCast, abs_of_nonneg (by positivity)]
 
 lemma f_int_negSucc (k : ℕ) {a : ℝ} (ha : a ≤ 1) (t : ℝ) (n : ℕ) :
     f_int k a t (Int.negSucc n) = f_nat k (1 - a) t n := by
@@ -199,7 +199,7 @@ lemma summable_f_int (k : ℕ) (a : ℝ) {t : ℝ} (ht : 0 < t) : Summable (f_in
     (summable_f_nat k (1 - a) ht).hasSum).summable.norm
   convert this using 2 with n
   rcases n with m | m
-  · simp only [f_int, f_nat, Int.ofNat_eq_coe, Int.cast_ofNat, norm_mul, norm_eq_abs, abs_pow,
+  · simp only [f_int, f_nat, Int.ofNat_eq_coe, Int.cast_natCast, norm_mul, norm_eq_abs, abs_pow,
       abs_abs]
   · simp only [f_int, f_nat, Int.cast_negSucc, norm_mul, norm_eq_abs, abs_pow, abs_abs,
       (by { push_cast; ring } : -↑(m + 1) + a = -(m + (1 - a))), abs_neg, neg_sq]

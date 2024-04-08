@@ -1,4 +1,4 @@
-import Mathlib.Data.IsROrC.Basic
+import Mathlib.Analysis.RCLike.Basic
 import Mathlib.Topology.Instances.AddCircle
 import Mathlib.NumberTheory.LegendreSymbol.AddCharacter
 import Mathlib.Analysis.Complex.Circle
@@ -47,7 +47,7 @@ lemma ZMod.toCircle_coe {N : ℕ+} (j : ℤ) :
 
 lemma ZMod.toCircle_apply {N : ℕ+} (j : ZMod N) :
     ZMod.toCircle j = Complex.exp (2 * π * Complex.I * j.val / N) := by
-  rw [← Int.cast_ofNat, ← ZMod.toCircle_coe, ZMod.nat_cast_val, ZMod.int_cast_zmod_cast]
+  rw [← Int.cast_natCast, ← ZMod.toCircle_coe, ZMod.nat_cast_val, ZMod.int_cast_zmod_cast]
 
 
 section fourier

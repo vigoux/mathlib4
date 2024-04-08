@@ -209,8 +209,8 @@ lemma expZeta_eq_congruenceLFunction {N : ℕ+} (j : ZMod N) (s : ℂ) (hs : s �
   rw [LSeries.term_of_re_pos _ _ (zero_lt_one.trans hz), ofReal_div, ofReal_nat_cast,
     ofReal_nat_cast, mul_assoc, div_mul_eq_mul_div]
   have := ZMod.toCircle_coe (N := N) (j.val * n)
-  conv_rhs at this => rw [Int.cast_mul, Int.cast_ofNat, Int.cast_ofNat, mul_div_assoc]
-  rw [← this, Int.cast_mul, Int.cast_ofNat, Int.cast_ofNat, nat_cast_zmod_val]
+  conv_rhs at this => rw [Int.cast_mul, Int.cast_natCast, Int.cast_natCast, mul_div_assoc]
+  rw [← this, Int.cast_mul, Int.cast_natCast, Int.cast_natCast, nat_cast_zmod_val]
 
 lemma congruenceLFunction_fourier {N : ℕ+} (Φ : ZMod N → ℂ) (s : ℂ) (hs : s ≠ 1) :
     congruenceLFunction (𝓕 Φ) s =

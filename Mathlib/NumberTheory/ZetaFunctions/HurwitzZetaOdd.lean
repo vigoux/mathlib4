@@ -123,7 +123,7 @@ lemma hasSum_nat_sinKernel (a : ℝ) {t : ℝ} (ht : 0 < t) : HasSum
     (sinKernel ↑a t) := by
   rw [← hasSum_ofReal]
   convert (hasSum_int_sinKernel a ht).sum_nat_of_sum_int using 2 with n
-  · simp_rw [Int.cast_neg, neg_sq, mul_neg, ofReal_mul, Int.cast_ofNat, ofReal_nat_cast,
+  · simp_rw [Int.cast_neg, neg_sq, mul_neg, ofReal_mul, Int.cast_natCast, ofReal_nat_cast,
       ofReal_ofNat, ← add_mul, ofReal_sin, Complex.sin]
     push_cast
     ring_nf
@@ -351,7 +351,7 @@ lemma completedSinZeta_one_sub (a : UnitAddCircle) (s : ℂ) :
   rw [← completedHurwitzZetaOdd_one_sub, sub_sub_cancel]
 
 /-!
-## Relation to the Dirichlet series for `0 ≪ re s`
+## Relation to the Dirichlet series for `1 < re s`
 -/
 
 /-- Formula for `completedSinZeta` as a Dirichlet series in the convergence range
@@ -383,7 +383,7 @@ lemma hasSum_int_completedSinZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
   · simp_rw [hc, div_right_comm]
     apply Summable.div_const
     apply Summable.of_nat_of_neg <;>
-    · simp only [Int.cast_neg, abs_neg, Int.cast_ofNat, Nat.abs_cast]
+    · simp only [Int.cast_neg, abs_neg, Int.cast_natCast, Nat.abs_cast]
       rwa [summable_one_div_nat_rpow]
 
 /-- Formula for `completedSinZeta` as a Dirichlet series in the convergence range
@@ -393,12 +393,12 @@ lemma hasSum_nat_completedSinZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
     (completedSinZeta a s) := by
   have := (hasSum_int_completedSinZeta a hs).sum_nat_of_sum_int
   simp_rw [Int.sign_zero, Int.cast_zero, mul_zero, zero_mul, zero_div, add_zero, abs_neg,
-    Int.sign_neg, Nat.abs_cast, Int.cast_neg, Int.cast_ofNat, ← add_div] at this
+    Int.sign_neg, Nat.abs_cast, Int.cast_neg, Int.cast_natCast, ← add_div] at this
   convert this using 2 with n
   rw [div_right_comm]
   rcases eq_or_ne n 0 with rfl | h
   · simp
-  simp_rw [Int.sign_coe_nat_of_nonzero h, Int.cast_one, ofReal_sin, Complex.sin]
+  simp_rw [Int.sign_natCast_of_ne_zero h, Int.cast_one, ofReal_sin, Complex.sin]
   cancel_denoms
   ring_nf
 
@@ -473,7 +473,7 @@ lemma hasSum_nat_hurwitzZetaOdd (a : ℝ) {s : ℂ} (hs : 1 < re s) :
     HasSum (fun n : ℕ ↦ (SignType.sign (n + a) / (↑|n + a| : ℂ) ^ s
       - SignType.sign (n + 1 - a) / (↑|n + 1 - a| : ℂ) ^ s) / 2) (hurwitzZetaOdd a s) := by
   convert (hasSum_int_hurwitzZetaOdd a hs).nat_add_neg_add_one using 2 with n
-  rw [Int.cast_neg, Int.cast_add, Int.cast_one, sub_div, sub_eq_add_neg, Int.cast_ofNat]
+  rw [Int.cast_neg, Int.cast_add, Int.cast_one, sub_div, sub_eq_add_neg, Int.cast_natCast]
   have : -(n + 1) + a = -(n + 1 - a) := by { push_cast; ring_nf }
   rw [this, Left.sign_neg, abs_neg, SignType.coe_neg, neg_div, neg_div]
 
@@ -508,12 +508,12 @@ lemma hasSum_nat_sinZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
     HasSum (fun n : ℕ ↦ Real.sin (2 * π * a * n) / (n : ℂ) ^ s) (sinZeta a s) := by
   have hs' : s ≠ 0 := (fun h ↦ (not_lt.mpr zero_le_one) ((zero_re ▸ h ▸ hs)))
   have := (hasSum_int_sinZeta a hs).sum_nat_of_sum_int
-  simp_rw [abs_neg, Int.sign_neg, Int.cast_neg, Nat.abs_cast, Int.cast_ofNat, mul_neg,
+  simp_rw [abs_neg, Int.sign_neg, Int.cast_neg, Nat.abs_cast, Int.cast_natCast, mul_neg,
     abs_zero, Int.cast_zero, zero_cpow hs', div_zero, zero_div, add_zero] at this
   simp_rw [push_cast, Complex.sin]
   convert this using 2 with n
   rcases ne_or_eq n 0 with h | rfl
-  · simp only [Int.sign_coe_nat_of_nonzero h, Int.cast_one]
+  · simp only [Int.sign_natCast_of_ne_zero h, Int.cast_one]
     ring_nf
   · simp only [Nat.cast_zero, Int.sign_zero, Int.cast_zero]
     ring_nf

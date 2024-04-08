@@ -211,7 +211,7 @@ lemma hasSum_nat_cosKernel₀ (a : ℝ) {t : ℝ} (ht : 0 < t) :
   rw [← hasSum_nat_add_iff' 1] at this
   simp_rw [Finset.sum_range_one, Nat.cast_zero, neg_zero, Int.cast_zero, zero_pow two_ne_zero,
     mul_zero, zero_mul, Complex.exp_zero, Real.exp_zero, ofReal_one, mul_one, Int.cast_neg,
-    Int.cast_ofNat, neg_sq, ← add_mul, add_sub_assoc, ← sub_sub, sub_self, zero_sub,
+    Int.cast_natCast, neg_sq, ← add_mul, add_sub_assoc, ← sub_sub, sub_self, zero_sub,
     ← sub_eq_add_neg, mul_neg] at this
   convert this with n
   push_cast
@@ -753,7 +753,7 @@ lemma hasSum_nat_cosZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
     HasSum (fun n : ℕ ↦ Real.cos (2 * π * a * n) / (n : ℂ) ^ s) (cosZeta a s) := by
   have hs' : s ≠ 0 := (fun h ↦ (not_lt.mpr zero_le_one) ((zero_re ▸ h ▸ hs)))
   have := (hasSum_int_cosZeta a hs).sum_nat_of_sum_int
-  simp_rw [abs_neg, Int.cast_neg, Nat.abs_cast, Int.cast_ofNat, mul_neg,
+  simp_rw [abs_neg, Int.cast_neg, Nat.abs_cast, Int.cast_natCast, mul_neg,
     abs_zero, Int.cast_zero, zero_cpow hs', div_zero, zero_div, add_zero] at this
   simp_rw [push_cast, Complex.cos]
   convert this using 2 with n
