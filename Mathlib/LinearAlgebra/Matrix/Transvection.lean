@@ -116,23 +116,23 @@ theorem transvection_mul_transvection_same (h : i ≠ j) (c d : R) :
 #align matrix.transvection_mul_transvection_same Matrix.transvection_mul_transvection_same
 
 @[simp]
-theorem transvection_mul_apply_same (b : n) (c : R) (M : Matrix n n R) :
+theorem transvection_mul_apply_same (b : p) (c : R) (M : Matrix n p R) :
     (transvection i j c * M) i b = M i b + c * M j b := by simp [transvection, Matrix.add_mul]
 #align matrix.transvection_mul_apply_same Matrix.transvection_mul_apply_same
 
 @[simp]
-theorem mul_transvection_apply_same (a : n) (c : R) (M : Matrix n n R) :
+theorem mul_transvection_apply_same (a : p) (c : R) (M : Matrix p n R) :
     (M * transvection i j c) a j = M a j + c * M a i := by
   simp [transvection, Matrix.mul_add, mul_comm]
 #align matrix.mul_transvection_apply_same Matrix.mul_transvection_apply_same
 
 @[simp]
-theorem transvection_mul_apply_of_ne (a b : n) (ha : a ≠ i) (c : R) (M : Matrix n n R) :
+theorem transvection_mul_apply_of_ne (a : n) (b : p) (ha : a ≠ i) (c : R) (M : Matrix n p R) :
     (transvection i j c * M) a b = M a b := by simp [transvection, Matrix.add_mul, ha]
 #align matrix.transvection_mul_apply_of_ne Matrix.transvection_mul_apply_of_ne
 
 @[simp]
-theorem mul_transvection_apply_of_ne (a b : n) (hb : b ≠ j) (c : R) (M : Matrix n n R) :
+theorem mul_transvection_apply_of_ne (a : p) (b : n) (hb : b ≠ j) (c : R) (M : Matrix p n R) :
     (M * transvection i j c) a b = M a b := by simp [transvection, Matrix.mul_add, hb]
 #align matrix.mul_transvection_apply_of_ne Matrix.mul_transvection_apply_of_ne
 
