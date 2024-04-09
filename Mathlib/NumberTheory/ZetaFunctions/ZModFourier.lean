@@ -1,5 +1,18 @@
+/-
+Copyright (c) 2024 David Loeffler. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: David Loeffler
+-/
 import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 import Mathlib.Analysis.Fourier.FourierTransform
+
+/-!
+# Fourier theory on `ZMod N`
+
+This file just records a few minimalistic definitions about discrete Fourier transforms for
+functions on `ZMod N`.
+-/
+
 
 open scoped Real
 
@@ -45,7 +58,6 @@ lemma ZMod.toCircle_apply {N : ℕ+} (j : ZMod N) :
     ZMod.toCircle j = Complex.exp (2 * π * Complex.I * j.val / N) := by
   rw [← Int.cast_natCast, ← ZMod.toCircle_coe, ZMod.nat_cast_val, ZMod.int_cast_zmod_cast]
 
-
 section fourier
 
 open BigOperators MeasureTheory
@@ -78,11 +90,10 @@ noncomputable def discreteFourierTransform {N : ℕ+} (Φ : ZMod N → ℂ) (k :
 scoped notation "𝓕" => discreteFourierTransform
 
 lemma discreteFourierTransform_def {N : ℕ+} (Φ : ZMod N → ℂ) (k : ZMod N) :
-    discreteFourierTransform Φ k = ∑ j : ZMod N, ZMod.toCircle (-(j * k)) • Φ j := by
-  rw [discreteFourierTransform, Fourier.fourierIntegral_def,
-    integral_countable' (integrable_count_iff.mpr <| Finite.summable _), tsum_fintype]
-  congr 1 with j
-  simp_rw [Measure.count_singleton, ENNReal.one_toReal, one_smul]
+    𝓕 Φ k = ∑ j : ZMod N, ZMod.toCircle (-(j * k)) • Φ j := by
+  simp only [discreteFourierTransform, Fourier.fourierIntegral_def,
+    integral_countable' (integrable_count_iff.mpr <| Finite.summable _), Measure.count_singleton,
+    ENNReal.one_toReal, one_smul, tsum_fintype]
 
 end ZMod
 
