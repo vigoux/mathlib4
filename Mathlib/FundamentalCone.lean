@@ -1,17 +1,10 @@
 import Mathlib.NumberTheory.NumberField.Units
 
-example {α : Type*} [s : Setoid α] (a b : α) :
-  @Quotient.mk'' _ s a = Quotient.mk'' b ↔ a ≈ b := Quotient.eq
-
-#exit
-
 noncomputable section Ideal
 
 open nonZeroDivisors
 
-variable {R : Type*} [CommRing R] [IsDomain R]
-
-example {R : Type*} [CommRing R] [IsDomain R] :
+theorem Ideal.equivIsPrincipal (R : Type*) [CommRing R] [IsDomain R] :
     Quotient (MulAction.orbitRel Rˣ R) ≃ {I : Ideal R | Submodule.IsPrincipal I} := by
   have h_main : ∀ ⦃x : R⦄, ∀ ⦃y:R⦄,
       y ∈ MulAction.orbit Rˣ x ↔ Ideal.span {x} = Ideal.span {y} := fun x y ↦ by
@@ -19,12 +12,22 @@ example {R : Type*} [CommRing R] [IsDomain R] :
     mul_comm x _]
     rfl
   refine Equiv.ofBijective ?_ ⟨?_, fun ⟨I, hI⟩ ↦ ?_⟩
-  · exact Quotient.lift (fun x ↦ ⟨Ideal.span {x}, ⟨x, rfl⟩⟩)
+  · exact _root_.Quotient.lift (fun x ↦ ⟨Ideal.span {x}, ⟨x, rfl⟩⟩)
       fun _ _ h ↦ Subtype.mk_eq_mk.mpr (h_main.mp h).symm
   · rintro ⟨_⟩ ⟨_⟩ h
     exact Quotient.sound <| h_main.mpr ((Subtype.mk_eq_mk.mp h).symm)
   · obtain ⟨x, hx⟩ := hI
     exact ⟨⟦x⟧, Subtype.mk_eq_mk.mpr hx.symm⟩
+
+theorem Ideal.equivIsPrincipal_apply (R : Type*) [CommRing R] [IsDomain R] (x : R) :
+    Ideal.equivIsPrincipal R ⟦x⟧ = Ideal.span {x} := by
+  unfold Ideal.equivIsPrincipal
+  rfl
+
+theorem Ideal.equivIsPrincipal_symm_apply (R : Type*) [CommRing R] [IsDomain R] {I : Ideal R}
+    (hI : Submodule.IsPrincipal I) :
+    (Ideal.equivIsPrincipal R).symm ⟨I, hI⟩ = ⟦hI.generator⟧ := by
+  rw [Equiv.symm_apply_eq, Subtype.ext_iff, Ideal.equivIsPrincipal_apply, span_singleton_generator]
 
 end Ideal
 
@@ -129,6 +132,12 @@ theorem NumberField.mixedEmbedding.unitSMul_iff_smul {x y : (𝓞 K)} {u : (𝓞
     ←  Submonoid.coe_mul, Subtype.mk_eq_mk]
   exact mixedEmbedding_injective K
 
+@[simp]
+theorem  NumberField.mixedEmbedding.norm_unitSMul (u : (𝓞 K)ˣ) (x : E K) :
+    norm (u • x) = norm x := by
+  rw [unitSMul_smul, map_mul, norm_eq_norm, show |(Algebra.norm ℚ) (u : K)| = 1
+      by exact NumberField.isUnit_iff_norm.mp (Units.isUnit u), Rat.cast_one, one_mul]
+
 end UnitSMul
 
 namespace NumberField.mixedEmbedding
@@ -210,20 +219,22 @@ def fundamentalCone : Set (E K) := by
   let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
   exact logMap⁻¹' (Zspan.fundamentalDomain B)
 
-theorem fundamentalCone_zero_mem : 0 ∈ fundamentalCone K := by
+namespace fundamentalCone
+
+protected theorem zero_mem : 0 ∈ fundamentalCone K := by
   simp_rw [fundamentalCone, Set.mem_preimage, Zspan.mem_fundamentalDomain, logMap_zero, map_zero,
     Finsupp.coe_zero, Pi.zero_apply, Set.left_mem_Ico, zero_lt_one, implies_true]
 
 variable {K}
 
-theorem fundamentalCone_smul_mem_of_mem {x : E K} (hx : norm x ≠ 0) (hx' : x ∈ fundamentalCone K)
+theorem smul_mem_of_mem {x : E K} (hx : norm x ≠ 0) (hx' : x ∈ fundamentalCone K)
     (c : ℝ) : c • x ∈ fundamentalCone K := by
   by_cases hc : c = 0
   · rw [hc, zero_smul]
-    exact  fundamentalCone_zero_mem K
+    exact fundamentalCone.zero_mem K
   · rwa [fundamentalCone, Set.mem_preimage, logMap_smul_eq hx hc]
 
-theorem fundamentalCone_exists_unitSMul_mem {x : E K} (hx : norm x ≠ 0) :
+theorem exists_unitSMul_mem {x : E K} (hx : norm x ≠ 0) :
     ∃ u : (𝓞 K)ˣ, u • x ∈ fundamentalCone K := by
   let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ
   rsuffices ⟨⟨_, ⟨u, _, rfl⟩⟩, hu⟩ : ∃ e : unitLattice K, e + logMap x ∈ Zspan.fundamentalDomain B
@@ -231,13 +242,13 @@ theorem fundamentalCone_exists_unitSMul_mem {x : E K} (hx : norm x ≠ 0) :
   · obtain ⟨⟨e, h₁⟩, h₂, -⟩ := Zspan.exist_unique_vadd_mem_fundamentalDomain B (logMap x)
     exact ⟨⟨e, by rwa [← Basis.ofZlatticeBasis_span ℝ (unitLattice K)]⟩, h₂⟩
 
-theorem fundamentalCone_torsion_unitSMul_mem_of_mem {x : E K}
+theorem torsion_unitSMul_mem_of_mem {x : E K}
     (hx' : x ∈ fundamentalCone K) {ζ : (𝓞 K)ˣ} (hζ : ζ ∈ torsion K) :
     ζ • x ∈ fundamentalCone K := by
   rwa [fundamentalCone, Set.mem_preimage, logMap_torsion_unitSMul_eq _ hζ]
 
-theorem fundamentalCone_unitSMul_mem_iff {x : E K} (hx : norm x ≠ 0) (hx' : x ∈ fundamentalCone K)
-    (u : (𝓞 K)ˣ) : u • x ∈ fundamentalCone K ↔ u ∈ torsion K := by
+theorem unitSMul_mem_iff {x : E K} (hx : norm x ≠ 0) (hx' : x ∈ fundamentalCone K) (u : (𝓞 K)ˣ) :
+    u • x ∈ fundamentalCone K ↔ u ∈ torsion K := by
   refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
   · rw [← logEmbedding_eq_zero_iff]
     let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ
@@ -246,188 +257,196 @@ theorem fundamentalCone_unitSMul_mem_iff {x : E K} (hx : norm x ≠ 0) (hx' : x 
     · change logEmbedding K u ∈ (Submodule.span ℤ (Set.range B)).toAddSubgroup
       rw [Basis.ofZlatticeBasis_span ℝ (unitLattice K)]
       exact ⟨u, trivial, rfl⟩
-    · exact zero_mem _
+    · exact Submodule.zero_mem _
     · rwa [fundamentalCone, Set.mem_preimage, logMap_unitSMul_eq _ hx] at h
     · rw [AddSubmonoid.mk_vadd, vadd_eq_add, zero_add]
       rwa [fundamentalCone, Set.mem_preimage] at hx'
-  · exact fundamentalCone_torsion_unitSMul_mem_of_mem hx' h
+  · exact torsion_unitSMul_mem_of_mem hx' h
 
 variable (K) in
-def fundamentalConePoints : Set (E K) := (fundamentalCone K) ∩ (mixedEmbedding K '' (𝓞 K))
+def integralPoints : Set (E K) := (fundamentalCone K) ∩ (mixedEmbedding K '' (𝓞 K))
 
-theorem fundamentalConePoints_exists_unitSMul_mem {x : E K} (hx : x ∈ mixedEmbedding K '' (𝓞 K)) :
-    ∃ u : (𝓞 K)ˣ, u • x ∈ fundamentalConePoints K := by
+theorem exists_unitSMul_mem_integralPoints {x : E K} (hx : x ∈ mixedEmbedding K '' (𝓞 K)) :
+    ∃ u : (𝓞 K)ˣ, u • x ∈ integralPoints K := by
   by_cases hx' : x = 0
   · simp_rw [hx', smul_zero]
-    exact ⟨1, fundamentalCone_zero_mem K, ⟨0, zero_mem _, map_zero _⟩⟩
+    exact ⟨1, fundamentalCone.zero_mem _, ⟨0, zero_mem _, map_zero _⟩⟩
   · replace hx' : norm x ≠ 0 :=
       norm_ne_zero (Set.mem_range_of_mem_image (mixedEmbedding K) _ hx) hx'
-    obtain ⟨u, hu⟩ := fundamentalCone_exists_unitSMul_mem hx'
+    obtain ⟨u, hu⟩ := exists_unitSMul_mem hx'
     obtain ⟨x, ⟨hx₁, ⟨_, rfl⟩⟩⟩ := hx
     refine ⟨u, hu, ?_⟩
     rw [unitSMul_smul, ← map_mul]
     exact ⟨u * x,  mul_mem (SetLike.coe_mem (u : 𝓞 K)) hx₁, rfl⟩
 
-theorem fundamentalConePoints_exists_preimage {x : E K} (hx : x ∈ fundamentalConePoints K) :
-    ∃ a : (𝓞 K), mixedEmbedding K a = x := ⟨⟨hx.2.choose, hx.2.choose_spec.1⟩, hx.2.choose_spec.2⟩
+theorem exists_unique_preimage_of_integralPoint {x : E K} (hx : x ∈ integralPoints K) :
+    ∃! a : (𝓞 K), mixedEmbedding K a = x := by
+  refine ⟨⟨hx.2.choose, hx.2.choose_spec.1⟩, hx.2.choose_spec.2, fun x h ↦ ?_⟩
+  rw [Subtype.ext_iff, ← (mixedEmbedding_injective K).eq_iff, h, hx.2.choose_spec.2]
 
-theorem fundamentalConePoints_torsion_unitSMul_mem {x : E K} {ζ : (𝓞 K)ˣ} (hζ : ζ ∈ torsion K)
-    (hx : x ∈ fundamentalConePoints K) :
-    ζ • x ∈ fundamentalConePoints K := by
+def preimageOfIntegralPoints (a : integralPoints K) : (𝓞 K) :=
+  ⟨a.prop.2.choose, a.prop.2.choose_spec.1⟩
+
+theorem image_preimageOfIntegralPoints_eq (a : integralPoints K) :
+    mixedEmbedding K (preimageOfIntegralPoints a) = a := a.prop.2.choose_spec.2
+
+theorem torsion_unitSMul_mem_integralPoints {x : E K} {ζ : (𝓞 K)ˣ} (hζ : ζ ∈ torsion K)
+    (hx : x ∈ integralPoints K) :
+    ζ • x ∈ integralPoints K := by
   obtain ⟨a, ha, rfl⟩ := hx.2
-  refine ⟨fundamentalCone_torsion_unitSMul_mem_of_mem hx.1 hζ, ⟨ζ * a, ?_, ?_⟩⟩
+  refine ⟨torsion_unitSMul_mem_of_mem hx.1 hζ, ⟨ζ * a, ?_, ?_⟩⟩
   · exact mul_mem (SetLike.coe_mem (ζ : (𝓞 K))) ha
   · rw [unitSMul_smul, map_mul]
 
 @[simps]
-instance fundamentalConePoints_torsionSMul: SMul (torsion K) (fundamentalConePoints K) where
-  smul := fun ⟨ζ, hζ⟩ ⟨x, hx⟩ ↦ ⟨ζ • x,  fundamentalConePoints_torsion_unitSMul_mem hζ hx⟩
+instance integralPoints_torsionSMul: SMul (torsion K) (integralPoints K) where
+  smul := fun ⟨ζ, hζ⟩ ⟨x, hx⟩ ↦ ⟨ζ • x,  torsion_unitSMul_mem_integralPoints hζ hx⟩
 
-instance : MulAction (torsion K) (fundamentalConePoints K) where
+instance : MulAction (torsion K) (integralPoints K) where
   one_smul := fun _ ↦ by
-    rw [Subtype.mk_eq_mk, fundamentalConePoints_torsionSMul_smul_coe, OneMemClass.coe_one, one_smul]
+    rw [Subtype.mk_eq_mk, integralPoints_torsionSMul_smul_coe, OneMemClass.coe_one, one_smul]
   mul_smul := fun _ _ _ ↦ by
     rw [Subtype.mk_eq_mk]
-    simp_rw [fundamentalConePoints_torsionSMul_smul_coe, Submonoid.coe_mul, mul_smul]
+    simp_rw [integralPoints_torsionSMul_smul_coe, Submonoid.coe_mul, mul_smul]
 
 -- We need to remind Lean of this instance to avoid a timeout
 instance : MulAction (𝓞 K) (𝓞 K) := MulActionWithZero.toMulAction
 
 variable (K) in
-def fundamentalConePointsToModUnits (a : fundamentalConePoints K) :
-    Quotient (MulAction.orbitRel (𝓞 K)ˣ (𝓞 K)) :=
-  Quotient.mk _ (fundamentalConePoints_exists_preimage a.prop).choose
+def integralPointsToModUnits (a : integralPoints K) :
+    Quotient (MulAction.orbitRel (𝓞 K)ˣ (𝓞 K)) := Quotient.mk _ (preimageOfIntegralPoints a)
 
-theorem fundamentalConePointsToModUnits_surjective :
-    Function.Surjective (fundamentalConePointsToModUnits K) := by
+theorem integralPointsToModUnits_apply (a : integralPoints K) :
+  (integralPointsToModUnits K a) = ⟦preimageOfIntegralPoints a⟧ := rfl
+
+variable (K) in
+theorem integralPointsToModUnits_surjective :
+    Function.Surjective (integralPointsToModUnits K) := by
   rintro ⟨x⟩
-  obtain ⟨u, hu⟩ : ∃ u : (𝓞 K)ˣ, u • (mixedEmbedding K x) ∈ fundamentalConePoints K  :=
-    fundamentalConePoints_exists_unitSMul_mem ⟨x, SetLike.coe_mem x, rfl⟩
+  obtain ⟨u, hu⟩ : ∃ u : (𝓞 K)ˣ, u • (mixedEmbedding K x) ∈ integralPoints K  :=
+      exists_unitSMul_mem_integralPoints ⟨x, SetLike.coe_mem x, rfl⟩
   refine ⟨⟨u • (mixedEmbedding K x), hu⟩, Quotient.sound ⟨u, ?_⟩⟩
-  rw [← unitSMul_iff_smul, (fundamentalConePoints_exists_preimage hu).choose_spec]
+  rw [← unitSMul_iff_smul, image_preimageOfIntegralPoints_eq]
 
+-- We need to remind Lean of this instance to avoid a timeout
+instance : MulAction (𝓞 K) (𝓞 K) := MulActionWithZero.toMulAction
 
+theorem integralPointsToModUnits_eq_iff (a b : integralPoints K) :
+    integralPointsToModUnits K a = integralPointsToModUnits K b ↔
+      ∃ ζ : torsion K, ζ • b = a := by
+  rw [integralPointsToModUnits_apply, integralPointsToModUnits_apply]
+  rw [show ⟦preimageOfIntegralPoints a⟧ = ⟦preimageOfIntegralPoints b⟧ ↔
+    ∃ u : (𝓞 K)ˣ, u • preimageOfIntegralPoints b = preimageOfIntegralPoints a by
+    rw [@Quotient.eq]; rfl]
+  simp_rw [← unitSMul_iff_smul, image_preimageOfIntegralPoints_eq, Subtype.ext_iff,
+    integralPoints_torsionSMul_smul_coe]
+  refine ⟨fun ⟨u, h⟩ ↦ ?_, fun ⟨⟨ζ, _⟩, h⟩ ↦ ⟨ζ, h⟩⟩
+  by_cases hb : (b : E K) = 0
+  · rw [hb, smul_zero] at h
+    exact ⟨1, by rw [hb, ← h, OneMemClass.coe_one, smul_zero]⟩
+  · have hnz : norm (b : E K) ≠ 0 :=
+      mixedEmbedding.norm_ne_zero ⟨b.prop.2.choose, b.prop.2.choose_spec.2⟩ hb
+    refine ⟨⟨u, (unitSMul_mem_iff hnz b.prop.1 u).mp ?_⟩, h⟩
+    rw [h]
+    exact a.prop.1
 
+variable (K) in
+def integralPointsQuoEquivModUnits :
+    Quotient (MulAction.orbitRel (torsion K) (integralPoints K)) ≃
+      Quotient (MulAction.orbitRel (𝓞 K)ˣ (𝓞 K)) := by
+  refine Equiv.ofBijective (Quotient.lift (integralPointsToModUnits K) ?_) ⟨?_, ?_⟩
+  · exact fun a b ↦ (integralPointsToModUnits_eq_iff a b).mpr
+  · convert Setoid.ker_lift_injective (integralPointsToModUnits K)
+    all_goals
+    · ext a b
+      exact (integralPointsToModUnits_eq_iff a b).symm
+  · rw [Quot.surjective_lift]
+    exact integralPointsToModUnits_surjective K
 
-theorem fundamentalConePointsToModUnits_eq_iff' (a b : fundamentalConePoints K) :
-    fundamentalConePointsToModUnits K a = fundamentalConePointsToModUnits K b ↔
-      ∃ u : torsion K, u • (b : E K) = ↑a := by
-  rw [fundamentalConePointsToModUnits, fundamentalConePointsToModUnits, @Quotient.eq]
-  refine ⟨?_, ?_⟩
-  · rintro ⟨ζ, h⟩
-    rw [← unitSMul_iff_smul] at h
-    refine ⟨⟨ζ, ?_⟩, ?_⟩
-    · rw [← fundamentalCone_unitSMul_mem_iff (x := (a : E K))]
-      sorry
-      sorry
-      exact a.prop.1
-    · convert h
-      exact (fundamentalConePoints_exists_preimage b.prop).choose_spec.symm
-      exact (fundamentalConePoints_exists_preimage a.prop).choose_spec.symm
+variable (K) in
+def integralPointsQuoEquivIsPrincipal :
+    Quotient (MulAction.orbitRel (torsion K) (integralPoints K)) ≃
+      {I : Ideal (𝓞 K) // Submodule.IsPrincipal I} :=
+  (integralPointsQuoEquivModUnits K).trans (Ideal.equivIsPrincipal (𝓞 K))
 
+theorem integralPointsQuoEquivIsPrincipal_apply (a : integralPoints K) :
+    integralPointsQuoEquivIsPrincipal K ⟦a⟧ =
+      Ideal.span {preimageOfIntegralPoints a} := by
+  rw [integralPointsQuoEquivIsPrincipal, Equiv.trans_apply]
+  erw [Ideal.equivIsPrincipal_apply]
 
+def integralPointsQuoNorm :
+    Quotient (MulAction.orbitRel (torsion K) (integralPoints K)) → ℝ := by
+  refine Quotient.lift ?_ ?_
+  · exact fun x ↦ norm (x : E K)
+  · intro a b ⟨⟨u, _⟩, hu⟩
+    rw [Subtype.ext_iff, integralPoints_torsionSMul_smul_coe] at hu
+    rw [← hu]
+    exact norm_unitSMul u b
 
-#exit
-   --, ← Quotient.out_equiv_out]
-  refine ⟨?_, ?_⟩
-  · intro h
-    have := Quotient.exact h
-    rintro ⟨u, hu⟩
-    rw [← unitSMul_iff_smul] at hu
-    obtain ⟨x, hx⟩ := fundamentalConePoints_exists_preimage a.prop
-    obtain ⟨y, hy⟩ := fundamentalConePoints_exists_preimage b.prop
-    refine ⟨u, ?_⟩
-    rw [← (fundamentalConePoints_exists_preimage a.prop).choose_spec,
-      ← (fundamentalConePoints_exists_preimage b.prop).choose_spec]
+theorem integralPointsQuoNorm_apply (a : integralPoints K) :
+    integralPointsQuoNorm ⟦a⟧ = |Algebra.norm ℤ (preimageOfIntegralPoints a)| := by
+  rw [integralPointsQuoNorm, @Quotient.lift_mk, ← image_preimageOfIntegralPoints_eq,
+    norm_eq_norm, ← Algebra.coe_norm_int, Rat.cast_abs, Rat.cast_intCast, Int.cast_abs]
 
-    convert hu
+def integralPointsQuoOrbitEquiv {q : Quotient (MulAction.orbitRel (torsion K) (integralPoints K))}
+    (hq : integralPointsQuoNorm q ≠ 0) :
+    (MulAction.orbitRel.Quotient.orbit q) ≃ (torsion K) := by
+  rw [MulAction.orbitRel.Quotient.orbit_eq_orbit_out _ Quotient.out_eq', MulAction.orbit]
+  refine (Equiv.ofInjective _ fun _ _ h ↦ ?_).symm
+  suffices (preimageOfIntegralPoints (Quotient.out' q) : K) ≠ 0 by
+    simp_rw [Subtype.ext_iff, integralPoints_torsionSMul_smul_coe, unitSMul_smul,
+      ← image_preimageOfIntegralPoints_eq, ← map_mul, (mixedEmbedding_injective K).eq_iff] at h
+    exact_mod_cast (mul_left_inj' this).mp h
+  contrapose! hq
+  rw [show q = ⟦Quotient.out' q⟧ from (Quotient.out_eq' q).symm, integralPointsQuoNorm_apply,
+    Int.cast_abs, abs_eq_zero, Int.cast_eq_zero, Algebra.norm_eq_zero_iff]
+  exact_mod_cast hq
 
+variable (K) in
+def integralPointsQuoNormEquivIsPrincipal (n : ℕ) :
+    { x : Quotient (MulAction.orbitRel (torsion K) (integralPoints K)) //
+      integralPointsQuoNorm x = n } ≃
+      { I : Ideal (𝓞 K) // Submodule.IsPrincipal I ∧ Ideal.absNorm I = n } := by
+  refine Equiv.trans ?_ (Equiv.subtypeSubtypeEquivSubtypeInter _ _)
+  refine Equiv.subtypeEquiv (integralPointsQuoEquivIsPrincipal K) ?_
+  rintro ⟨_⟩
+  erw [integralPointsQuoEquivIsPrincipal_apply, integralPointsQuoNorm_apply]
+  rw [Ideal.absNorm_span_singleton, Int.abs_eq_natAbs, Int.cast_ofNat, Nat.cast_inj]
 
+variable (K) in
+def integralPointsQuoNormProdEquiv {n : ℕ} (hn : 1 ≤ n) :
+    { x // integralPointsQuoNorm (K := K) x = n } × (torsion K) ≃
+        { a : integralPoints K // norm (a : E K) = n } := by
+  let f : { a : integralPoints K // norm (a : E K) = n } →
+      { x // integralPointsQuoNorm (K := K) x = n } := by
+    rintro ⟨a, ha⟩
+    refine ⟨⟦a⟧, by rw [← ha]; rfl⟩
+  let e := Equiv.sigmaFiberEquiv (α := { a : integralPoints K // norm (a : E K) = n })
+    (β := { x // integralPointsQuoNorm (K := K) x = n }) f
+  refine Equiv.trans ?_ e
+  refine (Equiv.sigmaEquivProdOfEquiv ?_).symm
+  rintro ⟨q, hq⟩
+  have hq' : integralPointsQuoNorm q ≠ 0 := by
+    rw [hq]
+    rw [Nat.cast_ne_zero]
+    linarith
+  refine Equiv.trans ?_ (integralPointsQuoOrbitEquiv hq')
+  simp_rw [Subtype.ext_iff]
+  refine Equiv.trans (Equiv.subtypeEquivRight fun _ ↦
+    MulAction.orbitRel.Quotient.mem_orbit.symm) ?_
+  refine Equiv.subtypeSubtypeEquivSubtype (q := fun x ↦ x ∈ MulAction.orbitRel.Quotient.orbit q) ?_
+  rintro a ha
+  rw [← hq, integralPointsQuoNorm]
+  rw [MulAction.orbitRel.Quotient.mem_orbit] at ha
+  rw [← ha]
+  simp_rw [Quotient.mk''_eq_mk]
+  simp_rw [Quotient.lift_mk]
 
-
-#exit
-
-theorem fundamentalConePointsToModUnits_eq_iff (a b : fundamentalConePoints K) :
-    fundamentalConePointsToModUnits K a = fundamentalConePointsToModUnits K b ↔
-      ∃ ζ : torsion K, ζ • a = b := by
-  rw [fundamentalConePointsToModUnits, fundamentalConePointsToModUnits, ← Quotient.out_equiv_out]
-  refine ⟨?_, ?_⟩
-  · rintro ⟨u, hu⟩
-    rw [← unitSMul_iff_smul] at hu
-    have := fundamentalCone_unitSMul_mem_iff
-    sorry
-  ·
-    sorry
-
-
-
-
-
-
-#exit
-
-theorem fundamentalConePoints_mem_orbit_iff (a b : fundamentalConePoints K) :
-    a ∈ MulAction.orbit (torsion K) b ↔ ∃ ζ : torsion K, (ζ : (𝓞 K)ˣ) • (b : E K) = a := by
-  simp_rw [← fundamentalConePoints_torsionSMul_smul_coe, ← Subtype.ext_iff]
-  rfl
-
-example : Quotient (MulAction.orbitRel (torsion K) (fundamentalConePoints K)) ≃
-    Quotient (MulAction.orbitRel (𝓞 K)ˣ (𝓞 K)) := by
-  refine Equiv.ofBijective ?_ ⟨?_, ?_⟩
-  · refine Quotient.lift ?_ ?_
-    · rintro ⟨x, hx⟩
-      exact Quotient.mk _ (fundamentalConePoints_exists_preimage hx).choose
-    · rintro a b h
-      have ha := fundamentalConePoints_exists_preimage a.prop
-      have hb := fundamentalConePoints_exists_preimage b.prop
-      have : a ∈ MulAction.orbit (torsion K) b := h
-      rw [fundamentalConePoints_mem_orbit_iff] at this
-      rw [← (fundamentalConePoints_exists_preimage a.prop).choose_spec,
-        ← (fundamentalConePoints_exists_preimage b.prop).choose_spec ] at this
-      simp_rw [unitSMul_iff_smul] at this
-      refine Quotient.sound ?_
-      refine ⟨this.choose, ?_⟩
-      simp only [unitSMul_smul]
-      exact this.choose_spec
-  · rintro ⟨_⟩ ⟨_⟩ h
-    refine Quotient.sound ?_
-    simp at h
-    refine ⟨?_, ?_⟩
-    rw [← Subtype.mk_eq_mk] at h
-    sorry
-  · sorry
-
-
-
-
-
-
-
-
-
-
-#exit
-
-example :
-  Quotient (MulAction.orbitRel (𝓞 K)ˣ (𝓞 K)) ≃
-    Quotient (MulAction.orbitRel (torsion K) (fundamentalConePoints K)) := by
-  refine Equiv.ofBijective ?_ ⟨?_, ?_⟩
-  · refine Quotient.lift ?_ ?_
-    · intro x
-      refine Quotient.mk _ ⟨?_, ?_, ?_⟩
-#exit
-
-example {R : Type*} [CommRing R] [IsDomain R] :
-    Quotient (MulAction.orbitRel Rˣ R) ≃ {I : Ideal R | Submodule.IsPrincipal I} := by
-  have h_main : ∀ ⦃x : R⦄, ∀ ⦃y:R⦄,
-      y ∈ MulAction.orbit Rˣ x ↔ Ideal.span {x} = Ideal.span {y} := fun x y ↦ by
-    simp_rw [Ideal.span_singleton_eq_span_singleton, MulAction.orbit, Set.mem_range, Associated,
-    mul_comm x _]
-    rfl
-  refine Equiv.ofBijective ?_ ⟨?_, fun ⟨I, hI⟩ ↦ ?_⟩
-  · exact Quotient.lift (fun x ↦ ⟨Ideal.span {x}, ⟨x, rfl⟩⟩)
-      fun _ _ h ↦ Subtype.mk_eq_mk.mpr (h_main.mp h).symm
-  · rintro ⟨_⟩ ⟨_⟩ h
-    exact Quotient.sound <| h_main.mpr ((Subtype.mk_eq_mk.mp h).symm)
-  · obtain ⟨x, hx⟩ := hI
-    exact ⟨⟦x⟧, Subtype.mk_eq_mk.mpr hx.symm⟩
+example {n : ℕ} (hn : 1 ≤ n) :
+    Nat.card {I : Ideal (𝓞 K) // Submodule.IsPrincipal I ∧ Ideal.absNorm I = n} *
+      Fintype.card (torsion K) = Nat.card ({a : integralPoints K // norm (a : E K) = n}) := by
+  rw [← Nat.card_congr (integralPointsQuoNormEquivIsPrincipal K n)]
+  rw [← Nat.card_eq_fintype_card, ← Nat.card_prod]
+  refine Nat.card_congr ?_
+  exact integralPointsQuoNormProdEquiv K hn
