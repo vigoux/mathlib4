@@ -27,34 +27,35 @@ local notation "R" => Sieve.generate U
 --variable (W:C)
 --variable (f:@U W)
 
-def Y : Cᵒᵖ⥤Type v := ∐ (fun (Z : C) => ∐ (fun (f : @U Z) => yoneda.obj Z))
+def Y : Cᵒᵖ⥤Type v := ∐ (fun (Z : C) => ∐ (fun (_ : @U Z) => yoneda.obj Z))
 
 
 def tau_Z_f (Z:C) (f: @U Z): yoneda.obj Z ⟶ (Sieve.functor R ) where
   app W:= by
-    apply Set.codRestrict (fun h => h ≫ f)
-    intro x
-    use Z, x, f
+    intro a
+    use (a ≫ f), Z, a, f
     constructor
-    --exact (@U Z f)
-    sorry
-
-
-    sorry
-
+    exact (f.2)
+    simp
   naturality := by
     intros V W h
-    unfold yoneda
+    simp only [yoneda_obj_obj, Sieve.functor_obj, Sieve.generate_apply]
+    ext
     simp
-    rw [Set.val_codRestrict_apply]
-
-    sorry
 
 def τ:  (Y X U) ⟶ (Sieve.functor R ) := (Limits.Sigma.desc (fun (Z:C) => Limits.Sigma.desc fun (f : @U Z) => (tau_Z_f X U Z f)))
 
+lemma tau_epi: Epi (τ X U):= by
+  constructor
+  intros Z u v huv
+  apply NatTrans.ext
+  ext Z f
+  rcases f with ⟨f,Y, g, h, hf1, hf2⟩
 
-def machin2:  (Y X U) ⟶ (Sieve.functor R ):= (Limits.Sigma.desc (fun (Z:C) => Limits.Sigma.desc fun (f : @U Z) => (Set.codRestrict (yoneda.map (f : Z⟶ X)) _ _)))-/
 
-lemma tau_epi: Epi (τ X U):= sorry
+
+  simp
+  rw [hf2]
+
 
 def Cech :SimplicialObject (Cᵒᵖ ⥤ Type v) := (Arrow.mk (τ X U)).cechNerve
