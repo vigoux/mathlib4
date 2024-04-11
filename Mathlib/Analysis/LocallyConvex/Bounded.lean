@@ -45,9 +45,8 @@ von Neumann-bounded sets.
 
 variable {𝕜 𝕜' E E' F ι : Type*}
 
-open Set Filter
-
-open Topology Pointwise
+open Set Filter Function
+open scoped Topology Pointwise
 
 set_option linter.uppercaseLean3 false
 
@@ -58,9 +57,7 @@ section SeminormedRing
 section Zero
 
 variable (𝕜)
-
 variable [SeminormedRing 𝕜] [SMul 𝕜 E] [Zero E]
-
 variable [TopologicalSpace E]
 
 /-- A set `s` is von Neumann bounded if every neighborhood of 0 absorbs `s`. -/
@@ -194,7 +191,7 @@ alias ⟨IsVonNBounded.tendsto_smallSets, IsVonNBounded.of_tendsto_smallSets⟩ 
 theorem IsVonNBounded.smul_tendsto_zero {S : Set E} {ε : ι → 𝕜} {x : ι → E} {l : Filter ι}
     (hS : IsVonNBounded 𝕜 S) (hxS : ∀ᶠ n in l, x n ∈ S) (hε : Tendsto ε l (𝓝 0)) :
     Tendsto (ε • x) l (𝓝 0) :=
-  (hS.tendsto_smallSets.comp hε).of_smallSets <| hxS.mono fun _ ↦ smul_mem_smul_set
+  (hS.tendsto_smallSets_nhds.comp hε).of_smallSets <| hxS.mono fun _ ↦ smul_mem_smul_set
 #align bornology.is_vonN_bounded.smul_tendsto_zero Bornology.IsVonNBounded.smul_tendsto_zero
 
 theorem isVonNBounded_of_smul_tendsto_zero {ε : ι → 𝕝} {l : Filter ι} [l.NeBot]
@@ -254,7 +251,6 @@ end Image
 section NormedField
 
 variable [NormedField 𝕜] [AddCommGroup E] [Module 𝕜 E]
-
 variable [TopologicalSpace E] [ContinuousSMul 𝕜 E]
 
 /-- Singletons are bounded. -/
@@ -335,7 +331,7 @@ variable (𝕜 E)
 /-- The von Neumann bornology defined by the von Neumann bounded sets.
 
 Note that this is not registered as an instance, in order to avoid diamonds with the
-metric bornology.-/
+metric bornology. -/
 @[reducible]
 def vonNBornology : Bornology E :=
   Bornology.ofBounded (setOf (IsVonNBounded 𝕜)) (isVonNBounded_empty 𝕜 E)
@@ -357,7 +353,6 @@ end Bornology
 section UniformAddGroup
 
 variable (𝕜) [NontriviallyNormedField 𝕜] [AddCommGroup E] [Module 𝕜 E]
-
 variable [UniformSpace E] [UniformAddGroup E] [ContinuousSMul 𝕜 E]
 
 theorem TotallyBounded.isVonNBounded {s : Set E} (hs : TotallyBounded s) :
@@ -418,7 +413,7 @@ theorem isVonNBounded_iff' (s : Set E) :
 
 theorem image_isVonNBounded_iff (f : E' → E) (s : Set E') :
     Bornology.IsVonNBounded 𝕜 (f '' s) ↔ ∃ r : ℝ, ∀ x ∈ s, ‖f x‖ ≤ r := by
-  simp_rw [isVonNBounded_iff', Set.ball_image_iff]
+  simp_rw [isVonNBounded_iff', Set.forall_mem_image]
 #align normed_space.image_is_vonN_bounded_iff NormedSpace.image_isVonNBounded_iff
 
 /-- In a normed space, the von Neumann bornology (`Bornology.vonNBornology`) is equal to the
