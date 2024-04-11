@@ -408,7 +408,7 @@ def integralPointsQuoNormEquivIsPrincipal (n : ℕ) :
   refine Equiv.subtypeEquiv (integralPointsQuoEquivIsPrincipal K) ?_
   rintro ⟨_⟩
   erw [integralPointsQuoEquivIsPrincipal_apply, integralPointsQuoNorm_apply]
-  rw [Ideal.absNorm_span_singleton, Int.abs_eq_natAbs, Int.cast_ofNat, Nat.cast_inj]
+  rw [Ideal.absNorm_span_singleton, Int.abs_eq_natAbs, Int.cast_natCast, Nat.cast_inj]
 
 variable (K) in
 def integralPointsQuoNormProdEquiv {n : ℕ} (hn : 1 ≤ n) :

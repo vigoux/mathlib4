@@ -1,10 +1,13 @@
-import Mathlib
+import Mathlib.Algebra.Module.Zlattice
+import Mathlib.Analysis.BoxIntegral.Integrability
 
 section Zspan
 
 open Submodule
 
 open scoped Pointwise
+
+-- Generalize more (IsScalarTower?) and move to other namespace
 
 variable {ι R M : Type*} [Ring R] [AddCommGroup M] [Module R M] (b : Basis ι R M)
 

@@ -1,9 +1,9 @@
-import Mathlib.Sandbox
+import Mathlib.UnitBox
 import Mathlib.FundamentalCone
 
 noncomputable section
 
-open Submodule Fintype Bornology
+open Submodule Fintype Bornology Filter Topology MeasureTheory
 
 open scoped Pointwise
 
@@ -16,24 +16,20 @@ variable (F : E → ℝ) (hF₁ : ∀ (x : E) ⦃r : ℝ⦄, 0 ≤ r →  F (r �
 
 open Submodule
 
-abbrev Nbr (B : ℝ) := Nat.card {x ∈ X ∩ (span ℤ (Set.range b)) | F x ≤ B }
-
 example {B : ℝ} (hB : 0 < B) :
-    Nbr b X F (B ^ card ι) =
+    Nat.card ({x ∈ X  | F x ≤ B ^ card ι} ∩ span ℤ (Set.range b) : Set E) =
       Nat.card ({x ∈ X | F x ≤ 1 } ∩ B⁻¹ • (span ℤ (Set.range b)) : Set E) := by
   have hB₂ : 0 ≤ B⁻¹ := inv_nonneg.mpr (le_of_lt hB)
-  refine Nat.card_congr ?_
-  refine Equiv.ofBijective ?_ ⟨?_, ?_⟩
-  · rintro ⟨x, ⟨hx₁, hx₂⟩, hx₃⟩
-    refine ⟨?_, ⟨?_, ?_⟩, ?_⟩
-    · exact B⁻¹ • x
-    · refine hX hx₁ hB₂
-    · specialize hF₁ x hB₂
-      rw [hF₁]
-      rw [inv_pow]
-      rwa [inv_mul_le_iff, mul_one]
-      refine pow_pos hB _
-    · exact Set.smul_mem_smul_set hx₂
-  · dsimp
-    sorry
-  · sorry
+  have hB₃ : B⁻¹ ≠ 0 := inv_ne_zero (ne_of_gt hB)
+  refine Nat.card_congr <| Equiv.subtypeEquiv (Equiv.smulRight hB₃) (fun a ↦ ?_)
+  simp_rw [Set.mem_inter_iff, Set.mem_setOf_eq, Equiv.smulRight_apply, Set.smul_mem_smul_set_iff₀
+    hB₃, SetLike.mem_coe, hF₁ a hB₂, inv_pow, inv_mul_le_iff (pow_pos hB _), mul_one,
+    and_congr_left_iff]
+  refine fun _ _ ↦ ⟨fun h ↦ hX h hB₂, fun h ↦ ?_⟩
+  convert hX h (le_of_lt hB)
+  rw [smul_inv_smul₀ (ne_of_gt hB)]
+
+example :
+    Tendsto (fun n : ℕ ↦
+      Nat.card ({x ∈ X  | F x ≤ n} ∩ span ℤ (Set.range b) : Set E) / (n : ℝ))
+      atTop (𝓝 (volume (b.equivFun ''  {x | F x ≤ 1})).toReal) := sorry
