@@ -2,9 +2,7 @@ import Mathlib.NumberTheory.NumberField.Units
 
 noncomputable section Ideal
 
-open nonZeroDivisors
-
-theorem Ideal.equivIsPrincipal (R : Type*) [CommRing R] [IsDomain R] :
+def Ideal.equivIsPrincipal (R : Type*) [CommRing R] [IsDomain R] :
     Quotient (MulAction.orbitRel Rˣ R) ≃ {I : Ideal R | Submodule.IsPrincipal I} := by
   have h_main : ∀ ⦃x : R⦄, ∀ ⦃y:R⦄,
       y ∈ MulAction.orbit Rˣ x ↔ Ideal.span {x} = Ideal.span {y} := fun x y ↦ by
@@ -20,9 +18,7 @@ theorem Ideal.equivIsPrincipal (R : Type*) [CommRing R] [IsDomain R] :
     exact ⟨⟦x⟧, Subtype.mk_eq_mk.mpr hx.symm⟩
 
 theorem Ideal.equivIsPrincipal_apply (R : Type*) [CommRing R] [IsDomain R] (x : R) :
-    Ideal.equivIsPrincipal R ⟦x⟧ = Ideal.span {x} := by
-  unfold Ideal.equivIsPrincipal
-  rfl
+    Ideal.equivIsPrincipal R ⟦x⟧ = Ideal.span {x} := rfl
 
 theorem Ideal.equivIsPrincipal_symm_apply (R : Type*) [CommRing R] [IsDomain R] {I : Ideal R}
     (hI : Submodule.IsPrincipal I) :
@@ -443,7 +439,7 @@ def integralPointsQuoNormProdEquiv {n : ℕ} (hn : 1 ≤ n) :
   simp_rw [Quotient.mk''_eq_mk]
   simp_rw [Quotient.lift_mk]
 
-example {n : ℕ} (hn : 1 ≤ n) :
+theorem main {n : ℕ} (hn : 1 ≤ n) :
     Nat.card {I : Ideal (𝓞 K) // Submodule.IsPrincipal I ∧ Ideal.absNorm I = n} *
       Fintype.card (torsion K) = Nat.card ({a : integralPoints K // norm (a : E K) = n}) := by
   rw [← Nat.card_congr (integralPointsQuoNormEquivIsPrincipal K n)]
