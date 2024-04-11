@@ -1178,7 +1178,7 @@ variable {E ι : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (b : Basis ι
 variable (c : ℝ) (s : Set E)
 
 -- We want to do it the other way around
-abbrev LatticePoints  : Set E := c • s ∩ span ℤ (Set.range b)
+abbrev LatticePoints  : Set E := s ∩ c⁻¹ • span ℤ (Set.range b)
 
 -- abbrev LatticePoints' (c : ℝ) : Set E := s ∩ c⁻¹ • span ℤ (Set.range b)
 
@@ -1189,36 +1189,13 @@ variable [Fintype ι]
 variable {c} in
 def EquivIntegralPoints (hc : c ≠ 0) :
     LatticePoints b c s ≃ IntegralPoints c (b.equivFun '' s) := by
-  let e := b.equivFun.toEquiv
-  let f : (ι → ℝ) ≃ (ι → ℝ) := MulAction.toPerm (Units.mk0 c⁻¹ (inv_ne_zero hc))
-  let g := e.trans f
-  refine g.subtypeEquiv ?_
-  intro a
-  simp [g, f, e, Set.mem_smul_set]
-  refine ⟨fun ⟨⟨x, hxs, hxa⟩, h₂⟩ ↦ ⟨?_, ?_⟩, ?_⟩
-  · refine ⟨x, hxs, ?_⟩
-    rw [← hxa]
-    rw [LinearEquiv.map_smul]
-    rw [Finsupp.coe_smul]
-    rw [inv_smul_smul₀ hc]
-  · refine ⟨?_, ?_, ?_⟩
-    · exact b.equivFun a
-    · rw [Basis.mem_span_iff_repr_mem] at h₂
-      simp_rw [Basis.mem_span_iff_repr_mem, Basis.equivFun_apply, Pi.basisFun_repr]
-      exact h₂
-    · simp
-  · rintro ⟨⟨x, hxs, hxa⟩, ⟨y, hy, hya⟩⟩
-    refine ⟨?_, ?_⟩
-    · refine ⟨x, hxs, ?_⟩
-      rw [eq_inv_smul_iff₀ hc] at hxa
-      rw [← Finsupp.coe_smul, ← LinearEquiv.map_smul] at hxa
-      have : Function.Injective b.equivFun := by exact LinearEquiv.injective _
-      exact this hxa
-    · rw [inv_smul_eq_iff₀ hc] at hya
-      rw [smul_inv_smul₀ hc] at hya
-      rw [Basis.mem_span_iff_repr_mem]
-      simp_rw [Basis.mem_span_iff_repr_mem, Pi.basisFun_repr, hya] at hy
-      exact hy
+  refine b.equivFun.toEquiv.subtypeEquiv ?_
+  intro x
+  simp_rw [Set.mem_inter_iff, LinearEquiv.coe_toEquiv, Basis.equivFun_apply, Set.mem_image,
+    DFunLike.coe_fn_eq, EmbeddingLike.apply_eq_iff_eq, exists_eq_right, and_congr_right_iff]
+  simp_rw [Set.mem_inv_smul_set_iff₀ hc]
+  simp_rw [← Finsupp.coe_smul, ← LinearEquiv.map_smul, SetLike.mem_coe, Basis.mem_span_iff_repr_mem]
+  simp_rw [Pi.basisFun_repr, implies_true]
 
 theorem toto2 (hc : c ≠ 0) : LatticeCountingFunction b c s = CountingFunction c (b.equivFun '' s) := by
   refine Nat.card_congr ?_
