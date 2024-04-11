@@ -10,8 +10,6 @@ open Submodule
 
 open scoped Pointwise
 
-example {c : K} (h : c ≠ 0) :
-    Basis ι K E := b.isUnitSMul (fun _ ↦ Ne.isUnit h)
 
 theorem Zspan.smul {c : K} (h : c ≠ 0) :
     c • span ℤ (Set.range b) = span ℤ (Set.range (b.isUnitSMul (fun _ ↦ Ne.isUnit h))) := by
@@ -1227,11 +1225,6 @@ theorem main2 (hs₁ : Bornology.IsBounded s) (hs₂ : MeasurableSet s) :
     have : Measurable b.equivFun.symm := by
       exact Continuous.measurable this
     exact this hs₂
-
--- All these theorems should limits on ℕ!!
--- theorem main2' :
---     Tendsto (fun n : ℕ ↦ (LatticeCountingFunction b n s : ℝ) / n ^ card ι)
---       atTop (𝓝 (volume (b.equivFun '' s)).toReal) := by sorry
 
 variable (b₀ : Basis ι ℝ (ι → ℝ)) (s₀ : Set (ι → ℝ)) (hs₀₁ : Bornology.IsBounded s₀)
   (hs₀₂ : MeasurableSet s₀)
