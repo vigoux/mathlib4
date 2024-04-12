@@ -1,5 +1,35 @@
-import Mathlib.Algebra.Module.Zlattice
+import Mathlib.Algebra.Module.Zlattice.Basic
 import Mathlib.Analysis.BoxIntegral.Integrability
+import Mathlib.Topology.Algebra.Order.Floor
+
+section SpecificLimits
+
+open Filter Topology
+
+theorem tendsto_nat_ceil_div_floor_atTop {R : Type*} [TopologicalSpace R] [LinearOrderedField R]
+    [OrderTopology R] [FloorRing R] :
+    Filter.Tendsto (fun (x : R) => (Nat.ceil x : R) / (Nat.floor x)) Filter.atTop (𝓝 1) := by
+  rw [show (1 : R) = 1 * 1⁻¹ by ring]
+  refine Tendsto.congr' ?_
+      <| tendsto_nat_ceil_div_atTop.mul (tendsto_nat_floor_div_atTop.inv₀ (one_ne_zero))
+  filter_upwards [eventually_ne_atTop 0] with _ h
+  rw [mul_comm_div, inv_div, div_div, div_mul_cancel_right₀ h, div_eq_mul_inv]
+
+end SpecificLimits
+
+section Order
+
+open Filter Nat
+
+variable {α : Type*} [LinearOrderedSemiring α] [FloorSemiring α]
+theorem tendsto_natCeil_atTop : Tendsto (ceil : α → ℕ) atTop atTop :=
+  ceil_mono.tendsto_atTop_atTop fun b ↦ ⟨b, (ceil_natCast _).ge⟩
+
+theorem tendsto_natFloor_atTop : Tendsto (floor : α → ℕ) atTop atTop :=
+  floor_mono.tendsto_atTop_atTop fun b ↦
+    ⟨(b + 1 : ℕ), by rw [floor_coe]; exact Nat.le_add_right b 1⟩
+
+end Order
 
 section Zspan
 
@@ -309,23 +339,28 @@ variable (F : (ι → ℝ) → ℝ) (hF : Continuous F)
 
 open scoped BigOperators
 
-theorem Fintype_integralPoints (hs₀ : IsBounded s) : Fintype (IntegralPoints c s) := by
+theorem Finite_integralPoints (hs₀ : IsBounded s) : Finite (IntegralPoints c s) := by
   rw [IntegralPoints, ← coe_pointwise_smul]
   by_cases hc : c = 0
   · rw [hc, inv_zero]
     rw [zero_smul]
     rw [zero_eq_bot, bot_coe]
-    exact ofFinite _
+    exact Finite.Set.finite_inter_of_right s {0}
   · rw [Zspan.smul _ (IsUnit.inv (Ne.isUnit hc))]
-    refine Set.Finite.fintype ?_
     refine Metric.finite_isBounded_inter_isClosed hs₀ ?_
     change IsClosed (span ℤ (Set.range (Basis.isUnitSMul (Pi.basisFun ℝ ι) _))).toAddSubgroup
     exact AddSubgroup.isClosed_of_discrete
 
 def CountingFunction := Nat.card (IntegralPoints c s)
 
--- Probably inline that instead (and others too?)
 abbrev SeriesFunction := ∑' x : IntegralPoints c s, F x
+
+theorem IntegralPointsEquiv :
+    IntegralPoints c s ≃ (c • s ∩ span ℤ (Set.range (Pi.basisFun ℝ ι)) : Set (ι → ℝ)) := sorry
+
+theorem CountingFunction_eq :
+    CountingFunction c s =
+      Nat.card (c • s ∩ span ℤ (Set.range (Pi.basisFun ℝ ι)) : Set (ι → ℝ)) := sorry
 
 -- theorem IntegralPoints_mem_iff {x : ι → ℝ} :
 --     x ∈ IntegralPoints s n ↔ (n:ℝ)⁻¹ • x ∈ IntegralPoints' ι s n := by
@@ -430,7 +465,7 @@ theorem SeriesFunction_eq {B : Box ι} (hB : HasIntegralVertices B) (hs₀ : s �
   have : IsBounded s := by
     refine IsBounded.subset ?_ hs₀
     exact Box.IsBounded B
-  have := Fintype_integralPoints n s this
+  have := @Fintype.ofFinite _ (Finite_integralPoints n s this)
   rw [tsum_fintype]
   rw [Finset.sum_indicator_eq_sum_filter]
   have : (n:ℝ) ≠ 0 := by
@@ -503,7 +538,7 @@ variable (hs₁ : Bornology.IsBounded s) (hs₂ : MeasurableSet s)
 
 open Filter
 
-theorem main' :
+theorem main'' :
     Tendsto (fun n : ℕ ↦ (∑' x : IntegralPoints n s, F x) / n ^ card ι)
       atTop (nhds (∫ x in s, F x)) := by
   obtain ⟨B, hB, hs₀⟩ := le_hasIntegralVertices_of_isBounded hs₁
@@ -554,12 +589,77 @@ theorem main' :
   exact hB
   exact hs₀
 
-theorem main :
+theorem main' :
     Tendsto (fun n : ℕ ↦ (CountingFunction n s : ℝ) / n ^ card ι)
       atTop (nhds (volume s).toReal) := by
-  convert main' s (fun _ ↦ 1) hs₁ hs₂
+  convert main'' s (fun _ ↦ 1) hs₁ hs₂
   · rw [tsum_const, nsmul_eq_mul, mul_one, Nat.cast_inj]
     rfl
   · rw [set_integral_const, smul_eq_mul, mul_one]
+
+variable (h₃ : ∀ ⦃x y : ℝ⦄, 0 < x → x ≤ y → x • s ⊆ y • s)
+
+theorem CountingFunction_mono {x y : ℝ} (h₁ : 0 < x) (h₂ : x ≤ y) :
+    CountingFunction x s ≤ CountingFunction y s := by
+  -- IntegralPointsEquiv
+  rw [CountingFunction_eq, CountingFunction_eq]
+  refine Nat.card_mono ?_ ?_
+  · sorry
+    -- exact Fintype_integralPoints c s hs₁
+  · intro x hx
+    refine ⟨?_, ?_⟩
+    · exact h₃ h₁ h₂ hx.1
+    · exact hx.2
+
+theorem main :
+    Tendsto (fun x : ℝ ↦ (CountingFunction x s : ℝ) / x ^ card ι)
+      atTop (nhds (volume s).toReal) := by
+  -- Make a bunch of ∀ᶠ x in atTop for filter_upwards?
+  have i₁ : ∀ᶠ x : ℝ in atTop, (CountingFunction (Nat.floor x) s : ℝ) / (Nat.ceil x) ^ card ι ≤
+      (CountingFunction x s : ℝ) / x ^ card ι := by
+    filter_upwards [eventually_ge_atTop 1] with x hx
+    gcongr
+    refine CountingFunction_mono s h₃ ?_ ?_
+    · rwa [Nat.cast_pos, Nat.floor_pos]
+    · exact Nat.floor_le (le_trans zero_le_one hx)
+    · exact Nat.le_ceil _
+  have i₂ : ∀ᶠ x : ℝ in atTop, (CountingFunction x s : ℝ) / x ^ card ι ≤
+      (CountingFunction (Nat.ceil x) s : ℝ) / (Nat.floor x) ^ card ι := by
+    filter_upwards [eventually_ge_atTop 1] with x hx
+    gcongr
+    refine pow_pos ?_ _
+    exact Nat.cast_pos.mpr (Nat.floor_pos.mpr hx)
+    refine CountingFunction_mono s h₃ ?_ ?_
+    · linarith
+    · exact Nat.le_ceil _
+    · refine Nat.floor_le ?_
+      exact le_trans zero_le_one hx
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' ?_ ?_ i₁ i₂
+  · have : (fun x : ℝ ↦ (CountingFunction (Nat.floor x) s : ℝ) / (Nat.floor x) ^ card ι *
+        (Nat.floor x / Nat.ceil x ) ^ card ι) =ᶠ[atTop]
+        fun x : ℝ ↦ (CountingFunction (Nat.floor x) s) / (Nat.ceil x) ^ card ι := by
+      filter_upwards [eventually_ge_atTop 1] with _ _
+      rw [mul_comm_div, ← div_pow, div_div, div_mul_cancel_right₀, inv_pow, div_eq_mul_inv]
+      rwa [Nat.cast_ne_zero, Nat.ne_zero_iff_zero_lt, Nat.floor_pos]
+    rw [show (volume s).toReal = (volume s).toReal * 1 ^ card ι by ring]
+    refine Tendsto.congr' this ?_
+    refine Tendsto.mul ?_ ?_
+    · exact Tendsto.comp (main' s hs₁ hs₂) tendsto_natFloor_atTop
+    · refine Tendsto.pow ?_ _
+      convert Tendsto.inv₀ (tendsto_nat_ceil_div_floor_atTop (R := ℝ)) one_ne_zero using 2
+      · rw [inv_div]
+      · rw [inv_one]
+  · have : (fun x : ℝ ↦ (CountingFunction (Nat.ceil x) s : ℝ) / (Nat.ceil x) ^ card ι *
+        (Nat.ceil x / Nat.floor x ) ^ card ι) =ᶠ[atTop]
+        fun x : ℝ ↦ (CountingFunction (Nat.ceil x) s) / (Nat.floor x) ^ card ι := by
+      filter_upwards [eventually_gt_atTop 0] with _ _
+      rw [mul_comm_div, ← div_pow, div_div, div_mul_cancel_right₀, inv_pow, div_eq_mul_inv]
+      rwa [Nat.cast_ne_zero, Nat.ne_zero_iff_zero_lt, Nat.ceil_pos]
+    rw [show (volume s).toReal = (volume s).toReal * 1 ^ card ι by ring]
+    refine Tendsto.congr' this ?_
+    refine Tendsto.mul ?_ ?_
+    · exact Tendsto.comp (main' s hs₁ hs₂) tendsto_natCeil_atTop
+    · refine Tendsto.pow ?_ _
+      exact tendsto_nat_ceil_div_floor_atTop
 
 end BoxIntegral
