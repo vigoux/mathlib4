@@ -137,23 +137,27 @@ theorem Finset.univ_pi_univ {α : Type*} {β : α → Type*} [DecidableEq α] [F
   ext; simp
 #align finset.univ_pi_univ Finset.univ_pi_univ
 
+/-- See `Fin.mem_piFinset_succ_iff'` for an analogous lemma using `Fin.init` and `Fin.last` -/
 lemma Fin.mem_piFinset_succ_iff {n : ℕ} {α : Fin (n + 1) → Type*} {p : (i : Fin (n + 1)) → α i}
     {S : (i : Fin (n + 1)) → Finset (α i)} :
     p ∈ Fintype.piFinset S ↔ p 0 ∈ S 0 ∧ Fin.tail p ∈ Fintype.piFinset (Fin.tail S) := by
   simp only [Fintype.mem_piFinset, forall_fin_succ, Fin.tail]
 
+/-- See `Fin.snoc_mem_piFinset_snoc_iff` for an analogous lemma using `Fin.snoc` -/
 lemma Fin.cons_mem_piFinset_cons_iff {n : ℕ} {α : Fin (n + 1) → Type*}
     {x : α 0} {xs : (i : Fin n) → α i.succ}
     {S₀ : Finset (α 0)} {Sᵢ : (i : Fin n) → Finset (α i.succ)} :
     Fin.cons x xs ∈ Fintype.piFinset (Fin.cons S₀ Sᵢ) ↔ x ∈ S₀ ∧ xs ∈ Fintype.piFinset Sᵢ := by
   simp_rw [Fin.mem_piFinset_succ_iff, cons_zero, tail_cons]
 
+/-- See `Fin.mem_piFinset_succ_iff` for an analogous lemma using `Fin.tail` and 0` -/
 lemma Fin.mem_piFinset_succ_iff' {n : ℕ} {α : Fin (n + 1) → Type*} {p : (i : Fin (n + 1)) → α i}
     {S : (i : Fin (n + 1)) → Finset (α i)} :
     p ∈ Fintype.piFinset S ↔
       Fin.init p ∈ Fintype.piFinset (Fin.init S) ∧ p (Fin.last n) ∈ S (Fin.last n) := by
   simp only [Fintype.mem_piFinset, forall_fin_succ', Fin.init]
 
+/-- See `Fin.cons_mem_piFinset_cons_iff` for an analogous lemma using `Fin.cons` -/
 lemma Fin.snoc_mem_piFinset_snoc_iff {n : ℕ} {α : Fin (n + 1) → Type*}
     {xs : (i : Fin n) → α i.castSucc} {x : α (.last n)}
     {Sᵢ : (i : Fin n) → Finset (α i.castSucc)} {Sₙ : Finset (α <| .last n)} :
@@ -175,7 +179,8 @@ lemma Finset.map_piFinSuccAbove_filter_piFinset_succAbove {n : ℕ} {k : Fin (n 
       Fin.insertNth_apply_succAbove, mem_product]
   tauto
 
-lemma Finset.map_piFinSuccAbove_filter_piFinset {n : ℕ} {α : Fin (n + 1) → Type*}
+-- TODO: Add snoc-y version of this lemma
+lemma Finset.map_piFinSuccAbove_filter_piFinset_tail {n : ℕ} {α : Fin (n + 1) → Type*}
     {p : ((i : Fin n) → α i.succ) → Prop} [DecidablePred p]
     {S : (i : Fin (n + 1)) → Finset (α i)} :
     ((Fintype.piFinset S).filter fun r ↦ p (Fin.tail r)).map
@@ -183,20 +188,22 @@ lemma Finset.map_piFinSuccAbove_filter_piFinset {n : ℕ} {α : Fin (n + 1) → 
     = S 0 ×ˢ (Fintype.piFinset (Fin.tail S)).filter p :=
   Finset.map_piFinSuccAbove_filter_piFinset_succAbove
 
+-- TODO: Add snoc-y version of this lemma
 lemma Finset.filter_piFinset_eq_map_piFinSuccAbove_symm {n : ℕ} {α : Fin (n + 1) → Type*}
     {p : ((i : Fin n) → α i.succ) → Prop} [DecidablePred p]
     {S : ∀ i, Finset (α i)} :
     ((Fintype.piFinset S).filter fun r ↦ p (Fin.tail r))
     = (S 0 ×ˢ (Fintype.piFinset (Fin.tail S)).filter p).map
         (Equiv.piFinSuccAbove α 0).symm.toEmbedding := by
-  rw [← Finset.map_piFinSuccAbove_filter_piFinset, Finset.map_map,
+  rw [← Finset.map_piFinSuccAbove_filter_piFinset_tail, Finset.map_map,
     Function.Embedding.equiv_toEmbedding_trans_symm_toEmbedding, map_refl]
 
+-- TODO: Add snoc-y version of this lemma
 lemma Finset.card_filter_succ_piFinset_eq {n : ℕ} {α : Fin (n + 1) → Type*}
     {p : ((i : Fin n) → α i.succ) → Prop} [DecidablePred p]
     {S : (i : Fin (n + 1)) → Finset (α i)} :
     ((Fintype.piFinset S).filter fun r ↦ p (Fin.tail r)).card
     = (S 0).card * ((Fintype.piFinset (Fin.tail S)).filter p).card := by
   rw [← Finset.card_map ((Equiv.piFinSuccAbove α 0).toEmbedding),
-    map_piFinSuccAbove_filter_piFinset]
+    map_piFinSuccAbove_filter_piFinset_tail]
   exact Finset.card_product (S 0) ((Fintype.piFinset (Fin.tail S)).filter p)
