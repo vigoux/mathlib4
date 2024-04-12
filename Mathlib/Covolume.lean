@@ -8,19 +8,18 @@ open Submodule Fintype Bornology Filter Topology MeasureTheory MeasureTheory.Mea
 
 open scoped Pointwise
 
+section General
+
 -- Do not use a basis but a IsZlattice instead
-variable {E ι : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] -- (b : Basis ι ℝ E)
-variable  (L : AddSubgroup E) [DiscreteTopology L] [IsZlattice ℝ L]
+variable {E ι : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (b : Basis ι ℝ E)
+
+-- variable  (L : AddSubgroup E) [DiscreteTopology L] [IsZlattice ℝ L]
 
 variable (c : ℝ) (s : Set E)
 
-abbrev LatticePoints  : Set E := s ∩ c⁻¹ • span ℤ (Set.range b)
-
-def LatticeCountingFunction := Nat.card (LatticePoints b c s)
-
 variable [Fintype ι]
 
-theorem toto2 (hc : c ≠ 0) : LatticeCountingFunction b c s =
+theorem toto2 (hc : c ≠ 0) : Nat.card (s ∩ c⁻¹ • span ℤ (Set.range b) : Set E) =
     CountingFunction c (b.equivFun '' s) := by
   refine Nat.card_congr (b.equivFun.toEquiv.subtypeEquiv fun x ↦ ?_)
   simp_rw [Set.mem_inter_iff, LinearEquiv.coe_toEquiv, Basis.equivFun_apply, Set.mem_image,
@@ -31,7 +30,7 @@ theorem toto2 (hc : c ≠ 0) : LatticeCountingFunction b c s =
 variable [MeasurableSpace E] [BorelSpace E]
 
 theorem main2 (hs₁ : Bornology.IsBounded s) (hs₂ : MeasurableSet s) :
-    Tendsto (fun n : ℕ ↦ (LatticeCountingFunction b n s : ℝ) / n ^ card ι)
+    Tendsto (fun n : ℕ ↦ (Nat.card (s ∩ (n : ℝ)⁻¹ • span ℤ (Set.range b) : Set E) : ℝ) / n ^ card ι)
       atTop (𝓝 (volume (b.equivFun '' s)).toReal) := by
   haveI : FiniteDimensional ℝ E := FiniteDimensional.of_fintype_basis b
   refine Tendsto.congr' ?_ (main' (b.equivFun '' s) ?_ ?_)
@@ -53,11 +52,36 @@ theorem main2 (hs₁ : Bornology.IsBounded s) (hs₂ : MeasurableSet s) :
       exact Continuous.measurable this
     exact this hs₂
 
-variable (b₀ : Basis ι ℝ (ι → ℝ)) (s₀ : Set (ι → ℝ)) (hs₀₁ : Bornology.IsBounded s₀)
-  (hs₀₂ : MeasurableSet s₀)
+end General
+
+section InnerProductSpace
+
+open FiniteDimensional
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+  [MeasurableSpace E] [BorelSpace E]
+
+variable  (L : AddSubgroup E) [DiscreteTopology L] [IsZlattice ℝ L]
+
+variable (s : Set E) (hs₁ : Bornology.IsBounded s) (hs₂ : MeasurableSet s)
+
+example :  Tendsto (fun n : ℕ ↦ ( Nat.card (s ∩ (n⁻¹ : ℝ) • L : Set E) : ℝ) / n ^ finrank ℝ E)
+     atTop (𝓝 (volume s).toReal) := by
+  let b := Module.Free.chooseBasis ℤ L
+  sorry
+
+
+
+end InnerProductSpace
+
+section Pi
+
+variable {ι : Type*} [Fintype ι] (b₀ : Basis ι ℝ (ι → ℝ)) (s₀ : Set (ι → ℝ))
+  (hs₀₁ : Bornology.IsBounded s₀) (hs₀₂ : MeasurableSet s₀)
 
 theorem main3 :
-    Tendsto (fun n : ℕ ↦ (LatticeCountingFunction b₀ n s₀ : ℝ) / n ^ card ι)
+    Tendsto (fun n : ℕ ↦
+      (Nat.card (s₀ ∩ (n : ℝ)⁻¹ • span ℤ (Set.range b₀) : Set (ι → ℝ)) : ℝ) / n ^ card ι)
       atTop (𝓝 (|(LinearEquiv.det b₀.equivFun : ℝ)| * (volume s₀).toReal)) := by
   convert main2 b₀ s₀ hs₀₁ hs₀₂ using 2
   rw [LinearEquiv.image_eq_preimage]
@@ -72,6 +96,16 @@ theorem main3 :
       exact LinearMap.continuous_of_finiteDimensional _
     exact Continuous.aemeasurable this
   · exact MeasurableSet.nullMeasurableSet hs₀₂
+
+end Pi
+
+section Cone
+
+open Fintype MeasureTheory
+
+variable {E ι : Type*} [Fintype ι] [NormedAddCommGroup E] [NormedSpace ℝ E] (b : Basis ι ℝ E)
+
+variable [MeasurableSpace E] [BorelSpace E]
 
 variable (X : Set E) (hX : ∀ ⦃x : E⦄ ⦃r : ℝ⦄, x ∈ X → 0 ≤ r → r • x ∈ X)
 
@@ -102,8 +136,7 @@ example [Nonempty ι] :
   have := Tendsto.comp t0 t1
   refine Tendsto.congr' ?_ this
   filter_upwards [eventually_gt_atTop 0] with c hc
-  · rw [Function.comp_apply, ← toto2, LatticeCountingFunction, LatticePoints, ← tool _ _ hX,
-      ← Real.rpow_nat_cast, Real.rpow_inv_rpow]
+  · rw [Function.comp_apply, ← toto2, ← tool _ _ hX, ← Real.rpow_nat_cast, Real.rpow_inv_rpow]
     · exact le_of_lt hc -- 0 ≤ c
     · rw [Nat.cast_ne_zero]
       exact card_ne_zero -- card ι ≠ 0
@@ -140,3 +173,5 @@ example [Nonempty ι] :
     · rw [← smul_assoc, smul_eq_mul, mul_inv_cancel_left₀]
       refine ne_of_gt ?_
       exact lt_of_lt_of_le h₁ h₂
+
+end Cone
