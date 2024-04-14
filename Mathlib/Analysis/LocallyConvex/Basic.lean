@@ -247,6 +247,11 @@ lemma absorbs_iff_nhdsWithin_zero :
 
 variable [TopologicalSpace E] [ContinuousSMul 𝕜 E]
 
+/-- Every neighbourhood of the origin is absorbent. -/
+theorem absorbent_nhds_zero (hA : A ∈ 𝓝 (0 : E)) : Absorbent 𝕜 A :=
+  absorbent_iff_inv_smul.2 fun x ↦ Filter.tendsto_inv₀_cobounded.smul tendsto_const_nhds <| by
+    rwa [zero_smul]
+#align absorbent_nhds_zero absorbent_nhds_zero
 variable [NeBot (𝓝[≠] (0 : 𝕜))]
 
 theorem Absorbent.zero_mem' (hs : Absorbent 𝕜 s) : (0 : E) ∈ s := hs.zero_mem
