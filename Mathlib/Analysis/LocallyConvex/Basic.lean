@@ -155,15 +155,6 @@ theorem Balanced.sub (hs : Balanced 𝕜 s) (ht : Balanced 𝕜 t) : Balanced �
 theorem balanced_zero : Balanced 𝕜 (0 : Set E) := fun _a _ha => (smul_zero _).subset
 #align balanced_zero balanced_zero
 
-lemma Balanced.neg_eq [NormOneClass 𝕜] (hs : Balanced 𝕜 s) : -s = s := by
-  apply Subset.antisymm
-  · simpa using hs (-1) (by simp)
-  · simpa using hs.neg (-1) (by simp)
-
-theorem Balanced.neg_mem_iff [NormOneClass 𝕜] (hs : Balanced 𝕜 s) {x : E} : -x ∈ s ↔ x ∈ s := by
-  simpa using Set.ext_iff.1 hs.neg_eq x
-#align balanced.neg_mem_iff Balanced.neg_mem_iff
-
 end Module
 
 end SeminormedRing
@@ -241,20 +232,16 @@ theorem Balanced.absorbs_self (hA : Balanced 𝕜 A) : Absorbs 𝕜 A A :=
   .of_norm ⟨1, fun _ => hA.subset_smul⟩
 #align balanced.absorbs_self Balanced.absorbs_self
 
-theorem Balanced.mem_smul_iff (hs : Balanced 𝕜 s) (h : ‖a‖ = ‖b‖) : a • x ∈ s ↔ b • x ∈ s := by
-  obtain ⟨c, hc, rfl⟩ : ∃ c : 𝕜, ‖c‖ = 1 ∧ a = c * b := by
-    obtain rfl | hb := eq_or_ne b 0
-    · use 1; simp_all
-    · refine ⟨a / b, ?_, (div_mul_cancel _ hb).symm⟩
-      rw [norm_div, h, div_self (norm_ne_zero_iff.2 hb)]
-  rw [mul_smul, ← mem_inv_smul_set_iff₀, hs.smul_eq]
-  · simp [hc]
-  · rintro rfl; simp at hc
-#align balanced.mem_smul_iff Balanced.mem_smul_iff
+theorem Balanced.smul_mem_iff (hs : Balanced 𝕜 s) (h : ‖a‖ = ‖b‖) : a • x ∈ s ↔ b • x ∈ s :=
+  ⟨(hs.smul_mem_mono · h.ge), (hs.smul_mem_mono · h.le)⟩
+#align balanced.mem_smul_iff Balanced.smul_mem_iff
+
+@[deprecated] -- Since 2024/02/02
+alias Balanced.mem_smul_iff := Balanced.smul_mem_iff
 
 lemma absorbs_iff_nhdsWithin_zero :
     Absorbs 𝕜 s t ↔ ∀ᶠ c : 𝕜 in 𝓝[≠] 0, MapsTo (c • ·) t s := by
-  rw [absorbs_iff_cobounded, ← inv_nhdsWithin_ne_zero, ← Filter.map_inv, eventually_map]
+  rw [Absorbs, ← inv_nhdsWithin_ne_zero, ← Filter.map_inv, eventually_map]
   refine eventually_congr <| eventually_mem_nhdsWithin.mono fun c hc ↦ ?_
   rw [← preimage_smul₀ hc]; rfl
 
@@ -264,7 +251,7 @@ variable [NeBot (𝓝[≠] (0 : 𝕜))]
 
 theorem Absorbent.zero_mem' (hs : Absorbent 𝕜 s) : (0 : E) ∈ s := hs.zero_mem
 
-end NontriviallyNormed
+end NormedField
 
 section ConstSMul
 
