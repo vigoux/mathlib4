@@ -352,7 +352,6 @@ import Mathlib.Algebra.Module.Hom
 import Mathlib.Algebra.Module.Injective
 import Mathlib.Algebra.Module.LinearMap.Basic
 import Mathlib.Algebra.Module.LinearMap.End
-import Mathlib.Algebra.Module.LinearMap.Pointwise
 import Mathlib.Algebra.Module.LocalizedModule
 import Mathlib.Algebra.Module.MinimalAxioms
 import Mathlib.Algebra.Module.Opposites
@@ -805,6 +804,7 @@ import Mathlib.Analysis.Complex.UpperHalfPlane.Manifold
 import Mathlib.Analysis.Complex.UpperHalfPlane.Metric
 import Mathlib.Analysis.Complex.UpperHalfPlane.Topology
 import Mathlib.Analysis.ConstantSpeed
+import Mathlib.Analysis.Convex.AmpleSet
 import Mathlib.Analysis.Convex.Basic
 import Mathlib.Analysis.Convex.Between
 import Mathlib.Analysis.Convex.Body
@@ -1027,7 +1027,9 @@ import Mathlib.Analysis.SpecialFunctions.Gamma.Basic
 import Mathlib.Analysis.SpecialFunctions.Gamma.Beta
 import Mathlib.Analysis.SpecialFunctions.Gamma.BohrMollerup
 import Mathlib.Analysis.SpecialFunctions.Gamma.Deligne
-import Mathlib.Analysis.SpecialFunctions.Gaussian
+import Mathlib.Analysis.SpecialFunctions.Gaussian.FourierTransform
+import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
+import Mathlib.Analysis.SpecialFunctions.Gaussian.PoissonSummation
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.Analysis.SpecialFunctions.Integrals
 import Mathlib.Analysis.SpecialFunctions.JapaneseBracket
@@ -2379,6 +2381,7 @@ import Mathlib.GroupTheory.GroupAction.Opposite
 import Mathlib.GroupTheory.GroupAction.Option
 import Mathlib.GroupTheory.GroupAction.Period
 import Mathlib.GroupTheory.GroupAction.Pi
+import Mathlib.GroupTheory.GroupAction.Pointwise
 import Mathlib.GroupTheory.GroupAction.Prod
 import Mathlib.GroupTheory.GroupAction.Quotient
 import Mathlib.GroupTheory.GroupAction.Ring
@@ -2576,6 +2579,7 @@ import Mathlib.LinearAlgebra.Dimension.Finrank
 import Mathlib.LinearAlgebra.Dimension.Free
 import Mathlib.LinearAlgebra.Dimension.LinearMap
 import Mathlib.LinearAlgebra.Dimension.Localization
+import Mathlib.LinearAlgebra.Dimension.RankNullity
 import Mathlib.LinearAlgebra.Dimension.StrongRankCondition
 import Mathlib.LinearAlgebra.DirectSum.Finsupp
 import Mathlib.LinearAlgebra.DirectSum.TensorProduct
@@ -2694,6 +2698,7 @@ import Mathlib.LinearAlgebra.TensorPower
 import Mathlib.LinearAlgebra.TensorProduct.Basic
 import Mathlib.LinearAlgebra.TensorProduct.Basis
 import Mathlib.LinearAlgebra.TensorProduct.DirectLimit
+import Mathlib.LinearAlgebra.TensorProduct.Finiteness
 import Mathlib.LinearAlgebra.TensorProduct.Graded.External
 import Mathlib.LinearAlgebra.TensorProduct.Graded.Internal
 import Mathlib.LinearAlgebra.TensorProduct.Matrix
@@ -3009,6 +3014,7 @@ import Mathlib.NumberTheory.Modular
 import Mathlib.NumberTheory.ModularForms.Basic
 import Mathlib.NumberTheory.ModularForms.CongruenceSubgroups
 import Mathlib.NumberTheory.ModularForms.EisensteinSeries.Basic
+import Mathlib.NumberTheory.ModularForms.JacobiTheta.Bounds
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.Manifold
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.OneVariable
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.TwoVariable
@@ -3048,7 +3054,6 @@ import Mathlib.NumberTheory.Wilson
 import Mathlib.NumberTheory.ZetaFunctions.HurwitzZeta
 import Mathlib.NumberTheory.ZetaFunctions.HurwitzZetaEven
 import Mathlib.NumberTheory.ZetaFunctions.HurwitzZetaOdd
-import Mathlib.NumberTheory.ZetaFunctions.KernelBounds
 import Mathlib.NumberTheory.ZetaFunctions.ResidueClassZeta
 import Mathlib.NumberTheory.ZetaFunctions.RiemannZeta
 import Mathlib.NumberTheory.ZetaFunctions.SpecialValues
@@ -3320,7 +3325,7 @@ import Mathlib.RingTheory.DiscreteValuationRing.Basic
 import Mathlib.RingTheory.DiscreteValuationRing.TFAE
 import Mathlib.RingTheory.Discriminant
 import Mathlib.RingTheory.EisensteinCriterion
-import Mathlib.RingTheory.Etale
+import Mathlib.RingTheory.Etale.Basic
 import Mathlib.RingTheory.EuclideanDomain
 import Mathlib.RingTheory.Filtration
 import Mathlib.RingTheory.FinitePresentation
@@ -3461,6 +3466,7 @@ import Mathlib.RingTheory.RootsOfUnity.Basic
 import Mathlib.RingTheory.RootsOfUnity.Complex
 import Mathlib.RingTheory.RootsOfUnity.Minpoly
 import Mathlib.RingTheory.SimpleModule
+import Mathlib.RingTheory.Smooth.Basic
 import Mathlib.RingTheory.Subring.Basic
 import Mathlib.RingTheory.Subring.Order
 import Mathlib.RingTheory.Subring.Pointwise
@@ -3471,6 +3477,8 @@ import Mathlib.RingTheory.Subsemiring.Pointwise
 import Mathlib.RingTheory.TensorProduct.Basic
 import Mathlib.RingTheory.Trace
 import Mathlib.RingTheory.UniqueFactorizationDomain
+import Mathlib.RingTheory.Unramified.Basic
+import Mathlib.RingTheory.Unramified.Derivations
 import Mathlib.RingTheory.Valuation.Basic
 import Mathlib.RingTheory.Valuation.ExtendToLocalization
 import Mathlib.RingTheory.Valuation.Integers
@@ -3527,6 +3535,7 @@ import Mathlib.SetTheory.Ordinal.Basic
 import Mathlib.SetTheory.Ordinal.CantorNormalForm
 import Mathlib.SetTheory.Ordinal.Exponential
 import Mathlib.SetTheory.Ordinal.FixedPoint
+import Mathlib.SetTheory.Ordinal.FixedPointApproximants
 import Mathlib.SetTheory.Ordinal.NaturalOps
 import Mathlib.SetTheory.Ordinal.Notation
 import Mathlib.SetTheory.Ordinal.Principal
@@ -3780,6 +3789,7 @@ import Mathlib.Topology.Algebra.Module.LinearPMap
 import Mathlib.Topology.Algebra.Module.LocallyConvex
 import Mathlib.Topology.Algebra.Module.Multilinear.Basic
 import Mathlib.Topology.Algebra.Module.Multilinear.Bounded
+import Mathlib.Topology.Algebra.Module.Multilinear.Topology
 import Mathlib.Topology.Algebra.Module.Simple
 import Mathlib.Topology.Algebra.Module.Star
 import Mathlib.Topology.Algebra.Module.StrongTopology
@@ -3930,6 +3940,7 @@ import Mathlib.Topology.Homotopy.Product
 import Mathlib.Topology.IndicatorConstPointwise
 import Mathlib.Topology.Inseparable
 import Mathlib.Topology.Instances.AddCircle
+import Mathlib.Topology.Instances.CantorSet
 import Mathlib.Topology.Instances.Complex
 import Mathlib.Topology.Instances.Discrete
 import Mathlib.Topology.Instances.ENNReal

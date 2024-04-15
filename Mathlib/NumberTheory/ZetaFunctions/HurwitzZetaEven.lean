@@ -4,9 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: David Loeffler
 -/
 import Mathlib.NumberTheory.LSeries.AbstractFuncEq
-import Mathlib.NumberTheory.ZetaFunctions.KernelBounds
+import Mathlib.NumberTheory.ModularForms.JacobiTheta.Bounds
 import Mathlib.NumberTheory.LSeries.MellinEqDirichlet
-import Mathlib.Analysis.SpecialFunctions.Gamma.Beta
 import Mathlib.Analysis.Complex.RemovableSingularity
 
 /-!
