@@ -578,6 +578,10 @@ theorem Zlattice.rank [hs : IsZlattice K L] : finrank ℤ L = finrank K E := by
     rw [← topEquiv.finrank_eq, ← h_spanE]
     convert finrank_span_le_card (R := K) (Set.range b)
 
+instance {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    (L : AddSubgroup E) [DiscreteTopology L] [IsZlattice ℝ L] [Nontrivial E] : Nontrivial L :=
+  nontrivial_of_finrank_pos <| (Zlattice.rank ℝ L).symm ▸ finrank_pos
+
 open Module
 
 variable {ι : Type*} [hs : IsZlattice K L] (b : Basis ι ℤ L)

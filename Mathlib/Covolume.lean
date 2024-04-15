@@ -1,6 +1,17 @@
 import Mathlib.UnitBox
-import Mathlib.FundamentalCone
+-- import Mathlib.FundamentalCone
 import Mathlib.Algebra.Module.Zlattice.Covolume
+import Mathlib.MeasureTheory.Measure.Haar.InnerProductSpace
+
+section OrthonormalBasis
+
+@[simp]
+theorem OrthonormalBasis.reindex_toBasis {ι ι' 𝕜 : Type*} [RCLike 𝕜] {E : Type*}
+    [NormedAddCommGroup E] [InnerProductSpace 𝕜 E] [Fintype ι] [Fintype ι']
+    (b : OrthonormalBasis ι 𝕜 E)  (e : ι ≃ ι') :
+    (b.reindex e).toBasis = b.toBasis.reindex e := Basis.eq_ofRepr_eq_repr fun _ ↦ congr_fun rfl
+
+end OrthonormalBasis
 
 noncomputable section
 
@@ -10,14 +21,9 @@ open scoped Pointwise
 
 section General
 
--- Do not use a basis but a IsZlattice instead
-variable {E ι : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (b : Basis ι ℝ E)
-
--- variable  (L : AddSubgroup E) [DiscreteTopology L] [IsZlattice ℝ L]
+variable {E ι : Type*} [Fintype ι] [NormedAddCommGroup E] [NormedSpace ℝ E] (b : Basis ι ℝ E)
 
 variable (c : ℝ) (s : Set E)
-
-variable [Fintype ι]
 
 theorem toto2 (hc : c ≠ 0) : Nat.card (s ∩ c⁻¹ • span ℤ (Set.range b) : Set E) =
     CountingFunction c (b.equivFun '' s) := by
@@ -53,26 +59,6 @@ theorem main2 (hs₁ : Bornology.IsBounded s) (hs₂ : MeasurableSet s) :
     exact this hs₂
 
 end General
-
-section InnerProductSpace
-
-open FiniteDimensional
-
-variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
-  [MeasurableSpace E] [BorelSpace E]
-
-variable  (L : AddSubgroup E) [DiscreteTopology L] [IsZlattice ℝ L]
-
-variable (s : Set E) (hs₁ : Bornology.IsBounded s) (hs₂ : MeasurableSet s)
-
-example :  Tendsto (fun n : ℕ ↦ ( Nat.card (s ∩ (n⁻¹ : ℝ) • L : Set E) : ℝ) / n ^ finrank ℝ E)
-     atTop (𝓝 (volume s).toReal) := by
-  let b := Module.Free.chooseBasis ℤ L
-  sorry
-
-
-
-end InnerProductSpace
 
 section Pi
 
@@ -110,7 +96,7 @@ variable [MeasurableSpace E] [BorelSpace E]
 variable (X : Set E) (hX : ∀ ⦃x : E⦄ ⦃r : ℝ⦄, x ∈ X → 0 ≤ r → r • x ∈ X)
 
 variable (F : E → ℝ) (hF₁ : ∀ (x : E) ⦃r : ℝ⦄, 0 ≤ r →  F (r • x) = r ^ card ι * (F x))
-  (hF₂ : IsBounded {x | F x ≤ 1}) (hF₃ : MeasurableSet {x | F x ≤ 1})
+  (hF₂ : IsBounded {x ∈ X | F x ≤ 1}) (hF₃ : MeasurableSet {x ∈ X | F x ≤ 1})
 
 open Submodule
 
@@ -127,10 +113,11 @@ theorem tool (B : ℝ) (hB : 0 < B) :
   convert hX h (le_of_lt hB)
   rw [smul_inv_smul₀ (ne_of_gt hB)]
 
-example [Nonempty ι] :
+theorem cone₁ [Nonempty ι] :
     Tendsto (fun c : ℝ ↦
       Nat.card ({x ∈ X | F x ≤ c} ∩ span ℤ (Set.range b) : Set E) / (c : ℝ))
         atTop (𝓝 (volume (b.equivFun '' {x ∈ X | F x ≤ 1})).toReal) := by
+  haveI : FiniteDimensional ℝ E := FiniteDimensional.of_fintype_basis b
   have t0 := main (b.equivFun '' {x ∈ X | F x ≤ 1}) ?_ ?_ ?_
   have t1 : Tendsto (fun x : ℝ ↦ x ^ (card ι : ℝ)⁻¹) atTop atTop := ?_
   have := Tendsto.comp t0 t1
@@ -146,8 +133,11 @@ example [Nonempty ι] :
   · refine tendsto_rpow_atTop ?_
     rw [inv_pos, Nat.cast_pos]
     exact card_pos
-  · sorry
-  · sorry
+  · rw [← NormedSpace.isVonNBounded_iff ℝ] at hF₂ ⊢
+    have := Bornology.IsVonNBounded.image (E := E) (F := ι → ℝ) (σ := RingHom.id ℝ) hF₂
+    erw [← LinearMap.coe_toContinuousLinearMap']
+    exact this _
+  · exact b.equivFunL.toHomeomorph.toMeasurableEquiv.measurableSet_image.mpr hF₃
   · intro c c' h₁ h₂
     have i₁ : 0 ≤ c'⁻¹ * c := by
       refine mul_nonneg ?_ ?_
@@ -175,3 +165,78 @@ example [Nonempty ι] :
       exact lt_of_lt_of_le h₁ h₂
 
 end Cone
+
+section InnerProductSpace
+
+open FiniteDimensional Zlattice
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+  [MeasurableSpace E] [BorelSpace E]
+
+variable  (L : AddSubgroup E) [DiscreteTopology L] [IsZlattice ℝ L]
+
+variable {s : Set E} (hs₁ : Bornology.IsBounded s) (hs₂ : MeasurableSet s)
+
+theorem volume_eq_volume_div_covolume {ι : Type*} [Fintype ι] (b : Basis ι ℤ L) :
+    volume ((b.ofZlatticeBasis ℝ L).equivFun '' s) = volume s / ENNReal.ofReal (covolume L) := by
+  classical
+  let e : Fin (finrank ℝ E) ≃ ι :=
+    Fintype.equivOfCardEq (by rw [card_fin, finrank_eq_card_basis (b.ofZlatticeBasis ℝ)])
+  have h₁ : MeasurableSet ((b.ofZlatticeBasis ℝ L).equivFun '' s) :=
+    (b.ofZlatticeBasis ℝ L).equivFunL.toHomeomorph.toMeasurableEquiv.measurableSet_image.mpr hs₂
+  have h₂ : ((stdOrthonormalBasis ℝ E).toBasis.reindex e).det (Subtype.val ∘ b) ≠ 0 := by
+    rw [show (Subtype.val ∘ b) = (b.ofZlatticeBasis ℝ) by
+      ext; exact (b.ofZlatticeBasis_apply ℝ L _).symm]
+    exact isUnit_iff_ne_zero.mp (Basis.isUnit_det _ _)
+  rw [← (EuclideanSpace.volume_preserving_measurableEquiv _).measure_preimage h₁]
+  rw [← ((stdOrthonormalBasis ℝ E).reindex e).measurePreserving_repr.measure_preimage
+    ((MeasurableEquiv.measurableSet_preimage _).mpr h₁)]
+  simp_rw [EuclideanSpace.coe_measurableEquiv, ← WithLp.linearEquiv_apply 2 ℝ,
+    ← LinearIsometryEquiv.coe_toLinearEquiv, ← LinearEquiv.image_symm_eq_preimage,
+    ← Set.image_comp, ← LinearEquiv.coe_coe, ← LinearMap.coe_comp, LinearEquiv.comp_coe]
+  erw [LinearEquiv.image_eq_preimage]
+  rw [addHaar_preimage_linearEquiv, mul_comm, div_eq_mul_inv, ← ENNReal.ofReal_inv_of_pos
+    (covolume_pos L volume), covolume_eq_det_mul_measure L volume b
+    ((stdOrthonormalBasis ℝ E).reindex e).toBasis, OrthonormalBasis.reindex_toBasis,
+    Zspan.fundamentalDomain_reindex, measure_congr (Zspan.fundamentalDomain_ae_parallelepiped _
+    volume), OrthonormalBasis.coe_toBasis, OrthonormalBasis.volume_parallelepiped,
+    ENNReal.one_toReal, mul_one, ← abs_inv]
+  congr
+  rw [← mul_eq_one_iff_eq_inv₀ (by convert h₂), ← Basis.det_comp]
+  convert Basis.det_self _
+  · ext
+    simp_rw [LinearEquiv.trans_symm, LinearEquiv.symm_symm, LinearEquiv.coe_coe, Function.comp_apply,
+      LinearEquiv.trans_apply, Basis.equivFun_apply, ← b.ofZlatticeBasis_apply ℝ, Basis.repr_self,
+      Finsupp.single_eq_pi_single, WithLp.linearEquiv_symm_apply, WithLp.equiv_symm_single _ (1:ℝ),
+      LinearIsometryEquiv.toLinearEquiv_symm, LinearIsometryEquiv.coe_toLinearEquiv,
+      OrthonormalBasis.repr_symm_single, OrthonormalBasis.coe_reindex, Basis.coe_reindex,
+      OrthonormalBasis.coe_toBasis]
+
+example :  Tendsto (fun n : ℕ ↦ ( Nat.card (s ∩ (n⁻¹ : ℝ) • L : Set E) : ℝ) / n ^ finrank ℝ E)
+     atTop (𝓝 ((volume s).toReal / Zlattice.covolume L)) := by
+  let b := Module.Free.chooseBasis ℤ L
+  convert main2 (b.ofZlatticeBasis ℝ) s hs₁ hs₂
+  · simp_rw [← b.ofZlatticeBasis_span ℝ]
+    rfl
+  · rw [← finrank_eq_card_chooseBasisIndex, Zlattice.rank ℝ L]
+  · rw [volume_eq_volume_div_covolume L hs₂, ENNReal.toReal_div, ENNReal.toReal_ofReal]
+    exact le_of_lt (covolume_pos L)
+
+variable (X : Set E) (hX : ∀ ⦃x : E⦄ ⦃r : ℝ⦄, x ∈ X → 0 ≤ r → r • x ∈ X)
+
+variable (F : E → ℝ) (hF₁ : ∀ (x : E) ⦃r : ℝ⦄, 0 ≤ r →  F (r • x) = r ^ finrank ℝ E * (F x))
+  (hF₂ : IsBounded {x ∈ X | F x ≤ 1}) (hF₃ : MeasurableSet {x ∈ X | F x ≤ 1})
+
+theorem cone₂ [Nontrivial E] :
+    Tendsto (fun c : ℝ ↦
+      Nat.card ({x ∈ X | F x ≤ c} ∩ L : Set E) / c)
+        atTop (𝓝 ((volume {x ∈ X | F x ≤ 1}).toReal / Zlattice.covolume L)) := by
+  let b := Module.Free.chooseBasis ℤ L
+  convert (cone₁ (b.ofZlatticeBasis ℝ) X hX F ?_ hF₂ hF₃)
+  · change (L : Set E) = (span ℤ (Set.range (b.ofZlatticeBasis ℝ))).toAddSubgroup
+    exact_mod_cast (b.ofZlatticeBasis_span ℝ).symm
+  · rw [volume_eq_volume_div_covolume L hF₃, ENNReal.toReal_div, ENNReal.toReal_ofReal]
+    exact le_of_lt (covolume_pos L)
+  · rwa [← finrank_eq_card_chooseBasisIndex, Zlattice.rank ℝ L]
+
+end InnerProductSpace

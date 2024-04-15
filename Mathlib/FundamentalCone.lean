@@ -1,4 +1,6 @@
 import Mathlib.NumberTheory.NumberField.Units
+import Mathlib.Covolume
+import Mathlib.Analysis.InnerProductSpace.OfNorm
 
 noncomputable section Ideal
 
@@ -446,3 +448,19 @@ theorem main {n : ℕ} (hn : 1 ≤ n) :
   rw [← Nat.card_eq_fintype_card, ← Nat.card_prod]
   refine Nat.card_congr ?_
   exact integralPointsQuoNormProdEquiv K hn
+
+open Filter Topology MeasureTheory Submodule
+
+example :
+  Tendsto (fun s : ℝ ↦
+      Nat.card {I : Ideal (𝓞 K) // Submodule.IsPrincipal I ∧ Ideal.absNorm I = s} / s)
+      atTop (𝓝 ((volume {x ∈ fundamentalCone K | norm x ≤ 1}).toReal /
+        Zlattice.covolume (span ℤ (Set.range (latticeBasis K))).toAddSubgroup)) := by
+  letI : InnerProductSpace ℝ (E K) := by
+    refine InnerProductSpace.ofNorm ℝ ?_
+    sorry
+  have : IsZlattice ℝ (toAddSubgroup (span ℤ (Set.range ⇑(latticeBasis K)))) := sorry
+  have := cone₂ (span ℤ (Set.range (latticeBasis K))).toAddSubgroup
+    (X := fundamentalCone K) (F := fun x ↦ norm x) ?_ ?_ ?_ ?_
+  convert this using 3
+  sorry
