@@ -1,6 +1,7 @@
 import Mathlib.NumberTheory.NumberField.Units
 import Mathlib.Covolume
 import Mathlib.Analysis.InnerProductSpace.OfNorm
+import Mathlib.Analysis.InnerProductSpace.ProdL2
 
 noncomputable section Ideal
 
@@ -448,6 +449,26 @@ theorem main {n : ℕ} (hn : 1 ≤ n) :
   rw [← Nat.card_eq_fintype_card, ← Nat.card_prod]
   refine Nat.card_congr ?_
   exact integralPointsQuoNormProdEquiv K hn
+
+end fundamentalCone
+
+section InnerProductSpace
+
+open scoped Classical
+
+/-- The space `ℝ^r₁ × ℂ^r₂` with `(r₁, r₂)` the signature of `K` as an Euclidean space. -/
+local notation "E'" K =>
+    (WithLp 2 ((EuclideanSpace ℝ {w : InfinitePlace K // IsReal w}) ×
+      (EuclideanSpace ℂ {w : InfinitePlace K // IsReal w})))
+
+example : (E' K) ≃L[ℝ] (E K) := by
+  refine ContinuousLinearEquiv.prod ?_ ?_
+  exact EuclideanSpace.equiv _ ℝ
+  
+
+end InnerProductSpace
+
+#exit
 
 open Filter Topology MeasureTheory Submodule
 
