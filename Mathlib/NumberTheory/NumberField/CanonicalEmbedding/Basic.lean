@@ -3,7 +3,6 @@ Copyright (c) 2022 Xavier Roblot. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Xavier Roblot
 -/
-import Mathlib.Analysis.InnerProductSpace.ProdL2
 import Mathlib.Algebra.Module.Zlattice.Basic
 import Mathlib.NumberTheory.NumberField.Embeddings
 import Mathlib.NumberTheory.NumberField.FractionalIdeal
@@ -158,59 +157,29 @@ namespace NumberField.mixedEmbedding
 
 open NumberField NumberField.InfinitePlace FiniteDimensional
 
-open scoped Classical
-
 /-- The space `ℝ^r₁ × ℂ^r₂` with `(r₁, r₂)` the signature of `K`. -/
--- local notation "E" K =>
---  ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℂ)
-
-local notation "E " K =>
-    (WithLp 2 ((EuclideanSpace ℝ {w : InfinitePlace K // IsReal w}) ×
-      (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w})))
-
-instance : CommRing (E K) := by
-  letI : CommRing (EuclideanSpace ℝ {w : InfinitePlace K // IsReal w}) := Pi.commRing
-  letI : CommRing (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w}) := Pi.commRing
-  exact Prod.instCommRing
-
-local instance : MeasurableSpace (EuclideanSpace ℝ {w : InfinitePlace K // IsReal w}) :=
-  MeasurableSpace.pi
-
-local instance : MeasurableSpace (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w}) :=
-  MeasurableSpace.pi
-
-instance : MeasurableSpace (E K) := MeasurableSpace.prod inferInstance inferInstance
-
-local instance [NumberField K] :
-    BorelSpace (EuclideanSpace ℝ {w : InfinitePlace K // IsReal w}) := Pi.borelSpace
-
-local instance [NumberField K] :
-    BorelSpace (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w}) := Pi.borelSpace
-
-instance [NumberField K] : BorelSpace (E K) := Prod.borelSpace
-
-instance : ContinuousSMul ℝ (E K) := sorry
+local notation "E" K =>
+  ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℂ)
 
 /-- The mixed embedding of a number field `K` of signature `(r₁, r₂)` into `ℝ^r₁ × ℂ^r₂`. -/
 noncomputable def _root_.NumberField.mixedEmbedding : K →+* (E K) :=
   RingHom.prod (Pi.ringHom fun w => embedding_of_isReal w.prop)
     (Pi.ringHom fun w => w.val.embedding)
 
-instance instMixedEmbeddingSpaceNonTrivial [NumberField K] : Nontrivial (E K) := by
+instance [NumberField K] : Nontrivial (E K) := by
   obtain ⟨w⟩ := (inferInstance : Nonempty (InfinitePlace K))
   obtain hw | hw := w.isReal_or_isComplex
   · have : Nonempty {w : InfinitePlace K // IsReal w} := ⟨⟨w, hw⟩⟩
-    sorry -- exact nontrivial_prod_left
+    exact nontrivial_prod_left
   · have : Nonempty {w : InfinitePlace K // IsComplex w} := ⟨⟨w, hw⟩⟩
-    sorry -- exact nontrivial_prod_right
+    exact nontrivial_prod_right
 
 protected theorem finrank [NumberField K] : finrank ℝ (E K) = finrank ℚ K := by
   classical
-  sorry
-  -- rw [finrank_prod, finrank_pi, finrank_pi_fintype, Complex.finrank_real_complex, Finset.sum_const,
-  --   Finset.card_univ, ← NrRealPlaces, ← NrComplexPlaces, ← card_real_embeddings,
-  --   Algebra.id.smul_eq_mul, mul_comm, ← card_complex_embeddings, ← NumberField.Embeddings.card K ℂ,
-  --   Fintype.card_subtype_compl, Nat.add_sub_of_le (Fintype.card_subtype_le _)]
+  rw [finrank_prod, finrank_pi, finrank_pi_fintype, Complex.finrank_real_complex, Finset.sum_const,
+    Finset.card_univ, ← NrRealPlaces, ← NrComplexPlaces, ← card_real_embeddings,
+    Algebra.id.smul_eq_mul, mul_comm, ← card_complex_embeddings, ← NumberField.Embeddings.card K ℂ,
+    Fintype.card_subtype_compl, Nat.add_sub_of_le (Fintype.card_subtype_le _)]
 
 theorem _root_.NumberField.mixedEmbedding_injective [NumberField K] :
     Function.Injective (NumberField.mixedEmbedding K) := by
@@ -224,15 +193,11 @@ noncomputable def commMap : ((K →+* ℂ) → ℂ) →ₗ[ℝ] (E K) where
   toFun := fun x => ⟨fun w => (x w.val.embedding).re, fun w => x w.val.embedding⟩
   map_add' := by
     simp only [Pi.add_apply, Complex.add_re, Prod.mk_add_mk, Prod.mk.injEq]
-    intro _ _
-    rfl
---    exact fun _ _ => ⟨rfl, rfl⟩
+    exact fun _ _ => ⟨rfl, rfl⟩
   map_smul' := by
     simp only [Pi.smul_apply, Complex.real_smul, Complex.mul_re, Complex.ofReal_re,
       Complex.ofReal_im, zero_mul, sub_zero, RingHom.id_apply, Prod.smul_mk, Prod.mk.injEq]
-    intro _ _
-    rfl
---    exact fun _ _ => ⟨rfl, rfl⟩
+    exact fun _ _ => ⟨rfl, rfl⟩
 
 theorem commMap_apply_of_isReal (x : (K →+* ℂ) → ℂ) {w : InfinitePlace K} (hw : IsReal w) :
     (commMap K x).1 ⟨w, hw⟩ = (x w.embedding).re := rfl
@@ -245,8 +210,7 @@ theorem commMap_canonical_eq_mixed (x : K) :
     commMap K (canonicalEmbedding K x) = mixedEmbedding K x := by
   simp only [canonicalEmbedding, commMap, LinearMap.coe_mk, AddHom.coe_mk, Pi.ringHom_apply,
     mixedEmbedding, RingHom.prod_apply, Prod.mk.injEq]
-  rfl
-  -- exact ⟨rfl, rfl⟩
+  exact ⟨rfl, rfl⟩
 
 /-- This is a technical result to ensure that the image of the `ℂ`-basis of `ℂ^n` defined in
 `canonicalEmbedding.latticeBasis` is a `ℝ`-basis of `ℝ^r₁ × ℂ^r₂`,
@@ -315,18 +279,16 @@ theorem fundamentalDomain_stdBasis :
     fundamentalDomain (stdBasis K) =
         (Set.univ.pi fun _ => Set.Ico 0 1) ×ˢ
         (Set.univ.pi fun _ => Complex.measurableEquivPi⁻¹' (Set.univ.pi fun _ => Set.Ico 0 1)) := by
-  sorry
-  -- ext
-  -- simp [stdBasis, mem_fundamentalDomain, Complex.measurableEquivPi]
+  ext
+  simp [stdBasis, mem_fundamentalDomain, Complex.measurableEquivPi]
 
 theorem volume_fundamentalDomain_stdBasis :
     volume (fundamentalDomain (stdBasis K)) = 1 := by
-  sorry
-  -- rw [fundamentalDomain_stdBasis, volume_eq_prod, prod_prod, volume_pi, volume_pi, pi_pi, pi_pi,
-  --   Complex.volume_preserving_equiv_pi.measure_preimage ?_, volume_pi, pi_pi, Real.volume_Ico,
-  --   sub_zero, ENNReal.ofReal_one, Finset.prod_const_one, Finset.prod_const_one,
-  --   Finset.prod_const_one, one_mul]
-  -- exact MeasurableSet.pi Set.countable_univ (fun _ _ => measurableSet_Ico)
+  rw [fundamentalDomain_stdBasis, volume_eq_prod, prod_prod, volume_pi, volume_pi, pi_pi, pi_pi,
+    Complex.volume_preserving_equiv_pi.measure_preimage ?_, volume_pi, pi_pi, Real.volume_Ico,
+    sub_zero, ENNReal.ofReal_one, Finset.prod_const_one, Finset.prod_const_one,
+    Finset.prod_const_one, one_mul]
+  exact MeasurableSet.pi Set.countable_univ (fun _ _ => measurableSet_Ico)
 
 /-- The `Equiv` between `index K` and `K →+* ℂ` defined by sending a real infinite place `w` to
 the unique corresponding embedding `w.embedding`, and the pair `⟨w, 0⟩` (resp. `⟨w, 1⟩`) for a
@@ -442,12 +404,11 @@ def latticeBasis :
       (disjoint_span_commMap_ker K)
     -- and it's a basis since it has the right cardinality
     refine basisOfLinearIndependentOfCardEqFinrank this ?_
-    sorry
-    -- rw [← finrank_eq_card_chooseBasisIndex, RingOfIntegers.rank, finrank_prod, finrank_pi,
-    --   finrank_pi_fintype, Complex.finrank_real_complex, Finset.sum_const, Finset.card_univ,
-    --   ← NrRealPlaces, ← NrComplexPlaces, ← card_real_embeddings, Algebra.id.smul_eq_mul, mul_comm,
-    --   ← card_complex_embeddings, ← NumberField.Embeddings.card K ℂ, Fintype.card_subtype_compl,
-    --   Nat.add_sub_of_le (Fintype.card_subtype_le _)]
+    rw [← finrank_eq_card_chooseBasisIndex, RingOfIntegers.rank, finrank_prod, finrank_pi,
+      finrank_pi_fintype, Complex.finrank_real_complex, Finset.sum_const, Finset.card_univ,
+      ← NrRealPlaces, ← NrComplexPlaces, ← card_real_embeddings, Algebra.id.smul_eq_mul, mul_comm,
+      ← card_complex_embeddings, ← NumberField.Embeddings.card K ℂ, Fintype.card_subtype_compl,
+      Nat.add_sub_of_le (Fintype.card_subtype_le _)]
 
 @[simp]
 theorem latticeBasis_apply (i : ChooseBasisIndex ℤ (𝓞 K)) :
@@ -477,18 +438,17 @@ theorem latticeBasis_repr_apply (x : K) (i : ChooseBasisIndex ℤ (𝓞 K)) :
     (latticeBasis K).repr (mixedEmbedding K x) i = (integralBasis K).repr x i := by
   rw [← Basis.restrictScalars_repr_apply ℚ _ ⟨_, mem_rat_span_latticeBasis K x⟩, eq_ratCast,
     Rat.cast_inj]
-  sorry
-  -- let f := (mixedEmbedding K).toRatAlgHom.toLinearMap.codRestrict _
-  --   (fun x ↦ mem_rat_span_latticeBasis K x)
-  -- suffices ((latticeBasis K).restrictScalars ℚ).repr.toLinearMap ∘ₗ f =
-  --   (integralBasis K).repr.toLinearMap from DFunLike.congr_fun (LinearMap.congr_fun this x) i
-  -- refine Basis.ext (integralBasis K) (fun i ↦ ?_)
-  -- have : f (integralBasis K i) = ((latticeBasis K).restrictScalars ℚ) i := by
-  --   apply Subtype.val_injective
-  --   rw [LinearMap.codRestrict_apply, AlgHom.toLinearMap_apply, Basis.restrictScalars_apply,
-  --     latticeBasis_apply]
-  --   rfl
-  -- simp_rw [LinearMap.coe_comp, LinearEquiv.coe_coe, Function.comp_apply, this, Basis.repr_self]
+  let f := (mixedEmbedding K).toRatAlgHom.toLinearMap.codRestrict _
+    (fun x ↦ mem_rat_span_latticeBasis K x)
+  suffices ((latticeBasis K).restrictScalars ℚ).repr.toLinearMap ∘ₗ f =
+    (integralBasis K).repr.toLinearMap from DFunLike.congr_fun (LinearMap.congr_fun this x) i
+  refine Basis.ext (integralBasis K) (fun i ↦ ?_)
+  have : f (integralBasis K i) = ((latticeBasis K).restrictScalars ℚ) i := by
+    apply Subtype.val_injective
+    rw [LinearMap.codRestrict_apply, AlgHom.toLinearMap_apply, Basis.restrictScalars_apply,
+      latticeBasis_apply]
+    rfl
+  simp_rw [LinearMap.coe_comp, LinearEquiv.coe_coe, Function.comp_apply, this, Basis.repr_self]
 
 variable (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ)
 
