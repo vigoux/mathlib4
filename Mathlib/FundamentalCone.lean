@@ -2,6 +2,8 @@ import Mathlib.NumberTheory.NumberField.Units
 import Mathlib.Covolume
 import Mathlib.Analysis.InnerProductSpace.OfNorm
 import Mathlib.Analysis.InnerProductSpace.ProdL2
+import Mathlib.ContinuousLinearEquiv
+import Mathlib.Dynamics.Ergodic.MeasurePreserving
 
 noncomputable section Ideal
 
@@ -454,17 +456,83 @@ end fundamentalCone
 
 section InnerProductSpace
 
-open scoped Classical
+open MeasureTheory
+
+open scoped Classical BigOperators
 
 /-- The space `ℝ^r₁ × ℂ^r₂` with `(r₁, r₂)` the signature of `K` as an Euclidean space. -/
-local notation "E'" K =>
+local notation "E₂ " K =>
     (WithLp 2 ((EuclideanSpace ℝ {w : InfinitePlace K // IsReal w}) ×
-      (EuclideanSpace ℂ {w : InfinitePlace K // IsReal w})))
+      (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w})))
 
-example : (E' K) ≃L[ℝ] (E K) := by
-  refine ContinuousLinearEquiv.prod ?_ ?_
-  exact EuclideanSpace.equiv _ ℝ
-  
+def euclideanEquiv : (E₂ K) ≃L[ℝ] (E K) :=
+  ContinuousLinearEquiv.prod (EuclideanSpace.equiv _ ℝ)
+    ((EuclideanSpace.equiv _ ℂ).restrictScalars ℝ)
+
+theorem euclideanEquiv_apply (x : E₂ K) : euclideanEquiv K x = (x : E K) := rfl
+
+local instance : MeasurableSpace (EuclideanSpace ℝ {w : InfinitePlace K // IsReal w}) :=
+  MeasurableSpace.pi
+
+local instance : MeasurableSpace (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w}) :=
+  MeasurableSpace.pi
+
+local instance : BorelSpace (EuclideanSpace ℝ {w : InfinitePlace K // IsReal w}) := Pi.borelSpace
+
+local instance : BorelSpace (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w}) := Pi.borelSpace
+
+local instance : MeasurableSpace (E₂ K) :=  MeasurableSpace.prod inferInstance inferInstance
+
+local instance : BorelSpace (E₂ K) := Prod.borelSpace
+
+theorem euclidean_norm_apply (x : E₂ K) :
+    ‖x‖ = Real.sqrt (∑ w, ‖x.1 w‖ ^ 2 + ∑ w, ‖x.2 w‖ ^ 2) := by
+  rw [WithLp.prod_norm_eq_add (by exact Nat.ofNat_pos), EuclideanSpace.norm_eq,
+    EuclideanSpace.norm_eq, ENNReal.toReal_ofNat, Real.rpow_two, Real.sq_sqrt (by positivity),
+    Real.rpow_two, Real.sq_sqrt (by positivity), Real.sqrt_eq_rpow]
+
+theorem euclidean_inner_apply (x y : E₂ K) :
+    ⟪x, y⟫_ℝ = ∑ w, (x.1 w) * (y.1 w) + ∑ w, ((x.2 w).re * (y.2 w).re + (x.2 w).im * (y.2 w).im) := by
+  simp_rw [WithLp.prod_inner_apply, EuclideanSpace.inner_eq_star_dotProduct, real_inner_eq_re_inner,
+    EuclideanSpace.inner_eq_star_dotProduct, Matrix.dotProduct, Pi.star_apply, star_trivial,
+    RCLike.star_def, map_sum, RCLike.mul_re, RCLike.conj_re, RCLike.re_to_complex,
+    RCLike.conj_im, WithLp.equiv_pi_apply, neg_mul, sub_neg_eq_add, RCLike.im_to_complex]
+
+protected def stdOrthonormalBasis : OrthonormalBasis (index K) ℝ (E₂ K) := by
+  refine Basis.toOrthonormalBasis (stdBasis K) ?_
+  refine ⟨?_, ?_⟩
+  · intro c
+    simp_rw [euclidean_norm_apply]
+    cases c with
+    | inl val =>
+      
+      sorry
+    | inr val => sorry
+  · sorry
+
+#exit
+
+
+
+#exit
+
+theorem CLE_measurePreserving : MeasurePreserving (CLE K) volume volume := by
+  letI e : (E' K) ≃ᵐ (E K) := (CLE K).toHomeomorph.toMeasurableEquiv
+  letI B := Basis.map (stdBasis K) (CLE K).toLinearEquiv.symm
+  letI B₀ := Basis.toOrthonormalBasis B sorry
+  convert (e.symm.measurable.measurePreserving volume).symm
+  have : SigmaFinite (Measure.map (⇑e.symm) volume) := sorry
+  have : Measure.IsAddHaarMeasure (Measure.map (⇑e.symm) volume) := sorry
+  -- Basis.addHaar_eq_iff
+  rw [← B₀.addHaar_eq_volume, Basis.addHaar_eq_iff, Measure.map_apply]
+  simp [Basis.coe_parallelepiped, OrthonormalBasis.coe_toBasis, B₀, B, Basis.parallelepiped_map, e]
+  rw [← @LinearEquiv.coe_toContinuousLinearEquiv_symm']
+  rw [ContinuousLinearEquiv.image_symm_eq_preimage]
+  erw [ContinuousLinearEquiv.symm_preimage_preimage]
+  rw [← measure_congr (Zspan.fundamentalDomain_ae_parallelepiped _ _)]
+  exact volume_fundamentalDomain_stdBasis K
+  exact e.measurable
+  sorry
 
 end InnerProductSpace
 

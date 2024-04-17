@@ -212,6 +212,8 @@ theorem volume_eq_volume_div_covolume {ι : Type*} [Fintype ι] (b : Basis ι �
       OrthonormalBasis.repr_symm_single, OrthonormalBasis.coe_reindex, Basis.coe_reindex,
       OrthonormalBasis.coe_toBasis]
 
+-- These below are not wanted as they are direct consequences of the previous result
+
 example :  Tendsto (fun n : ℕ ↦ ( Nat.card (s ∩ (n⁻¹ : ℝ) • L : Set E) : ℝ) / n ^ finrank ℝ E)
      atTop (𝓝 ((volume s).toReal / Zlattice.covolume L)) := by
   let b := Module.Free.chooseBasis ℤ L
