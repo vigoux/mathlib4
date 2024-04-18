@@ -123,7 +123,7 @@ lemma hasSum_nat_sinKernel (a : ℝ) {t : ℝ} (ht : 0 < t) : HasSum
     (sinKernel ↑a t) := by
   rw [← hasSum_ofReal]
   convert (hasSum_int_sinKernel a ht).sum_nat_of_sum_int using 2 with n
-  · simp_rw [Int.cast_neg, neg_sq, mul_neg, ofReal_mul, Int.cast_natCast, ofReal_nat_cast,
+  · simp_rw [Int.cast_neg, neg_sq, mul_neg, ofReal_mul, Int.cast_natCast, ofReal_natCast,
       ofReal_ofNat, ← add_mul, ofReal_sin, Complex.sin]
     push_cast
     ring_nf
@@ -369,7 +369,7 @@ lemma hasSum_int_completedSinZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
     ring_nf
   convert hasSum_mellin_pi_mul_sq' (zero_lt_one.trans hs) hF ?_ using 1
   · ext1 n
-    rw [← Int.cast_abs, ofReal_int_cast]
+    rw [← Int.cast_abs, ofReal_intCast]
     have : (Int.sign n : ℂ) = SignType.sign (n : ℝ) := by
       rcases lt_trichotomy 0 n with h | rfl | h
       · rw [Int.sign_eq_one_of_pos h, Int.cast_one, sign_pos (Int.cast_pos.mpr h), SignType.coe_one]

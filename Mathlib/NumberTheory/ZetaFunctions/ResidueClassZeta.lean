@@ -59,11 +59,11 @@ lemma LSeries.term_of_re_pos (n : ℕ) (f : ℕ → ℂ) {s : ℂ} (hs : 0 < re 
 def Nat.residueClassesEquiv (N : ℕ+) : ℕ ≃ ZMod N × ℕ where
   toFun n := (↑n, n / N)
   invFun p := p.1.val + N * p.2
-  left_inv n := by simpa only [val_nat_cast] using Nat.mod_add_div n N
+  left_inv n := by simpa only [val_natCast] using Nat.mod_add_div n N
   right_inv p := by
     ext1
     · simp only [add_comm p.1.val, Nat.cast_add, Nat.cast_mul, CharP.cast_eq_zero, zero_mul,
-        nat_cast_val, cast_id', id_eq, zero_add]
+        natCast_val, cast_id', id_eq, zero_add]
     · simp only [add_comm p.1.val, Nat.mul_add_div N.pos, (Nat.div_eq_zero_iff N.pos).2 p.1.val_lt,
         add_zero]
 
@@ -156,11 +156,11 @@ lemma congruenceLFunction_eq_LSeries {N : ℕ+} (Φ : ZMod N → ℂ) {s : ℂ} 
   have aux3 : arg (N : ℂ) ≠ π := by simpa only [natCast_arg] using Real.pi_pos.ne
   have aux4 : ((N : ℂ) ^ s)⁻¹ ≠ 0 := by simp
   rw [aux0, div_eq_mul_inv _ (N : ℝ), ofReal_mul, mul_cpow_ofReal_nonneg aux1 aux2, ← div_div,
-    ofReal_inv, ofReal_nat_cast, cpow_neg, inv_cpow _ _ aux3, ← mul_div_assoc, mul_assoc,
-    mul_div_cancel_left₀ _ aux4, mul_one_div, ← Nat.cast_mul, ← Nat.cast_add, ofReal_nat_cast,
+    ofReal_inv, ofReal_natCast, cpow_neg, inv_cpow _ _ aux3, ← mul_div_assoc, mul_assoc,
+    mul_div_cancel_left₀ _ aux4, mul_one_div, ← Nat.cast_mul, ← Nat.cast_add, ofReal_natCast,
     LSeries.term_of_re_pos _ _ (one_pos.trans hs), Nat.cast_add (R := ZMod _), Nat.cast_mul,
     CharP.cast_eq_zero (R := ZMod N) (p := N), zero_mul, add_zero]
-  simp only [Nat.cast_add, nat_cast_val, Nat.cast_mul, cast_id', id_eq]
+  simp only [Nat.cast_add, natCast_val, Nat.cast_mul, cast_id', id_eq]
 
 /-- The `L`-function of `Φ` is differentiable away from `s = 1`. -/
 lemma differentiableAt_congruenceLFunction {N : ℕ+} (Φ : ZMod N → ℂ) {s : ℂ} (hs : s ≠ 1) :
@@ -206,11 +206,11 @@ lemma expZeta_eq_congruenceLFunction {N : ℕ+} (j : ZMod N) (s : ℂ) (hs : s �
   rw [toAddCircle_apply, ← (hasSum_expZeta_of_one_lt_re (j.val / N) hz).tsum_eq,
     congruenceLFunction_eq_LSeries _ hz, LSeries]
   congr 1 with n
-  rw [LSeries.term_of_re_pos _ _ (zero_lt_one.trans hz), ofReal_div, ofReal_nat_cast,
-    ofReal_nat_cast, mul_assoc, div_mul_eq_mul_div]
+  rw [LSeries.term_of_re_pos _ _ (zero_lt_one.trans hz), ofReal_div, ofReal_natCast,
+    ofReal_natCast, mul_assoc, div_mul_eq_mul_div]
   have := ZMod.toCircle_coe (N := N) (j.val * n)
   conv_rhs at this => rw [Int.cast_mul, Int.cast_natCast, Int.cast_natCast, mul_div_assoc]
-  rw [← this, Int.cast_mul, Int.cast_natCast, Int.cast_natCast, nat_cast_zmod_val]
+  rw [← this, Int.cast_mul, Int.cast_natCast, Int.cast_natCast, natCast_zmod_val]
 
 lemma congruenceLFunction_fourier {N : ℕ+} (Φ : ZMod N → ℂ) (s : ℂ) (hs : s ≠ 1) :
     congruenceLFunction (𝓕 Φ) s =

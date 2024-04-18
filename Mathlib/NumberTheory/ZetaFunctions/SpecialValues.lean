@@ -91,7 +91,7 @@ theorem riemannZeta_neg_nat_eq_bernoulli (k : ℕ) :
     -- substitute in what we know about zeta values at positive integers
     have step1 := congr_arg ((↑) : ℝ → ℂ) (hasSum_zeta_nat (by norm_num : m + 1 ≠ 0)).tsum_eq
     have step2 := zeta_nat_eq_tsum_of_gt_one (by rw [mul_add]; norm_num : 1 < 2 * (m + 1))
-    simp_rw [ofReal_tsum, ofReal_div, ofReal_one, ofReal_pow, ofReal_nat_cast] at step1
+    simp_rw [ofReal_tsum, ofReal_div, ofReal_one, ofReal_pow, ofReal_natCast] at step1
     rw [step1, (by norm_cast : (↑(2 * (m + 1)) : ℂ) = 2 * ↑m + 2)] at step2
     rw [step2, mul_div]
     -- now the rest is just a lengthy but elementary rearrangement
@@ -104,7 +104,7 @@ theorem riemannZeta_neg_nat_eq_bernoulli (k : ℕ) :
     congr 1
     rw [div_eq_iff (Gamma_ne_zero_of_re_pos _)]
     swap; · rw [(by norm_num : 2 * (m : ℂ) + 2 = ↑(2 * (m : ℝ) + 2)), ofReal_re]; positivity
-    simp_rw [ofReal_mul, ← mul_assoc, ofReal_rat_cast, mul_add, Nat.add_assoc, mul_one,
+    simp_rw [ofReal_mul, ← mul_assoc, ofReal_ratCast, mul_add, Nat.add_assoc, mul_one,
       one_add_one_eq_two, mul_neg, neg_mul, neg_inj]
     conv_rhs => rw [mul_comm]
     congr 1
@@ -116,7 +116,7 @@ theorem riemannZeta_neg_nat_eq_bernoulli (k : ℕ) :
     rw [(by simp : (2 : ℂ) * π = ((2 : ℝ) : ℂ) * π), mul_cpow_ofReal_nonneg two_pos.le pi_pos.le,
       ← mul_assoc]
     rw [show (2 : ℂ) * ↑(2 : ℝ) ^ (-(2 * ↑m + 2) : ℂ) = (↑((2 : ℝ) ^ (2 * m + 2 - 1 : ℕ)))⁻¹ by
-        rw [ofReal_pow, ← cpow_nat_cast, ← cpow_neg, show (2 : ℝ) = (2 : ℂ) by norm_num]
+        rw [ofReal_pow, ← cpow_natCast, ← cpow_neg, show (2 : ℝ) = (2 : ℂ) by norm_num]
         rw [Nat.add_sub_assoc one_le_two, Nat.cast_add, Nat.cast_mul, Nat.cast_two,
           (by norm_num : 2 - 1 = 1), Nat.cast_one]
         nth_rewrite 1 [← cpow_one 2]
@@ -124,7 +124,7 @@ theorem riemannZeta_neg_nat_eq_bernoulli (k : ℕ) :
         congr 1
         ring]
     rw [show (π : ℂ) ^ (-(2 * (m : ℂ) + 2)) = (↑(π ^ (2 * m + 2)))⁻¹ by
-        rw [ofReal_pow, ← cpow_nat_cast, ← cpow_neg, Nat.cast_add, Nat.cast_mul, Nat.cast_two]]
+        rw [ofReal_pow, ← cpow_natCast, ← cpow_neg, Nat.cast_add, Nat.cast_mul, Nat.cast_two]]
     rw [(by intros; ring : ∀ a b c d e : ℂ, a * b * c * d * e = a * d * (b * e) * c)]
     rw [inv_mul_cancel (ofReal_ne_zero.mpr <| pow_ne_zero _ pi_ne_zero),
       inv_mul_cancel (ofReal_ne_zero.mpr <| pow_ne_zero _ two_ne_zero), one_mul, one_mul]

@@ -59,7 +59,7 @@ lemma toCircle_coe {N : ℕ+} (j : ℤ) :
 
 lemma toCircle_apply {N : ℕ+} (j : ZMod N) :
     toCircle j = Complex.exp (2 * π * Complex.I * j.val / N) := by
-  rw [← Int.cast_natCast, ← toCircle_coe, nat_cast_val, int_cast_zmod_cast]
+  rw [← Int.cast_natCast, ← toCircle_coe, natCast_val, intCast_zmod_cast]
 
 /-- The additive character from `ZMod N` to the underlying multiplicative monoid of `ℂ`, sending
 `j mod N` to `exp (2 * π * I * j / N)`. -/

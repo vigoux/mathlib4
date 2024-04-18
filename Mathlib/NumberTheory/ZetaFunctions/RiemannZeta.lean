@@ -207,7 +207,7 @@ theorem zeta_eq_tsum_one_div_nat_add_one_cpow {s : ℂ} (hs : 1 < re s) :
   rw [tsum_eq_zero_add] at this
   · simpa [Nat.cast_zero, zero_cpow hs', div_zero, zero_add, Nat.cast_add, Nat.cast_one]
   · refine .of_norm ?_
-    simp_rw [norm_div, norm_one, Complex.norm_eq_abs, ← ofReal_nat_cast,
+    simp_rw [norm_div, norm_one, Complex.norm_eq_abs, ← ofReal_natCast,
       abs_cpow_eq_rpow_re_of_nonneg (Nat.cast_nonneg _) (zero_lt_one.trans hs).ne',
       summable_one_div_nat_rpow]
     assumption
@@ -218,8 +218,8 @@ function can be expressed using naïve `pow` rather than `cpow`. -/
 theorem zeta_nat_eq_tsum_of_gt_one {k : ℕ} (hk : 1 < k) :
     riemannZeta k = ∑' n : ℕ, 1 / (n : ℂ) ^ k := by
   simp only [zeta_eq_tsum_one_div_nat_cpow
-      (by rwa [← ofReal_nat_cast, ofReal_re, ← Nat.cast_one, Nat.cast_lt] : 1 < re k),
-    cpow_nat_cast]
+      (by rwa [← ofReal_natCast, ofReal_re, ← Nat.cast_one, Nat.cast_lt] : 1 < re k),
+    cpow_natCast]
 #align zeta_nat_eq_tsum_of_gt_one zeta_nat_eq_tsum_of_gt_one
 
 /-- The residue of `ζ(s)` at `s = 1` is equal to 1. -/
