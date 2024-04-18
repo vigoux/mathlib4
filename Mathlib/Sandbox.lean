@@ -1,5 +1,96 @@
 import Mathlib
 
+noncomputable section Ideal
+
+def Ideal.equivIsPrincipal (R : Type*) [CommRing R] [IsDomain R] :
+    Quotient (MulAction.orbitRel Rˣ R) ≃ {I : Ideal R | Submodule.IsPrincipal I} := by
+  have h_main : ∀ ⦃x : R⦄, ∀ ⦃y:R⦄,
+      y ∈ MulAction.orbit Rˣ x ↔ Ideal.span {x} = Ideal.span {y} := fun x y ↦ by
+    simp_rw [Ideal.span_singleton_eq_span_singleton, MulAction.orbit, Set.mem_range, Associated,
+    mul_comm x _]
+    rfl
+  refine Equiv.ofBijective ?_ ⟨?_, fun ⟨I, hI⟩ ↦ ?_⟩
+  · exact _root_.Quotient.lift (fun x ↦ ⟨Ideal.span {x}, ⟨x, rfl⟩⟩)
+      fun _ _ h ↦ Subtype.mk_eq_mk.mpr (h_main.mp h).symm
+  · rintro ⟨_⟩ ⟨_⟩ h
+    exact Quotient.sound <| h_main.mpr ((Subtype.mk_eq_mk.mp h).symm)
+  · obtain ⟨x, hx⟩ := hI
+    exact ⟨⟦x⟧, Subtype.mk_eq_mk.mpr hx.symm⟩
+
+theorem Ideal.equivIsPrincipal_apply (R : Type*) [CommRing R] [IsDomain R] (x : R) :
+    Ideal.equivIsPrincipal R ⟦x⟧ = Ideal.span {x} := rfl
+
+theorem Ideal.equivIsPrincipal_symm_apply (R : Type*) [CommRing R] [IsDomain R] {I : Ideal R}
+    (hI : Submodule.IsPrincipal I) :
+    (Ideal.equivIsPrincipal R).symm ⟨I, hI⟩ = ⟦hI.generator⟧ := by
+  rw [Equiv.symm_apply_eq, Subtype.ext_iff, Ideal.equivIsPrincipal_apply, span_singleton_generator]
+
+end Ideal
+
+open BigOperators
+
+@[simp]
+theorem OrthonormalBasis.reindex_toBasis {ι ι' 𝕜 : Type*} [RCLike 𝕜] {E : Type*}
+    [NormedAddCommGroup E] [InnerProductSpace 𝕜 E] [Fintype ι] [Fintype ι']
+    (b : OrthonormalBasis ι 𝕜 E)  (e : ι ≃ ι') :
+    (b.reindex e).toBasis = b.toBasis.reindex e := Basis.eq_ofRepr_eq_repr fun _ ↦ congr_fun rfl
+
+variable {η : Type*} [Fintype η] {ι : η → Type*} [∀ i, Fintype (ι i)] {𝕜 : Type*} [RCLike 𝕜]
+    {E : η → Type*} [∀ i, NormedAddCommGroup (E i)] [∀ i, InnerProductSpace 𝕜 (E i)]
+
+/-- `Pi.orthonormalBasis (B : ∀ i, OrthonormalBasis (ι i) 𝕜 (E i))` is the
+`Σ i, ι i`-indexed orthonormal basis on `Π i, E i` given by `B i` on each component. -/
+protected noncomputable def Pi.orthonormalBasis (B : ∀ i, OrthonormalBasis (ι i) 𝕜 (E i)) :
+    OrthonormalBasis ((i : η) × (ι i)) 𝕜 (PiLp 2 fun i : η ↦ (E i)) := by
+  classical
+  refine Basis.toOrthonormalBasis ?_ ⟨fun j ↦ ?_, ?_⟩
+  · exact Pi.basis (fun i : η ↦ (B i).toBasis)
+  · erw [Pi.basis_apply (fun i : η ↦ (B i).toBasis) j, OrthonormalBasis.coe_toBasis,
+      PiLp.norm_eq_sum (by exact Nat.ofNat_pos)]
+    rw [← Finset.sum_erase_add Finset.univ _ (Finset.mem_univ j.fst), LinearMap.stdBasis_same,
+      ENNReal.toReal_ofNat, Finset.sum_eq_zero, zero_add, ← Real.rpow_mul (norm_nonneg _),
+      mul_div_cancel₀ _ two_ne_zero, Real.rpow_one, (B j.fst).orthonormal.1 j.snd]
+    intro _ h
+    rw [LinearMap.stdBasis_ne, norm_zero, Real.zero_rpow two_ne_zero]
+    exact Finset.ne_of_mem_erase h
+  · intro j j' h
+    erw [PiLp.inner_apply, Pi.basis_apply (fun i : η ↦ (B i).toBasis) j,
+      Pi.basis_apply (fun i : η ↦ (B i).toBasis) j']
+    rw [OrthonormalBasis.coe_toBasis, OrthonormalBasis.coe_toBasis, ← Finset.sum_erase_add
+      Finset.univ _ (Finset.mem_univ j.fst), LinearMap.stdBasis_same, Finset.sum_eq_zero, zero_add]
+    · by_cases hj : j.fst = j'.fst
+      · rw [ne_eq, Sigma.mk.inj_iff] at h
+        -- Several convert steps are needed to avoid type check errors
+        have : j.snd ≠ hj ▸ j'.snd := by aesop
+        convert (B j.fst).orthonormal.2 this
+        convert LinearMap.stdBasis_same 𝕜 (fun i ↦ E i) j'.fst _
+        exact eqRec_heq hj.symm j'.snd
+      · rw [LinearMap.stdBasis_ne _ _ _ _ hj, inner_zero_right]
+    · intro _ h
+      rw [LinearMap.stdBasis_ne, inner_zero_left]
+      exact Finset.ne_of_mem_erase h
+
+@[simp]
+theorem Pi.orthonormalBasis.toBasis (B : ∀ i, OrthonormalBasis (ι i) 𝕜 (E i)) :
+    (Pi.orthonormalBasis B).toBasis =
+      (Pi.basis fun i : η ↦ (B i).toBasis) := by ext; rfl
+
+@[simp]
+theorem Pi.orthonormalBasis_coe_apply (B : ∀ i, OrthonormalBasis (ι i) 𝕜 (E i))
+    (j : (i : η) × (ι i)) :
+    Pi.orthonormalBasis B j = (Pi.basis fun i : η ↦ (B i).toBasis) j := rfl
+
+theorem Pi.orthonormalBasis_apply (B : ∀ i, OrthonormalBasis (ι i) 𝕜 (E i)) [DecidableEq η]
+    (j : (i : η) × (ι i)) :
+    Pi.orthonormalBasis B j = LinearMap.stdBasis 𝕜 _ j.fst ((B j.fst) j.snd) := by simp
+
+@[simp]
+theorem Pi.orthonormalBasis_repr (B : ∀ i, OrthonormalBasis (ι i) 𝕜 (E i)) (x : (i : η ) → E i)
+    (j : (i : η) × (ι i)) :
+    (Pi.orthonormalBasis B).repr x j = (B j.fst).repr (x j.fst) j.snd := rfl
+
+#exit
+
 noncomputable section Algebra
 
 variable {E ι K : Type*} [NormedLinearOrderedField K]

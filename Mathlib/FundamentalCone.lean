@@ -498,6 +498,19 @@ theorem euclidean_inner_apply (x y : E₂ K) :
     RCLike.star_def, map_sum, RCLike.mul_re, RCLike.conj_re, RCLike.re_to_complex,
     RCLike.conj_im, WithLp.equiv_pi_apply, neg_mul, sub_neg_eq_add, RCLike.im_to_complex]
 
+@[simp]
+theorem stdBasis_apply_fst_ofIsReal (c : index K) (w : {w : InfinitePlace K // IsReal w}) :
+    (stdBasis K c).1 w = if c = (Sum.inl w) then 1 else 0 := sorry
+
+@[simp]
+theorem stdBasis_apply_ofIsComplex_fst (c : index K) (w : {w : InfinitePlace K // IsComplex w}) :
+    (stdBasis K c).2 w = if c = ⟨Sum.inr ⟨w, 0⟩⟩ then 1 else
+      if c = ⟨Sum.inr ⟨w, 1⟩⟩ then 1 else 0 := sorry
+
+@[simp]
+theorem stdBasis_apply_ofIsComplex_snd (x : E K) (w : {w : InfinitePlace K // IsComplex w}) :
+    (stdBasis K).repr x (Sum.inr ⟨w, 1⟩) = (x.2 w).im := rfl
+
 protected def stdOrthonormalBasis : OrthonormalBasis (index K) ℝ (E₂ K) := by
   refine Basis.toOrthonormalBasis (stdBasis K) ?_
   refine ⟨?_, ?_⟩
@@ -505,7 +518,7 @@ protected def stdOrthonormalBasis : OrthonormalBasis (index K) ℝ (E₂ K) := b
     simp_rw [euclidean_norm_apply]
     cases c with
     | inl val =>
-      
+
       sorry
     | inr val => sorry
   · sorry

@@ -262,15 +262,15 @@ def stdBasis : Basis (index K) ℝ (E K) :=
 variable {K}
 
 @[simp]
-theorem stdBasis_apply_ofIsReal (x : E K) (w : {w : InfinitePlace K // IsReal w}) :
+theorem stdBasis_repr_apply_ofIsReal (x : E K) (w : {w : InfinitePlace K // IsReal w}) :
     (stdBasis K).repr x (Sum.inl w) = x.1 w := rfl
 
 @[simp]
-theorem stdBasis_apply_ofIsComplex_fst (x : E K) (w : {w : InfinitePlace K // IsComplex w}) :
+theorem stdBasis_repr_apply_ofIsComplex_fst (x : E K) (w : {w : InfinitePlace K // IsComplex w}) :
     (stdBasis K).repr x (Sum.inr ⟨w, 0⟩) = (x.2 w).re := rfl
 
 @[simp]
-theorem stdBasis_apply_ofIsComplex_snd (x : E K) (w : {w : InfinitePlace K // IsComplex w}) :
+theorem stdBasis_repr_apply_ofIsComplex_snd (x : E K) (w : {w : InfinitePlace K // IsComplex w}) :
     (stdBasis K).repr x (Sum.inr ⟨w, 1⟩) = (x.2 w).im := rfl
 
 variable (K)
@@ -360,21 +360,21 @@ theorem stdBasis_repr_eq_matrixToStdBasis_mul (x : (K →+* ℂ) → ℂ)
     mul_one, smul_empty, Equiv.prodComm_symm, Equiv.coe_prodComm]
   cases c with
   | inl w =>
-      simp_rw [stdBasis_apply_ofIsReal, fromBlocks_apply₁₁, fromBlocks_apply₁₂,
+      simp_rw [stdBasis_repr_apply_ofIsReal, fromBlocks_apply₁₁, fromBlocks_apply₁₂,
         one_apply, Matrix.zero_apply, ite_mul, one_mul, zero_mul, Finset.sum_ite_eq,
         Finset.mem_univ, ite_true, add_zero, Finset.sum_const_zero, add_zero,
         ← conj_eq_iff_re, hx (embedding w.val), conjugate_embedding_eq_of_isReal w.prop]
   | inr c =>
     rcases c with ⟨w, j⟩
     fin_cases j
-    · simp_rw [Fin.mk_zero, stdBasis_apply_ofIsComplex_fst, fromBlocks_apply₂₁,
+    · simp_rw [Fin.mk_zero, stdBasis_repr_apply_ofIsComplex_fst, fromBlocks_apply₂₁,
         fromBlocks_apply₂₂, Matrix.zero_apply, submatrix_apply,
         blockDiagonal_apply, Prod.swap_prod_mk, ite_mul, zero_mul, Finset.sum_const_zero,
         zero_add, Finset.sum_add_distrib, Finset.sum_ite_eq, Finset.mem_univ, ite_true,
         of_apply, cons_val', cons_val_zero, cons_val_one,
         head_cons, ← hx (embedding w), re_eq_add_conj]
       field_simp
-    · simp_rw [Fin.mk_one, stdBasis_apply_ofIsComplex_snd, fromBlocks_apply₂₁,
+    · simp_rw [Fin.mk_one, stdBasis_repr_apply_ofIsComplex_snd, fromBlocks_apply₂₁,
         fromBlocks_apply₂₂, Matrix.zero_apply, submatrix_apply,
         blockDiagonal_apply, Prod.swap_prod_mk, ite_mul, zero_mul, Finset.sum_const_zero,
         zero_add, Finset.sum_add_distrib, Finset.sum_ite_eq, Finset.mem_univ, ite_true,

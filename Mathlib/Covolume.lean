@@ -5,11 +5,7 @@ import Mathlib.MeasureTheory.Measure.Haar.InnerProductSpace
 
 section OrthonormalBasis
 
-@[simp]
-theorem OrthonormalBasis.reindex_toBasis {ι ι' 𝕜 : Type*} [RCLike 𝕜] {E : Type*}
-    [NormedAddCommGroup E] [InnerProductSpace 𝕜 E] [Fintype ι] [Fintype ι']
-    (b : OrthonormalBasis ι 𝕜 E)  (e : ι ≃ ι') :
-    (b.reindex e).toBasis = b.toBasis.reindex e := Basis.eq_ofRepr_eq_repr fun _ ↦ congr_fun rfl
+
 
 end OrthonormalBasis
 
