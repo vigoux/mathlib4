@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: David Loeffler
 -/
 
-import Mathlib.NumberTheory.ZetaFunctions.HurwitzZetaEven
+import Mathlib.NumberTheory.LSeries.HurwitzZetaEven
 import Mathlib.NumberTheory.ZetaFunctions.HurwitzZetaOdd
 import Mathlib.Analysis.SpecialFunctions.Gamma.Beta
 

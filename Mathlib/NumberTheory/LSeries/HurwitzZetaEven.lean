@@ -669,7 +669,7 @@ lemma tendsto_hurwitzZetaEven_sub_one_div_nhds_one (a : UnitAddCircle) :
   simpa only [one_div, sub_self, div_zero, Gammaℝ_one, div_one, sub_zero] using
     (differentiableAt_hurwitzZetaEven_sub_one_div a).continuousAt.tendsto
 
-lemma differentiable_hurwitzZetaEven_sub_hurwitzZetaEven' (a b : UnitAddCircle) :
+lemma differentiable_hurwitzZetaEven_sub_hurwitzZetaEven (a b : UnitAddCircle) :
     Differentiable ℂ (fun s ↦ hurwitzZetaEven a s - hurwitzZetaEven b s) := by
   intro z
   rcases ne_or_eq z 1 with hz | rfl
