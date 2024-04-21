@@ -13,15 +13,15 @@ import Mathlib.NumberTheory.LSeries.MellinEqDirichlet
 In this file we study the functions on `ℂ` which are the analytic continuation of the following
 series (convergent for `1 < re s`), where `a ∈ ℝ` is a parameter:
 
-`completedHurwitzZetaOdd a s = 1 / 2 * □ * ∑' n : ℤ, sgn (n + a) / |n + a| ^ s`
+`hurwitzZetaOdd a s = 1 / 2 * ∑' n : ℤ, sgn (n + a) / |n + a| ^ s`
 
 and
 
-`completedSinZeta a s = □ * ∑' n : ℕ, sin (2 * π * a * n) / n ^ s`
+`sinZeta a s = ∑' n : ℕ, sin (2 * π * a * n) / n ^ s`.
 
-where `□` denotes a Gamma factor. The term for `n = -a` in the first sum is understood as 0
-if `a` is an integer, as is the term for `n = 0` in the second sum (for all `a`). Note that these
-functions are differentiable everywhere, unlike their even counterparts which have poles.
+The term for `n = -a` in the first sum is understood as 0 if `a` is an integer, as is the term for
+`n = 0` in the second sum (for all `a`). Note that these functions are differentiable everywhere,
+unlike their even counterparts which have poles.
 
 Of course, we cannot *define* these functions by the above formulae (since existence of the
 analytic continuation is not at all obvious); we in fact construct them as Mellin transforms of
@@ -43,55 +43,82 @@ noncomputable section
 
 open Complex hiding abs_of_nonneg
 open Filter Topology Asymptotics Real Set MeasureTheory
+open scoped ComplexConjugate
 
-section defs
+section kernel_defs
 /-!
 ## Definitions and elementary properties of kernels
 -/
+
+/-- Variant of `jacobiTheta₂'` which we introduce to simplify some formulae. -/
+def jacobiTheta₂'' (z τ : ℂ) : ℂ :=
+  cexp (π * I * z ^ 2 * τ) * (jacobiTheta₂' (z * τ) τ / (2 * π * I) + z * jacobiTheta₂ (z * τ) τ)
+
+lemma jacobiTheta₂''_conj (z τ : ℂ) :
+    conj (jacobiTheta₂'' z τ) = jacobiTheta₂'' (conj z) (-conj τ) := by
+  simp only [jacobiTheta₂'', jacobiTheta₂'_conj, jacobiTheta₂_conj,
+    ← exp_conj, conj_ofReal, conj_I, map_mul, map_add, map_div₀, mul_neg, map_pow, map_ofNat,
+    neg_mul, div_neg, neg_div, jacobiTheta₂'_neg_left, jacobiTheta₂_neg_left]
+
+/-- Restatement of `jacobiTheta₂'_add_left'`: the function `jacobiTheta₂''` is 1-periodic in `z`. -/
+lemma jacobiTheta₂''_add_left (z τ : ℂ) : jacobiTheta₂'' (z + 1) τ = jacobiTheta₂'' z τ := by
+  simp only [jacobiTheta₂'', add_mul z 1, one_mul, jacobiTheta₂'_add_left', jacobiTheta₂_add_left']
+  -- this proof should ideally be done using `field_simp` and `ring_nf` but these are unusably
+  -- slow at the time of writing
+  generalize jacobiTheta₂ (z * τ) τ = J
+  generalize jacobiTheta₂' (z * τ) τ = J'
+  -- clear denominator
+  simp_rw [div_add' _ _ _ two_pi_I_ne_zero,  ← mul_div_assoc]
+  refine congr_arg (· / (2 * π * I)) ?_
+  -- get all exponential terms to left
+  rw [← mul_assoc _ (cexp _), mul_comm z (cexp _), mul_assoc (cexp _), ← mul_add,
+    mul_assoc (cexp _), ← mul_add, ← mul_assoc (cexp _), ← Complex.exp_add]
+  congrm (cexp ?_ * ?_) <;> ring
+
+lemma jacobiTheta₂''_neg_left (z τ : ℂ) : jacobiTheta₂'' (-z) τ = -jacobiTheta₂'' z τ := by
+  simp only [jacobiTheta₂'', jacobiTheta₂'_neg_left, jacobiTheta₂_neg_left,
+    neg_mul, neg_div, ← neg_add, mul_neg, neg_sq]
+
+lemma jacobiTheta₂'_functional_equation' (z τ : ℂ) :
+    jacobiTheta₂' z τ = (-2 * π) / (-I * τ) ^ (3 / 2 : ℂ) * jacobiTheta₂'' z (-1 / τ) := by
+  rcases eq_or_ne τ 0 with rfl | hτ
+  · rw [jacobiTheta₂'_undef _ (by simp), mul_zero, zero_cpow (by norm_num), div_zero, zero_mul]
+  have aux1 : (-2 * π : ℂ) / (2 * π * I) = I := by rw [div_eq_iff two_pi_I_ne_zero, mul_comm I,
+    mul_assoc _ I I, I_mul_I, neg_mul, mul_neg, mul_one]
+  rw [jacobiTheta₂'_functional_equation, ← mul_one_div _ τ, mul_assoc _ (cexp _), mul_comm (cexp _),
+    ← mul_assoc, (by rw [cpow_one, ← div_div, div_self (neg_ne_zero.mpr I_ne_zero)] :
+      1 / τ = -I / (-I * τ) ^ (1 : ℂ)), div_mul_div_comm,
+    ← cpow_add _ _ (mul_ne_zero (neg_ne_zero.mpr I_ne_zero) hτ), ← div_mul_eq_mul_div,
+    (by norm_num : (1 / 2  + 1 : ℂ) = 3 / 2), mul_assoc (1 / _), mul_assoc (1 / _),
+    ← mul_one_div (-2 * π : ℂ), mul_comm _ (1 / _), mul_assoc (1 / _)]
+  congr 1
+  rw [jacobiTheta₂'', div_add' _ _ _ two_pi_I_ne_zero, ← mul_div_assoc, ← mul_div_assoc,
+    ← div_mul_eq_mul_div (-2 * π : ℂ), mul_assoc, aux1, mul_div z (-1), mul_neg_one, neg_div τ z,
+    jacobiTheta₂_neg_left, jacobiTheta₂'_neg_left, neg_mul, ← mul_neg, ← mul_neg,
+    mul_div, mul_neg_one, neg_div, neg_mul, neg_mul, neg_div]
+  congr 2
+  rw [neg_sub, ← sub_eq_neg_add, mul_comm _ (_ * I), ← mul_assoc]
 
 /-- Odd Hurwitz zeta kernel (function whose Mellin transform will be the odd part of the completed
 Hurwitz zeta function). See `oddKernel_def` for the defining formula, and `hasSum_int_oddKernel`
 for an expression as a sum over `ℤ`.
 -/
 @[irreducible] def oddKernel (a : UnitAddCircle) (x : ℝ) : ℝ :=
-  (show Function.Periodic (fun a : ℝ ↦ re (cexp (-π * a ^ 2 * x) *
-    (jacobiTheta₂' (a * I * x) (I * x) / (2 * π * I) + a * jacobiTheta₂ (a * I * x) (I * x)))) 1 by
-      intro a
-      dsimp only
-      rw [ofReal_add, ofReal_one, add_mul, one_mul, add_mul, jacobiTheta₂'_add_left',
-        jacobiTheta₂_add_left']
-      field_simp [pi_ne_zero]
-      simp_rw [mul_add, mul_comm ((a : ℂ) + 1) _, ← mul_assoc, ← Complex.exp_add]
-      ring_nf
-      rw [I_sq]
-      ring_nf).lift a
+  (show Function.Periodic (fun a : ℝ ↦ re (jacobiTheta₂'' a (I * x))) 1 by
+    intro a; simp only [ofReal_add, ofReal_one, jacobiTheta₂''_add_left]).lift a
 
-lemma oddKernel_def (a x : ℝ) : ↑(oddKernel ↑a x) = cexp (-π * a ^ 2 * x) *
+lemma oddKernel_def (a x : ℝ) : ↑(oddKernel a x) = jacobiTheta₂'' a (I * x) := by
+  rw [oddKernel, Function.Periodic.lift_coe, ← conj_eq_iff_re, jacobiTheta₂''_conj, map_mul,
+    conj_I, neg_mul, neg_neg, conj_ofReal, conj_ofReal]
+
+lemma oddKernel_def' (a x : ℝ) : ↑(oddKernel ↑a x) = cexp (-π * a ^ 2 * x) *
     (jacobiTheta₂' (a * I * x) (I * x) / (2 * π * I) + a * jacobiTheta₂ (a * I * x) (I * x)) := by
-  rw [oddKernel, Function.Periodic.lift_coe]
-  simp only [neg_mul, re_eq_add_conj, map_mul, ← exp_conj, map_neg,
-    conj_ofReal, map_pow, map_add, map_div₀, jacobiTheta₂'_conj, conj_I, mul_neg, neg_neg,
-    jacobiTheta₂'_neg_left, map_ofNat, jacobiTheta₂_conj, jacobiTheta₂_neg_left]
-  ring_nf
-
-lemma hasSum_int_oddKernel (a : ℝ) {x : ℝ} (hx : 0 < x) :
-    HasSum (fun n : ℤ ↦ (n + a) * rexp (-π * (n + a) ^ 2 * x)) (oddKernel ↑a x) := by
-  rw [← hasSum_ofReal, oddKernel_def a x]
-  have h1 := hasSum_jacobiTheta₂_term (a * I * x) (by rwa [I_mul_im, ofReal_re] : 0 < im (I * x))
-  have h2 := hasSum_jacobiTheta₂'_term (a * I * x) (by rwa [I_mul_im, ofReal_re] : 0 < im (I * x))
-  convert ((h2.div_const (2 * π * I)).add (h1.mul_left ↑a)).mul_left _ using 2 with n
-  rw [jacobiTheta₂'_term, mul_assoc (2 * π * I), mul_div_cancel_left₀, ← add_mul,
-    ← mul_assoc, mul_comm _ (n + a : ℂ), mul_assoc (n + a : ℂ), jacobiTheta₂_term,
-    ← Complex.exp_add]
-  · push_cast
-    ring_nf
-    rw [I_sq]
-    ring_nf
-  · simpa only [mul_ne_zero_iff, ofReal_ne_zero] using ⟨⟨two_ne_zero, pi_ne_zero⟩, I_ne_zero⟩
+  rw [oddKernel_def, jacobiTheta₂'', ← mul_assoc ↑a I x,
+    (by ring : ↑π * I * ↑a ^ 2 * (I * ↑x) = I ^ 2 * ↑π * ↑a ^ 2 * x), I_sq, neg_one_mul]
 
 lemma oddKernel_undef (a : UnitAddCircle) {x : ℝ} (hx : x ≤ 0) : oddKernel a x = 0 := by
   induction' a using QuotientAddGroup.induction_on' with a'
-  rw [← ofReal_eq_zero, oddKernel_def, jacobiTheta₂_undef, jacobiTheta₂'_undef, zero_div, zero_add,
+  rw [← ofReal_eq_zero, oddKernel_def', jacobiTheta₂_undef, jacobiTheta₂'_undef, zero_div, zero_add,
     mul_zero, mul_zero] <;>
   rwa [I_mul_im, ofReal_re]
 
@@ -107,45 +134,18 @@ lemma sinKernel_def (a x : ℝ) : ↑(sinKernel ↑a x) = jacobiTheta₂' a (I *
   simp_rw [map_mul, conj_I, conj_ofReal, map_neg, map_ofNat, neg_mul, neg_neg]
   ring
 
-lemma hasSum_int_sinKernel (a : ℝ) {t : ℝ} (ht : 0 < t) : HasSum
-    (fun n : ℤ ↦ -I * n * cexp (2 * π * I * a * n) * rexp (-π * n ^ 2 * t)) ↑(sinKernel a t) := by
-  rw [sinKernel_def]
-  have := hasSum_jacobiTheta₂'_term a (by rwa [I_mul_im, ofReal_re])
-  convert this.div_const _ using 2 with n
-  rw [jacobiTheta₂'_term, jacobiTheta₂_term, ofReal_exp, mul_assoc (-I * n), ← Complex.exp_add]
-  field_simp [pi_ne_zero]
-  ring_nf
-  rw [I_sq]
-  ring_nf
-
-lemma hasSum_nat_sinKernel (a : ℝ) {t : ℝ} (ht : 0 < t) : HasSum
-    (fun n : ℕ ↦ 2 * n * Real.sin (2 * π * a * n) * rexp (-π * n ^ 2 * t))
-    (sinKernel ↑a t) := by
-  rw [← hasSum_ofReal]
-  convert (hasSum_int_sinKernel a ht).sum_nat_of_sum_int using 2 with n
-  · simp_rw [Int.cast_neg, neg_sq, mul_neg, ofReal_mul, Int.cast_natCast, ofReal_natCast,
-      ofReal_ofNat, ← add_mul, ofReal_sin, Complex.sin]
-    push_cast
-    ring_nf
-  · simp
-
 lemma sinKernel_undef (a : UnitAddCircle) {x : ℝ} (hx : x ≤ 0) : sinKernel a x = 0 := by
   induction' a using QuotientAddGroup.induction_on' with a'
   rw [← ofReal_eq_zero, sinKernel_def, jacobiTheta₂'_undef, zero_div]
   rwa [I_mul_im, ofReal_re]
 
-lemma oddKernel_neg (a : UnitAddCircle) (x : ℝ) :
-    oddKernel (-a) x = -oddKernel a x := by
+lemma oddKernel_neg (a : UnitAddCircle) (x : ℝ) : oddKernel (-a) x = -oddKernel a x := by
   induction' a using QuotientAddGroup.induction_on' with a'
-  rw [← ofReal_inj, ← QuotientAddGroup.mk_neg, oddKernel_def, ofReal_neg, ofReal_neg,
-    oddKernel_def, neg_mul (a' : ℂ), neg_mul (a' : ℂ), neg_mul (a' * I),
-    jacobiTheta₂_neg_left, jacobiTheta₂'_neg_left]
-  ring_nf
+  rw [← ofReal_inj, ← QuotientAddGroup.mk_neg, oddKernel_def, ofReal_neg, ofReal_neg, oddKernel_def,
+    jacobiTheta₂''_neg_left]
 
 lemma oddKernel_zero (x : ℝ) : oddKernel 0 x = 0 := by
-  have := oddKernel_neg 0 x
-  rwa [neg_zero, ← add_eq_zero_iff_eq_neg, ← two_mul, mul_eq_zero, eq_false_intro two_ne_zero,
-    false_or] at this
+  simpa only [neg_zero, eq_neg_self_iff] using oddKernel_neg 0 x
 
 lemma sinKernel_neg (a : UnitAddCircle) (x : ℝ) :
     sinKernel (-a) x = -sinKernel a x := by
@@ -154,34 +154,34 @@ lemma sinKernel_neg (a : UnitAddCircle) (x : ℝ) :
     jacobiTheta₂'_neg_left, neg_div]
 
 lemma sinKernel_zero (x : ℝ) : sinKernel 0 x = 0 := by
-  have := sinKernel_neg 0 x
-  rwa [neg_zero, ← add_eq_zero_iff_eq_neg, ← two_mul, mul_eq_zero, eq_false_intro two_ne_zero,
-    false_or] at this
+  simpa only [neg_zero, eq_neg_self_iff] using sinKernel_neg 0 x
 
 /-- The odd kernel is continuous on `Ioi 0`. -/
 lemma continuousOn_oddKernel (a : UnitAddCircle) : ContinuousOn (oddKernel a) (Ioi 0) := by
-  induction' a using QuotientAddGroup.induction_on' with a'
-  change ContinuousOn (fun x ↦ re (oddKernel a' x : ℂ)) (Ioi 0)
-  apply Complex.continuous_re.comp_continuousOn
-  simp_rw [oddKernel_def a']
+  induction' a using QuotientAddGroup.induction_on' with a
+  suffices ContinuousOn (fun x ↦ (oddKernel a x : ℂ)) (Ioi 0) from
+    (continuous_re.comp_continuousOn this).congr fun a _ ↦ (ofReal_re _).symm
+  simp_rw [oddKernel_def' a]
   refine fun x hx ↦ ((Continuous.continuousAt ?_).mul ?_).continuousWithinAt
-  · exact Complex.continuous_exp.comp (continuous_const.mul continuous_ofReal)
+  · exact continuous_exp.comp (continuous_const.mul continuous_ofReal)
   · have hx' : 0 < im (I * x) := by rwa [I_mul_im, ofReal_re]
-    have hf : Continuous fun u : ℝ ↦ (a' * I * u, I * u) := by continuity
+    have hf : Continuous fun u : ℝ ↦ (a * I * u, I * u) := by
+      rw [continuous_prod_mk]
+      constructor <;> exact continuous_const.mul continuous_ofReal
     apply ContinuousAt.add
-    · exact ((continuousAt_jacobiTheta₂' (a' * I * x) hx').comp
-        (f := fun u : ℝ ↦ (a' * I * u, I * u)) hf.continuousAt).div_const _
-    · exact continuousAt_const.mul <| (continuousAt_jacobiTheta₂ (a' * I * x) hx').comp
-        (f := fun u : ℝ ↦ (a' * I * u, I * u)) hf.continuousAt
+    · exact ((continuousAt_jacobiTheta₂' (a * I * x) hx').comp
+        (f := fun u : ℝ ↦ (a * I * u, I * u)) hf.continuousAt).div_const _
+    · exact continuousAt_const.mul <| (continuousAt_jacobiTheta₂ (a * I * x) hx').comp
+        (f := fun u : ℝ ↦ (a * I * u, I * u)) hf.continuousAt
 
 lemma continuousOn_sinKernel (a : UnitAddCircle) : ContinuousOn (sinKernel a) (Ioi 0) := by
-  induction' a using QuotientAddGroup.induction_on' with a'
-  change ContinuousOn (fun x ↦ re (sinKernel a' x : ℂ)) (Ioi 0)
-  apply Complex.continuous_re.comp_continuousOn
+  induction' a using QuotientAddGroup.induction_on' with a
+  suffices ContinuousOn (fun x ↦ (sinKernel a x : ℂ)) (Ioi 0) from
+    (continuous_re.comp_continuousOn this).congr fun a _ ↦ (ofReal_re _).symm
   simp_rw [sinKernel_def]
   apply (ContinuousAt.continuousOn (fun x hx ↦ ?_)).div_const
-  have h := continuousAt_jacobiTheta₂' a' (by rwa [I_mul_im, ofReal_re] : 0 < im (I * x))
-  exact h.comp (f := fun u : ℝ ↦ ((a' : ℂ), I * u)) (continuous_prod_mk.mpr ⟨continuous_const,
+  have h := continuousAt_jacobiTheta₂' a (by rwa [I_mul_im, ofReal_re] : 0 < im (I * x))
+  exact h.comp (f := fun u : ℝ ↦ ((a : ℂ), I * u)) (continuous_prod_mk.mpr ⟨continuous_const,
     continuous_const.mul continuous_ofReal⟩).continuousAt
 
 lemma oddKernel_functional_equation (a : UnitAddCircle) (x : ℝ) :
@@ -190,51 +190,98 @@ lemma oddKernel_functional_equation (a : UnitAddCircle) (x : ℝ) :
   rcases le_or_lt x 0 with hx | hx
   · rw [oddKernel_undef _ hx, sinKernel_undef _ (one_div_nonpos.mpr hx), mul_zero]
   induction' a using QuotientAddGroup.induction_on' with a
-  rw [← ofReal_inj, ofReal_mul, oddKernel_def, sinKernel_def, jacobiTheta₂'_functional_equation a]
-  -- What remains is an annoyingly fiddly rearrangement. We use `generalize` to replace complicated
-  -- subexpressions with abstract variables that `field_simp` and `ring_nf` can work with. The
-  -- sticky point is that we need to be careful about branches of complex powers.
-  --
-  -- *First step*: get rid of the theta-functions themselves.
-  have : -1 / (I * ↑(1 / x)) = I * x := by { push_cast; field_simp; ring_nf }
-  rw [this]
-  have : a / (I * ↑(1 / x)) = -(a * I * x) := by { push_cast; field_simp; ring_nf }
-  rw [this, jacobiTheta₂_neg_left, jacobiTheta₂'_neg_left]
-  generalize jacobiTheta₂ (↑a * I * ↑x) (I * ↑x) = J
-  generalize jacobiTheta₂' (↑a * I * ↑x) (I * ↑x) = J'
-  -- *Second step*: get rid of the complex exponential.
-  have : -π * I * a ^ 2 / (I * ↑(1 / x)) = -π * a ^ 2 * x := by
-    push_cast; field_simp; ring_nf; rw [I_sq]; ring_nf
-  rw [this]
-  generalize cexp (-π * a ^ 2 * x) = C
-  -- *Third step*: rewrite all the powers in terms of `y = ↑(x ^ (1 / 2))`.
-  generalize hy : (↑(x ^ (1 / 2 : ℝ)) : ℂ) = y
-  have : ↑(1 / x ^ (3 / 2 : ℝ)) = 1 / y ^ 3 := by
-    rw [← hy, ← ofReal_pow, ← rpow_mul_natCast hx.le]; norm_num
-  rw [this]
-  have : 1 / (-I * (I * ↑(1 / x))) ^ (1 / 2 : ℂ) = y := by
-    rw [← hy]
-    push_cast; field_simp; rw [one_div, one_div, inv_cpow, inv_inv, ofReal_cpow hx.le]; norm_num
-    rw [arg_ofReal_of_nonneg hx.le]
-    exact pi_pos.ne
-  rw [this]
-  have : ↑(1 / x) = 1 / y ^ 2 := by
-    rw [← hy, one_div, one_div, ofReal_inv, inv_inj, ← ofReal_pow, ofReal_inj,
-      ← rpow_mul_natCast hx.le]; norm_num
-  rw [this]
-  -- *Fourth step*: use `field_simp` and `ring_nf` (twice, because we first need to bring the
-  -- powers of `I` together)
-  have hy' : y ≠ 0 := by
-    rw [← hy]; exact ofReal_ne_zero.mpr (rpow_pos_of_pos hx _).ne'
-  field_simp [pi_ne_zero]
-  ring_nf
-  rw [(by norm_num : I ^ 3 = I ^ (2 + 1)), pow_add, I_sq]
-  ring_nf
-  -- *Fifth step*: breathe a sigh of relief and go to bed.
+  have h1 : -1 / (I * ↑(1 / x)) = I * x := by rw [one_div, ofReal_inv, mul_comm, ← div_div,
+    div_inv_eq_mul, div_eq_mul_inv, inv_I, mul_neg, neg_one_mul, neg_mul, neg_neg, mul_comm]
+  have h2 : (-I * (I * ↑(1 / x))) = 1 / x := by
+    rw [← mul_assoc, neg_mul, I_mul_I, neg_neg, one_mul, ofReal_div, ofReal_one]
+  have h3 : (x : ℂ) ^ (3 / 2 : ℂ) ≠ 0 := by
+    simp only [Ne, cpow_eq_zero_iff, ofReal_eq_zero, hx.ne', false_and, not_false_eq_true]
+  have h4 : arg x ≠ π := by rw [arg_ofReal_of_nonneg hx.le]; exact pi_ne_zero.symm
+  rw [← ofReal_inj, oddKernel_def, ofReal_mul, sinKernel_def, jacobiTheta₂'_functional_equation',
+    h1, h2]
+  generalize jacobiTheta₂'' a (I * ↑x) = J
+  rw [one_div (x : ℂ), inv_cpow _ _ h4, div_inv_eq_mul, one_div, ofReal_inv, ofReal_cpow hx.le,
+    ofReal_div, ofReal_ofNat, ofReal_ofNat, ← mul_div_assoc _ _ (-2 * π : ℂ),
+    eq_div_iff <| mul_ne_zero (neg_ne_zero.mpr two_ne_zero) (ofReal_ne_zero.mpr pi_ne_zero),
+    ← div_eq_inv_mul, eq_div_iff h3, mul_comm J _, mul_assoc (-2 * π : ℂ) ((x : ℂ) ^ _),
+    mul_comm ((x : ℂ) ^ _) J, ← mul_assoc]
+
+end kernel_defs
+
+section sum_formulas
 
 /-!
-## Asymptotics as `t → ∞`
+## Formulae for the kernels as sums
 -/
+
+lemma hasSum_int_oddKernel (a : ℝ) {x : ℝ} (hx : 0 < x) :
+    HasSum (fun n : ℤ ↦ (n + a) * rexp (-π * (n + a) ^ 2 * x)) (oddKernel ↑a x) := by
+  rw [← hasSum_ofReal, oddKernel_def' a x]
+  have h1 := hasSum_jacobiTheta₂_term (a * I * x) (by rwa [I_mul_im, ofReal_re] : 0 < im (I * x))
+  have h2 := hasSum_jacobiTheta₂'_term (a * I * x) (by rwa [I_mul_im, ofReal_re] : 0 < im (I * x))
+  refine (((h2.div_const (2 * π * I)).add (h1.mul_left ↑a)).mul_left
+    (cexp (-π * a ^ 2 * x))).congr_fun (fun n ↦ ?_)
+  rw [jacobiTheta₂'_term, mul_assoc (2 * π * I), mul_div_cancel_left₀ _ two_pi_I_ne_zero, ← add_mul,
+    ← mul_assoc, mul_comm _ (n + a : ℂ), mul_assoc (n + a : ℂ), jacobiTheta₂_term,
+    ← Complex.exp_add]
+  push_cast
+  congr 2
+  simp only [← mul_assoc, ← add_mul]
+  congr 1
+  simp_rw [mul_assoc _ I, mul_comm I _, ← mul_assoc _ _ I, mul_assoc _ I, mul_comm I _,
+    ← mul_assoc _ _ I, add_mul, mul_assoc _ _ I, I_mul_I, mul_neg, mul_one,
+    mul_comm (2 : ℂ) π, mul_assoc, ← neg_mul, ← mul_add]
+  rw [← add_assoc, add_comm, mul_comm (n : ℂ) a, ← mul_assoc, add_sq]
+
+lemma hasSum_int_sinKernel (a : ℝ) {t : ℝ} (ht : 0 < t) : HasSum
+    (fun n : ℤ ↦ -I * n * cexp (2 * π * I * a * n) * rexp (-π * n ^ 2 * t)) ↑(sinKernel a t) := by
+  have h : -2 * (π : ℂ) ≠ (0 : ℂ) := by
+    simp? [pi_ne_zero] says simp only [neg_mul, ne_eq, neg_eq_zero, mul_eq_zero,
+      OfNat.ofNat_ne_zero, ofReal_eq_zero, pi_ne_zero, or_self, not_false_eq_true]
+  rw [sinKernel_def]
+  have := hasSum_jacobiTheta₂'_term a (by rwa [I_mul_im, ofReal_re])
+  refine (this.div_const (-2 * π : ℂ)).congr_fun fun n ↦ ?_
+  rw [jacobiTheta₂'_term, jacobiTheta₂_term, ofReal_exp, mul_assoc (-I * n), ← Complex.exp_add,
+    eq_div_iff h, ofReal_mul, ofReal_mul, ofReal_pow, ofReal_neg, ofReal_intCast,
+    mul_comm _ (-2 * π : ℂ), ← mul_assoc]
+  congrm ?_ * cexp (?_ + ?_)
+  · simp only [neg_mul, mul_neg, neg_neg, mul_assoc]
+  · exact mul_right_comm (2 * π * I) a n
+  · simp only [← mul_assoc, mul_comm _ I, I_mul_I, neg_one_mul]
+
+lemma hasSum_nat_sinKernel (a : ℝ) {t : ℝ} (ht : 0 < t) :
+    HasSum (fun n : ℕ ↦ 2 * n * Real.sin (2 * π * a * n) * rexp (-π * n ^ 2 * t))
+    (sinKernel ↑a t) := by
+  rw [← hasSum_ofReal]
+  have := (hasSum_int_sinKernel a ht).sum_nat_of_sum_int
+  simp only [Int.cast_zero, sq (0 : ℂ), zero_mul, mul_zero, add_zero] at this
+  refine this.congr_fun fun n ↦ ?_
+  simp_rw [Int.cast_neg, neg_sq, mul_neg, ofReal_mul, Int.cast_natCast, ofReal_natCast,
+      ofReal_ofNat, ← add_mul, ofReal_sin, Complex.sin]
+  push_cast
+  congr 1
+  rw [← mul_div_assoc, ← div_mul_eq_mul_div, ← div_mul_eq_mul_div, div_self two_ne_zero, one_mul,
+    neg_mul, neg_mul, neg_neg, mul_comm _ I, ← mul_assoc, mul_comm _ I, neg_mul,
+    ← sub_eq_neg_add, mul_sub]
+  congr 3 <;> ring
+
+end sum_formulas
+
+section asymp
+/-!
+## Asymptotics of the kernels as `t → ∞`
+-/
+
+/-- The function `oddKernel a` has exponential decay at `+∞`, for any `a`. -/
+lemma isBigO_atTop_oddKernel (a : UnitAddCircle) :
+    ∃ p, 0 < p ∧ IsBigO atTop (oddKernel a) (fun x ↦ Real.exp (-p * x)) := by
+  obtain ⟨b, _, rfl⟩ := a.eq_coe_Ico
+  let ⟨p, hp, hp'⟩ := HurwitzKernelBounds.isBigO_atTop_F_int_one b
+  refine ⟨p, hp, (Eventually.isBigO ?_).trans hp'⟩
+  filter_upwards [eventually_gt_atTop 0] with t ht
+  simpa only [← (hasSum_int_oddKernel b ht).tsum_eq, Real.norm_eq_abs, HurwitzKernelBounds.F_int,
+    HurwitzKernelBounds.f_int, pow_one, norm_mul, abs_of_nonneg (exp_pos _).le] using
+    (norm_tsum_le_tsum_norm (hasSum_int_oddKernel b ht).summable.norm)
 
 /-- The function `sinKernel a` has exponential decay at `+∞`, for any `a`. -/
 lemma isBigO_atTop_sinKernel (a : UnitAddCircle) :
@@ -253,16 +300,7 @@ lemma isBigO_atTop_sinKernel (a : UnitAddCircle) :
       mul_le_mul_iff_of_pos_right (exp_pos _)]
     exact mul_le_of_le_one_right (Nat.cast_nonneg _) (abs_sin_le_one _)
 
-/-- The function `oddKernel a` has exponential decay at `+∞`, for any `a`. -/
-lemma isBigO_atTop_oddKernel (a : UnitAddCircle) :
-    ∃ p, 0 < p ∧ IsBigO atTop (oddKernel a) (fun x ↦ Real.exp (-p * x)) := by
-  obtain ⟨b, _, rfl⟩ := a.eq_coe_Ico
-  let ⟨p, hp, hp'⟩ := HurwitzKernelBounds.isBigO_atTop_F_int_one b
-  refine ⟨p, hp, (Eventually.isBigO ?_).trans hp'⟩
-  filter_upwards [eventually_gt_atTop 0] with t ht
-  simpa only [← (hasSum_int_oddKernel b ht).tsum_eq, Real.norm_eq_abs, HurwitzKernelBounds.F_int,
-    HurwitzKernelBounds.f_int, pow_one, norm_mul, abs_of_nonneg (exp_pos _).le] using
-    (norm_tsum_le_tsum_norm (hasSum_int_oddKernel b ht).summable.norm)
+end asymp
 
 section FEPair
 /-!
@@ -270,6 +308,7 @@ section FEPair
 -/
 
 /-- A `StrongFEPair` structure with `f = oddKernel a` and `g = sinKernel a`. -/
+@[simps]
 def hurwitzOddFEPair (a : UnitAddCircle) : StrongFEPair ℂ where
   f := ofReal' ∘ oddKernel a
   g := ofReal' ∘ sinKernel a
@@ -297,6 +336,10 @@ def hurwitzOddFEPair (a : UnitAddCircle) : StrongFEPair ℂ where
   h_feq x hx := by simp_rw [Function.comp_apply, one_mul, smul_eq_mul, ← ofReal_mul,
     oddKernel_functional_equation a, one_div x, one_div x⁻¹, inv_rpow (le_of_lt hx), one_div,
     inv_inv]
+
+/-!
+## Definition of the completed odd Hurwitz zeta function
+-/
 
 /-- The entire function of `s` which agrees with
 `1 / 2 * Gamma ((s + 1) / 2) * π ^ (-(s + 1) / 2) * ∑' (n : ℤ), sgn (n + a) / |n + a| ^ s`
@@ -338,12 +381,14 @@ lemma completedSinZeta_neg (a : UnitAddCircle) (s : ℂ) :
     hurwitzOddFEPair, Function.comp_def, sinKernel_neg, ofReal_neg, smul_neg]
   rw [integral_neg, neg_div]
 
+
 /-- Functional equation for the odd Hurwitz zeta function. -/
 lemma completedHurwitzZetaOdd_one_sub (a : UnitAddCircle) (s : ℂ) :
     completedHurwitzZetaOdd a (1 - s) = completedSinZeta a s := by
-  erw [completedHurwitzZetaOdd, completedSinZeta,
+  rw [completedHurwitzZetaOdd, completedSinZeta,
     (by { push_cast; ring } : (1 - s + 1) / 2 = ↑(3 / 2 : ℝ) - (s + 1) / 2),
-    (hurwitzOddFEPair a).functional_equation ((s + 1) / 2), one_smul]
+    ← hurwitzOddFEPair_k, (hurwitzOddFEPair a).functional_equation ((s + 1) / 2),
+    hurwitzOddFEPair_ε, one_smul]
 
 /-- Functional equation for the odd Hurwitz zeta function (alternative form). -/
 lemma completedSinZeta_one_sub (a : UnitAddCircle) (s : ℂ) :
@@ -362,29 +407,28 @@ lemma hasSum_int_completedSinZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
   let c (n : ℤ) : ℂ := -I * cexp (2 * π * I * a * n) / 2
   have hc (n : ℤ) : ‖c n‖ = 1 / 2 := by
     simp_rw [c, (by { push_cast; ring } : 2 * π * I * a * n = ↑(2 * π * a * n) * I), norm_div,
-      RCLike.norm_ofNat, norm_mul, norm_neg, norm_I, one_mul, Complex.norm_exp_ofReal_mul_I]
+      RCLike.norm_ofNat, norm_mul, norm_neg, norm_I, one_mul, norm_exp_ofReal_mul_I]
   have hF t (ht : 0 < t) :
       HasSum (fun n ↦ c n * n * rexp (-π * n ^ 2 * t)) (sinKernel a t / 2) := by
-    convert (hasSum_int_sinKernel a ht).div_const 2 using 2 with n
-    ring_nf
-  convert hasSum_mellin_pi_mul_sq' (zero_lt_one.trans hs) hF ?_ using 1
-  · ext1 n
-    rw [← Int.cast_abs, ofReal_intCast]
-    have : (Int.sign n : ℂ) = SignType.sign (n : ℝ) := by
-      rcases lt_trichotomy 0 n with h | rfl | h
-      · rw [Int.sign_eq_one_of_pos h, Int.cast_one, sign_pos (Int.cast_pos.mpr h), SignType.coe_one]
-      · rw [Int.sign_zero, Int.cast_zero, Int.cast_zero, sign_zero, SignType.coe_zero]
-      · rw [Int.sign_eq_neg_one_of_neg h, Int.cast_neg, Int.cast_one,
-            sign_neg (Int.cast_lt_zero.mpr h), SignType.coe_neg_one]
-    rw [this]
-    ring_nf
-  · rw [mellin_div_const]
-    rfl
-  · simp_rw [hc, div_right_comm]
+    refine ((hasSum_int_sinKernel a ht).div_const 2).congr_fun fun n ↦ ?_
+    rw [div_mul_eq_mul_div, div_mul_eq_mul_div, mul_assoc (-I), mul_assoc (-I),
+      mul_assoc (-I), mul_assoc (-I), mul_comm (cexp _)]
+  have h_sum : Summable fun i ↦ ‖c i‖ / |↑i| ^ s.re := by
+    simp_rw [hc, div_right_comm]
     apply Summable.div_const
     apply Summable.of_nat_of_neg <;>
     · simp only [Int.cast_neg, abs_neg, Int.cast_natCast, Nat.abs_cast]
       rwa [summable_one_div_nat_rpow]
+  have := mellin_div_const .. ▸ hasSum_mellin_pi_mul_sq' (zero_lt_one.trans hs) hF h_sum
+  refine this.congr_fun fun n ↦ ?_
+  rw [← Int.cast_abs, ofReal_intCast]
+  have : (Int.sign n : ℂ) = SignType.sign (n : ℝ) := by
+    rw [← SignType.map_cast (f := Int.castRingHom ℂ), Int.coe_castRingHom, Int.cast_inj,
+      ← eq_intCast (Int.castRingHom ℝ) n, StrictMono.sign_comp, Int.sign_eq_sign n]
+    simp_rw [strictMono_iff_map_pos, Int.coe_castRingHom, Int.cast_pos, imp_self, forall_const]
+  rw [this, ← mul_div_assoc, div_mul_eq_mul_div, div_right_comm, mul_assoc (Gammaℝ _),
+    mul_assoc (Gammaℝ _), mul_assoc (Gammaℝ _), mul_assoc (-I), mul_assoc (-I),
+    mul_comm (cexp _)]
 
 /-- Formula for `completedSinZeta` as a Dirichlet series in the convergence range
 (second version, with sum over `ℕ`). -/
@@ -394,13 +438,17 @@ lemma hasSum_nat_completedSinZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
   have := (hasSum_int_completedSinZeta a hs).sum_nat_of_sum_int
   simp_rw [Int.sign_zero, Int.cast_zero, mul_zero, zero_mul, zero_div, add_zero, abs_neg,
     Int.sign_neg, Nat.abs_cast, Int.cast_neg, Int.cast_natCast, ← add_div] at this
-  convert this using 2 with n
+  refine this.congr_fun fun n ↦ ?_
   rw [div_right_comm]
   rcases eq_or_ne n 0 with rfl | h
-  · simp
+  · simp only [Nat.cast_zero, mul_zero, Real.sin_zero, ofReal_zero, zero_div, mul_neg,
+      Int.sign_zero, Int.cast_zero, Complex.exp_zero, mul_one, neg_zero, add_zero]
   simp_rw [Int.sign_natCast_of_ne_zero h, Int.cast_one, ofReal_sin, Complex.sin]
-  cancel_denoms
-  ring_nf
+  simp only [← mul_div_assoc, push_cast, mul_assoc (Gammaℝ _), ← mul_add]
+  congr 3
+  rw [mul_one, mul_neg_one, neg_neg, neg_mul I, ← sub_eq_neg_add, ← mul_sub, mul_comm,
+    mul_neg, neg_mul]
+  congr 3 <;> ring
 
 /-- Formula for `completedHurwitzZetaOdd` as a Dirichlet series in the convergence range. -/
 lemma hasSum_int_completedHurwitzZetaOdd (a : ℝ) {s : ℂ} (hs : 1 < re s) :
@@ -410,18 +458,15 @@ lemma hasSum_int_completedHurwitzZetaOdd (a : ℝ) {s : ℂ} (hs : 1 < re s) :
   let c (n : ℤ) : ℂ := 1 / 2
   have hF t (ht : 0 < t) : HasSum (fun n ↦ c n * r n * rexp (-π * (r n) ^ 2 * t))
       (oddKernel a t / 2) := by
-    convert (hasSum_ofReal.mpr (hasSum_int_oddKernel a ht)).div_const 2 using 2 with n
-    simp only [r, c]
-    push_cast
-    ring_nf
-  convert hasSum_mellin_pi_mul_sq' (zero_lt_one.trans hs) hF ?_ using 1
-  · ext1 n
-    ring_nf
-  · rw [mellin_div_const]
-    rfl
-  · simp_rw [c, ← mul_one_div ‖_‖]
+    refine ((hasSum_ofReal.mpr (hasSum_int_oddKernel a ht)).div_const 2).congr_fun fun n ↦ ?_
+    simp only [r, c, push_cast, div_mul_eq_mul_div, one_mul]
+  have h_sum : Summable fun i ↦ ‖c i‖ / |r i| ^ s.re := by
+    simp_rw [c, ← mul_one_div ‖_‖]
     apply Summable.mul_left
     rwa [summable_one_div_int_add_rpow]
+  have := mellin_div_const .. ▸ hasSum_mellin_pi_mul_sq' (zero_lt_one.trans hs) hF h_sum
+  refine this.congr_fun fun n ↦ ?_
+  simp only [c, mul_one_div, div_mul_eq_mul_div, div_right_comm]
 
 /-!
 ## Non-completed zeta functions
@@ -461,7 +506,7 @@ lemma differentiableAt_sinZeta (a : UnitAddCircle) :
 lemma hasSum_int_hurwitzZetaOdd (a : ℝ) {s : ℂ} (hs : 1 < re s) :
     HasSum (fun n : ℤ ↦ SignType.sign (n + a) / (↑|n + a| : ℂ) ^ s / 2) (hurwitzZetaOdd a s) := by
   rw [hurwitzZetaOdd]
-  convert (hasSum_int_completedHurwitzZetaOdd a hs).div_const (Gammaℝ (s + 1)) using 2 with n
+  refine ((hasSum_int_completedHurwitzZetaOdd a hs).div_const (Gammaℝ _)).congr_fun fun n ↦ ?_
   simp_rw [div_right_comm _ _ (Gammaℝ _)]
   rw [mul_div_cancel_left₀ _ (Gammaℝ_ne_zero_of_re_pos ?_)]
   rw [add_re, one_re]
@@ -472,7 +517,7 @@ lemma hasSum_int_hurwitzZetaOdd (a : ℝ) {s : ℂ} (hs : 1 < re s) :
 lemma hasSum_nat_hurwitzZetaOdd (a : ℝ) {s : ℂ} (hs : 1 < re s) :
     HasSum (fun n : ℕ ↦ (SignType.sign (n + a) / (↑|n + a| : ℂ) ^ s
       - SignType.sign (n + 1 - a) / (↑|n + 1 - a| : ℂ) ^ s) / 2) (hurwitzZetaOdd a s) := by
-  convert (hasSum_int_hurwitzZetaOdd a hs).nat_add_neg_add_one using 2 with n
+  refine (hasSum_int_hurwitzZetaOdd a hs).nat_add_neg_add_one.congr_fun fun n ↦ ?_
   rw [Int.cast_neg, Int.cast_add, Int.cast_one, sub_div, sub_eq_add_neg, Int.cast_natCast]
   have : -(n + 1) + a = -(n + 1 - a) := by { push_cast; ring_nf }
   rw [this, Left.sign_neg, abs_neg, SignType.coe_neg, neg_div, neg_div]
@@ -482,7 +527,7 @@ lemma hasSum_nat_hurwitzZetaOdd (a : ℝ) {s : ℂ} (hs : 1 < re s) :
 lemma hasSum_nat_hurwitzZetaOdd_of_mem_Icc {a : ℝ} (ha : a ∈ Icc 0 1) {s : ℂ} (hs : 1 < re s) :
     HasSum (fun n : ℕ ↦ (1 / (n + a : ℂ) ^ s - 1 / (n + 1 - a : ℂ) ^ s) / 2)
     (hurwitzZetaOdd a s) := by
-  convert (hasSum_nat_hurwitzZetaOdd a hs) using 2 with n
+  refine (hasSum_nat_hurwitzZetaOdd a hs).congr_fun fun n ↦ ?_
   suffices ∀ (b : ℝ) (_ : 0 ≤ b), SignType.sign (n + b) / (↑|n + b| : ℂ) ^ s = 1 / (n + b) ^ s by
     simp only [add_sub_assoc, this a ha.1, this (1 - a) (sub_nonneg.mpr ha.2), push_cast]
   intro b hb
@@ -492,18 +537,18 @@ lemma hasSum_nat_hurwitzZetaOdd_of_mem_Icc {a : ℝ} (ha : a ∈ Icc 0 1) {s : �
   · rw [← hb, ofReal_zero, zero_cpow ((not_lt.mpr zero_le_one) ∘ (zero_re ▸ · ▸ hs)),
       div_zero, div_zero]
 
-/-- Formula for `cosZeta` as a Dirichlet series in the convergence range, with sum over `ℤ`. -/
+/-- Formula for `sinZeta` as a Dirichlet series in the convergence range, with sum over `ℤ`. -/
 lemma hasSum_int_sinZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
     HasSum (fun n : ℤ ↦ -I * Int.sign n * cexp (2 * π * I * a * n) / ↑|n| ^ s / 2)
     (sinZeta a s) := by
   rw [sinZeta]
-  convert (hasSum_int_completedSinZeta a hs).div_const (Gammaℝ (s + 1)) using 2 with n
+  refine ((hasSum_int_completedSinZeta a hs).div_const (Gammaℝ (s + 1))).congr_fun fun n ↦ ?_
   simp_rw [mul_assoc, div_right_comm _ _ (Gammaℝ _)]
   rw [mul_div_cancel_left₀ _ (Gammaℝ_ne_zero_of_re_pos (?_ : 0 < (s + 1).re))]
   rw [add_re, one_re]
   positivity
 
-/-- Formula for `cosZeta` as a Dirichlet series in the convergence range, with sum over `ℕ`. -/
+/-- Formula for `sinZeta` as a Dirichlet series in the convergence range, with sum over `ℕ`. -/
 lemma hasSum_nat_sinZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
     HasSum (fun n : ℕ ↦ Real.sin (2 * π * a * n) / (n : ℂ) ^ s) (sinZeta a s) := by
   have hs' : s ≠ 0 := (fun h ↦ (not_lt.mpr zero_le_one) ((zero_re ▸ h ▸ hs)))
@@ -511,12 +556,13 @@ lemma hasSum_nat_sinZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
   simp_rw [abs_neg, Int.sign_neg, Int.cast_neg, Nat.abs_cast, Int.cast_natCast, mul_neg,
     abs_zero, Int.cast_zero, zero_cpow hs', div_zero, zero_div, add_zero] at this
   simp_rw [push_cast, Complex.sin]
-  convert this using 2 with n
+  refine this.congr_fun fun n ↦ ?_
   rcases ne_or_eq n 0 with h | rfl
-  · simp only [Int.sign_natCast_of_ne_zero h, Int.cast_one]
-    ring_nf
-  · simp only [Nat.cast_zero, Int.sign_zero, Int.cast_zero]
-    ring_nf
+  · simp only [neg_mul, sub_mul, div_right_comm _ (2 : ℂ), Int.sign_natCast_of_ne_zero h,
+      Int.cast_one, mul_one, mul_comm I, neg_neg, ← add_div, ← sub_eq_neg_add]
+    congr 5 <;> ring
+  · simp only [Nat.cast_zero, Int.sign_zero, Int.cast_zero, mul_zero, zero_mul, neg_zero,
+      sub_self, zero_div, zero_add]
 
 /-- The trivial zeroes of the odd Hurwitz zeta function. -/
 theorem hurwitzZetaOdd_neg_two_mul_nat_sub_one (a : UnitAddCircle) (n : ℕ) :
@@ -532,16 +578,14 @@ theorem sinZeta_neg_two_mul_nat_sub_one (a : UnitAddCircle) (n : ℕ) :
 `sinZeta s`. -/
 lemma hurwitzZetaOdd_one_sub (a : UnitAddCircle) {s : ℂ} (hs : ∀ (n : ℕ), s ≠ -n) :
     hurwitzZetaOdd a (1 - s) = 2 * (2 * π) ^ (-s) * Gamma s * sin (π * s / 2) * sinZeta a s := by
-  change hurwitzZetaOdd a (1 - s) = Gammaℂ s * sin (π * s / 2) * sinZeta a s
-  rw [hurwitzZetaOdd, (by ring : 1 - s + 1 = 2 - s), div_eq_mul_inv, inv_Gammaℝ_two_sub hs,
-    completedHurwitzZetaOdd_one_sub, sinZeta]
-  ring_nf
+  rw [← Gammaℂ, hurwitzZetaOdd, (by ring : 1 - s + 1 = 2 - s), div_eq_mul_inv,
+    inv_Gammaℝ_two_sub hs, completedHurwitzZetaOdd_one_sub, sinZeta, ← div_eq_mul_inv,
+    ← mul_div_assoc, ← mul_div_assoc, mul_comm]
 
 /-- If `s` is not in `-ℕ`, then `hurwitzZetaOdd a (1 - s)` is an explicit multiple of
 `sinZeta s`. -/
 lemma sinZeta_one_sub (a : UnitAddCircle) {s : ℂ} (hs : ∀ (n : ℕ), s ≠ -n) :
     sinZeta a (1 - s) = 2 * (2 * π) ^ (-s) * Gamma s * sin (π * s / 2) * hurwitzZetaOdd a s := by
-  change sinZeta a (1 - s) = Gammaℂ s * sin (π * s / 2) * hurwitzZetaOdd a s
-  rw [sinZeta, (by ring : 1 - s + 1 = 2 - s), div_eq_mul_inv, inv_Gammaℝ_two_sub hs,
-    ← completedHurwitzZetaOdd_one_sub, ← sub_add, sub_self, zero_add, hurwitzZetaOdd]
-  ring_nf
+  rw [← Gammaℂ, sinZeta, (by ring : 1 - s + 1 = 2 - s), div_eq_mul_inv, inv_Gammaℝ_two_sub hs,
+    completedSinZeta_one_sub, hurwitzZetaOdd, ← div_eq_mul_inv, ← mul_div_assoc, ← mul_div_assoc,
+    mul_comm]
