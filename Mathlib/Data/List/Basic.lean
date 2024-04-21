@@ -1575,6 +1575,7 @@ theorem map_eq_foldr (f : α → β) (l : List α) : map f l = foldr (fun a bs =
   induction l <;> simp [*]
 #align list.map_eq_foldr List.map_eq_foldr
 
+@[congr]
 theorem map_congr {f g : α → β} : ∀ {l : List α}, (∀ x ∈ l, f x = g x) → map f l = map g l
   | [], _ => rfl
   | a :: l, h => by
@@ -1618,6 +1619,7 @@ set_option linter.deprecated false in
 theorem bind_ret_eq_map (f : α → β) (l : List α) : l.bind (List.ret ∘ f) = map f l :=
   bind_pure_eq_map f l
 
+@[congr]
 theorem bind_congr {l : List α} {f g : α → List β} (h : ∀ x ∈ l, f x = g x) :
     List.bind l f = List.bind l g :=
   (congr_arg List.join <| map_congr h : _)
