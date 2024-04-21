@@ -40,9 +40,7 @@ variable {R S : Type*}
 open Tropical Finset
 
 theorem List.trop_sum [AddMonoid R] (l : List R) : trop l.sum = List.prod (l.map trop) := by
-  induction' l with hd tl IH
-  · simp
-  · simp [← IH]
+  induction l <;> simp [*]
 #align list.trop_sum List.trop_sum
 
 theorem Multiset.trop_sum [AddCommMonoid R] (s : Multiset R) :
@@ -81,7 +79,7 @@ theorem List.trop_minimum [LinearOrder R] (l : List R) :
     trop l.minimum = List.sum (l.map (trop ∘ WithTop.some)) := by
   induction' l with hd tl IH
   · simp
-  · simp [List.minimum_cons, ← IH]
+  · simp [List.minimum_cons, IH]
 #align list.trop_minimum List.trop_minimum
 
 theorem Multiset.trop_inf [LinearOrder R] [OrderTop R] (s : Multiset R) :
