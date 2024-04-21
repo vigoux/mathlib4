@@ -6,6 +6,7 @@ Authors: David Loeffler
 import Mathlib.NumberTheory.LSeries.AbstractFuncEq
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.Bounds
 import Mathlib.NumberTheory.LSeries.MellinEqDirichlet
+import Mathlib.NumberTheory.LSeries.Basic
 
 /-!
 # Odd Hurwitz zeta functions
@@ -35,7 +36,7 @@ various versions of the Jacobi theta function.
   differentiability on `ℂ`
 * `completedHurwitzZetaOdd_one_sub`: the functional equation
   `completedHurwitzZetaOdd a (1 - s) = completedSinZeta a s`
-* [TODO] `completedHurwitzZetaOdd_eq_tsum_int` and `completedSinZeta_eq_tsum_nat`: relation between
+* `hasSum_int_hurwitzZetaOdd` and `hasSum_nat_sinZeta`: relation between
   the zeta functions and corresponding Dirichlet series for `1 < re s`
 -/
 
@@ -383,7 +384,7 @@ lemma completedSinZeta_neg (a : UnitAddCircle) (s : ℂ) :
 
 
 /-- Functional equation for the odd Hurwitz zeta function. -/
-lemma completedHurwitzZetaOdd_one_sub (a : UnitAddCircle) (s : ℂ) :
+theorem completedHurwitzZetaOdd_one_sub (a : UnitAddCircle) (s : ℂ) :
     completedHurwitzZetaOdd a (1 - s) = completedSinZeta a s := by
   rw [completedHurwitzZetaOdd, completedSinZeta,
     (by { push_cast; ring } : (1 - s + 1) / 2 = ↑(3 / 2 : ℝ) - (s + 1) / 2),
@@ -503,7 +504,7 @@ lemma differentiableAt_sinZeta (a : UnitAddCircle) :
     differentiable_id.add <| differentiable_const _
 
 /-- Formula for `hurwitzZetaOdd` as a Dirichlet series in the convergence range (sum over `ℤ`). -/
-lemma hasSum_int_hurwitzZetaOdd (a : ℝ) {s : ℂ} (hs : 1 < re s) :
+theorem hasSum_int_hurwitzZetaOdd (a : ℝ) {s : ℂ} (hs : 1 < re s) :
     HasSum (fun n : ℤ ↦ SignType.sign (n + a) / (↑|n + a| : ℂ) ^ s / 2) (hurwitzZetaOdd a s) := by
   rw [hurwitzZetaOdd]
   refine ((hasSum_int_completedHurwitzZetaOdd a hs).div_const (Gammaℝ _)).congr_fun fun n ↦ ?_
@@ -538,7 +539,7 @@ lemma hasSum_nat_hurwitzZetaOdd_of_mem_Icc {a : ℝ} (ha : a ∈ Icc 0 1) {s : �
       div_zero, div_zero]
 
 /-- Formula for `sinZeta` as a Dirichlet series in the convergence range, with sum over `ℤ`. -/
-lemma hasSum_int_sinZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
+theorem hasSum_int_sinZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
     HasSum (fun n : ℤ ↦ -I * Int.sign n * cexp (2 * π * I * a * n) / ↑|n| ^ s / 2)
     (sinZeta a s) := by
   rw [sinZeta]
@@ -563,6 +564,14 @@ lemma hasSum_nat_sinZeta (a : ℝ) {s : ℂ} (hs : 1 < re s) :
     congr 5 <;> ring
   · simp only [Nat.cast_zero, Int.sign_zero, Int.cast_zero, mul_zero, zero_mul, neg_zero,
       sub_self, zero_div, zero_add]
+
+/-- Reformulation of `hasSum_nat_cosZeta` using `LSeriesHasSum`. -/
+lemma LSeriesHasSum_sin (a : ℝ) {s : ℂ} (hs : 1 < re s) :
+    LSeriesHasSum (Real.sin <| 2 * π * a * ·) s (sinZeta a s) := by
+  refine (hasSum_nat_sinZeta a hs).congr_fun (fun n ↦ ?_)
+  rcases eq_or_ne n 0 with rfl | hn
+  · rw [LSeries.term_zero, Nat.cast_zero, mul_zero, Real.sin_zero, ofReal_zero, zero_div]
+  · apply LSeries.term_of_ne_zero hn
 
 /-- The trivial zeroes of the odd Hurwitz zeta function. -/
 theorem hurwitzZetaOdd_neg_two_mul_nat_sub_one (a : UnitAddCircle) (n : ℕ) :
