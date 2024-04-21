@@ -94,7 +94,7 @@ theorem le_mul_of_le_right : a ≤ c → a ≤ b * c :=
 
 @[to_additive]
 theorem le_iff_exists_mul : a ≤ b ↔ ∃ c, b = a * c :=
-  ⟨exists_mul_of_le, by
+  ⟨fun h ↦ exists_mul_of_le h, by
     rintro ⟨c, rfl⟩
     exact le_self_mul⟩
 
