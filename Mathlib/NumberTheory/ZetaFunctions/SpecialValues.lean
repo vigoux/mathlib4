@@ -6,16 +6,187 @@ Authors: David Loeffler
 
 import Mathlib.NumberTheory.ZetaValues
 import Mathlib.NumberTheory.ZetaFunctions.RiemannZeta
+import Mathlib.NumberTheory.ZetaFunctions.HurwitzZeta
 
 /-!
-# Special values of the Riemann zeta function
+# Special values of Hurwitz and Riemann zeta functions
 
 This file gives the formula for `ζ (2 * k)`, for `k` a non-zero integer, in terms of Bernoulli
-numbers.
+numbers. More generally, we give formulae for any Hurwitz zeta functions at any (strictly) negative
+integer.
+
+(Note that some supporting results – those which do not explicitly invoke the definitions of the
+Riemann zeta and related functions – are in a different file `Mathlib.NumberTheory.ZetaValues`.)
+
+## Main results
+- `hurwitzZeta_neg_nat`: for `k : ℕ` with `k ≠ 0`, and any `x ∈ ℝ / ℤ`, the special value
+  `hurwitzZeta x (-k)` is equal to `-(Polynomial.bernoulli (k + 1) x) / (k + 1)`.
+- `riemannZeta_neg_nat_eq_bernoulli` and `riemannZeta_neg_nat_eq_bernoulli'`: special case of the
+  Riemann zeta function (2 formulations according to taste) – note that this _does_ allow `k = 0`.
+
+## TODO
+
+The results on the Hurwitz zeta function are incomplete since the value at `s = 0` is not included.
+This is difficult to approach using the methods in the library at the present time.
 -/
 
-open Complex Real
+open Complex Real Set
 open scoped Nat
+
+/-- Express the value of `cosZeta` at a positive even integer as a value
+of the Bernoulli polynomial. -/
+theorem cosZeta_two_mul_nat {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+    cosZeta x (2 * k) = (-1) ^ (k + 1) * (2 * π) ^ (2 * k) / 2 / (2 * k)! *
+      ((Polynomial.bernoulli (2 * k)).map (algebraMap ℚ ℂ)).eval ↑x := by
+  rw [← (hasSum_nat_cosZeta x (?_ : 1 < re (2 * k))).tsum_eq]
+  refine Eq.trans ?_ <| (congr_arg ofReal' (hasSum_one_div_nat_pow_mul_cos hk hx).tsum_eq).trans ?_
+  · rw [ofReal_tsum]
+    refine tsum_congr fun n ↦ ?_
+    rw [mul_comm (1 / _), mul_one_div, ofReal_div, mul_assoc (2 * π), mul_comm x n, ← mul_assoc,
+      ← Nat.cast_ofNat (R := ℂ), ← Nat.cast_mul, cpow_natCast, ofReal_pow, ofReal_natCast]
+  · simp only [ofReal_mul, ofReal_div, ofReal_pow, ofReal_natCast, ofReal_ofNat,
+      ofReal_neg, ofReal_one]
+    congr 1
+    have : (Polynomial.bernoulli (2 * k)).map (algebraMap ℚ ℂ) = _ :=
+      (Polynomial.map_map (algebraMap ℚ ℝ) ofReal _).symm
+    rw [this, ← ofReal_eq_coe, ← ofReal_eq_coe]
+    apply Polynomial.map_aeval_eq_aeval_map
+    simp only [Algebra.id.map_eq_id, RingHomCompTriple.comp_eq]
+  · rw [← Nat.cast_ofNat, ← Nat.cast_one, ← Nat.cast_mul, natCast_re, Nat.cast_lt]
+    omega
+
+/--
+Express the value of `sinZeta` at an odd integer `> 1` as a value of the Bernoulli polynomial.
+
+Note that this formula is also correct for `k = 0` (i.e. for the value at `s = 1`), but we do not
+prove it in this case, owing to the additional difficulty of working with series that are only
+conditionally convergent.
+-/
+theorem sinZeta_two_mul_nat_add_one {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+    sinZeta x (2 * k + 1) = (-1) ^ (k + 1) * (2 * π) ^ (2 * k + 1) / 2 / (2 * k + 1)! *
+      ((Polynomial.bernoulli (2 * k + 1)).map (algebraMap ℚ ℂ)).eval ↑x := by
+  rw [← (hasSum_nat_sinZeta x (?_ : 1 < re (2 * k + 1))).tsum_eq]
+  refine Eq.trans ?_ <| (congr_arg ofReal' (hasSum_one_div_nat_pow_mul_sin hk hx).tsum_eq).trans ?_
+  · rw [ofReal_tsum]
+    refine tsum_congr fun n ↦ ?_
+    rw [mul_comm (1 / _), mul_one_div, ofReal_div, mul_assoc (2 * π), mul_comm x n, ← mul_assoc]
+    congr 1
+    rw [← Nat.cast_ofNat, ← Nat.cast_mul, ← Nat.cast_add_one, cpow_natCast, ofReal_pow,
+      ofReal_natCast]
+  · simp only [ofReal_mul, ofReal_div, ofReal_pow, ofReal_natCast, ofReal_ofNat,
+      ofReal_neg, ofReal_one]
+    congr 1
+    have : (Polynomial.bernoulli (2 * k + 1)).map (algebraMap ℚ ℂ) = _ :=
+      (Polynomial.map_map (algebraMap ℚ ℝ) ofReal _).symm
+    rw [this, ← ofReal_eq_coe, ← ofReal_eq_coe]
+    apply Polynomial.map_aeval_eq_aeval_map
+    simp only [Algebra.id.map_eq_id, RingHomCompTriple.comp_eq]
+  · rw [← Nat.cast_ofNat, ← Nat.cast_one, ← Nat.cast_mul, ← Nat.cast_add_one, natCast_re,
+      Nat.cast_lt, lt_add_iff_pos_left]
+    exact mul_pos two_pos (Nat.pos_of_ne_zero hk)
+
+/-- Reformulation of `cosZeta_two_mul_nat` using `Gammaℂ`. -/
+theorem cosZeta_two_mul_nat' {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+    cosZeta x (2 * k) = (-1) ^ (k + 1) / (2 * k) / Gammaℂ (2 * k) *
+      ((Polynomial.bernoulli (2 * k)).map (algebraMap ℚ ℂ)).eval ↑x := by
+  rw [cosZeta_two_mul_nat hk hx]
+  congr 1
+  have : (2 * k)! = (2 * k) * Complex.Gamma (2 * k) := by
+    rw [(by { norm_cast; omega } : 2 * (k : ℂ) = ↑(2 * k - 1) + 1), Complex.Gamma_nat_eq_factorial,
+      ← Nat.cast_add_one, ← Nat.cast_mul, ← Nat.factorial_succ, Nat.sub_add_cancel (by omega)]
+  simp_rw [this, Gammaℂ, cpow_neg, ← div_div, div_inv_eq_mul, div_mul_eq_mul_div, div_div]
+  congr 2
+  · rw [(by simp : 2 * (k : ℂ) = ↑(2 * k)), cpow_natCast]
+  · ring
+
+/-- Reformulation of `sinZeta_two_mul_nat_add_one` using `Gammaℂ`. -/
+theorem sinZeta_two_mul_nat_add_one' {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+    sinZeta x (2 * k + 1) = (-1) ^ (k + 1) / (2 * k + 1) / Gammaℂ (2 * k + 1) *
+      ((Polynomial.bernoulli (2 * k + 1)).map (algebraMap ℚ ℂ)).eval ↑x := by
+  rw [sinZeta_two_mul_nat_add_one hk hx]
+  congr 1
+  have : (2 * k + 1)! = (2 * k + 1) * Complex.Gamma (2 * k + 1) := by
+    rw [(by simp : Complex.Gamma (2 * k + 1) = Complex.Gamma (↑(2 * k) + 1)),
+       Complex.Gamma_nat_eq_factorial, ← Nat.cast_ofNat (R := ℂ), ← Nat.cast_mul,
+      ← Nat.cast_add_one, ← Nat.cast_mul, ← Nat.factorial_succ]
+  simp_rw [this, Gammaℂ, cpow_neg, ← div_div, div_inv_eq_mul, div_mul_eq_mul_div, div_div]
+  congr 2
+  · rw [(by simp : 2 * (k : ℂ) + 1 = ↑(2 * k + 1)), cpow_natCast]
+  · ring
+
+theorem hurwitzZetaEven_one_sub_two_mul_nat {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+    hurwitzZetaEven x (1 - 2 * k) =
+      -1 / (2 * k) * ((Polynomial.bernoulli (2 * k)).map (algebraMap ℚ ℂ)).eval ↑x := by
+  have h1 (n : ℕ) : (2 * k : ℂ) ≠ -n := by
+    rw [← Int.cast_ofNat, ← Int.cast_natCast, ← Int.cast_mul, ← Int.cast_natCast n, ← Int.cast_neg,
+      Ne, Int.cast_inj, ← Ne]
+    refine ne_of_gt ((neg_nonpos_of_nonneg n.cast_nonneg).trans_lt (mul_pos two_pos ?_))
+    exact Nat.cast_pos.mpr (Nat.pos_of_ne_zero hk)
+  have h2 : (2 * k : ℂ) ≠ 1 := by norm_cast; simp only [mul_eq_one, OfNat.ofNat_ne_one,
+    false_and, not_false_eq_true]
+  have h3 : Gammaℂ (2 * k) ≠ 0 := by
+    refine mul_ne_zero (mul_ne_zero two_ne_zero ?_) (Gamma_ne_zero h1)
+    simp only [ne_eq, cpow_eq_zero_iff, mul_eq_zero, OfNat.ofNat_ne_zero, ofReal_eq_zero,
+      pi_ne_zero, Nat.cast_eq_zero, false_or, false_and, not_false_eq_true]
+  rw [hurwitzZetaEven_one_sub _ h1 (Or.inr h2), ← Gammaℂ, cosZeta_two_mul_nat' hk hx, ← mul_assoc,
+    ← mul_div_assoc, mul_assoc, mul_div_cancel_left₀ _ h3, ← mul_div_assoc]
+  congr 2
+  rw [mul_div_assoc, mul_div_cancel_left₀ _ two_ne_zero, ← ofReal_natCast, ← ofReal_mul,
+    ← ofReal_cos, mul_comm π, ← sub_zero (k * π), cos_nat_mul_pi_sub, Real.cos_zero, mul_one,
+    ofReal_pow, ofReal_neg, ofReal_one, pow_succ, mul_neg_one, mul_neg, ← mul_pow, neg_one_mul,
+    neg_neg, one_pow]
+
+theorem hurwitzZetaOdd_neg_two_mul_nat {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+    hurwitzZetaOdd x (-(2 * k)) =
+    -1 / (2 * k + 1) * ((Polynomial.bernoulli (2 * k + 1)).map (algebraMap ℚ ℂ)).eval ↑x := by
+  have h1 (n : ℕ) : (2 * k + 1 : ℂ) ≠ -n := by
+    rw [← Int.cast_ofNat, ← Int.cast_natCast, ← Int.cast_mul, ← Int.cast_natCast n, ← Int.cast_neg,
+      ← Int.cast_one, ← Int.cast_add, Ne, Int.cast_inj, ← Ne]
+    refine ne_of_gt ((neg_nonpos_of_nonneg n.cast_nonneg).trans_lt ?_)
+    positivity
+  have h3 : Gammaℂ (2 * k + 1) ≠ 0 := by
+    refine mul_ne_zero (mul_ne_zero two_ne_zero ?_) (Gamma_ne_zero h1)
+    simp only [ne_eq, cpow_eq_zero_iff, mul_eq_zero, OfNat.ofNat_ne_zero, ofReal_eq_zero,
+      pi_ne_zero, Nat.cast_eq_zero, false_or, false_and, not_false_eq_true]
+  rw [(by simp : -(2 * k : ℂ) = 1 - (2 * k + 1)),
+    hurwitzZetaOdd_one_sub _ h1, ← Gammaℂ, sinZeta_two_mul_nat_add_one' hk hx, ← mul_assoc,
+    ← mul_div_assoc, mul_assoc, mul_div_cancel_left₀ _ h3, ← mul_div_assoc]
+  congr 2
+  rw [mul_div_assoc, add_div, mul_div_cancel_left₀ _ two_ne_zero, ← ofReal_natCast,
+    ← ofReal_one, ← ofReal_ofNat, ← ofReal_div, ← ofReal_add, ← ofReal_mul,
+    ← ofReal_sin, mul_comm π, add_mul, mul_comm (1 / 2), mul_one_div, Real.sin_add_pi_div_two,
+    ← sub_zero (k * π), cos_nat_mul_pi_sub, Real.cos_zero, mul_one,
+    ofReal_pow, ofReal_neg, ofReal_one, pow_succ, mul_neg_one, mul_neg, ← mul_pow, neg_one_mul,
+    neg_neg, one_pow]
+
+theorem hurwitzZeta_one_sub_two_mul_nat {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+    hurwitzZeta x (1 - 2 * k) =
+      -1 / (2 * k) * ((Polynomial.bernoulli (2 * k)).map (algebraMap ℚ ℂ)).eval ↑x := by
+  suffices hurwitzZetaOdd x (1 - 2 * k) = 0 by
+    rw [hurwitzZeta, this, add_zero, hurwitzZetaEven_one_sub_two_mul_nat hk hx]
+  obtain ⟨k, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hk
+  rw [Nat.cast_succ, show (1 : ℂ) - 2 * (k + 1) = - 2 * k - 1 by ring]
+  apply hurwitzZetaOdd_neg_two_mul_nat_sub_one
+
+theorem hurwitzZeta_neg_two_mul_nat {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+    hurwitzZeta x (-(2 * k)) =
+      -1 / (2 * k + 1) * ((Polynomial.bernoulli (2 * k + 1)).map (algebraMap ℚ ℂ)).eval ↑x := by
+  suffices hurwitzZetaEven x (-(2 * k)) = 0 by
+    rw [hurwitzZeta, this, zero_add, hurwitzZetaOdd_neg_two_mul_nat hk hx]
+  obtain ⟨k, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hk
+  simpa only [Nat.cast_succ, ← neg_mul] using hurwitzZetaEven_neg_two_mul_nat_add_one x k
+
+/-- Values of Hurwitz zeta functions at (strictly) negative integers.
+
+TODO: This formula is also correct for `k = 0`; but our current proof does not work in this
+case. -/
+theorem hurwitzZeta_neg_nat {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+    hurwitzZeta x (-k) =
+    -1 / (k + 1) * ((Polynomial.bernoulli (k + 1)).map (algebraMap ℚ ℂ)).eval ↑x := by
+  rcases Nat.even_or_odd' k with ⟨n, (rfl | rfl)⟩
+  · have : n ≠ 0 := by contrapose! hk; rw [hk, mul_zero]
+    exact_mod_cast hurwitzZeta_neg_two_mul_nat this hx
+  · exact_mod_cast hurwitzZeta_one_sub_two_mul_nat (by omega : n + 1 ≠ 0) hx
 
 /-- Explicit formula for `ζ (2 * k)`, for `k ∈ ℕ` with `k ≠ 0`: we have
 `ζ (2 * k) = (-1) ^ (k + 1) * 2 ^ (2 * k - 1) * π ^ (2 * k) * bernoulli (2 * k) / (2 * k)!`.
@@ -23,7 +194,7 @@ Compare `hasSum_zeta_nat` for a version formulated explicitly as a sum, and
 `riemannZeta_neg_nat_eq_bernoulli` for values at negative integers (equivalent to the above via
 the functional equation). -/
 theorem riemannZeta_two_mul_nat {k : ℕ} (hk : k ≠ 0) :
-    riemannZeta (2 * k) = (-1 : ℂ) ^ (k + 1) * (2 : ℂ) ^ (2 * k - 1)
+    riemannZeta (2 * k) = (-1) ^ (k + 1) * (2 : ℂ) ^ (2 * k - 1)
       * (π : ℂ) ^ (2 * k) * bernoulli (2 * k) / (2 * k)! := by
   convert congr_arg ((↑) : ℝ → ℂ) (hasSum_zeta_nat hk).tsum_eq
   · rw [← Nat.cast_two, ← Nat.cast_mul, zeta_nat_eq_tsum_of_gt_one]
@@ -32,7 +203,7 @@ theorem riemannZeta_two_mul_nat {k : ℕ} (hk : k ≠ 0) :
     · refine one_lt_two.trans_le ?_
       conv_lhs => rw [← mul_one 2]
       rwa [mul_le_mul_left (zero_lt_two' ℕ), Nat.one_le_iff_ne_zero]
-  · set_option tactic.skipAssignedInstances false in norm_num
+  · norm_num
 #align riemann_zeta_two_mul_nat riemannZeta_two_mul_nat
 
 theorem riemannZeta_two : riemannZeta 2 = (π : ℂ) ^ 2 / 6 := by
@@ -50,82 +221,21 @@ theorem riemannZeta_four : riemannZeta 4 = π ^ 4 / 90 := by
   · norm_num
 #align riemann_zeta_four riemannZeta_four
 
+/-- Value of Riemann zeta at `-ℕ` in terms of `bernoulli'`. -/
+theorem riemannZeta_neg_nat_eq_bernoulli' (k : ℕ) :
+    riemannZeta (-k) = -bernoulli' (k + 1) / (k + 1) := by
+  rcases eq_or_ne k 0 with rfl | hk
+  · rw [Nat.cast_zero, neg_zero, riemannZeta_zero, zero_add, zero_add, div_one,
+      bernoulli'_one, Rat.cast_div, Rat.cast_one, Rat.cast_ofNat, neg_div]
+  · rw [← hurwitzZeta_zero, ← QuotientAddGroup.mk_zero, hurwitzZeta_neg_nat hk
+      (left_mem_Icc.mpr zero_le_one), ofReal_zero, Polynomial.eval_zero_map,
+      Polynomial.bernoulli_eval_zero, Algebra.algebraMap_eq_smul_one, Rat.smul_one_eq_coe,
+      div_mul_eq_mul_div, neg_one_mul, bernoulli_eq_bernoulli'_of_ne_one (by simp [hk])]
+
+/-- Value of Riemann zeta at `-ℕ` in terms of `bernoulli`. -/
 theorem riemannZeta_neg_nat_eq_bernoulli (k : ℕ) :
     riemannZeta (-k) = (-1 : ℂ) ^ k * bernoulli (k + 1) / (k + 1) := by
-  rcases Nat.even_or_odd' k with ⟨m, rfl | rfl⟩
-  · cases' m with m m
-    ·-- k = 0 : evaluate explicitly
-      rw [Nat.zero_eq, mul_zero, Nat.cast_zero, pow_zero, one_mul, zero_add, neg_zero, zero_add,
-        div_one, bernoulli_one, riemannZeta_zero]
-      norm_num
-    · -- k = 2 * (m + 1) : both sides "trivially" zero
-      rw [Nat.cast_mul, ← neg_mul, Nat.cast_two, Nat.cast_succ, riemannZeta_neg_two_mul_nat_add_one,
-        bernoulli_eq_bernoulli'_of_ne_one]
-      swap; · apply ne_of_gt; norm_num
-      rw [bernoulli'_odd_eq_zero ⟨m + 1, rfl⟩ (by norm_num), Rat.cast_zero, mul_zero,
-        zero_div]
-  · -- k = 2 * m + 1 : the interesting case
-    rw [Odd.neg_one_pow ⟨m, rfl⟩]
-    rw [show -(↑(2 * m + 1) : ℂ) = 1 - (2 * m + 2) by push_cast; ring]
-    rw [riemannZeta_one_sub]
-    rotate_left
-    · intro n
-      rw [(by norm_cast : 2 * (m : ℂ) + 2 = ↑(2 * m + 2)), ← Int.cast_neg_natCast,
-        ← Int.cast_natCast, Ne.def, Int.cast_inj]
-      apply ne_of_gt
-      exact lt_of_le_of_lt
-        (by set_option tactic.skipAssignedInstances false in norm_num : (-n : ℤ) ≤ 0)
-        (by positivity)
-    · rw [(by norm_cast : 2 * (m : ℂ) + 2 = ↑(2 * m + 2)), Ne.def, Nat.cast_eq_one]; norm_num
-    -- get rid of cosine term
-    rw [show Complex.cos (π * (2 * m + 2) / 2) = -(-1 : ℂ) ^ m by
-        rw [(by field_simp; ring : (π : ℂ) * (2 * m + 2) / 2 = (π * m + π))]
-        rw [Complex.cos_add_pi, neg_inj]
-        rcases Nat.even_or_odd' m with ⟨t, rfl | rfl⟩
-        · rw [pow_mul, neg_one_sq, one_pow]
-          convert Complex.cos_nat_mul_two_pi t using 2
-          push_cast; ring_nf
-        · rw [pow_add, pow_one, pow_mul, neg_one_sq, one_pow, one_mul]
-          convert Complex.cos_nat_mul_two_pi_add_pi t using 2
-          push_cast; ring_nf]
-    -- substitute in what we know about zeta values at positive integers
-    have step1 := congr_arg ((↑) : ℝ → ℂ) (hasSum_zeta_nat (by norm_num : m + 1 ≠ 0)).tsum_eq
-    have step2 := zeta_nat_eq_tsum_of_gt_one (by rw [mul_add]; norm_num : 1 < 2 * (m + 1))
-    simp_rw [ofReal_tsum, ofReal_div, ofReal_one, ofReal_pow, ofReal_natCast] at step1
-    rw [step1, (by norm_cast : (↑(2 * (m + 1)) : ℂ) = 2 * ↑m + 2)] at step2
-    rw [step2, mul_div]
-    -- now the rest is just a lengthy but elementary rearrangement
-    rw [show ((2 * (m + 1))! : ℂ) = Complex.Gamma (2 * m + 2) * (↑(2 * m + 1) + 1) by
-        rw [(by push_cast; ring : (2 * m + 2 : ℂ) = ↑(2 * m + 1) + 1),
-          Complex.Gamma_nat_eq_factorial, (by ring : 2 * (m + 1) = 2 * m + 1 + 1),
-          Nat.factorial_succ, Nat.cast_mul, mul_comm]
-        norm_num]
-    rw [← div_div, neg_one_mul]
-    congr 1
-    rw [div_eq_iff (Gamma_ne_zero_of_re_pos _)]
-    swap; · rw [(by norm_num : 2 * (m : ℂ) + 2 = ↑(2 * (m : ℝ) + 2)), ofReal_re]; positivity
-    simp_rw [ofReal_mul, ← mul_assoc, ofReal_ratCast, mul_add, Nat.add_assoc, mul_one,
-      one_add_one_eq_two, mul_neg, neg_mul, neg_inj]
-    conv_rhs => rw [mul_comm]
-    congr 1
-    rw [ofReal_pow, ofReal_neg, ofReal_one, pow_add, neg_one_sq, mul_one]
-    conv_lhs =>
-      congr
-      congr
-      rw [mul_assoc, ← pow_add, ← two_mul, pow_mul, neg_one_sq, one_pow, mul_one]
-    rw [(by simp : (2 : ℂ) * π = ((2 : ℝ) : ℂ) * π), mul_cpow_ofReal_nonneg two_pos.le pi_pos.le,
-      ← mul_assoc]
-    rw [show (2 : ℂ) * ↑(2 : ℝ) ^ (-(2 * ↑m + 2) : ℂ) = (↑((2 : ℝ) ^ (2 * m + 2 - 1 : ℕ)))⁻¹ by
-        rw [ofReal_pow, ← cpow_natCast, ← cpow_neg, show (2 : ℝ) = (2 : ℂ) by norm_num]
-        rw [Nat.add_sub_assoc one_le_two, Nat.cast_add, Nat.cast_mul, Nat.cast_two,
-          (by norm_num : 2 - 1 = 1), Nat.cast_one]
-        nth_rewrite 1 [← cpow_one 2]
-        rw [← cpow_add _ _ two_ne_zero]
-        congr 1
-        ring]
-    rw [show (π : ℂ) ^ (-(2 * (m : ℂ) + 2)) = (↑(π ^ (2 * m + 2)))⁻¹ by
-        rw [ofReal_pow, ← cpow_natCast, ← cpow_neg, Nat.cast_add, Nat.cast_mul, Nat.cast_two]]
-    rw [(by intros; ring : ∀ a b c d e : ℂ, a * b * c * d * e = a * d * (b * e) * c)]
-    rw [inv_mul_cancel (ofReal_ne_zero.mpr <| pow_ne_zero _ pi_ne_zero),
-      inv_mul_cancel (ofReal_ne_zero.mpr <| pow_ne_zero _ two_ne_zero), one_mul, one_mul]
+  rw [riemannZeta_neg_nat_eq_bernoulli', bernoulli, Rat.cast_mul, Rat.cast_pow, Rat.cast_neg,
+    Rat.cast_one, ← neg_one_mul, ← mul_assoc, pow_succ, ← mul_assoc, ← mul_pow, neg_one_mul (-1),
+    neg_neg, one_pow, one_mul]
 #align riemann_zeta_neg_nat_eq_bernoulli riemannZeta_neg_nat_eq_bernoulli
