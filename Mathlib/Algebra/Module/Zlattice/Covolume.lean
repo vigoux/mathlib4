@@ -77,7 +77,7 @@ theorem covolume_eq_det_mul_measure {ι : Type*} [Fintype ι] [DecidableEq ι] (
 
 theorem covolume_eq_det {ι : Type*} [Fintype ι] [DecidableEq ι] (L : AddSubgroup (ι → ℝ))
     [DiscreteTopology L] [IsZlattice ℝ L] (b : Basis ι ℤ L) :
-    covolume L volume = |(Matrix.of ((↑) ∘ b)).det| := by
+    covolume L = |(Matrix.of ((↑) ∘ b)).det| := by
   rw [covolume_eq_measure_fundamentalDomain L volume (isAddFundamentalDomain b volume),
     Zspan.volume_fundamentalDomain, ENNReal.toReal_ofReal (by positivity)]
   congr
