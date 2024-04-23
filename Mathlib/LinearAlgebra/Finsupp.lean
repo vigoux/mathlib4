@@ -1339,7 +1339,7 @@ lemma mem_span_set' {m : M} {s : Set M} :
     rw [Finsupp.sum, ← Finset.sum_coe_sort c.support]
     exact Fintype.sum_equiv A.symm _ (fun j ↦ c j • (j : M)) (fun i ↦ rfl)
   · rintro ⟨n, f, g, rfl⟩
-    exact Submodule.sum_mem _ (fun i _ ↦ Submodule.smul_mem _ _ (Submodule.subset_span (g i).2))
+    exact sum_mem (fun i _ ↦ Submodule.smul_mem _ _ (Submodule.subset_span (g i).2))
 
 /-- The span of a subset `s` is the union over all `n` of the set of linear combinations of at most
 `n` terms belonging to `s`. -/

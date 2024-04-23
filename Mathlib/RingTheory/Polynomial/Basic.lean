@@ -79,7 +79,7 @@ theorem degreeLE_eq_span_X_pow [DecidableEq R] {n : ℕ} :
   · intro p hp
     replace hp := mem_degreeLE.1 hp
     rw [← Polynomial.sum_monomial_eq p, Polynomial.sum]
-    refine' Submodule.sum_mem _ fun k hk => _
+    refine' sum_mem fun k hk => _
     have := WithBot.coe_le_coe.1 (Finset.sup_le_iff.1 hp k hk)
     rw [← C_mul_X_pow_eq_monomial, C_mul']
     refine'
@@ -119,7 +119,7 @@ theorem degreeLT_eq_span_X_pow [DecidableEq R] {n : ℕ} :
   · intro p hp
     replace hp := mem_degreeLT.1 hp
     rw [← Polynomial.sum_monomial_eq p, Polynomial.sum]
-    refine' Submodule.sum_mem _ fun k hk => _
+    refine' sum_mem fun k hk => _
     have := WithBot.coe_lt_coe.1 ((Finset.sup_lt_iff <| WithBot.bot_lt_coe n).1 hp k hk)
     rw [← C_mul_X_pow_eq_monomial, C_mul']
     refine'
@@ -590,7 +590,7 @@ variable [CommSemiring R] [Semiring S]
 /-- If every coefficient of a polynomial is in an ideal `I`, then so is the polynomial itself -/
 theorem polynomial_mem_ideal_of_coeff_mem_ideal (I : Ideal R[X]) (p : R[X])
     (hp : ∀ n : ℕ, p.coeff n ∈ I.comap (C : R →+* R[X])) : p ∈ I :=
-  sum_C_mul_X_pow_eq p ▸ Submodule.sum_mem I fun n _ => I.mul_mem_right _ (hp n)
+  sum_C_mul_X_pow_eq p ▸ _root_.sum_mem fun n _ => I.mul_mem_right _ (hp n)
 #align ideal.polynomial_mem_ideal_of_coeff_mem_ideal Ideal.polynomial_mem_ideal_of_coeff_mem_ideal
 
 /-- The push-forward of an ideal `I` of `R` to `R[X]` via inclusion
@@ -1223,7 +1223,7 @@ theorem mem_ideal_of_coeff_mem_ideal (I : Ideal (MvPolynomial σ R)) (p : MvPoly
     (hcoe : ∀ m : σ →₀ ℕ, p.coeff m ∈ I.comap (C : R →+* MvPolynomial σ R)) : p ∈ I := by
   rw [as_sum p]
   suffices ∀ m ∈ p.support, monomial m (MvPolynomial.coeff m p) ∈ I by
-    exact Submodule.sum_mem I this
+    exact sum_mem this
   intro m _
   rw [← mul_one (coeff m p), ← C_mul_monomial]
   suffices C (coeff m p) ∈ I by exact I.mul_mem_right (monomial m 1) this
@@ -1253,7 +1253,7 @@ theorem mem_map_C_iff {I : Ideal R} {f : MvPolynomial σ R} :
   · intro hf
     rw [as_sum f]
     suffices ∀ m ∈ f.support, monomial m (coeff m f) ∈ (Ideal.map C I : Ideal (MvPolynomial σ R)) by
-      exact Submodule.sum_mem _ this
+      exact sum_mem this
     intro m _
     rw [← mul_one (coeff m f), ← C_mul_monomial]
     suffices C (coeff m f) ∈ (Ideal.map C I : Ideal (MvPolynomial σ R)) by

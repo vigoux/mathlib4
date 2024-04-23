@@ -1179,7 +1179,7 @@ def submoduleOfSMulMem (W : Submodule k V) (h : ∀ (g : G) (v : V), v ∈ W →
     intro f v hv
     rw [← Finsupp.sum_single f, Finsupp.sum, Finset.sum_smul]
     simp_rw [← smul_of, smul_assoc]
-    exact Submodule.sum_smul_mem W _ fun g _ => h g v hv
+    exact sum_mem fun g _ => Submodule.smul_mem _ _ <| h g v hv
 #align monoid_algebra.submodule_of_smul_mem MonoidAlgebra.submoduleOfSMulMem
 
 end Submodule

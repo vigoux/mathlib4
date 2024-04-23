@@ -389,8 +389,8 @@ theorem fundamentalDomain_ae_parallelepiped [Fintype ι] [MeasurableSpace E] (μ
   obtain ⟨i, hi⟩ := hx.2
   have : b.repr x i = 1 := le_antisymm (hx.1 i).2 (hi (hx.1 i).1)
   rw [← b.sum_repr x, ← Finset.sum_erase_add _ _ (Finset.mem_univ i), this, one_smul, ← vadd_eq_add]
-  refine Set.mem_iUnion.mpr ⟨i, AffineSubspace.vadd_mem_mk' _
-    (sum_smul_mem _ _ (fun i hi ↦ Submodule.subset_span ?_))⟩
+  refine Set.mem_iUnion.mpr ⟨i, AffineSubspace.vadd_mem_mk' _ ?_⟩
+  refine sum_mem fun i hi => Submodule.smul_mem _ _ (Submodule.subset_span ?_)
   exact ⟨i, Set.mem_diff_singleton.mpr ⟨trivial, Finset.ne_of_mem_erase hi⟩, rfl⟩
 
 end Real

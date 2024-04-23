@@ -497,7 +497,7 @@ theorem mem_rat_span_latticeBasis (x : K) :
     mixedEmbedding K x ∈ Submodule.span ℚ (Set.range (latticeBasis K)) := by
   rw [← Basis.sum_repr (integralBasis K) x, map_sum]
   simp_rw [map_rat_smul]
-  refine Submodule.sum_smul_mem _ _ (fun i _ ↦ Submodule.subset_span ?_)
+  refine sum_mem fun i _ => Submodule.smul_mem _ _ (Submodule.subset_span ?_)
   rw [← latticeBasis_apply]
   exact Set.mem_range_self i
 

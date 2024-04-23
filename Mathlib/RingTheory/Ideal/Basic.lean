@@ -79,7 +79,7 @@ theorem ext {I J : Ideal α} (h : ∀ x, x ∈ I ↔ x ∈ J) : I = J :=
 
 theorem sum_mem (I : Ideal α) {ι : Type*} {t : Finset ι} {f : ι → α} :
     (∀ c ∈ t, f c ∈ I) → (∑ i in t, f i) ∈ I :=
-  Submodule.sum_mem I
+  _root_.sum_mem
 #align ideal.sum_mem Ideal.sum_mem
 
 theorem eq_top_of_unit_mem (x y : α) (hx : x ∈ I) (h : y * x = 1) : I = ⊤ :=
@@ -643,7 +643,7 @@ theorem pow_multiset_sum_mem_span_pow [DecidableEq α] (s : Multiset α) (n : �
   · simp
   simp only [Finset.coe_insert, Multiset.map_cons, Multiset.toFinset_cons, Multiset.sum_cons,
     Multiset.card_cons, add_pow]
-  refine' Submodule.sum_mem _ _
+  refine' _root_.sum_mem _
   intro c _hc
   rw [mem_span_insert]
   by_cases h : n + 1 ≤ c

@@ -137,7 +137,7 @@ theorem mem_span_gramSchmidt (f : ι → E) {i j : ι} (hij : i ≤ j) :
   rw [gramSchmidt_def' 𝕜 f i]
   simp_rw [orthogonalProjection_singleton]
   exact Submodule.add_mem _ (subset_span <| mem_image_of_mem _ hij)
-    (Submodule.sum_mem _ fun k hk => smul_mem (span 𝕜 (gramSchmidt 𝕜 f '' Set.Iic j)) _ <|
+    (sum_mem fun k hk => smul_mem (span 𝕜 (gramSchmidt 𝕜 f '' Set.Iic j)) _ <|
       subset_span <| mem_image_of_mem (gramSchmidt 𝕜 f) <| (Finset.mem_Iio.1 hk).le.trans hij)
 #align mem_span_gram_schmidt mem_span_gramSchmidt
 
@@ -147,7 +147,7 @@ theorem gramSchmidt_mem_span (f : ι → E) :
   rw [gramSchmidt_def 𝕜 f i]
   simp_rw [orthogonalProjection_singleton]
   refine' Submodule.sub_mem _ (subset_span (mem_image_of_mem _ hij))
-    (Submodule.sum_mem _ fun k hk => _)
+    (sum_mem fun k hk => _)
   let hkj : k < j := (Finset.mem_Iio.1 hk).trans_le hij
   exact smul_mem _ _
     (span_mono (image_subset f <| Iic_subset_Iic.2 hkj.le) <| gramSchmidt_mem_span _ le_rfl)
@@ -204,7 +204,7 @@ theorem gramSchmidt_ne_zero_coe {f : ι → E} (n : ι)
   by_contra h
   have h₁ : f n ∈ span 𝕜 (f '' Set.Iio n) := by
     rw [← span_gramSchmidt_Iio 𝕜 f n, gramSchmidt_def' 𝕜 f, h, zero_add]
-    apply Submodule.sum_mem _ _
+    apply sum_mem _
     intro a ha
     simp only [Set.mem_image, Set.mem_Iio, orthogonalProjection_singleton]
     apply Submodule.smul_mem _ _ _

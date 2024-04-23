@@ -290,7 +290,7 @@ theorem le_jacobson_bot [IsAdicComplete I R] : I ≤ (⊥ : Ideal R).jacobson :=
     simp only [f, Algebra.id.smul_eq_mul, Ideal.mul_top, SModEq.sub_mem]
     rw [← add_tsub_cancel_of_le h, Finset.sum_range_add, ← sub_sub, sub_self, zero_sub,
       @neg_mem_iff]
-    apply Submodule.sum_mem
+    apply sum_mem
     intro n _
     rw [mul_pow, pow_add, mul_assoc]
     exact Ideal.mul_mem_right _ (I ^ m) (Ideal.pow_mem_pow hx m)

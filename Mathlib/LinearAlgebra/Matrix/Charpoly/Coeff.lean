@@ -65,7 +65,7 @@ theorem charpoly_sub_diagonal_degree_lt :
   simp only [charmatrix_apply_eq, one_mul, Equiv.Perm.sign_refl, id, Int.cast_one,
     Units.val_one, add_sub_cancel_right, Equiv.coe_refl]
   rw [← mem_degreeLT]
-  apply Submodule.sum_mem (degreeLT R (Fintype.card n - 1))
+  apply sum_mem
   intro c hc; rw [← C_eq_intCast, C_mul']
   apply Submodule.smul_mem (degreeLT R (Fintype.card n - 1)) ↑↑(Equiv.Perm.sign c)
   rw [mem_degreeLT]

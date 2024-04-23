@@ -222,7 +222,7 @@ instance (priority := 100) IsAdicComplete.henselianRing (R : Type*) [CommRing R]
             taylor_coeff_zero, taylor_coeff_one, pow_zero, pow_one, mul_one, mul_neg,
             mul_left_comm, Ring.mul_inverse_cancel _ (hf'c n), mul_one, add_neg_self]
           exact Ideal.zero_mem _
-        · refine' Submodule.sum_mem _ _
+        · refine' sum_mem _
           simp only [Finset.mem_Ico]
           rintro i ⟨h2i, _⟩
           have aux : n + 2 ≤ i * (n + 1) := by trans 2 * (n + 1) <;> nlinarith only [h2i]

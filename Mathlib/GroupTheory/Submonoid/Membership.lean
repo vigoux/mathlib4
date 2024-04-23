@@ -102,6 +102,7 @@ theorem prod_mem {M : Type*} [CommMonoid M] [SetLike B M] [SubmonoidClass B M] {
     hix ▸ h i hi
 #align prod_mem prod_mem
 #align sum_mem sum_mem
+#align submodule.sum_mem sum_memₓ
 
 namespace Submonoid
 

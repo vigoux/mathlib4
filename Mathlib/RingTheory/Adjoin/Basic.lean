@@ -378,7 +378,7 @@ theorem pow_smul_mem_of_smul_subset_of_mem_adjoin [CommSemiring B] [Algebra R B]
   use l.support.sup n₁
   intro n hn
   rw [Finsupp.smul_sum]
-  refine' B'.toSubmodule.sum_mem _
+  refine' sum_mem _
   intro a ha
   have : n ≥ n₁ a := le_trans (Finset.le_sup ha) hn
   dsimp only

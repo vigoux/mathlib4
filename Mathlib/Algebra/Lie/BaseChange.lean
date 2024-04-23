@@ -180,7 +180,7 @@ def baseChange : LieSubmodule A (A ⊗[R] L) (A ⊗[R] M) :=
         simp_rw [Finsupp.total_apply, Finsupp.sum, map_sum, map_smul, toEndomorphism_apply_apply]
         suffices ∀ n : (N : Submodule R M).map (TensorProduct.mk R A M 1),
             ⁅a ⊗ₜ[R] y, (n : A ⊗[R] M)⁆ ∈ (N : Submodule R M).baseChange A by
-          exact Submodule.sum_mem _ fun n _ ↦ Submodule.smul_mem _ _ (this n)
+          exact sum_mem fun n _ ↦ Submodule.smul_mem _ _ (this n)
         rintro ⟨-, ⟨n : M, hn : n ∈ N, rfl⟩⟩
         exact Submodule.tmul_mem_baseChange_of_mem _ (N.lie_mem hn)
       · rw [add_lie]

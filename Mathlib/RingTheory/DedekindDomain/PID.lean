@@ -133,7 +133,8 @@ theorem FractionalIdeal.isPrincipal.of_finite_maximals_of_inv {A : Type*} [CommR
   choose! a ha b hb hm using this
   choose! u hu hum using fun M hM => SetLike.not_le_iff_exists.1 (nle M hM)
   let v := ∑ M in s, u M • b M
-  have hv : v ∈ I' := Submodule.sum_mem _ fun M hM => Submodule.smul_mem _ _ <| hb M hM
+  have hv : v ∈ I' :=
+    sum_mem (S := (I' : Submodule R A)) fun M hM => Submodule.smul_mem _ _ <| hb M hM
   refine'
     FractionalIdeal.isPrincipal_of_unit_of_comap_mul_span_singleton_eq_top
       (Units.mkOfMulEqOne I I' hinv') hv (of_not_not fun h => _)
@@ -159,7 +160,7 @@ theorem FractionalIdeal.isPrincipal.of_finite_maximals_of_inv {A : Type*} [CommR
     -- Note: #8386 had to specify the value of `f`
     exact Submodule.mem_map_of_mem (f := Algebra.linearMap _ _)
         (((hf.mem_toFinset.1 hM).isPrime.mem_or_mem hdM).resolve_left <| hum M hM)
-  · refine' Submodule.sum_mem _ fun M' hM' => _
+  · refine' sum_mem fun M' hM' => _
     rw [Finset.mem_erase] at hM'
     obtain ⟨c, hc⟩ := this _ (ha M hM) _ (hb M' hM'.2)
     rw [← hc, Algebra.smul_def, ← _root_.map_mul]

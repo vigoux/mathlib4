@@ -445,7 +445,7 @@ lemma set_smul_eq_map [SMulCommClass R R N] :
     simp only [LinearMap.coe_comp, coeSubtype, Finsupp.coe_lsum, Finsupp.sum, LinearMap.coe_mk,
       AddHom.coe_mk, Function.comp_apply, AddSubmonoid.coe_finset_sum, coe_toAddSubmonoid,
       SetLike.val_smul]
-    refine Submodule.sum_mem (p := sR • N) (t := c.support) ?_ _ ⟨sR • N, ?_⟩
+    refine sum_mem (S := sR • N) (t := c.support) ?_ _ ⟨sR • N, ?_⟩
     · rintro r hr
       rw [mem_set_smul_def, Submodule.mem_sInf]
       rintro p hp
@@ -469,7 +469,7 @@ lemma mem_set_smul (x : M) [SMulCommClass R R N] :
   · rw [mem_set_smul_def, Submodule.mem_sInf]
     rintro ⟨c, hc1, rfl⟩ p hp
     simp only [Finsupp.sum, AddSubmonoid.coe_finset_sum, coe_toAddSubmonoid, SetLike.val_smul]
-    exact Submodule.sum_mem _ fun r hr ↦ hp (hc1 hr) (c _).2
+    exact sum_mem fun r hr ↦ hp (hc1 hr) (c _).2
 
 @[simp] lemma empty_set_smul : (∅ : Set S) • N = ⊥ := by
   ext
@@ -524,7 +524,7 @@ protected def pointwiseSetMulAction [SMulCommClass R R M] :
       obtain ⟨c, hc1, rfl⟩ := mem_set_smul _ _ _ |>.mp hm
       simp only [Finsupp.sum, AddSubmonoid.coe_finset_sum, coe_toAddSubmonoid, SetLike.val_smul,
         Finset.smul_sum, smul_smul]
-      exact Submodule.sum_mem _ fun r' hr' ↦
+      exact sum_mem fun r' hr' ↦
         mem_set_smul_of_mem_mem (Set.mul_mem_mul hr (hc1 hr')) (c _).2)
 
 scoped[Pointwise] attribute [instance] Submodule.pointwiseSetMulAction
@@ -577,7 +577,7 @@ lemma coe_span_smul {R' M' : Type*} [CommSemiring R'] [AddCommMonoid M'] [Module
         · rw [mem_span_set] at hr
           obtain ⟨c, hc, rfl⟩ := hr
           rw [Finsupp.sum, Finset.smul_sum, Finset.sum_smul]
-          refine Submodule.sum_mem _ fun i hi => ?_
+          refine sum_mem fun i hi => ?_
           rw [← mul_smul, smul_eq_mul, mul_comm, mul_smul]
           exact mem_set_smul_of_mem_mem (hc hi) <| Submodule.smul_mem _ _ hn) <|
     set_smul_mono_left _ Submodule.subset_span
