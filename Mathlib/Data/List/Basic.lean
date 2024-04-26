@@ -860,6 +860,14 @@ theorem get_eq_get? (l : List α) (i : Fin l.length) :
     l.get i = (l.get? i).get (by simp [get?_eq_get]) := by
   simp [get_eq_iff]
 
+theorem exists_mem_iff_get {l : List α} {p : α → Prop} :
+    (∃ x ∈ l, p x) ↔ ∃ i : Fin l.length, p (l.get i) := by
+  simp [mem_iff_get]
+
+theorem forall_mem_iff_get {l : List α} {p : α → Prop} :
+    (∀ x ∈ l, p x) ↔ ∀ i : Fin l.length, p (l.get i) := by
+  simp [mem_iff_get]
+
 section deprecated
 set_option linter.deprecated false -- TODO(Mario): make replacements for theorems in this section
 
@@ -3688,8 +3696,8 @@ theorem disjoint_pmap {p : α → Prop} {f : ∀ a : α, p a → β} {s t : List
     (hf : ∀ (a a' : α) (ha : p a) (ha' : p a'), f a ha = f a' ha' → a = a')
     (h : Disjoint s t) :
     Disjoint (s.pmap f hs) (t.pmap f ht) := by
-  simp only [Disjoint, mem_pmap]
-  rintro b ⟨a, ha, rfl⟩ ⟨a', ha', ha''⟩
+  simp only [Disjoint, mem_pmap, exists_imp]
+  rintro b a ha rfl a' ha' ha''
   apply h ha
   rwa [hf a a' (hs a ha) (ht a' ha') ha''.symm]
 
@@ -3698,6 +3706,16 @@ theorem disjoint_map {f : α → β} {s t : List α} (hf : Function.Injective f)
     (h : Disjoint s t) : Disjoint (s.map f) (t.map f) := by
   rw [← pmap_eq_map _ _ _ (fun _ _ ↦ trivial), ← pmap_eq_map _ _ _ (fun _ _ ↦ trivial)]
   exact disjoint_pmap _ _ (fun _ _ _ _ h' ↦ hf h') h
+
+alias Disjoint.map := disjoint_map
+
+theorem Disjoint.of_map {f : α → β} {s t : List α} (h : Disjoint (s.map f) (t.map f)) :
+    Disjoint s t := fun _a has hat ↦
+  h (mem_map_of_mem f has) (mem_map_of_mem f hat)
+
+theorem disjoint_map_iff {f : α → β} {s t : List α} (hf : Function.Injective f) :
+    Disjoint (s.map f) (t.map f) ↔ Disjoint s t :=
+  ⟨fun h ↦ h.of_map, fun h ↦ h.map hf⟩
 
 end Disjoint
 
