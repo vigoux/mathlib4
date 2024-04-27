@@ -869,6 +869,7 @@ def homeoOfEquivCompactToT2 [CompactSpace X] [T2Space Y] {f : X ≃ Y} (hf : Con
 end Continuous
 
 variable [TopologicalSpace X] [TopologicalSpace Y] [TopologicalSpace Z]
+  {W : Type*} [TopologicalSpace W]
 
 def IsHomeomorph (f : X → Y) := Continuous f ∧ IsOpenMap f ∧ Function.Bijective f
 
@@ -944,3 +945,23 @@ theorem isHomeomorph_id : IsHomeomorph (@id X) := ⟨continuous_id,IsOpenMap.id,
 
 theorem IsHomeomorph.comp {f : X → Y} {g : Y → Z} (hg : IsHomeomorph g) (hf : IsHomeomorph f) :
   IsHomeomorph (g ∘ f) := ⟨hg.1.comp hf.1,hg.2.1.comp hf.2.1,hg.2.2.comp hf.2.2⟩
+
+theorem IsHomeomorph.sum_map {f : X → Y} {g : Z → W} (hf : IsHomeomorph f) (hg : IsHomeomorph g) :
+    IsHomeomorph (Sum.map f g) := by
+  refine' ⟨hf.1.sum_map hg.1,hf.2.1.sum_map hg.2.1,hf.2.2.sum_map hg.2.2⟩
+
+theorem IsHomeomorph.prod_map {f : X → Y} {g : Z → W} (hf : IsHomeomorph f) (hg : IsHomeomorph g) :
+    IsHomeomorph (Prod.map f g) :=
+  ⟨hf.1.prod_map hg.1,hf.2.1.prod hg.2.1,hf.2.2.Prod_map hg.2.2⟩
+
+lemma IsHomeomorph.sigma_map {ι κ : Type*} {X : ι → Type*} {Y : κ → Type*}
+    [∀ i, TopologicalSpace (X i)] [∀ i, TopologicalSpace (Y i)] {f₁ : ι → κ}
+    (h₁ : Function.Bijective f₁) {f₂ : (i : ι) → X i → Y (f₁ i)} (h₂ : ∀ i, IsHomeomorph (f₂ i)) :
+    IsHomeomorph (Sigma.map f₁ f₂) := by
+  refine' isHomeomorph_iff_embedding_surjective.2 ⟨_,h₁.2.sigma_map fun i => (h₂ i).2.2.2⟩
+  exact (embedding_sigma_map h₁.1).2 fun i => (isHomeomorph_iff_embedding_surjective.1 (h₂ i)).1
+
+lemma IsHomeomorph.pi_map {ι : Type*} {X Y : ι → Type*} [∀ i, TopologicalSpace (X i)]
+    [∀ i, TopologicalSpace (Y i)] {f : (i : ι) → X i → Y i} (h : ∀ i, IsHomeomorph (f i)) :
+    IsHomeomorph (fun (x : ∀ i, X i) i ↦ f i (x i)) := by
+  exact (Homeomorph.piCongrRight fun i => Homeomorph.ofIsHomeomorph (f i) (h i)).isHomeomorph
