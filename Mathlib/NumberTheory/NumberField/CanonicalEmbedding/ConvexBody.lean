@@ -655,6 +655,8 @@ local notation "E₂" K =>
     (WithLp 2 ((EuclideanSpace ℝ {w : InfinitePlace K // IsReal w}) ×
       (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w})))
 
+#synth NormedAddCommGroup (E₂ K)
+
 instance : MeasurableSpace (E₂ K) := borel _
 
 instance : BorelSpace (E₂ K)  :=  ⟨rfl⟩
