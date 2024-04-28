@@ -6,6 +6,7 @@ Authors: Xavier Roblot
 import Mathlib.MeasureTheory.Group.GeometryOfNumbers
 import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
 import Mathlib.NumberTheory.NumberField.CanonicalEmbedding.Basic
+import Mathlib.Analysis.InnerProductSpace.ProdL2
 
 #align_import number_theory.number_field.canonical_embedding from "leanprover-community/mathlib"@"60da01b41bbe4206f05d34fd70c8dd7498717a30"
 
@@ -642,5 +643,61 @@ theorem exists_ne_zero_mem_ringOfIntegers_of_norm_le {B : ℝ}
   exact ⟨a, ha, h_nz, h_bd⟩
 
 end minkowski
+
+noncomputable section euclidean
+
+open Classical BigOperators MeasureTheory
+
+variable [NumberField K]
+
+/-- The space `ℝ^r₁ × ℂ^r₂` with `(r₁, r₂)` the signature of `K` as an Euclidean space. -/
+local notation "E₂" K =>
+    (WithLp 2 ((EuclideanSpace ℝ {w : InfinitePlace K // IsReal w}) ×
+      (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w})))
+
+instance : MeasurableSpace (E₂ K) := borel _
+
+instance : BorelSpace (E₂ K)  :=  ⟨rfl⟩
+
+def euclideanEquiv : (E₂ K) ≃L[ℝ] (E K) := ContinuousLinearEquiv.prod
+  (EuclideanSpace.equiv _ ℝ) ((EuclideanSpace.equiv _ ℂ).restrictScalars ℝ).toContinuousLinearEquiv
+
+@[simp]
+theorem euclideanEquiv_apply (a : E₂ K) : euclideanEquiv K a = a := rfl
+
+@[simp]
+theorem euclideanEquiv_symm_apply (a : E K) : (euclideanEquiv K).symm a = a := rfl
+
+theorem euclidean_norm_apply (x : E₂ K) :
+    ‖x‖ = Real.sqrt (∑ w, ‖x.1 w‖ ^ 2 + ∑ w, ‖x.2 w‖ ^ 2) := by
+  rw [WithLp.prod_norm_eq_add (by exact Nat.ofNat_pos), EuclideanSpace.norm_eq,
+    EuclideanSpace.norm_eq, ENNReal.toReal_ofNat, Real.rpow_two, Real.sq_sqrt (by positivity),
+    Real.rpow_two, Real.sq_sqrt (by positivity), Real.sqrt_eq_rpow]
+
+theorem euclidean_inner_apply (x y : E₂ K) :
+    ⟪x, y⟫_ℝ = ∑ w, (x.1 w) * (y.1 w) +
+      ∑ w, ((x.2 w).re * (y.2 w).re + (x.2 w).im * (y.2 w).im) := by
+  simp_rw [WithLp.prod_inner_apply, EuclideanSpace.inner_eq_star_dotProduct, real_inner_eq_re_inner,
+    EuclideanSpace.inner_eq_star_dotProduct, Matrix.dotProduct, Pi.star_apply, star_trivial,
+    RCLike.star_def, map_sum, RCLike.mul_re, RCLike.conj_re, RCLike.re_to_complex,
+    RCLike.conj_im, WithLp.equiv_pi_apply, neg_mul, sub_neg_eq_add, RCLike.im_to_complex]
+
+protected def stdOrthonormalBasis : OrthonormalBasis (index K) ℝ (E₂ K) := by
+  sorry
+
+theorem stdOrthonormalBasis_equiv :
+    (mixedEmbedding.stdOrthonormalBasis K).toBasis.map (euclideanEquiv K).toLinearEquiv =
+    stdBasis K := sorry
+
+theorem measurePreserving_euclideanEquiv :
+    MeasurePreserving (euclideanEquiv K) := by
+  convert ((euclideanEquiv K).toHomeomorph.toMeasurableEquiv.measurable.measurePreserving volume)
+  rw [← (OrthonormalBasis.addHaar_eq_volume (mixedEmbedding.stdOrthonormalBasis K)),
+    Homeomorph.toMeasurableEquiv_coe, ContinuousLinearEquiv.coe_toHomeomorph,
+    Basis.map_addHaar, stdOrthonormalBasis_equiv, eq_comm, Basis.addHaar_eq_iff,
+    Basis.coe_parallelepiped, ← measure_congr (Zspan.fundamentalDomain_ae_parallelepiped
+    (stdBasis K) volume), volume_fundamentalDomain_stdBasis K]
+
+end euclidean
 
 end NumberField.mixedEmbedding
