@@ -4,12 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Xavier Roblot
 -/
 import Mathlib.Algebra.Module.Zlattice.Basic
-import Mathlib.Analysis.InnerProductSpace.ProdL2
 import Mathlib.NumberTheory.NumberField.Embeddings
 import Mathlib.NumberTheory.NumberField.FractionalIdeal
-
-import Mathlib.Analysis.InnerProductSpace.EuclideanDist
-import Mathlib.Extra
 
 #align_import number_theory.number_field.canonical_embedding from "leanprover-community/mathlib"@"60da01b41bbe4206f05d34fd70c8dd7498717a30"
 
@@ -454,63 +450,6 @@ theorem stdBasis_repr_eq_matrixToStdBasis_mul (x : (K →+* ℂ) → ℂ)
       ring_nf; field_simp
 
 end stdBasis
-
-noncomputable section euclidean
-
-variable [NumberField K]
-
-example : (E K) ≃L[ℝ] EuclideanSpace ℝ (Fin (finrank ℝ (E K))) := by
-  refine @toEuclidean (E K) _ _ _ _ _ _ _
-
-#exit
-
-/-- The space `ℝ^r₁ × ℂ^r₂` with `(r₁, r₂)` the signature of `K` as an Euclidean space. -/
-local notation "E₂" K =>
-    (WithLp 2 ((EuclideanSpace ℝ {w : InfinitePlace K // IsReal w}) ×
-      (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w}).toEuclidean))
-
-variable [NumberField K]
-
-def euclideanEquiv : (E₂ K) ≃L[ℝ] (E K) := ContinuousLinearEquiv.prod
-  (EuclideanSpace.equiv _ ℝ) ((EuclideanSpace.equiv _ ℂ).restrictScalars ℝ).toContinuousLinearEquiv
-
-open Classical BigOperators
-
-instance : MeasurableSpace (E₂ K) := borel _
-
-instance : BorelSpace (E₂ K)  :=  ⟨rfl⟩
-
-theorem euclidean_norm_apply (x : E₂ K) :
-    ‖x‖ = Real.sqrt (∑ w, ‖x.1 w‖ ^ 2 + ∑ w, ‖x.2 w‖ ^ 2) := by
-  rw [WithLp.prod_norm_eq_add (by exact Nat.ofNat_pos), EuclideanSpace.norm_eq,
-    EuclideanSpace.norm_eq, ENNReal.toReal_ofNat, Real.rpow_two, Real.sq_sqrt (by positivity),
-    Real.rpow_two, Real.sq_sqrt (by positivity), Real.sqrt_eq_rpow]
-
-theorem euclidean_inner_apply (x y : E₂ K) :
-    ⟪x, y⟫_ℝ = ∑ w, (x.1 w) * (y.1 w) +
-      ∑ w, ((x.2 w).re * (y.2 w).re + (x.2 w).im * (y.2 w).im) := by
-  simp_rw [WithLp.prod_inner_apply, EuclideanSpace.inner_eq_star_dotProduct, real_inner_eq_re_inner,
-    EuclideanSpace.inner_eq_star_dotProduct, Matrix.dotProduct, Pi.star_apply, star_trivial,
-    RCLike.star_def, map_sum, RCLike.mul_re, RCLike.conj_re, RCLike.re_to_complex,
-    RCLike.conj_im, WithLp.equiv_pi_apply, neg_mul, sub_neg_eq_add, RCLike.im_to_complex]
-
-protected def stdOrthonormalBasis : OrthonormalBasis (index K) ℝ (E₂ K) := by
-  refine OrthonormalBasis.prod ?_ ?_
-  · refine EuclideanSpace.basisFun _ _
-  · let B₀ : OrthonormalBasis _ ℝ (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w}) :=
-      @Pi.orthonormalBasis {w : InfinitePlace K // IsComplex w} _ (fun _ ↦ Fin 2) _
-        ℝ _ (fun _ ↦ ℂ) _ _ (fun _ ↦ Complex.orthonormalBasisOneI)
-
-
-
---      (Pi.orthonormalBasis (fun _ : {w : InfinitePlace K // IsComplex w} ↦ Complex.orthonormalBasisOneI)).reindex (Equiv.sigmaEquivProd _ _)
-
-
-
--- (Pi.basisFun ℝ _)
---    (Basis.reindex (Pi.basis fun _ => basisOneI) (Equiv.sigmaEquivProd _ _))
-
-end euclidean
 
 noncomputable section integerLattice
 
