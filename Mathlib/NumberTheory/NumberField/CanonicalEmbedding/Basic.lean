@@ -40,6 +40,8 @@ number field, infinite places
 
 variable (K : Type*) [Field K]
 
+noncomputable section
+
 namespace NumberField.canonicalEmbedding
 
 open NumberField
@@ -108,7 +110,7 @@ theorem integerLattice.inter_ball_finite [NumberField K] (r : ℝ) :
 open Module Fintype FiniteDimensional
 
 /-- A `ℂ`-basis of `ℂ^n` that is also a `ℤ`-basis of the `integerLattice`. -/
-noncomputable def latticeBasis [NumberField K] :
+def latticeBasis [NumberField K] :
     Basis (Free.ChooseBasisIndex ℤ (𝓞 K)) ℂ ((K →+* ℂ) → ℂ) := by
   classical
   -- Let `B` be the canonical basis of `(K →+* ℂ) → ℂ`. We prove that the determinant of
@@ -156,23 +158,58 @@ end NumberField.canonicalEmbedding
 
 namespace NumberField.mixedEmbedding
 
-open NumberField NumberField.InfinitePlace FiniteDimensional Classical
+open NumberField NumberField.InfinitePlace FiniteDimensional Classical BigOperators
 
 /-- The space `ℝ^r₁ × ℂ^r₂` with `(r₁, r₂)` the signature of `K` as an Euclidean space. -/
 local notation "E" K =>
     (WithLp 2 ((EuclideanSpace ℝ {w : InfinitePlace K // IsReal w}) ×
       (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w})))
 
+local notation "E'" K =>
+  ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℂ)
+
 variable [NumberField K]
 
-instance : Ring (EuclideanSpace ℝ { w : InfinitePlace K // IsReal w }) := Pi.ring
+local instance : Ring (EuclideanSpace ℝ { w : InfinitePlace K // IsReal w }) := Pi.ring
 
-instance : Ring (EuclideanSpace ℂ { w : InfinitePlace K // IsComplex w }) := Pi.ring
+local instance : Algebra ℚ (EuclideanSpace ℝ { w : InfinitePlace K // IsReal w }) :=
+  Pi.algebra _ _
+
+local instance : Algebra ℝ (EuclideanSpace ℝ { w : InfinitePlace K // IsReal w }) :=
+  Pi.algebra _ _
+
+local instance : Ring (EuclideanSpace ℂ { w : InfinitePlace K // IsComplex w }) := Pi.ring
+
+local instance : Algebra ℚ (EuclideanSpace ℂ { w : InfinitePlace K // IsComplex w }) :=
+  Pi.algebra _ _
+
+local instance : Algebra ℝ (EuclideanSpace ℂ { w : InfinitePlace K // IsComplex w }) :=
+  Pi.algebra _ _
 
 instance : Ring (E K) := Prod.instRing
 
+instance : Algebra ℚ (E K) := Prod.algebra _ _ _
+
+instance : Algebra ℝ (E K) := Prod.algebra _ _ _
+
+-- Really need these?
+theorem euclidean_norm_apply (x : E K) :
+    ‖x‖ = Real.sqrt (∑ w, ‖x.1 w‖ ^ 2 + ∑ w, ‖x.2 w‖ ^ 2) := by
+  rw [WithLp.prod_norm_eq_add (by exact Nat.ofNat_pos), EuclideanSpace.norm_eq,
+    EuclideanSpace.norm_eq, ENNReal.toReal_ofNat, Real.rpow_two, Real.sq_sqrt (by positivity),
+    Real.rpow_two, Real.sq_sqrt (by positivity), Real.sqrt_eq_rpow]
+
+-- Really need these?
+theorem euclidean_inner_apply (x y : E K) :
+    ⟪x, y⟫_ℝ = ∑ w, (x.1 w) * (y.1 w) +
+      ∑ w, ((x.2 w).re * (y.2 w).re + (x.2 w).im * (y.2 w).im) := by
+  simp_rw [WithLp.prod_inner_apply, EuclideanSpace.inner_eq_star_dotProduct, real_inner_eq_re_inner,
+    EuclideanSpace.inner_eq_star_dotProduct, Matrix.dotProduct, Pi.star_apply, star_trivial,
+    RCLike.star_def, map_sum, RCLike.mul_re, RCLike.conj_re, RCLike.re_to_complex,
+    RCLike.conj_im, WithLp.equiv_pi_apply, neg_mul, sub_neg_eq_add, RCLike.im_to_complex]
+
 /-- The mixed embedding of a number field `K` of signature `(r₁, r₂)` into `ℝ^r₁ × ℂ^r₂`. -/
-noncomputable def _root_.NumberField.mixedEmbedding : K →+* (E K) :=
+def _root_.NumberField.mixedEmbedding : K →+* (E K) :=
   RingHom.prod (Pi.ringHom fun w => embedding_of_isReal w.prop)
     (Pi.ringHom fun w => w.val.embedding)
 
@@ -180,14 +217,17 @@ instance [NumberField K] : Nontrivial (E K) := by
   obtain ⟨w⟩ := (inferInstance : Nonempty (InfinitePlace K))
   obtain hw | hw := w.isReal_or_isComplex
   · have : Nonempty {w : InfinitePlace K // IsReal w} := ⟨⟨w, hw⟩⟩
-    exact nontrivial_prod_left
+    sorry
+--    exact nontrivial_prod_left
   · have : Nonempty {w : InfinitePlace K // IsComplex w} := ⟨⟨w, hw⟩⟩
-    exact nontrivial_prod_right
+    sorry
+--    exact nontrivial_prod_right
 
 protected theorem finrank [NumberField K] : finrank ℝ (E K) = finrank ℚ K := by
   classical
-  rw [finrank_prod, finrank_pi, finrank_pi_fintype, Complex.finrank_real_complex, Finset.sum_const,
-    Finset.card_univ, ← NrRealPlaces, ← NrComplexPlaces, ← card_real_embeddings,
+  erw [finrank_prod, finrank_pi, finrank_pi_fintype]
+  simp_rw [Complex.finrank_real_complex]
+  rw [Finset.sum_const, Finset.card_univ, ← NrRealPlaces, ← NrComplexPlaces, ← card_real_embeddings,
     Algebra.id.smul_eq_mul, mul_comm, ← card_complex_embeddings, ← NumberField.Embeddings.card K ℂ,
     Fintype.card_subtype_compl, Nat.add_sub_of_le (Fintype.card_subtype_le _)]
 
@@ -199,15 +239,15 @@ section commMap
 
 /-- The linear map that makes `canonicalEmbedding` and `mixedEmbedding` commute, see
 `commMap_canonical_eq_mixed`. -/
-noncomputable def commMap : ((K →+* ℂ) → ℂ) →ₗ[ℝ] (E K) where
+def commMap : ((K →+* ℂ) → ℂ) →ₗ[ℝ] (E K) where
   toFun := fun x => ⟨fun w => (x w.val.embedding).re, fun w => x w.val.embedding⟩
   map_add' := by
     simp only [Pi.add_apply, Complex.add_re, Prod.mk_add_mk, Prod.mk.injEq]
-    exact fun _ _ => ⟨rfl, rfl⟩
+    exact fun _ _ => rfl
   map_smul' := by
     simp only [Pi.smul_apply, Complex.real_smul, Complex.mul_re, Complex.ofReal_re,
       Complex.ofReal_im, zero_mul, sub_zero, RingHom.id_apply, Prod.smul_mk, Prod.mk.injEq]
-    exact fun _ _ => ⟨rfl, rfl⟩
+    exact fun _ _ => rfl
 
 theorem commMap_apply_of_isReal (x : (K →+* ℂ) → ℂ) {w : InfinitePlace K} (hw : IsReal w) :
     (commMap K x).1 ⟨w, hw⟩ = (x w.embedding).re := rfl
@@ -220,7 +260,7 @@ theorem commMap_canonical_eq_mixed (x : K) :
     commMap K (canonicalEmbedding K x) = mixedEmbedding K x := by
   simp only [canonicalEmbedding, commMap, LinearMap.coe_mk, AddHom.coe_mk, Pi.ringHom_apply,
     mixedEmbedding, RingHom.prod_apply, Prod.mk.injEq]
-  exact ⟨rfl, rfl⟩
+  exact rfl
 
 /-- This is a technical result to ensure that the image of the `ℂ`-basis of `ℂ^n` defined in
 `canonicalEmbedding.latticeBasis` is a `ℝ`-basis of `ℝ^r₁ × ℂ^r₂`,
@@ -251,7 +291,7 @@ theorem disjoint_span_commMap_ker [NumberField K] :
 
 end commMap
 
-noncomputable section norm
+section norm
 
 open scoped Classical
 
@@ -264,17 +304,19 @@ the norm of `mixedEmbedding K a` for `a : K` is equal to the absolute value of t
 over `ℚ`, see `norm_eq_norm`. -/
 protected def norm  : (E K) →*₀ ℝ where
   toFun := fun x ↦ (∏ w, ‖x.1 w‖) * ∏ w, ‖x.2 w‖ ^ 2
-  map_one' := by simp only [Prod.fst_one, Pi.one_apply, norm_one, Finset.prod_const_one,
-    Prod.snd_one, one_pow, mul_one]
-  map_zero' := by
-    simp_rw [Prod.fst_zero, Prod.snd_zero, Pi.zero_apply, norm_zero, zero_pow (two_ne_zero),
-      mul_eq_zero, Finset.prod_const, pow_eq_zero_iff', true_and, Finset.card_univ]
-    by_contra!
-    have : finrank ℚ K = 0 := by
-      rw [← card_add_two_mul_card_eq_rank, NrRealPlaces, NrComplexPlaces, this.1, this.2]
-    exact ne_of_gt finrank_pos this
-  map_mul' _ _ := by simp only [Prod.fst_mul, Pi.mul_apply, norm_mul, Real.norm_eq_abs,
-      Finset.prod_mul_distrib, Prod.snd_mul, Complex.norm_eq_abs, mul_pow]; ring
+  map_one' := by sorry
+    -- simp only [Prod.fst_one, Pi.one_apply, norm_one, Finset.prod_const_one,
+    -- Prod.snd_one, one_pow, mul_one]
+  map_zero' := by sorry
+    -- simp_rw [Prod.fst_zero, Prod.snd_zero, Pi.zero_apply, norm_zero, zero_pow (two_ne_zero),
+    --  mul_eq_zero, Finset.prod_const, pow_eq_zero_iff', true_and, Finset.card_univ]
+    -- by_contra!
+    -- have : finrank ℚ K = 0 := by
+    --   rw [← card_add_two_mul_card_eq_rank, NrRealPlaces, NrComplexPlaces, this.1, this.2]
+    -- exact ne_of_gt finrank_pos this
+  map_mul' _ _ := by sorry
+    -- simp only [Prod.fst_mul, Pi.mul_apply, norm_mul, Real.norm_eq_abs,
+    --  Finset.prod_mul_distrib, Prod.snd_mul, Complex.norm_eq_abs, mul_pow]; ring
 
 protected theorem norm_eq_zero_iff {x : E K} :
     mixedEmbedding.norm x = 0 ↔ (∃ w, x.1 w = 0) ∨ (∃ w, x.2 w = 0) := by
@@ -293,21 +335,22 @@ theorem norm_real (c : ℝ) :
     ← card_add_two_mul_card_eq_rank, Finset.card_univ, pow_add]
 
 theorem norm_smul (c : ℝ) (x : E K) :
-    mixedEmbedding.norm (c • x) = |c| ^ finrank ℚ K * (mixedEmbedding.norm x) := by
-  rw [show c • x = ((fun _ ↦ c, fun _ ↦ c) : (E K)) * x by rfl, map_mul, norm_real]
+    mixedEmbedding.norm (c • x) = |c| ^ finrank ℚ K * (mixedEmbedding.norm x) := by sorry
+--  rw [show c • x = ((fun _ ↦ c, fun _ ↦ c) : (E K)) * x by rfl, map_mul, norm_real]
 
 @[simp]
 theorem norm_eq_norm (x : K) :
     mixedEmbedding.norm (mixedEmbedding K x) = |Algebra.norm ℚ x| := by
-  simp_rw [← prod_eq_abs_norm, mixedEmbedding.norm, mixedEmbedding, RingHom.prod_apply,
-    MonoidWithZeroHom.coe_mk, ZeroHom.coe_mk, Pi.ringHom_apply, norm_embedding_eq,
-    norm_embedding_of_isReal]
-  rw [← Fintype.prod_subtype_mul_prod_subtype (fun w : InfinitePlace K ↦ IsReal w)]
-  congr 1
-  · exact Finset.prod_congr rfl (fun w _ ↦ by rw [mult, if_pos w.prop, pow_one])
-  · refine (Fintype.prod_equiv (Equiv.subtypeEquivRight ?_) _ _ (fun w ↦ ?_)).symm
-    · exact fun _ ↦ not_isReal_iff_isComplex
-    · rw [Equiv.subtypeEquivRight_apply_coe, mult, if_neg w.prop]
+  sorry
+  -- simp_rw [← prod_eq_abs_norm, mixedEmbedding.norm, mixedEmbedding, RingHom.prod_apply,
+  --   MonoidWithZeroHom.coe_mk, ZeroHom.coe_mk, Pi.ringHom_apply, norm_embedding_eq,
+  --   norm_embedding_of_isReal]
+  -- rw [← Fintype.prod_subtype_mul_prod_subtype (fun w : InfinitePlace K ↦ IsReal w)]
+  -- congr 1
+  -- · exact Finset.prod_congr rfl (fun w _ ↦ by rw [mult, if_pos w.prop, pow_one])
+  -- · refine (Fintype.prod_equiv (Equiv.subtypeEquivRight ?_) _ _ (fun w ↦ ?_)).symm
+  --   · exact fun _ ↦ not_isReal_iff_isComplex
+  --   · rw [Equiv.subtypeEquivRight_apply_coe, mult, if_neg w.prop]
 
 theorem norm_eq_zero_iff' {x : E K} (hx : x ∈ Set.range (mixedEmbedding K)) :
     mixedEmbedding.norm x = 0 ↔ x = 0 := by
@@ -317,7 +360,7 @@ theorem norm_eq_zero_iff' {x : E K} (hx : x ∈ Set.range (mixedEmbedding K)) :
 
 end norm
 
-noncomputable section stdBasis
+section stdBasis
 
 open scoped Classical
 
@@ -332,40 +375,34 @@ abbrev index := {w : InfinitePlace K // IsReal w} ⊕ ({w : InfinitePlace K // I
 /-- The `ℝ`-basis of `({w // IsReal w} → ℝ) × ({ w // IsComplex w } → ℂ)` formed by the vector
 equal to `1` at `w` and `0` elsewhere for `IsReal w` and by the couple of vectors equal to `1`
 (resp. `I`) at `w` and `0` elsewhere for `IsComplex w`. -/
-def stdBasis : Basis (index K) ℝ (E K) :=
-  Basis.prod (Pi.basisFun ℝ _)
-    (Basis.reindex (Pi.basis fun _ => basisOneI) (Equiv.sigmaEquivProd _ _))
+def stdBasis : OrthonormalBasis (index K) ℝ (E K) := sorry
+--  Basis.prod (Pi.basisFun ℝ _)
+--    (Basis.reindex (Pi.basis fun _ => basisOneI) (Equiv.sigmaEquivProd _ _))
 
 variable {K}
 
 @[simp]
 theorem stdBasis_apply_ofIsReal (x : E K) (w : {w : InfinitePlace K // IsReal w}) :
-    (stdBasis K).repr x (Sum.inl w) = x.1 w := rfl
+    (stdBasis K).repr x (Sum.inl w) = x.1 w := sorry -- rfl
 
 @[simp]
 theorem stdBasis_apply_ofIsComplex_fst (x : E K) (w : {w : InfinitePlace K // IsComplex w}) :
-    (stdBasis K).repr x (Sum.inr ⟨w, 0⟩) = (x.2 w).re := rfl
+    (stdBasis K).repr x (Sum.inr ⟨w, 0⟩) = (x.2 w).re := sorry -- rfl
 
 @[simp]
 theorem stdBasis_apply_ofIsComplex_snd (x : E K) (w : {w : InfinitePlace K // IsComplex w}) :
-    (stdBasis K).repr x (Sum.inr ⟨w, 1⟩) = (x.2 w).im := rfl
+    (stdBasis K).repr x (Sum.inr ⟨w, 1⟩) = (x.2 w).im := sorry -- rfl
 
 variable (K)
 
-theorem fundamentalDomain_stdBasis :
-    fundamentalDomain (stdBasis K) =
-        (Set.univ.pi fun _ => Set.Ico 0 1) ×ˢ
-        (Set.univ.pi fun _ => Complex.measurableEquivPi⁻¹' (Set.univ.pi fun _ => Set.Ico 0 1)) := by
-  ext
-  simp [stdBasis, mem_fundamentalDomain, Complex.measurableEquivPi]
-
-theorem volume_fundamentalDomain_stdBasis :
-    volume (fundamentalDomain (stdBasis K)) = 1 := by
-  rw [fundamentalDomain_stdBasis, volume_eq_prod, prod_prod, volume_pi, volume_pi, pi_pi, pi_pi,
-    Complex.volume_preserving_equiv_pi.measure_preimage ?_, volume_pi, pi_pi, Real.volume_Ico,
-    sub_zero, ENNReal.ofReal_one, Finset.prod_const_one, Finset.prod_const_one,
-    Finset.prod_const_one, one_mul]
-  exact MeasurableSet.pi Set.countable_univ (fun _ _ => measurableSet_Ico)
+-- Move this -
+-- theorem volume_fundamentalDomain_stdBasis :
+--    volume (fundamentalDomain (stdBasis K)) = 1 := by
+--  rw [fundamentalDomain_stdBasis, volume_eq_prod, prod_prod, volume_pi, volume_pi, pi_pi, pi_pi,
+--    Complex.volume_preserving_equiv_pi.measure_preimage ?_, volume_pi, pi_pi, Real.volume_Ico,
+--    sub_zero, ENNReal.ofReal_one, Finset.prod_const_one, Finset.prod_const_one,
+--    Finset.prod_const_one, one_mul]
+--  exact MeasurableSet.pi Set.countable_univ (fun _ _ => measurableSet_Ico)
 
 /-- The `Equiv` between `index K` and `K →+* ℂ` defined by sending a real infinite place `w` to
 the unique corresponding embedding `w.embedding`, and the pair `⟨w, 0⟩` (resp. `⟨w, 1⟩`) for a
@@ -385,7 +422,7 @@ def indexEquiv : (index K) ≃ (K →+* ℂ) := by
       · exact ⟨Sum.inr ⟨InfinitePlace.mkComplex ⟨φ, hφ⟩, 1⟩,
           by simp [(embedding_mk_eq φ).resolve_left hw]⟩
   · rw [Embeddings.card, ← mixedEmbedding.finrank K,
-      ← FiniteDimensional.finrank_eq_card_basis (stdBasis K)]
+      ← FiniteDimensional.finrank_eq_card_basis (stdBasis K).toBasis]
 
 variable {K}
 
@@ -461,7 +498,7 @@ theorem stdBasis_repr_eq_matrixToStdBasis_mul (x : (K →+* ℂ) → ℂ)
 
 end stdBasis
 
-noncomputable section integerLattice
+section integerLattice
 
 variable [NumberField K]
 
@@ -481,11 +518,7 @@ def latticeBasis :
       (disjoint_span_commMap_ker K)
     -- and it's a basis since it has the right cardinality
     refine basisOfLinearIndependentOfCardEqFinrank this ?_
-    rw [← finrank_eq_card_chooseBasisIndex, RingOfIntegers.rank, finrank_prod, finrank_pi,
-      finrank_pi_fintype, Complex.finrank_real_complex, Finset.sum_const, Finset.card_univ,
-      ← NrRealPlaces, ← NrComplexPlaces, ← card_real_embeddings, Algebra.id.smul_eq_mul, mul_comm,
-      ← card_complex_embeddings, ← NumberField.Embeddings.card K ℂ, Fintype.card_subtype_compl,
-      Nat.add_sub_of_le (Fintype.card_subtype_le _)]
+    rw [← finrank_eq_card_chooseBasisIndex, RingOfIntegers.rank, mixedEmbedding.finrank]
 
 @[simp]
 theorem latticeBasis_apply (i : ChooseBasisIndex ℤ (𝓞 K)) :

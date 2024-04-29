@@ -41,12 +41,18 @@ number field, infinite places
 
 variable (K : Type*) [Field K]
 
+noncomputable section
+
 namespace NumberField.mixedEmbedding
 
 open NumberField NumberField.InfinitePlace FiniteDimensional
 
-/-- The space `ℝ^r₁ × ℂ^r₂` with `(r₁, r₂)` the signature of `K`. -/
+/-- The space `ℝ^r₁ × ℂ^r₂` with `(r₁, r₂)` the signature of `K` as an Euclidean space. -/
 local notation "E" K =>
+    (WithLp 2 ((EuclideanSpace ℝ {w : InfinitePlace K // IsReal w}) ×
+      (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w})))
+/-- The space `ℝ^r₁ × ℂ^r₂` with `(r₁, r₂)` the signature of `K`. -/
+local notation "E'" K =>
   ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℂ)
 
 section convexBodyLT
@@ -63,17 +69,19 @@ abbrev convexBodyLT : Set (E K) :=
 
 theorem convexBodyLT_mem {x : K} :
     mixedEmbedding K x ∈ (convexBodyLT K f) ↔ ∀ w : InfinitePlace K, w x < f w := by
-  simp_rw [mixedEmbedding, RingHom.prod_apply, Set.mem_prod, Set.mem_pi, Set.mem_univ,
-    forall_true_left, mem_ball_zero_iff, Pi.ringHom_apply, ← Complex.norm_real,
-    embedding_of_isReal_apply, Subtype.forall, ← forall₂_or_left, ← not_isReal_iff_isComplex, em,
-    forall_true_left, norm_embedding_eq]
+  sorry
+  -- simp_rw [mixedEmbedding, RingHom.prod_apply, Set.mem_prod, Set.mem_pi, Set.mem_univ,
+  --   forall_true_left, mem_ball_zero_iff, Pi.ringHom_apply, ← Complex.norm_real,
+  --   embedding_of_isReal_apply, Subtype.forall, ← forall₂_or_left, ← not_isReal_iff_isComplex, em,
+  --   forall_true_left, norm_embedding_eq]
 
 theorem convexBodyLT_neg_mem (x : E K) (hx : x ∈ (convexBodyLT K f)) :
     -x ∈ (convexBodyLT K f) := by
-  simp only [Set.mem_prod, Prod.fst_neg, Set.mem_pi, Set.mem_univ, Pi.neg_apply,
-    mem_ball_zero_iff, norm_neg, Real.norm_eq_abs, forall_true_left, Subtype.forall,
-    Prod.snd_neg, Complex.norm_eq_abs] at hx ⊢
-  exact hx
+  sorry
+  -- simp only [Set.mem_prod, Prod.fst_neg, Set.mem_pi, Set.mem_univ, Pi.neg_apply,
+  --   mem_ball_zero_iff, norm_neg, Real.norm_eq_abs, forall_true_left, Subtype.forall,
+  --   Prod.snd_neg, Complex.norm_eq_abs] at hx ⊢
+  -- exact hx
 
 theorem convexBodyLT_convex : Convex ℝ (convexBodyLT K f) :=
   Convex.prod (convex_pi (fun _ _ => convex_ball _ _)) (convex_pi (fun _ _ => convex_ball _ _))
@@ -82,19 +90,27 @@ open Fintype MeasureTheory MeasureTheory.Measure ENNReal
 
 open scoped Classical BigOperators
 
+instance : MeasurableSpace (E K) := borel _
+
+instance : BorelSpace (E K)  :=  ⟨rfl⟩
+
 variable [NumberField K]
 
-instance : IsAddHaarMeasure (volume : Measure (E K)) := prod.instIsAddHaarMeasure volume volume
+protected theorem volume_eq_prod (s : Set (E K)):
+  volume s = (volume : Measure ({w : InfinitePlace K // IsReal w} → ℝ)) (s.1) *
+    (volume : Measure ({w : InfinitePlace K // IsComplex w} → ℂ)) (s.2) := sorry
 
-instance : NoAtoms (volume : Measure (E K)) := by
-  obtain ⟨w⟩ := (inferInstance : Nonempty (InfinitePlace K))
-  by_cases hw : IsReal w
-  exact @prod.instNoAtoms_fst _ _ _ _ volume volume _ (pi_noAtoms ⟨w, hw⟩)
-  · exact @prod.instNoAtoms_snd _ _ _ _ volume volume _
-      (pi_noAtoms ⟨w, not_isReal_iff_isComplex.mp hw⟩)
+-- instance : IsAddHaarMeasure (volume : Measure (E K)) := prod.instIsAddHaarMeasure volume volume
+
+-- instance : NoAtoms (volume : Measure (E K)) := by
+--   obtain ⟨w⟩ := (inferInstance : Nonempty (InfinitePlace K))
+--   by_cases hw : IsReal w
+--   exact @prod.instNoAtoms_fst _ _ _ _ volume volume _ (pi_noAtoms ⟨w, hw⟩)
+--   · exact @prod.instNoAtoms_snd _ _ _ _ volume volume _
+--       (pi_noAtoms ⟨w, not_isReal_iff_isComplex.mp hw⟩)
 
 /-- The fudge factor that appears in the formula for the volume of `convexBodyLT`. -/
-noncomputable abbrev convexBodyLTFactor : ℝ≥0 :=
+abbrev convexBodyLTFactor : ℝ≥0 :=
   (2 : ℝ≥0) ^ NrRealPlaces K * NNReal.pi ^ NrComplexPlaces K
 
 theorem convexBodyLTFactor_ne_zero : convexBodyLTFactor K ≠ 0 :=
@@ -209,7 +225,7 @@ open scoped Classical BigOperators
 variable [NumberField K]
 
 /-- The fudge factor that appears in the formula for the volume of `convexBodyLT'`. -/
-noncomputable abbrev convexBodyLT'Factor : ℝ≥0 :=
+abbrev convexBodyLT'Factor : ℝ≥0 :=
   (2 : ℝ≥0) ^ (NrRealPlaces K + 2) * NNReal.pi ^ (NrComplexPlaces K - 1)
 
 theorem convexBodyLT'Factor_ne_zero : convexBodyLT'Factor K ≠ 0 :=
@@ -279,7 +295,7 @@ variable {K}
 
 /-- The function that sends `x : ({w // IsReal w} → ℝ) × ({w // IsComplex w} → ℂ)` to
   `∑ w, ‖x.1 w‖ + 2 * ∑ w, ‖x.2 w‖`. It defines a norm and it used to define `convexBodySum`. -/
-noncomputable abbrev convexBodySumFun (x : E K) : ℝ := ∑ w, ‖x.1 w‖ + 2 * ∑ w, ‖x.2 w‖
+abbrev convexBodySumFun (x : E K) : ℝ := ∑ w, ‖x.1 w‖ + 2 * ∑ w, ‖x.2 w‖
 
 theorem convexBodySumFun_nonneg (x : E K) :
     0 ≤ convexBodySumFun x := by
@@ -396,7 +412,7 @@ theorem convexBodySum_compact : IsCompact (convexBodySum K B) := by
   simp [convexBodySumFun_nonneg]
 
 /-- The fudge factor that appears in the formula for the volume of `convexBodyLt`. -/
-noncomputable abbrev convexBodySumFactor : ℝ≥0 :=
+abbrev convexBodySumFactor : ℝ≥0 :=
   (2 : ℝ≥0) ^ NrRealPlaces K * (NNReal.pi / 2) ^ NrComplexPlaces K / (finrank ℚ K).factorial
 
 theorem convexBodySumFactor_ne_zero : convexBodySumFactor K ≠ 0 := by
@@ -475,7 +491,7 @@ variable [NumberField K] (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ)
 `NumberField.mixedEmbedding.volume_fundamentalDomain_idealLatticeBasis_eq` and
 `NumberField.mixedEmbedding.volume_fundamentalDomain_latticeBasis` for the computation of
 `volume (fundamentalDomain (idealLatticeBasis K))`. -/
-noncomputable def minkowskiBound : ℝ≥0∞ :=
+def minkowskiBound : ℝ≥0∞ :=
   volume (fundamentalDomain (fractionalIdealLatticeBasis K I)) * (2 : ℝ≥0∞) ^ (finrank ℝ (E K))
 
 theorem volume_fundamentalDomain_fractionalIdealLatticeBasis :
@@ -643,63 +659,5 @@ theorem exists_ne_zero_mem_ringOfIntegers_of_norm_le {B : ℝ}
   exact ⟨a, ha, h_nz, h_bd⟩
 
 end minkowski
-
-noncomputable section euclidean
-
-open Classical BigOperators MeasureTheory
-
-variable [NumberField K]
-
-/-- The space `ℝ^r₁ × ℂ^r₂` with `(r₁, r₂)` the signature of `K` as an Euclidean space. -/
-local notation "E₂" K =>
-    (WithLp 2 ((EuclideanSpace ℝ {w : InfinitePlace K // IsReal w}) ×
-      (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w})))
-
-#synth NormedAddCommGroup (E₂ K)
-
-instance : MeasurableSpace (E₂ K) := borel _
-
-instance : BorelSpace (E₂ K)  :=  ⟨rfl⟩
-
-def euclideanEquiv : (E₂ K) ≃L[ℝ] (E K) := ContinuousLinearEquiv.prod
-  (EuclideanSpace.equiv _ ℝ) ((EuclideanSpace.equiv _ ℂ).restrictScalars ℝ).toContinuousLinearEquiv
-
-@[simp]
-theorem euclideanEquiv_apply (a : E₂ K) : euclideanEquiv K a = a := rfl
-
-@[simp]
-theorem euclideanEquiv_symm_apply (a : E K) : (euclideanEquiv K).symm a = a := rfl
-
-theorem euclidean_norm_apply (x : E₂ K) :
-    ‖x‖ = Real.sqrt (∑ w, ‖x.1 w‖ ^ 2 + ∑ w, ‖x.2 w‖ ^ 2) := by
-  rw [WithLp.prod_norm_eq_add (by exact Nat.ofNat_pos), EuclideanSpace.norm_eq,
-    EuclideanSpace.norm_eq, ENNReal.toReal_ofNat, Real.rpow_two, Real.sq_sqrt (by positivity),
-    Real.rpow_two, Real.sq_sqrt (by positivity), Real.sqrt_eq_rpow]
-
-theorem euclidean_inner_apply (x y : E₂ K) :
-    ⟪x, y⟫_ℝ = ∑ w, (x.1 w) * (y.1 w) +
-      ∑ w, ((x.2 w).re * (y.2 w).re + (x.2 w).im * (y.2 w).im) := by
-  simp_rw [WithLp.prod_inner_apply, EuclideanSpace.inner_eq_star_dotProduct, real_inner_eq_re_inner,
-    EuclideanSpace.inner_eq_star_dotProduct, Matrix.dotProduct, Pi.star_apply, star_trivial,
-    RCLike.star_def, map_sum, RCLike.mul_re, RCLike.conj_re, RCLike.re_to_complex,
-    RCLike.conj_im, WithLp.equiv_pi_apply, neg_mul, sub_neg_eq_add, RCLike.im_to_complex]
-
-protected def stdOrthonormalBasis : OrthonormalBasis (index K) ℝ (E₂ K) := by
-  sorry
-
-theorem stdOrthonormalBasis_equiv :
-    (mixedEmbedding.stdOrthonormalBasis K).toBasis.map (euclideanEquiv K).toLinearEquiv =
-    stdBasis K := sorry
-
-theorem measurePreserving_euclideanEquiv :
-    MeasurePreserving (euclideanEquiv K) := by
-  convert ((euclideanEquiv K).toHomeomorph.toMeasurableEquiv.measurable.measurePreserving volume)
-  rw [← (OrthonormalBasis.addHaar_eq_volume (mixedEmbedding.stdOrthonormalBasis K)),
-    Homeomorph.toMeasurableEquiv_coe, ContinuousLinearEquiv.coe_toHomeomorph,
-    Basis.map_addHaar, stdOrthonormalBasis_equiv, eq_comm, Basis.addHaar_eq_iff,
-    Basis.coe_parallelepiped, ← measure_congr (Zspan.fundamentalDomain_ae_parallelepiped
-    (stdBasis K) volume), volume_fundamentalDomain_stdBasis K]
-
-end euclidean
 
 end NumberField.mixedEmbedding
