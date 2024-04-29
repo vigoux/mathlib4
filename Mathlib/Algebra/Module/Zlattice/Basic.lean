@@ -59,6 +59,10 @@ open scoped Pointwise
 
 theorem span_top : span K (span ℤ (Set.range b) : Set E) = ⊤ := by simp [span_span_of_tower]
 
+theorem map {F : Type*} [NormedAddCommGroup F] [NormedSpace K F] (f : E ≃ₗ[K] F) :
+    Submodule.map (f.restrictScalars ℤ) (span ℤ (Set.range b)) = span ℤ (Set.range (b.map f)) := by
+  simp_rw [Submodule.map_span, LinearEquiv.restrictScalars_apply, Basis.coe_map, Set.range_comp]
+
 theorem smul {c : K} (hc : c ≠ 0) :
     c • span ℤ (Set.range b) = span ℤ (Set.range (b.isUnitSMul (fun _ ↦ Ne.isUnit hc))) := by
   rw [smul_span, Set.smul_set_range]
@@ -327,7 +331,7 @@ instance [Finite ι] : DiscreteTopology (span ℤ (Set.range b)) := by
   · exact discreteTopology_pi_basisFun
   · refine Subtype.map_injective _ (Basis.equivFun b).injective
 
-instance [Finite ι] : DiscreteTopology (span ℤ (Set.range b)).toAddSubgroup :=
+instance instDiscreteTopology [Finite ι] : DiscreteTopology (span ℤ (Set.range b)).toAddSubgroup :=
   inferInstanceAs <| DiscreteTopology (span ℤ (Set.range b))
 
 theorem setFinite_inter [ProperSpace E] [Finite ι] {s : Set E} (hs : Bornology.IsBounded s) :
