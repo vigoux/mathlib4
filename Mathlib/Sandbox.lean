@@ -92,7 +92,7 @@ example :
       Nat.card {I : Ideal (𝓞 K) // Submodule.IsPrincipal I ∧ Ideal.absNorm I = n} *
       torsionOrder K / n) atTop
       (𝓝 ((volume (A K)).toReal)) := by
-
+  
 --  have := Zlattice.covolume.tendsto_card_le_div
 
 
