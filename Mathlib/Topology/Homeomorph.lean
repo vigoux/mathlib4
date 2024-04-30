@@ -871,11 +871,13 @@ end Continuous
 variable [TopologicalSpace X] [TopologicalSpace Y] [TopologicalSpace Z]
   {W : Type*} [TopologicalSpace W]
 
+/-- Predicate saying that `f` is a homeomorphism. -/
 def IsHomeomorph (f : X → Y) := Continuous f ∧ IsOpenMap f ∧ Function.Bijective f
 
 protected theorem Homeomorph.isHomeomorph (h : X ≃ₜ Y) : IsHomeomorph h :=
   ⟨h.continuous,h.isOpenMap,h.bijective⟩
 
+/-- Bundled homeomorphism constructed from a map that is a homeomorphism. -/
 noncomputable def Homeomorph.ofIsHomeomorph (f : X → Y) (hf : IsHomeomorph f) : X ≃ₜ Y where
   continuous_toFun := hf.1
   continuous_invFun := by
@@ -915,9 +917,11 @@ protected theorem surjective : Function.Surjective f := hf.2.2.2
 
 end IsHomeomorph
 
+/-- A map is a homeomorphism iff it is the map underlying a bundled homeomorphism `h : X ≃ₜ Y`. -/
 theorem isHomeomorph_iff_is_homeomorph {f : X → Y} : IsHomeomorph f ↔ ∃ h : X ≃ₜ Y, h = f :=
   ⟨fun hf => ⟨Homeomorph.ofIsHomeomorph f hf,rfl⟩,fun ⟨h,h'⟩ => h' ▸ h.isHomeomorph⟩
 
+/-- A map is a homeomorphism iff it is continuous and has a continuous inverse. -/
 theorem isHomeomorph_iff_exists_inverse {f : X → Y} : IsHomeomorph f ↔ Continuous f ∧ ∃ g : Y → X,
     Function.LeftInverse g f ∧ Function.RightInverse g f ∧ Continuous g := by
   refine' ⟨fun hf => ⟨hf.continuous,_⟩,fun ⟨hf,g,hg⟩ => _⟩
@@ -925,16 +929,20 @@ theorem isHomeomorph_iff_exists_inverse {f : X → Y} : IsHomeomorph f ↔ Conti
   exact ⟨h.symm,h.left_inv,h.right_inv,h.continuous_invFun⟩
   exact (Homeomorph.mk ⟨f,g,hg.1,hg.2.1⟩ hf hg.2.2).isHomeomorph
 
+/-- A map is a homeomorphism iff it is a surjective embedding. -/
 theorem isHomeomorph_iff_embedding_surjective {f : X → Y} : IsHomeomorph f ↔
     Embedding f ∧ Function.Surjective f :=
   ⟨fun hf => ⟨hf.embedding,hf.surjective⟩, fun ⟨hf,hf'⟩ =>
     ⟨hf.continuous,((openEmbedding_iff f).2 ⟨hf,hf'.range_eq ▸ isOpen_univ⟩).isOpenMap,hf.inj,hf'⟩⟩
 
+/-- A map is a homeomorphism iff it is continuous, closed and bijective. -/
 theorem isHomeomorph_iff_closed_bijective {f : X → Y} : IsHomeomorph f ↔
     Continuous f ∧ IsClosedMap f ∧ Function.Bijective f :=
   ⟨fun hf => ⟨hf.continuous,hf.isClosedMap,hf.bijective⟩, fun ⟨hf,hf',hf''⟩ =>
     ⟨hf,fun _ hu => isClosed_compl_iff.1 (image_compl_eq hf'' ▸ hf' _ hu.isClosed_compl),hf''⟩⟩
 
+/-- A map from a compact space to a T2 space is a homeomorphism iff it is continuous and
+  bijective. -/
 theorem isHomeomorph_iff_bijective [CompactSpace X] [T2Space Y] {f : X → Y} :
     IsHomeomorph f ↔ Continuous f ∧ Function.Bijective f := by
   rw [isHomeomorph_iff_closed_bijective]
