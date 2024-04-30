@@ -78,6 +78,20 @@ theorem norm_unitSMul (u : (𝓞 K)ˣ) (x : E K) :
     mixedEmbedding.norm (u • x) = mixedEmbedding.norm x := by
   rw [unitSMul_smul, map_mul, norm_unit, one_mul]
 
+theorem unitSMul_eq_zero (u : (𝓞 K)ˣ) (x : E K) :
+    u • x = 0 ↔ x = 0 := by
+  refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
+  · ext w
+    · have := congr_fun (congr_arg Prod.fst h) w
+      rw [unitSMul_smul, Prod.fst_mul, Pi.mul_apply, Prod.fst_zero, Pi.zero_apply, mul_eq_zero]
+        at this
+      refine this.resolve_left (by simp)
+    · have := congr_fun (congr_arg Prod.snd h) w
+      rw [unitSMul_smul, Prod.snd_mul, Pi.mul_apply, Prod.snd_zero, Pi.zero_apply, mul_eq_zero]
+        at this
+      refine this.resolve_left (by simp)
+  · rw [h, smul_zero]
+
 end UnitSMul
 
 noncomputable section logMap
@@ -86,12 +100,11 @@ open NumberField.Units NumberField.Units.dirichletUnitTheorem FiniteDimensional
 
 variable [NumberField K] {K}
 
+open Classical in
 /-- The map from `ℝ^r₁ × ℂ^r₂` to `{w : InfinitePlace K // w ≠ w₀} → ℝ` (with `w₀` a fixed place)
 define in such way that: 1) it factors the map `logEmbedding`, see `logMap_eq_logEmbedding`;
 2) it is constant on the lines `{c • x | c ∈ ℝ}`, see `logMap_smul`. -/
-def logMap (x : E K) : {w : InfinitePlace K // w ≠ w₀} → ℝ := by
-  classical
-  exact fun w ↦
+def logMap (x : E K) : {w : InfinitePlace K // w ≠ w₀} → ℝ := fun w ↦
     if hw : IsReal w.val then
       Real.log ‖x.1 ⟨w.val, hw⟩‖ - Real.log (mixedEmbedding.norm x) * (finrank ℚ K : ℝ)⁻¹
     else
@@ -140,7 +153,7 @@ theorem logMap_torsion_unitSMul (x : E K) {ζ : (𝓞 K)ˣ} (hζ : ζ ∈ torsio
     Rat.cast_one, one_mul, norm_embedding_eq, norm_embedding_of_isReal, (mem_torsion K).mp hζ,
     one_mul]
 
-theorem logMap_smul {x : E K} {c : ℝ} (hx : mixedEmbedding.norm x ≠ 0) (hc : c ≠ 0) :
+theorem logMap_smul {x : E K} (hx : mixedEmbedding.norm x ≠ 0) {c : ℝ} (hc : c ≠ 0) :
     logMap (c • x) = logMap x := by
   rw [show c • x = ((fun _ ↦ c, fun _ ↦ c) : (E K)) * x by rfl, logMap_mul _ hx, add_left_eq_self]
   ext
@@ -165,38 +178,52 @@ to roots of unity, see `exists_unitSMul_mem` and `torsion_unitSMul_mem_of_mem`. 
 def fundamentalCone : Set (E K) := by
   classical
   let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
-  exact logMap⁻¹' (Zspan.fundamentalDomain B)
+  exact logMap⁻¹' (Zspan.fundamentalDomain B) \ {x | mixedEmbedding.norm x = 0} ∪ {0}
 
 namespace fundamentalCone
 
-protected theorem zero_mem : 0 ∈ fundamentalCone K := by
-  simp_rw [fundamentalCone, Set.mem_preimage, Zspan.mem_fundamentalDomain, logMap_zero, map_zero,
-    Finsupp.coe_zero, Pi.zero_apply, Set.left_mem_Ico, zero_lt_one, implies_true]
+protected theorem zero_mem : 0 ∈ fundamentalCone K := Set.mem_union_right _ rfl
 
 variable {K}
 
-theorem smul_mem_of_mem {x : E K} (hx : mixedEmbedding.norm x ≠ 0) (hx' : x ∈ fundamentalCone K)
+theorem smul_mem_of_mem {x : E K} (hx : x ∈ fundamentalCone K)
     (c : ℝ) : c • x ∈ fundamentalCone K := by
   by_cases hc : c = 0
   · rw [hc, zero_smul]
     exact fundamentalCone.zero_mem K
-  · rwa [fundamentalCone, Set.mem_preimage, logMap_smul hx hc]
+  · cases hx with
+  | inl hx =>
+      refine Set.mem_union_left _ ⟨?_, ?_⟩
+      · rw [Set.mem_preimage, logMap_smul hx.2 hc]
+        exact hx.1
+      · rw [Set.mem_setOf_eq, mixedEmbedding.norm_smul, mul_eq_zero, not_or]
+        exact ⟨pow_ne_zero _ (abs_ne_zero.mpr hc), hx.2⟩
+  | inr hx =>
+      rw [hx, smul_zero]
+      exact fundamentalCone.zero_mem K
 
 theorem exists_unitSMul_mem {x : E K} (hx : mixedEmbedding.norm x ≠ 0) :
     ∃ u : (𝓞 K)ˣ, u • x ∈ fundamentalCone K := by
   classical
   let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ
   rsuffices ⟨⟨_, ⟨u, _, rfl⟩⟩, hu⟩ : ∃ e : unitLattice K, e + logMap x ∈ Zspan.fundamentalDomain B
-  · exact ⟨u, by rwa [fundamentalCone, Set.mem_preimage, logMap_unitSMul u hx]⟩
+  · exact ⟨u,
+      Set.mem_union_left _ ⟨by rwa [Set.mem_preimage, logMap_unitSMul u hx], by simp [hx]⟩⟩
   · obtain ⟨⟨e, h₁⟩, h₂, -⟩ := Zspan.exist_unique_vadd_mem_fundamentalDomain B (logMap x)
     exact ⟨⟨e, by rwa [← Basis.ofZlatticeBasis_span ℝ (unitLattice K)]⟩, h₂⟩
 
-theorem torsion_unitSMul_mem_of_mem {x : E K}
-    (hx' : x ∈ fundamentalCone K) {ζ : (𝓞 K)ˣ} (hζ : ζ ∈ torsion K) :
+theorem torsion_unitSMul_mem_of_mem {x : E K} (hx : x ∈ fundamentalCone K) {ζ : (𝓞 K)ˣ}
+    (hζ : ζ ∈ torsion K) :
     ζ • x ∈ fundamentalCone K := by
-  rwa [fundamentalCone, Set.mem_preimage, logMap_torsion_unitSMul _ hζ]
+  by_cases hx' : x = 0
+  · refine Set.mem_union_right _ ?_
+    rw [hx', smul_zero, Set.mem_singleton_iff]
+  · refine Set.mem_union_left _ ⟨?_, ?_⟩
+    · rw [Set.mem_preimage, logMap_torsion_unitSMul _ hζ]
+      exact (hx.resolve_right hx').1
+    · simpa using (hx.resolve_right hx').2
 
-theorem unitSMul_mem_iff_mem_torsion {x : E K} (hx : mixedEmbedding.norm x ≠ 0)
+theorem unitSMul_mem_iff_mem_torsion {x : E K} (hx : x ≠ 0) -- (hx : mixedEmbedding.norm x ≠ 0)
     (hx' : x ∈ fundamentalCone K) (u : (𝓞 K)ˣ) :
     u • x ∈ fundamentalCone K ↔ u ∈ torsion K := by
   classical
@@ -209,9 +236,12 @@ theorem unitSMul_mem_iff_mem_torsion {x : E K} (hx : mixedEmbedding.norm x ≠ 0
       rw [Basis.ofZlatticeBasis_span ℝ (unitLattice K)]
       exact ⟨u, trivial, rfl⟩
     · exact Submodule.zero_mem _
-    · rwa [fundamentalCone, Set.mem_preimage, logMap_unitSMul _ hx] at h
+    · rw [AddSubmonoid.mk_vadd, vadd_eq_add, ← logMap_unitSMul _ (hx'.resolve_right hx).2]
+      refine (h.resolve_right ?_).1
+      rw [Set.mem_singleton_iff, unitSMul_eq_zero]
+      exact hx
     · rw [AddSubmonoid.mk_vadd, vadd_eq_add, zero_add]
-      rwa [fundamentalCone, Set.mem_preimage] at hx'
+      exact (hx'.resolve_right hx).1
   · exact torsion_unitSMul_mem_of_mem hx' h
 
 variable (K) in
@@ -314,9 +344,7 @@ theorem integralPointToAssociates_eq_iff (a b : integralPoint K) :
   by_cases ha : (a : E K) = 0
   · simp_rw [ha, smul_zero] at h ⊢
     exact ⟨1, h⟩
-  · have hnz : mixedEmbedding.norm (a : E K) ≠ 0 :=
-      (norm_eq_zero_iff' ⟨a.prop.2.choose, a.prop.2.choose_spec.2⟩).not.mpr ha
-    refine ⟨⟨u, (unitSMul_mem_iff_mem_torsion hnz a.prop.1 u).mp ?_⟩, h⟩
+  · refine ⟨⟨u, (unitSMul_mem_iff_mem_torsion ha a.prop.1 u).mp ?_⟩, h⟩
     rw [h]
     exact b.prop.1
 
