@@ -944,7 +944,7 @@ theorem isHomeomorph_iff_bijective [CompactSpace X] [T2Space Y] {f : X → Y} :
 theorem isHomeomorph_id : IsHomeomorph (@id X) := ⟨continuous_id,IsOpenMap.id,Function.bijective_id⟩
 
 theorem IsHomeomorph.comp {f : X → Y} {g : Y → Z} (hg : IsHomeomorph g) (hf : IsHomeomorph f) :
-  IsHomeomorph (g ∘ f) := ⟨hg.1.comp hf.1,hg.2.1.comp hf.2.1,hg.2.2.comp hf.2.2⟩
+    IsHomeomorph (g ∘ f) := ⟨hg.1.comp hf.1,hg.2.1.comp hf.2.1,hg.2.2.comp hf.2.2⟩
 
 theorem IsHomeomorph.sum_map {f : X → Y} {g : Z → W} (hf : IsHomeomorph f) (hg : IsHomeomorph g) :
     IsHomeomorph (Sum.map f g) := by
