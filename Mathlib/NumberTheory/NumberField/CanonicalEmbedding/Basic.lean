@@ -279,6 +279,12 @@ protected def norm : (E K) →*₀ ℝ where
 protected theorem norm_apply (x : E K) :
     mixedEmbedding.norm x =  (∏ w, ‖x.1 w‖) * (∏ w, ‖x.2 w‖ ^ 2) := rfl
 
+protected theorem norm_nonneg (x : E K) :
+    0 ≤ mixedEmbedding.norm x := by
+  refine mul_nonneg ?_ ?_
+  · exact Finset.prod_nonneg (fun _ _ ↦ norm_nonneg _)
+  · exact Finset.prod_nonneg (fun _ _ ↦ pow_nonneg (norm_nonneg _) _)
+
 protected theorem norm_eq_zero_iff {x : E K} :
     mixedEmbedding.norm x = 0 ↔ (∃ w, x.1 w = 0) ∨ (∃ w, x.2 w = 0) := by
   simp_rw [mixedEmbedding.norm, MonoidWithZeroHom.coe_mk, ZeroHom.coe_mk, mul_eq_zero,

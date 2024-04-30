@@ -90,7 +90,6 @@ local notation "E₂" K =>
 def Λ : AddSubgroup (E₂ K) :=
     (span ℤ (Set.range ((latticeBasis K).map (euclideanSpace.linearEquiv K).symm))).toAddSubgroup
 
-
 instance : DiscreteTopology (Λ K) := Zspan.instDiscreteTopology _
 
 instance : IsZlattice ℝ (Λ K) where
@@ -99,18 +98,60 @@ instance : IsZlattice ℝ (Λ K) where
     simp_rw [coe_toAddSubgroup, ← Zspan.map, map_coe, LinearEquiv.restrictScalars_apply,
       ← Submodule.map_span, Zspan.span_top, Submodule.map_top, LinearEquivClass.range]
 
-
 /-- Docs. -/
 abbrev X : Set (E₂ K) := (euclideanSpace.equiv K)⁻¹' (fundamentalCone K)
 
 /-- Docs. -/
-def X₁ : Set (E₂ K) := {x ∈ X K | mixedEmbedding.norm x ≤ 1}
+abbrev X₁ : Set (E₂ K) := {x ∈ X K | mixedEmbedding.norm (euclideanSpace.equiv K x) ≤ 1}
 
 /-- Docs. -/
-def F₁ : Set (E₂ K) := {x ∈ X K | mixedEmbedding.norm x = 1}
+abbrev F₁ : Set (E₂ K) := {x ∈ X K | mixedEmbedding.norm (euclideanSpace.equiv K x) = 1}
+
+theorem aux00 {x : E₂ K} (hx : x ∈ X₁ K) (hx' : x ≠ 0) :
+    mixedEmbedding.norm (euclideanSpace.equiv K x) ≠ 0 := by
+  obtain ⟨h, _⟩ := hx
+  rw [X, fundamentalCone, Set.mem_preimage] at h
+  have := h.resolve_right ?_
+  exact this.2
+  
+
+theorem aux0 {x : E₂ K} (hx : x ∈ X₁ K) (hx' : x ≠ 0) :
+    ∃ c : ℝ, 1 ≤ c ∧ c • x ∈ F₁ K := by
+  refine ⟨(mixedEmbedding.norm (euclideanSpace.equiv K x))⁻¹, ?_, ?_⟩
+  · refine one_le_inv_iff.mpr ⟨?_, ?_⟩
+    · obtain ⟨hx₁, _⟩ := hx
+      refine lt_iff_le_and_ne.mpr ⟨?_, ?_⟩
+      · exact mixedEmbedding.norm_nonneg _
+      · exact Ne.symm hx₂
+
+      sorry
+    ·
+      sorry
+  ·
+    sorry
 
 theorem aux1 (h : IsBounded (F₁ K)) :
-    IsBounded (X₁ K) := sorry
+    IsBounded (X₁ K) := by
+  rw [Metric.isBounded_iff_subset_ball 0]
+  obtain ⟨r, hr₁, hr₂⟩ := h.subset_ball_lt 0 0
+  refine ⟨r, ?_⟩
+  rintro x hx
+  by_cases hx' : x = 0
+  · rw [hx']
+    exact Metric.mem_ball_self hr₁
+  · obtain ⟨c, hc₁, hc₂⟩ := aux0 K hx hx'
+    have := hr₂ hc₂
+    rw [mem_ball_zero_iff] at this ⊢
+    rw [norm_smul, ← lt_div_iff'] at this
+    refine lt_of_lt_of_le this ?_
+    refine div_le_self ?_ ?_
+    exact le_of_lt hr₁
+    rw [Real.norm_eq_abs]
+    exact le_trans hc₁ (le_abs_self _)
+    rw [norm_pos_iff]
+    refine ne_of_gt ?_
+    exact lt_of_lt_of_le zero_lt_one hc₁
+
 
 example :
     Tendsto (fun n : ℝ ↦

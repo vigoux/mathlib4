@@ -172,13 +172,14 @@ open NumberField.Units NumberField.Units.dirichletUnitTheorem
 
 variable [NumberField K]
 
+open Classical
 /-- The fundamental cone is a cone in `ℝ^r₁ × ℂ^r₂` --that is a subset fixed by multiplication by
 a scalar, see `smul_mem_of_mem`--, that is also a fundamental domain for the action of `(𝓞 K)ˣ` up
 to roots of unity, see `exists_unitSMul_mem` and `torsion_unitSMul_mem_of_mem`. -/
-def fundamentalCone : Set (E K) := by
-  classical
-  let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
-  exact logMap⁻¹' (Zspan.fundamentalDomain B) \ {x | mixedEmbedding.norm x = 0} ∪ {0}
+def fundamentalCone : Set (E K) :=
+  logMap⁻¹' (Zspan.fundamentalDomain
+    ((Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _)) \
+      {x | mixedEmbedding.norm x = 0} ∪ {0}
 
 namespace fundamentalCone
 
