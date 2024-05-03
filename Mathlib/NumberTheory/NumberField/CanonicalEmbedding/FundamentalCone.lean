@@ -323,15 +323,6 @@ instance : MulAction (torsion K) (integralPoint K) where
     rw [Subtype.mk_eq_mk]
     simp_rw [integralPoint_torsionSMul_smul_coe, Submonoid.coe_mul, mul_smul]
 
-theorem integralPoint_torsionSMul_stabilizer {a : integralPoint K} (ha : (a : E K) ≠ 0) :
-    MulAction.stabilizer (torsion K) a = ⊥ := by
-  refine (Subgroup.eq_bot_iff_forall _).mpr fun ζ hζ ↦ ?_
-  rwa [MulAction.mem_stabilizer_iff, Subtype.ext_iff, integralPoint_torsionSMul_smul_coe,
-    unitSMul_smul, ← image_preimageOfIntegralPoint, ← map_mul, (mixedEmbedding_injective K).eq_iff,
-    mul_eq_right₀, OneMemClass.coe_eq_one, Units.val_eq_one, OneMemClass.coe_eq_one] at hζ
-  contrapose! ha
-  rw [← image_preimageOfIntegralPoint, ha, map_zero]
-
 theorem integralPointToAssociates_eq_iff (a b : integralPoint K) :
     integralPointToAssociates K a = integralPointToAssociates K b ↔
       ∃ ζ : torsion K, ζ • a = b := by
@@ -368,6 +359,34 @@ def integralPointQuotEquivAssociates :
 theorem integralPointQuotEquivAssociates_apply (a : integralPoint K) :
     integralPointQuotEquivAssociates K ⟦a⟧ = ⟦preimageOfIntegralPoint a⟧ := rfl
 
+/-- the norm of `a : integralPoint K` as a natural integer. -/
+def intNorm (a : integralPoint K) : ℕ := (Algebra.norm ℤ (preimageOfIntegralPoint a)).natAbs
+
+@[simp]
+theorem intNorm_coe (a : integralPoint K) :
+    (intNorm a : ℝ) = mixedEmbedding.norm (a : E K) := by
+  rw [intNorm, Int.cast_natAbs, ← Rat.cast_intCast, Int.cast_abs, Algebra.coe_norm_int,
+    ← norm_eq_norm, image_preimageOfIntegralPoint]
+
+/-- The norm `intNorm` defined on `fundamentalCone.integralPoint K` lifts to a function
+on the classes of `fundamentalCone.integralPoint K` modulo `torsion K`. -/
+def quotIntNorm :
+    Quotient (MulAction.orbitRel (torsion K) (integralPoint K)) → ℕ := by
+  refine Quotient.lift (fun x ↦ intNorm x) fun a b ⟨u, hu⟩ ↦ ?_
+  rw [← Nat.cast_inj (R := ℝ), intNorm_coe, intNorm_coe, ← hu, integralPoint_torsionSMul_smul_coe,
+    norm_unitSMul]
+
+@[simp]
+theorem quotIntNorm_apply (a : integralPoint K) : quotIntNorm ⟦a⟧ = intNorm a := rfl
+
+theorem quotIntNorm_eq_zero_iff (q : Quotient (MulAction.orbitRel (torsion K) (integralPoint K))) :
+    quotIntNorm q = 0 ↔ Quotient.out' q = (0 : E K) := by
+  convert_to quotIntNorm ⟦Quotient.out' q⟧ = 0 ↔ Quotient.out' q = (0 : E K)
+  · rw [← @Quotient.mk''_eq_mk, Quotient.out_eq']
+  · rw [quotIntNorm_apply, intNorm, Int.natAbs_eq_zero, Algebra.norm_eq_zero_iff,
+      ← image_preimageOfIntegralPoint, map_eq_zero, ZeroMemClass.coe_eq_zero]
+
+-- Absorb this?
 variable (K) in
 /-- The equivalence between `fundamentalCone.integralPoint K / torsion K` and the principal
 ideals of `𝓞 K`. -/
@@ -381,53 +400,163 @@ theorem integralPointQuotEquivIsPrincipal_apply (a : integralPoint K) :
   rw [integralPointQuotEquivIsPrincipal, Equiv.trans_apply,
     integralPointQuotEquivAssociates_apply, Ideal.associatesEquivIsPrincipal_apply]
 
+theorem integralPoint_torsionSMul_stabilizer_eq_bot {a : integralPoint K} (ha : (a : E K) ≠ 0) :
+    MulAction.stabilizer (torsion K) a = ⊥ := by
+  refine (Subgroup.eq_bot_iff_forall _).mpr fun ζ hζ ↦ ?_
+  rwa [MulAction.mem_stabilizer_iff, Subtype.ext_iff, integralPoint_torsionSMul_smul_coe,
+    unitSMul_smul, ← image_preimageOfIntegralPoint, ← map_mul, (mixedEmbedding_injective K).eq_iff,
+    mul_eq_right₀, OneMemClass.coe_eq_one, Units.val_eq_one, OneMemClass.coe_eq_one] at hζ
+  contrapose! ha
+  rw [← image_preimageOfIntegralPoint, ha, map_zero]
+
+theorem integralPoint_torsionSMul_stabilizer_eq_top {a : integralPoint K} (ha : (a : E K) = 0) :
+    MulAction.stabilizer (torsion K) a = ⊤ := by
+  rw [Subgroup.eq_top_iff']
+  intro ζ
+  rw [MulAction.mem_stabilizer_iff, Subtype.ext_iff, integralPoint_torsionSMul_smul_coe, ha,
+    smul_zero]
+
+-- Change name
 variable (K) in
-/-- The norm `mixedEmbedding.norm` defined on `fundamentalCone.integralPoint K` lifts to a function
-on the classes of `fundamentalCone.integralPoint K` modulo `torsion K`. -/
-def integralPointQuotNorm :
-    Quotient (MulAction.orbitRel (torsion K) (integralPoint K)) → ℝ := by
-  refine Quotient.lift (fun x ↦ mixedEmbedding.norm (x : E K)) fun a b ⟨u, hu⟩ ↦ ?_
-  simp_rw [← hu, integralPoint_torsionSMul_smul_coe, norm_unitSMul]
-
-theorem integralPointQuotNorm_apply (a : integralPoint K) :
-    integralPointQuotNorm K ⟦a⟧ = mixedEmbedding.norm (a : E K) := rfl
-
-theorem integralPointQuotNorm_eq_norm (a : integralPoint K) :
-    integralPointQuotNorm K ⟦a⟧ = |Algebra.norm ℤ (preimageOfIntegralPoint a)| := by
-  rw [integralPointQuotNorm_apply, ← image_preimageOfIntegralPoint, norm_eq_norm,
-    ← Algebra.coe_norm_int, Rat.cast_abs, Rat.cast_intCast, Int.cast_abs]
-
-theorem integralPointQuotNorm_eq_zero_iff
-    (q : Quotient (MulAction.orbitRel (torsion K) (integralPoint K))) :
-    integralPointQuotNorm K q = 0 ↔ Quotient.out' q = (0 : E K) := by
-  convert_to integralPointQuotNorm K ⟦Quotient.out' q⟧ = 0 ↔ Quotient.out' q = (0 : E K)
-  · rw [← @Quotient.mk''_eq_mk, Quotient.out_eq']
-  · rw [integralPointQuotNorm_apply, norm_eq_zero_iff' (by
-      rw [← image_preimageOfIntegralPoint]
-      exact Set.mem_range_self _)]
+def idealStab (I : Ideal (𝓞 K)) : Subgroup (torsion K) := if I = ⊥ then ⊥ else ⊤
 
 variable (K) in
+theorem toto1 : integralPoint K ≃
+    (I : {I : Ideal (𝓞 K) // Submodule.IsPrincipal I}) × (idealStab K I) := by
+  let e := MulAction.selfEquivSigmaOrbitsQuotientStabilizer (torsion K) (integralPoint K)
+  refine Equiv.trans e ?_
+  refine Equiv.sigmaCongr (integralPointQuotEquivIsPrincipal K) ?_
+  intro q
+  by_cases hq : Quotient.out' q = (0 : E K)
+  · rw [integralPoint_torsionSMul_stabilizer_eq_top hq]
+    rw [show q = ⟦Quotient.out' q⟧ by sorry]
+    rw [integralPointQuotEquivIsPrincipal_apply, idealStab, if_pos]
+    have := QuotientGroup.subsingleton_quotient_top (G := torsion K)
+    exact equivOfSubsingletonOfSubsingleton (fun _ ↦ 1) (fun _ ↦ 1)
+    sorry
+  · rw [integralPoint_torsionSMul_stabilizer_eq_bot hq]
+    rw [show q = ⟦Quotient.out' q⟧ by sorry]
+    rw [integralPointQuotEquivIsPrincipal_apply, idealStab, if_neg]
+    exact QuotientGroup.quotientBot.toEquiv.trans Subgroup.topEquiv.toEquiv.symm
+    sorry
+
+@[simp]
+theorem toto1_apply_fst (a : integralPoint K) :
+    (toto1 K a).fst = Ideal.span {preimageOfIntegralPoint a} := by
+  rw [← integralPointQuotEquivIsPrincipal_apply]
+  unfold toto1
+  rfl
+
+
+
+open Submodule
+
+variable (K) in
+theorem toto2 {n : ℕ} (hn : 0 < n) :
+    {a : integralPoint K // intNorm a = n} ≃
+      {I : Ideal (𝓞 K) // IsPrincipal I ∧ Ideal.absNorm I = n} × (torsion K) := by
+  -- refine Equiv.trans ?_ (Equiv.sigmaEquivProd _ _)
+  let g := Equiv.subtypeEquiv (p := fun a ↦ intNorm a = n)
+--    (q := fun σ ↦ ?_)
+    (q := fun σ : (I : { I : Ideal (𝓞 K) // IsPrincipal I }) × (idealStab K I) ↦ Ideal.absNorm σ.1.val = n)
+    (toto1 K) ?_
+  · refine Equiv.trans g ?_
+    let h := Equiv.subtypeSigmaEquiv
+      (fun I : { I : Ideal (𝓞 K) // IsPrincipal I } ↦ (idealStab K I))
+      (fun I ↦ Ideal.absNorm I.val = n)
+    refine Equiv.trans h ?_
+    refine Equiv.trans (Equiv.sigmaEquivProdOfEquiv (β := torsion K) ?_) ?_
+    · rintro ⟨I, hI⟩
+      rw [idealStab, if_neg]
+      exact Subgroup.topEquiv.toEquiv
+      rw [← Ideal.absNorm_eq_zero_iff, hI]
+      linarith
+    refine Equiv.prodCongrLeft fun _ ↦ ?_
+    let h := Equiv.subtypeSubtypeEquivSubtypeInter (fun I : Ideal (𝓞 K) ↦ IsPrincipal I)
+      (fun I : Ideal (𝓞 K) ↦ Ideal.absNorm I = n)
+    exact h
+  · intro a
+    dsimp
+    rw [toto1_apply_fst, Ideal.absNorm_span_singleton, intNorm]
+
+theorem toto2_apply_fst {n : ℕ} (hn : 0 < n) (a : integralPoint K) (ha : intNorm a = n) :
+    (toto2 K hn ⟨a, ha⟩).fst = Ideal.span {preimageOfIntegralPoint a} := by
+  unfold toto2
+  simp only [MulEquiv.toEquiv_eq_coe, eq_mpr_eq_cast, cast_eq, Equiv.trans_apply,
+    Equiv.subtypeEquiv_apply]
+  dsimp
+  simp_rw [← toto1_apply_fst]
+  rfl
+
+
+#exit
+
+
+  refine Equiv.trans ?_ (Equiv.subtypeSubtypeEquivSubtypeInter _ _)
+  refine Equiv.subtypeEquiv (integralPointQuotEquivIsPrincipal K) ?_
+  sorry
+
+
+
+
+
+
+
+
+
+-- variable (K) in
+-- /-- The norm `mixedEmbedding.norm` defined on `fundamentalCone.integralPoint K` lifts to a function
+-- on the classes of `fundamentalCone.integralPoint K` modulo `torsion K`. -/
+-- def integralPointQuotNorm :
+--     Quotient (MulAction.orbitRel (torsion K) (integralPoint K)) → ℕ := by
+--   refine Quotient.lift (fun x ↦ intNorm x) fun a b ⟨u, hu⟩ ↦ ?_
+--   sorry
+-- --  simp_rw [← hu, integralPoint_torsionSMul_smul_coe, norm_unitSMul]
+
+-- theorem integralPointQuotNorm_apply (a : integralPoint K) :
+--     integralPointQuotNorm K ⟦a⟧ = mixedEmbedding.norm (a : E K) := sorry --  rfl
+
+-- theorem integralPointQuotNorm_eq_norm (a : integralPoint K) :
+--     integralPointQuotNorm K ⟦a⟧ = |Algebra.norm ℤ (preimageOfIntegralPoint a)| := by
+--   sorry
+-- --  rw [integralPointQuotNorm_apply, ← image_preimageOfIntegralPoint, norm_eq_norm,
+-- --    ← Algebra.coe_norm_int, Rat.cast_abs, Rat.cast_intCast, Int.cast_abs]
+
+-- theorem integralPointQuotNorm_eq_zero_iff
+--     (q : Quotient (MulAction.orbitRel (torsion K) (integralPoint K))) :
+--     integralPointQuotNorm K q = 0 ↔ Quotient.out' q = (0 : E K) := by
+--   sorry
+--  convert_to integralPointQuotNorm K ⟦Quotient.out' q⟧ = 0 ↔ Quotient.out' q = (0 : E K)
+--  · rw [← @Quotient.mk''_eq_mk, Quotient.out_eq']
+--  · rw [integralPointQuotNorm_apply, norm_eq_zero_iff' (by
+--      rw [← image_preimageOfIntegralPoint]
+--      exact Set.mem_range_self _)]
+
+open Ideal Submodule
+
+variable (K)
+
 /-- The equivalence between classes in `fundamentalCone.integralPoint K / torsion K` of norm `n`
 and the principal ideals of `𝓞 K` of norm `n`. -/
 def integralPointQuotNormEquivIsPrincipal (n : ℕ) :
     { x // integralPointQuotNorm K x = n } ≃
-        { I : Ideal (𝓞 K) // Submodule.IsPrincipal I ∧ Ideal.absNorm I = n } := by
+      { I : Ideal (𝓞 K) // IsPrincipal I ∧ absNorm I = n } := by
   refine Equiv.trans ?_ (Equiv.subtypeSubtypeEquivSubtypeInter _ _)
   refine Equiv.subtypeEquiv (integralPointQuotEquivIsPrincipal K) ?_
   rintro ⟨a⟩
-  rw [show Quot.mk _ a = ⟦a⟧ by rfl, integralPointQuotEquivIsPrincipal_apply,
-    integralPointQuotNorm_eq_norm, Ideal.absNorm_span_singleton, Int.abs_eq_natAbs,
-    Int.cast_natCast, Nat.cast_inj]
+  sorry
+--  rw [show Quot.mk _ a = ⟦a⟧ by rfl, integralPointQuotEquivIsPrincipal_apply,
+--    integralPointQuotNorm_eq_norm, absNorm_span_singleton, Int.abs_eq_natAbs, Int.cast_natCast,
+--    Nat.cast_inj]
 
 /-- For `n` positive, the number of principal ideals in `𝓞 K` of norm `n` multiplied by the number
 of roots of unity in `K` is equal to the number of `fundamentalCone.integralPoint K` of
 norm `n`. -/
-theorem card_isPrincipal_norm_mul {n : ℕ} (hn : 1 ≤ n) :
-    Nat.card {I : Ideal (𝓞 K) // Submodule.IsPrincipal I ∧ Ideal.absNorm I = n} *
-      torsionOrder K =
-        Nat.card ({a : integralPoint K // mixedEmbedding.norm (a : E K) = n}) := by
-  rw [← Nat.card_congr (integralPointQuotNormEquivIsPrincipal K n), torsionOrder, PNat.mk_coe,
-    ← Nat.card_eq_fintype_card, ← Nat.card_prod]
+theorem card_isPrincipal_norm_eq {n : ℕ} (hn : 1 ≤ n) :
+    Nat.card {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I = n} * torsionOrder K =
+        Nat.card ({a : integralPoint K | intNorm a = n}) := by
+  rw [Set.coe_setOf, Set.coe_setOf, ← Nat.card_congr (integralPointQuotNormEquivIsPrincipal K n),
+    torsionOrder, PNat.mk_coe, ← Nat.card_eq_fintype_card, ← Nat.card_prod]
   refine Nat.card_congr (Equiv.symm ?_)
   refine (Equiv.subtypeEquiv (q := fun s ↦ integralPointQuotNorm K s.fst = n)
     (MulAction.selfEquivSigmaOrbitsQuotientStabilizer (torsion K) (integralPoint K))
@@ -437,12 +566,131 @@ theorem card_isPrincipal_norm_mul {n : ℕ} (hn : 1 ≤ n) :
       Quotient.mk'_eq_mk, Equiv.instTransSortSortSortEquivEquivEquiv_trans, Equiv.trans_apply,
       Equiv.sigmaCongrRight_apply, Equiv.sigmaFiberEquiv_symm_apply_fst, Equiv.Set.ofEq_apply,
       integralPointQuotNorm_apply]
+    sorry
   · refine (@Equiv.subtypeSigmaEquiv _ _ (fun q ↦ integralPointQuotNorm K q = n)).trans
       (Equiv.sigmaEquivProdOfEquiv fun ⟨_, h⟩ ↦ ?_)
     rw [integralPoint_torsionSMul_stabilizer]
     exact QuotientGroup.quotientBot.toEquiv
-    rw [ne_eq, ← integralPointQuotNorm_eq_zero_iff, h, Nat.cast_eq_zero, ← ne_eq]
-    linarith
+    sorry
+    -- rw [ne_eq, ← integralPointQuotNorm_eq_zero_iff, h, Nat.cast_eq_zero, ← ne_eq]
+    -- linarith
+
+instance (n : ℕ) : Fintype {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I = n} := by
+  refine Set.Finite.fintype ?_
+  by_cases hn : n = 0
+  · simp_rw [hn, Ideal.absNorm_eq_zero_iff]
+    refine Set.Finite.subset (Set.finite_singleton ⊥) (by simp)
+  · exact Set.Finite.subset (Ideal.finite_setOf_absNorm_eq (Nat.pos_of_ne_zero hn)) (by simp)
+
+instance (n : ℕ) : Fintype {a : integralPoint K | intNorm a = n} := by
+  refine Set.Finite.fintype ?_
+  by_cases hn : n = 0
+  · sorry
+  ·
+    sorry
+
+theorem card_isPrincipal_norm_le {n : ℕ} (hn : 1 ≤ n) :
+    Nat.card {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I ∈ Finset.Icc 1 n} * torsionOrder K =
+        Nat.card ({a : integralPoint K | intNorm a ∈ Finset.Icc 1 n}) := by
+  have : Fintype {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I ∈ Finset.Icc 1 n} := sorry
+  have : Fintype {a : integralPoint K | intNorm a ∈ Finset.Icc 1 n} := sorry
+
+  have t₁ := @Finset.card_eq_sum_card_fiberwise (Ideal (𝓞 K)) ℕ _ (fun I ↦ absNorm I)
+    {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I ∈ Finset.Icc 1 n}.toFinset
+    (Finset.Icc 1 n) ?_
+
+  rw [Nat.card_eq_fintype_card]
+  rw [← Set.toFinset_card, t₁, Finset.sum_mul]
+
+  have t₂ := @Finset.card_eq_sum_card_fiberwise (integralPoint K) ℕ _ (fun a ↦ intNorm a)
+    {a : integralPoint K | intNorm a ∈ Finset.Icc 1 n}.toFinset (Finset.Icc 1 n) ?_
+
+  · rw [Nat.card_eq_fintype_card]
+    rw [← Set.toFinset_card, t₂]
+
+    refine Finset.sum_congr rfl fun i hi ↦ ?_
+    convert card_isPrincipal_norm_eq K (Finset.mem_Icc.mp hi).1
+    · rw [Nat.card_eq_fintype_card, ← Set.toFinset_card]
+      congr
+      ext I
+      rw [Finset.mem_filter, Set.mem_toFinset, Set.mem_toFinset, Set.mem_setOf_eq, Set.mem_setOf_eq,
+        and_assoc, and_iff_right_of_imp (?_ : absNorm I = i → absNorm I ∈ Finset.Icc 1 n)]
+      intro h
+      rwa [← h] at hi
+    · rw [Nat.card_eq_fintype_card, ← Set.toFinset_card]
+      congr
+      ext a
+      rw [Finset.mem_filter, Set.mem_toFinset, Set.mem_toFinset, Set.mem_setOf_eq, Set.mem_setOf_eq,
+        and_iff_right_of_imp]
+      intro h
+      rwa [← h] at hi
+  · intro x hx
+    convert (Set.mem_toFinset.mp hx)
+  · intro x hx
+    convert (Set.mem_toFinset.mp hx).2
+
+#exit
+
+  have t₁ := @Finset.card_eq_sum_card_fiberwise
+    {I : Ideal (𝓞 K) // IsPrincipal I ∧ absNorm I ∈ Finset.Icc 1 n} ℕ
+    _ (fun I ↦ absNorm I.1) Finset.univ (Finset.Icc 1 n) ?_
+  have t₂ := @Finset.card_eq_sum_card_fiberwise
+    {a : integralPoint K // intNorm a ∈ Finset.Icc 1 n} ℕ _ (fun a ↦ intNorm a.1) Finset.univ (Finset.Icc 1 n) ?_
+
+  rw [t₁, t₂, Finset.sum_mul]
+
+  refine Finset.sum_congr rfl fun n hn ↦ ?_
+  · convert card_isPrincipal_norm_eq K (by sorry : 1 ≤ n)
+    erw [← Finset.card_subtype, @Nat.card_eq_fintype_card _ (inst1 n), Fintype.card]
+
+
+
+
+
+
+#exit
+
+  rw [Set.coe_setOf, Set.coe_setOf, Nat.card_eq_fintype_card, Nat.card_eq_fintype_card,
+    Fintype.card, t₁, Fintype.card, t₂, Finset.sum_mul]
+  refine Finset.sum_congr rfl fun n hn ↦ ?_
+  have := card_isPrincipal_norm_eq K (n := n) ?_
+  convert this
+  · rw [Set.coe_setOf, Nat.card_eq_fintype_card, ← Finset.card_subtype]
+
+
+
+
+#exit
+
+  have : ∀ n, Fintype { I : Ideal (𝓞 K) // IsPrincipal I ∧ absNorm I = n} := sorry
+  have : ∀ n, Fintype { x : integralPoint K // mixedEmbedding.norm (x : E K) = n } := sorry
+  have := Finset.sum_congr (α := Set.Icc 1 n) (s₁ := Finset.univ) rfl
+    (fun n _ ↦ card_isPrincipal_norm_eq K n.prop.1)
+  simp_rw [Set.coe_setOf, Nat.card_eq_fintype_card] at this
+  rw? at this
+#exit
+
+  rw [show {I : Ideal (𝓞 K) | IsPrincipal I ∧ 1 ≤ absNorm I ∧ absNorm I ≤ n } =
+    (⋃ i ∈ Set.Icc 1 n, {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I = i}) by ext; simp]
+  rw [show {a :integralPoint K | mixedEmbedding.norm (a : E K) ≤ n } =
+    (⋃ i ∈ Set.Icc 1 n, {a : integralPoint K | mixedEmbedding.norm (a : E K) = i}) by sorry] --ext; simp]
+  rw [torsionOrder, PNat.mk_coe, ← Nat.card_eq_fintype_card, ← Nat.card_prod]
+
+
+#exit
+  have h := card_isPrincipal_norm_eq K hn
+  have : Fintype { I : Ideal (𝓞 K) // IsPrincipal I ∧ (1 ≤ absNorm I ∧ absNorm I ≤ n)} := sorry
+  have : Fintype { x : integralPoint K // mixedEmbedding.norm (x : E K) ≤ n } := sorry
+  rw [Set.coe_setOf, Set.coe_setOf, Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
+  rw [Fintype.card, Fintype.card, Finset.univ.card_eq_sum_card_image
+    (fun x : integralPoint K ↦ mixedEmbedding.norm (x : E K))]
+  -- rw [torsionOrder, PNat.mk_coe, ← Nat.card_eq_fintype_card, ← Nat.card_prod]
+  rw [show {I : Ideal (𝓞 K) | IsPrincipal I ∧ 1 ≤ absNorm I ∧ absNorm I ≤ n } =
+    (⋃ i ∈ Set.Icc 1 n, { I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I = i}) by ext; simp]
+
+
+  -- exact Set.Finite.biUnion (Set.finite_Icc _ _) (fun n hn => Ideal.finite_setOf_absNorm_eq hn.1)
+  sorry
 
 end fundamentalCone
 
