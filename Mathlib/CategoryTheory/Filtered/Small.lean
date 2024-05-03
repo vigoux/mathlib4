@@ -25,8 +25,9 @@ namespace IsFiltered
 
 section FilteredClosure
 
-variable [IsFilteredOrEmpty C] {α : Type w} (f : α → C)
+variable [IsFilteredOrEmpty C] {α : Type w} {f : α → C}
 
+variable (f) in
 /-- The "filtered closure" of an `α`-indexed family of objects in `C` is the set of objects in `C`
     obtained by starting with the family and successively adding maxima and coequalizers. -/
 inductive FilteredClosure : C → Prop
@@ -58,29 +59,33 @@ namespace FilteredClosureSmall
     induction and then take the union over all natural numbers, mimicking what one would do in a
     set-theoretic setting.  -/
 
+variable (f) in
 /-- One step of the inductive procedure consists of adjoining all maxima and coequalizers of all
     objects and morphisms obtained so far. This is quite redundant, picking up many objects which we
     already hit in earlier iterations, but this is easier to work with later.  -/
-private inductive InductiveStep (n : ℕ) (X : ∀ (k : ℕ), k < n → Σ t : Type (max v w), t → C) :
-    Type (max v w)
-  | max : {k k' : ℕ} → (hk : k < n) → (hk' : k' < n) → (X _ hk).1 → (X _ hk').1 → InductiveStep n X
-  | coeq : {k k' : ℕ} → (hk : k < n) → (hk' : k' < n) → (j : (X _ hk).1) → (j' : (X _ hk').1) →
-      ((X _ hk).2 j ⟶ (X _ hk').2 j') → ((X _ hk).2 j ⟶ (X _ hk').2 j') → InductiveStep n X
+private inductive InductiveStep (X : Σ t : Type (max v w), t → C) : Type (max v w)
+  | max : X.1 → X.1 → InductiveStep X
+  | coeq : {j : X.1} → {j' : X.1} → (f g : X.2 j ⟶ X.2 j') → InductiveStep X
+  | self : X.1 → InductiveStep X
 
+variable (f) in
 /-- The realization function sends the abstract maxima and weak coequalizers to the corresponding
     objects in `C`. -/
-private noncomputable def inductiveStepRealization (n : ℕ)
-    (X : ∀ (k : ℕ), k < n → Σ t : Type (max v w), t → C) : InductiveStep.{w} n X → C
-  | (InductiveStep.max hk hk' x y) => max ((X _ hk).2 x) ((X _ hk').2 y)
-  | (InductiveStep.coeq _ _ _ _ f g) => coeq f g
+private noncomputable def inductiveStepRealization
+    (X : Σ t : Type (max v w), t → C) : InductiveStep.{w} X → C
+  | (InductiveStep.max x y) => max (X.2 x) (X.2 y)
+  | (InductiveStep.coeq f g) => coeq f g
+  | (InductiveStep.self x) => X.2 x
 
+variable (f) in
 /-- All steps of building the abstract filtered closure together with the realization function,
     as a function of `ℕ`. -/
-private noncomputable def bundledAbstractFilteredClosure : ℕ → Σ t : Type (max v w), t → C :=
-  Nat.strongRec' fun n => match n with
-    | 0 => fun _ => ⟨ULift.{v} α, f ∘ ULift.down⟩
-    | (n + 1) => fun X => ⟨InductiveStep.{w, v, u} (n + 1) X, inductiveStepRealization (n + 1) X⟩
+private noncomputable def bundledAbstractFilteredClosure : ℕ → Σ t : Type (max v w), t → C
+  | 0 => ⟨ULift.{v} α, f ∘ ULift.down⟩
+  | (n + 1) => ⟨InductiveStep.{w, v, u} (bundledAbstractFilteredClosure n),
+                inductiveStepRealization (bundledAbstractFilteredClosure n)⟩
 
+variable (f) in
 /-- The small type modelling the filtered closure. -/
 private noncomputable def AbstractFilteredClosure : Type (max v w) :=
   Σ n, (bundledAbstractFilteredClosure f n).1
@@ -89,31 +94,108 @@ private noncomputable def AbstractFilteredClosure : Type (max v w) :=
 private noncomputable def abstractFilteredClosureRealization : AbstractFilteredClosure f → C :=
   fun x => (bundledAbstractFilteredClosure f x.1).2 x.2
 
+private noncomputable def AbstractFilteredClosure.lift (x : AbstractFilteredClosure f) :
+    AbstractFilteredClosure f :=
+  ⟨x.1 + 1, InductiveStep.self x.2⟩
+
+@[simp]
+private theorem AbstractFilteredClosure.lift_fst (x : AbstractFilteredClosure f) :
+  x.lift.1 = x.1 + 1 := rfl
+
+@[simp]
+private theorem abstractFilteredClosureRealization_lift (x : AbstractFilteredClosure f) :
+    abstractFilteredClosureRealization x.lift = abstractFilteredClosureRealization x := rfl
+
+private noncomputable def AbstractFilteredClosure.liftBy (x : AbstractFilteredClosure f) :
+    ℕ → AbstractFilteredClosure f
+  | 0 => x
+  | n + 1 => (liftBy x n).lift
+
+@[simp]
+private theorem AbstractFilteredClosure.liftBy_fst (x : AbstractFilteredClosure f) (n : ℕ) :
+    (x.liftBy n).1 = x.1 + n := by
+  induction n <;> simp_all [AbstractFilteredClosure.liftBy, Nat.add_assoc]
+
+@[simp]
+private theorem abstractFilteredClosureRealization_liftBy (x : AbstractFilteredClosure f) (n : ℕ) :
+    abstractFilteredClosureRealization (x.liftBy n) = abstractFilteredClosureRealization x := by
+  induction n <;> simp_all [AbstractFilteredClosure.liftBy]
+
+private noncomputable def AbstractFilteredClosure.cast (x : AbstractFilteredClosure f) (n : ℕ)
+    (h : x.1 = n) : AbstractFilteredClosure f :=
+  ⟨n, h ▸ x.2⟩
+
+@[simp]
+private theorem AbstractFilteredClosure.cast_fst (x : AbstractFilteredClosure f) (n : ℕ)
+    (h : x.1 = n) : (x.cast n h).1 = n := rfl
+
+@[simp]
+private theorem abstractFilteredClosureRealization_cast (x : AbstractFilteredClosure f) (n : ℕ)
+    (h : x.1 = n) :
+    abstractFilteredClosureRealization (x.cast n h) = abstractFilteredClosureRealization x := by
+  cases h; rfl
+
+private noncomputable def AbstractFilteredClosure.liftTo (x : AbstractFilteredClosure f) (n : ℕ)
+    (h : x.1 ≤ n) : AbstractFilteredClosure f :=
+  (x.liftBy (n - x.1)).cast n (by simp only [liftBy_fst]; omega)
+
+@[simp]
+private theorem AbstractFilteredClosure.liftTo_fst (x : AbstractFilteredClosure f) (n : ℕ)
+    (h : x.1 ≤ n) : (x.liftTo n h).1 = n := rfl
+
+@[simp]
+private theorem abstractFilteredClosureRealization_liftTo (x : AbstractFilteredClosure f) (n : ℕ)
+    (h : x.1 ≤ n) :
+    abstractFilteredClosureRealization (x.liftTo n h) = abstractFilteredClosureRealization x := by
+  simp [AbstractFilteredClosure.liftTo]
+
+private noncomputable def AbstractFilteredClosure.max (x y : AbstractFilteredClosure f) :
+    AbstractFilteredClosure f :=
+  ⟨(Max.max x.1 y.1) + 1, InductiveStep.max
+      (x.liftTo (Max.max x.1 y.1) (Nat.le_max_left _ _)).2
+      (y.liftTo (Max.max x.1 y.1) (Nat.le_max_right _ _)).2⟩
+
+private theorem AbstractFilteredClosure.max_fst (x y : AbstractFilteredClosure f) :
+    (x.max y).1 = (Max.max x.1 y.1) + 1 := rfl
+
+@[simp]
+private theorem abstractFilteredClosureRealization_max (x y : AbstractFilteredClosure f) :
+    abstractFilteredClosureRealization (x.max y) =
+      max (abstractFilteredClosureRealization x) (abstractFilteredClosureRealization y) := by
+  rw [AbstractFilteredClosure.max, abstractFilteredClosureRealization]
+  simp [bundledAbstractFilteredClosure, inductiveStepRealization]
+  show max (abstractFilteredClosureRealization (x.liftTo (Max.max x.1 y.1) _))
+           (abstractFilteredClosureRealization (y.liftTo (Max.max x.1 y.1) _)) = _
+  simp
+
 end FilteredClosureSmall
 
 theorem small_fullSubcategory_filteredClosure :
     Small.{max v w} (FullSubcategory (FilteredClosure f)) := by
-  refine' small_of_injective_of_exists (FilteredClosureSmall.abstractFilteredClosureRealization f)
+  refine' small_of_injective_of_exists (FilteredClosureSmall.abstractFilteredClosureRealization (f := f))
     FullSubcategory.ext _
   rintro ⟨j, h⟩
   induction h with
   | base x => exact ⟨⟨0, ⟨x⟩⟩, rfl⟩
   | max hj₁ hj₂ ih ih' =>
-    rcases ih with ⟨⟨n, x⟩, rfl⟩
-    rcases ih' with ⟨⟨m, y⟩, rfl⟩
-    refine' ⟨⟨(Max.max n m).succ, FilteredClosureSmall.InductiveStep.max _ _ x y⟩, rfl⟩
-    all_goals apply Nat.lt_succ_of_le
-    exacts [Nat.le_max_left _ _, Nat.le_max_right _ _]
-  | coeq hj₁ hj₂ g g' ih ih' =>
-    rcases ih with ⟨⟨n, x⟩, rfl⟩
-    rcases ih' with ⟨⟨m, y⟩, rfl⟩
-    refine' ⟨⟨(Max.max n m).succ, FilteredClosureSmall.InductiveStep.coeq _ _ x y g g'⟩, rfl⟩
-    all_goals apply Nat.lt_succ_of_le
-    exacts [Nat.le_max_left _ _, Nat.le_max_right _ _]
+    rcases ih with ⟨x, rfl⟩
+    rcases ih' with ⟨y, rfl⟩
+    exact ⟨x.max y, by simp⟩
+  | @coeq j₁ j₂ hj₁ hj₂ g g' ih ih' =>
+    skip
+    rcases ih with ⟨x, hx⟩
+    rcases ih' with ⟨y, hy⟩
+    let x' := x.liftTo (Max.max x.1 y.1) (Nat.le_max_left _ _)
+    obtain rfl : FilteredClosureSmall.abstractFilteredClosureRealization x' = j₁ := by
+      simp [x', hx]
+    let y' := y.liftTo (Max.max x.1 y.1) (Nat.le_max_right _ _)
+    obtain rfl : FilteredClosureSmall.abstractFilteredClosureRealization y' = j₂ := by
+      simp [y', hy]
+    exact ⟨⟨(Max.max x.1 y.1) + 1, FilteredClosureSmall.InductiveStep.coeq g g'⟩, rfl⟩
 
 instance : EssentiallySmall.{max v w} (FullSubcategory (FilteredClosure f)) :=
   have : LocallySmall.{max v w} (FullSubcategory (FilteredClosure f)) := locallySmall_max.{w, v, u}
-  have := small_fullSubcategory_filteredClosure f
+  have := small_fullSubcategory_filteredClosure (f := f)
   essentiallySmall_of_small_of_locallySmall _
 
 end FilteredClosure
