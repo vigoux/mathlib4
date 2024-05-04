@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2024 Yury Kudryashov. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Yury Kudryashov
+-/
 import Mathlib.Algebra.BigOperators.List.Basic
 import Mathlib.Data.List.Join
 import Mathlib.Data.List.Enum
@@ -5,13 +10,21 @@ import Mathlib.Data.List.EraseIdx
 import Mathlib.GroupTheory.GroupAction.Defs
 import Mathlib.Data.Fin.Basic
 
+/-!
+# Definition and basic properties of `List.offDiag`
+
+In this file we define `List.offDiag l` to be the product `l.product l`
+with the diagonal removed.
+-/
+
 namespace List
 
 variable {α : Type*} {l : List α}
 
+/-- List.offDiag l` is the product `l.product l` with the diagonal removed. -/
 def offDiag (l : List α) : List (α × α) :=
   l.enum.bind fun nx ↦ map (Prod.mk nx.2) <| l.eraseIdx nx.1
-    
+
 @[simp]
 theorem offDiag_nil : offDiag ([] : List α) = [] := rfl
 
@@ -32,11 +45,12 @@ theorem mem_offDiag_iff_get {x : α × α} :
   rcases x with ⟨x, y⟩
   simp only [offDiag, exists_mem_enum, mem_eraseIdx_iff_get, mem_bind, mem_map]
   simp [@and_comm _ (_ = x), @and_left_comm _ (_ = x), @eq_comm (Fin _), Fin.val_inj]
-  
+
+/-- `List.offDiag l` has no duplicates iff the original list has no duplicates. -/
 @[simp]
 theorem nodup_offDiag : l.offDiag.Nodup ↔ l.Nodup := by
   simp_rw [offDiag, nodup_bind, forall_mem_iff_get, get_enum]
-  refine ⟨λ h ↦ ?_, fun h ↦ ⟨fun i ↦ (Pairwise.map _ ?_ (h.sublist <| eraseIdx_sublist ..)), ?_⟩⟩
+  refine ⟨fun h ↦ ?_, fun h ↦ ⟨fun i ↦ (Pairwise.map _ ?_ (h.sublist <| eraseIdx_sublist ..)), ?_⟩⟩
   · replace h := h.2
     simp only [Nodup, pairwise_iff_get, get_enum] at h ⊢
     intro i j hlt heq
@@ -52,6 +66,8 @@ theorem nodup_offDiag : l.offDiag.Nodup ↔ l.Nodup := by
 
 protected alias ⟨Nodup.of_offDiag, Nodup.offDiag⟩ := nodup_offDiag
 
+/-- If `l : List α` is a list with no duplicates, then `x : α × α` belongs to `List.offDiag l`
+iff both components of `x` belong to `l` and they are not equal. -/
 theorem Nodup.mem_offDiag (h : l.Nodup) {x : α × α} :
     x ∈ l.offDiag ↔ x.1 ∈ l ∧ x.2 ∈ l ∧ x.1 ≠ x.2 := by
   rcases x with ⟨x, y⟩
@@ -62,9 +78,4 @@ theorem Nodup.mem_offDiag (h : l.Nodup) {x : α × α} :
   · rintro ⟨⟨i, rfl⟩, ⟨j, rfl⟩, hne⟩
     exact ⟨i, j, hne, rfl, rfl⟩
 
-theorem Sublist.offDiag {l l' : List α} (h : l <+ l') : l.offDiag <+ l'.offDiag := by
-  induction h with
-  | slnil => simp
-  | cons => _
-  | cons₂ => _
-  
+end List
