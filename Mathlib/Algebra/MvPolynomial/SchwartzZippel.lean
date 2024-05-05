@@ -186,9 +186,7 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           set p_r := (Polynomial.map (MvPolynomial.eval r) p') with hp_r
           have : p_r.natDegree = i := by
             rw [hp_r, hi]
-            apply Polynomial.natDegree_map_of_leadingCoeff_ne_zero
-            -- unfold Polynomial.leadingCoeff
-            exact hr2
+            exact Polynomial.natDegree_map_of_leadingCoeff_ne_zero (MvPolynomial.eval r) hr2
           rw [← this]
           apply le_trans _ (Polynomial.card_roots' _)
           apply le_trans _ (Multiset.toFinset_card_le _)
@@ -203,7 +201,7 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           intro hpr_zero
           contrapose! hr2
           rw [hp_i', ← this, hpr_zero, Polynomial.natDegree_zero]
-          have hp_r0 : p_r.coeff 0 = 0 := by simp [hpr_zero]
+          have hp_r0 : p_r.coeff 0 = 0 := by rw [hpr_zero, Polynomial.coeff_zero]
           rw [← hp_r0, Polynomial.coeff_map]
       · simp only [Polynomial.coeff_natDegree,
           MvPolynomial.finSuccEquiv_apply, MvPolynomial.coe_eval₂Hom, ne_eq,
@@ -237,8 +235,8 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
       * Finset.card S := by
         congr
         rw [← Finset.card_union_add_card_inter, Finset.filter_union_right, ← Finset.filter_and]
-        simp only [ne_eq, and_or_and_not_iff, and_and_and_not_iff]
-        simp only [Finset.filter_False, Finset.card_empty, add_zero]
+        simp only [ne_eq, and_or_and_not_iff, and_and_and_not_iff, Finset.filter_False,
+          Finset.card_empty, add_zero]
       -- Pr [B] + Pr [A ∩ Bᶜ]
       _ ≤ (Finset.card
         (Finset.filter
@@ -265,17 +263,11 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           +
           (i) * (Finset.card S) ^ n
           )
-      * Finset.card S := by
-        apply Nat.mul_le_mul_right
-        apply add_le_add
-        exact h_first_half
-        exact h_second_half
+      * Finset.card S := Nat.mul_le_mul_right S.card (add_le_add h_first_half h_second_half)
       _ ≤
       MvPolynomial.totalDegree p * Finset.card S ^ Nat.succ n := by
         rw [Nat.pow_succ, ← mul_assoc]
         apply Nat.mul_le_mul_right
         rw [← add_mul]
-        apply Nat.mul_le_mul_right
-        apply le_of_eq
-        apply Nat.sub_add_cancel
-        apply le_of_add_le_right h0
+        exact
+          Nat.mul_le_mul_right (S.card ^ n) (le_of_eq (Nat.sub_add_cancel (le_of_add_le_right h0)))
