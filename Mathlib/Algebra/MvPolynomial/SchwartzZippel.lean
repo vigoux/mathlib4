@@ -24,10 +24,16 @@ of the field. This lemma is useful as a probabilistic polynomial identity test.
 * Generalize to noncommutative rings? Is that even possible?
 * Generalize to subset of the ring being different for each variable.
   * What does the theorem say in thic case?
-  * Note that the schwartz paper covers this case
+  * Note that the Schwartz paper covers this case
 * Reexpress in terms of probabilities.
 * Then generalize to polynomials over arbitrary variable types
 * Write a tactic to apply this lemma to a given polynomial
+
+## References
+
+* [demillo_lipton_1978]
+* [schwartz_1980]
+* [zippel_1979]
 
 -/
 
