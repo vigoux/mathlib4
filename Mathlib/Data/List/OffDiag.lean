@@ -7,7 +7,6 @@ import Mathlib.Algebra.BigOperators.List.Basic
 import Mathlib.Data.List.Join
 import Mathlib.Data.List.Enum
 import Mathlib.Data.List.EraseIdx
-import Mathlib.GroupTheory.GroupAction.Defs
 import Mathlib.Data.Fin.Basic
 
 /-!
@@ -34,7 +33,7 @@ theorem offDiag_singleton (a : α) : offDiag [a] = [] := rfl
 theorem length_offDiag' (l : List α) : length l.offDiag = (length l - 1) * length l := by
   have : ∀ x ∈ enum l, length (eraseIdx l x.1) = length l - 1 := fun x hx ↦
     length_eraseIdx <| fst_lt_of_mem_enum hx
-  simp [offDiag, (· ∘ ·), map_congr this, mul_comm]
+  simp [offDiag, (· ∘ ·), map_congr this, mul_comm, Nat.nsmul_eq_mul]
 
 @[simp]
 theorem length_offDiag (l : List α) : length l.offDiag = length l ^ 2 - length l := by
