@@ -3,8 +3,8 @@ Copyright (c) 2023 Bolton Bailey. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Bolton Bailey
 -/
-import Mathlib.Data.MvPolynomial.Equiv
-import Mathlib.Data.Polynomial.RingDivision
+import Mathlib.Algebra.MvPolynomial.Equiv
+import Mathlib.Algebra.Polynomial.RingDivision
 import Mathlib.Data.Fin.Tuple.Basic
 
 /-!
@@ -43,12 +43,6 @@ lemma and_or_and_not_iff (p q : Prop) : ((p ∧ q) ∨ (p ∧ ¬ q)) ↔ p := by
 
 lemma and_and_and_not_iff (p q r : Prop) : ((p ∧ q) ∧ (r ∧ ¬ q)) ↔ false := by
   tauto
-
--- https://github.com/leanprover-community/mathlib4/pull/11401
-@[simp]
-lemma MvPolynomial.support_nonempty_iff {F σ} [CommSemiring F] (p : MvPolynomial σ F) :
-    (MvPolynomial.support p).Nonempty ↔ p ≠ 0 := by
-  rw [ne_eq, ← MvPolynomial.support_eq_empty, Finset.nonempty_iff_ne_empty]
 
 -- https://github.com/leanprover-community/mathlib4/pull/7898
 lemma Finset.card_filter_piFinset_eq' {n : ℕ} {α : Fin (n + 1) → Type*}
