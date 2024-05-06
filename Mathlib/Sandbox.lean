@@ -1,18 +1,17 @@
 import Mathlib.NumberTheory.NumberField.CanonicalEmbedding.FundamentalCone
 import Mathlib.Algebra.Module.Zlattice.Covolume
 
-section logic
+section Logic
 
-variable {α : Type*} {β : α → Type*} (p : α → Prop)
+variable {α : Type*} (s t : Set α) (p : α → Prop)
 
-example : {x : (a : α) × (β a) // p x.fst} ≃ (a : {a : α // p a}) × (β a) := by
-  exact Equiv.subtypeSigmaEquiv (fun a ↦ β a) p
-  sorry
+example : {a : α | a ∈ s ∧ p a} ≃ {a : s // p a} := by
+  exact Equiv.Set.sep s fun x ↦ p x
 
-end logic
+example : {a : α | p a} ∩ s = {a : α | a ∈ s ∧ p a} := by
+  exact Set.setOf_inter_eq_sep (fun a ↦ p a) s
 
-
-#exit
+end Logic
 
 section Topo
 
@@ -41,8 +40,6 @@ theorem frontier_lt_eq_eq {α β : Type*} [TopologicalSpace α] [LinearOrder α]
   simpa only [eq_comm, ← not_lt, ← Set.compl_setOf, frontier_compl] using frontier_le_eq_eq hg hf h
 
 end Topo
-
-#exit
 
 section Module
 
@@ -222,14 +219,14 @@ local notation "E" K =>
   ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℂ)
 
 /-- Docs. -/
-abbrev Λ : AddSubgroup (E₂ K) :=
+def Λ : AddSubgroup (E₂ K) :=
     (span ℤ (Set.range ((latticeBasis K).map (euclideanSpace.linearEquiv K).symm))).toAddSubgroup
 
 instance : DiscreteTopology (Λ K) := Zspan.instDiscreteTopology _
 
 instance : IsZlattice ℝ (Λ K) where
   span_top := by
-    simp_rw [coe_toAddSubgroup, ← Zspan.map, map_coe, LinearEquiv.restrictScalars_apply,
+    simp_rw [Λ, coe_toAddSubgroup, ← Zspan.map, map_coe, LinearEquiv.restrictScalars_apply,
       ← Submodule.map_span, Zspan.span_top, Submodule.map_top, LinearEquivClass.range]
 
 /-- Docs. -/
@@ -349,17 +346,50 @@ theorem aux2 : IsBounded (F₁ K) := by
     rw [mem_closedBall_zero_iff, euclideanSpace.norm_apply]
     sorry
 
+variable (K) in
+def iso3 : ↑(↑(Λ K) ∩ X K) ≃ integralPoint K :=
+  Equiv.subtypeEquiv (euclideanSpace.linearEquiv _).toEquiv fun x ↦ by
+  simp only [Λ, coe_toAddSubgroup, Set.inter_comm _ (X K), Set.mem_inter_iff, Set.mem_preimage,
+    SetLike.mem_coe, LinearEquiv.coe_toEquiv, integralPoint, Set.mem_image, Set.mem_range,
+    exists_exists_eq_and, and_congr_right_iff]
+  intro _
+  rw [← Zspan.map]
+  rw [Submodule.mem_map]
+  simp_rw [mem_span_latticeBasis]
+  simp only [RingHom.mem_range, RingHom.coe_comp, Function.comp_apply,
+    LinearEquiv.restrictScalars_apply, exists_exists_eq_and]
+  simp_rw [LinearEquiv.symm_apply_eq]
+
+@[simp]
+theorem iso3_apply (x : ↑(↑(Λ K) ∩ X K)) :
+    iso3 K x = euclideanSpace.linearEquiv K (x : E₂ K) := rfl
+
+open Asymptotics
+
 example :
     Tendsto (fun n : ℕ ↦
-      (Nat.card {I : Ideal (𝓞 K) // Submodule.IsPrincipal I ∧ 1 ≤ Ideal.absNorm I ∧
-        Ideal.absNorm I ≤ n} * torsionOrder K : ℝ) / n) atTop
+      (Nat.card {I : Ideal (𝓞 K) | Submodule.IsPrincipal I ∧ Ideal.absNorm I ∈ Finset.Icc 1 n} *
+        torsionOrder K : ℝ) / n) atTop
           (𝓝 ((volume (X₁ K)).toReal / Zlattice.covolume (Λ K))) := by
   refine Tendsto.congr' ?_
+--  refine IsEquivalent.tendsto_nhds ?_
     (Tendsto.comp (Zlattice.covolume.tendsto_card_le_div' (Λ K) ?_ ?_ ?_ ?_)
       tendsto_natCast_atTop_atTop)
-  · filter_upwards with c
-    simp_rw [Function.comp_apply]
-    rw [card_isPrincipal_norm_mul]
+  · have := card_isPrincipal_norm_le_div_atTop K
+    refine IsEquivalent.trans ?_ this.symm
+    refine EventuallyEq.isEquivalent ?_
+    filter_upwards with _
+    simp_rw [Function.comp_apply, Set.setOf_inter_eq_sep, ← and_assoc, ← Set.mem_inter_iff]
+    -- have := card_isPrincipal_norm_in_Icc K c
+    -- simp_rw [this]
+    congr 2
+    refine Nat.card_congr ?_
+    refine Equiv.trans (Equiv.Set.sep _ _) ?_
+    refine Equiv.subtypeEquiv (iso3 K) ?_
+    intro x
+    simp_rw [Set.mem_setOf_eq, ← Nat.cast_le (α := ℝ), intNorm_coe]
+    have := iso3_apply x
+    rw [this]
   · intro x r hx hr
     erw [Set.mem_preimage, _root_.map_smul (euclideanSpace.linearEquiv K)]
     refine smul_mem_of_mem ?_ r
