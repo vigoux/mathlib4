@@ -30,6 +30,7 @@ lemma toAddCircle_coe {N : ℕ+} (j : ℤ) :
 lemma toAddCircle_apply {N : ℕ+} (j : ZMod N) :
     toAddCircle j = ↑(j.val / N : ℝ) := by
   conv_lhs => rw [show j = (val j : ℤ) by simp, toAddCircle_coe]
+  rfl
 
 lemma toAddCircle_injective (N : ℕ+) : Function.Injective <| toAddCircle (N := N) := by
   intro x y hxy

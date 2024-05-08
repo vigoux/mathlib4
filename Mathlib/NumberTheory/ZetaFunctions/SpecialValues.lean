@@ -229,7 +229,7 @@ theorem riemannZeta_neg_nat_eq_bernoulli' (k : ℕ) :
       bernoulli'_one, Rat.cast_div, Rat.cast_one, Rat.cast_ofNat, neg_div]
   · rw [← hurwitzZeta_zero, ← QuotientAddGroup.mk_zero, hurwitzZeta_neg_nat hk
       (left_mem_Icc.mpr zero_le_one), ofReal_zero, Polynomial.eval_zero_map,
-      Polynomial.bernoulli_eval_zero, Algebra.algebraMap_eq_smul_one, Rat.smul_one_eq_coe,
+      Polynomial.bernoulli_eval_zero, Algebra.algebraMap_eq_smul_one, Rat.smul_one_eq_cast,
       div_mul_eq_mul_div, neg_one_mul, bernoulli_eq_bernoulli'_of_ne_one (by simp [hk])]
 
 /-- Value of Riemann zeta at `-ℕ` in terms of `bernoulli`. -/
