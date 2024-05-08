@@ -166,23 +166,23 @@ theorem tendsto_card_div_pow'' {s : Set E} (hs₁ : IsBounded s) (hs₂ : Measur
     exact Bornology.IsVonNBounded.image hs₁ ((b.ofZlatticeBasis ℝ).equivFunL : E →L[ℝ] ι → ℝ)
   · exact (b.ofZlatticeBasis ℝ).equivFunL.toHomeomorph.toMeasurableEquiv.measurableSet_image.mpr hs₂
 
-variable {X : Set E} (hX : ∀ ⦃x⦄ ⦃r : ℝ⦄, x ∈ X → 0 ≤ r → r • x ∈ X)
-variable {F : E → ℝ} (hF₁ : ∀ x ⦃r : ℝ⦄, 0 ≤ r →  F (r • x) = r ^ card ι * (F x))
+variable {X : Set E} (hX : ∀ ⦃x⦄ ⦃r : ℝ⦄, x ∈ X → 0 < r → r • x ∈ X)
+variable {F : E → ℝ} (hF₁ : ∀ x ⦃r : ℝ⦄, 0 < r →  F (r • x) = r ^ card ι * (F x))
   (hF₂ : IsBounded {x ∈ X | F x ≤ 1}) (hF₃ : MeasurableSet {x ∈ X | F x ≤ 1})
 
 private theorem tendsto_card_le_div''_aux {c : ℝ} (hc : 0 < c) :
     c • {x ∈ X | F x ≤ 1} = {x ∈ X | F x ≤ c ^ card ι} := by
-  obtain ⟨hc₁, hc₂⟩ := lt_iff_le_and_ne.mp hc
   ext x
-  refine ⟨?_, ?_⟩
+  constructor
   · rintro ⟨y, ⟨hy₁, hy₂⟩, rfl⟩
-    refine ⟨hX hy₁ hc₁, ?_⟩
-    rw [hF₁ _ hc₁]
-    exact mul_le_of_le_one_right (pow_nonneg hc₁ _) hy₂
+    refine ⟨?_, ?_⟩
+    exact hX hy₁ hc
+    rw [hF₁ _ hc]
+    exact mul_le_of_le_one_right (pow_nonneg (le_of_lt hc) _) hy₂
   · refine fun ⟨hx₁, hx₂⟩ ↦
-      ⟨c⁻¹ • x, ⟨hX hx₁ (inv_nonneg_of_nonneg hc₁), ?_⟩, smul_inv_smul₀ (hc₂.symm) _⟩
-    rw [hF₁ _ (inv_nonneg_of_nonneg hc₁), inv_pow]
-    exact inv_mul_le_one_of_le hx₂ (pow_nonneg hc₁ _)
+      ⟨c⁻¹ • x, ⟨hX hx₁ (inv_pos_of_pos hc), ?_⟩, smul_inv_smul₀ (ne_of_gt hc) _⟩
+    rw [hF₁ _ (inv_pos_of_pos hc), inv_pow]
+    exact inv_mul_le_one_of_le hx₂ (pow_nonneg (le_of_lt hc) _)
 
 theorem tendsto_card_le_div'' [Nonempty ι] :
     Tendsto (fun c : ℝ ↦
@@ -238,8 +238,8 @@ theorem tendsto_card_div_pow (b : Basis ι ℤ L) {s : Set (ι → ℝ)} (hs₁ 
     Units.val_inv_eq_inv_val, IsUnit.unit_spec, abs_inv, inv_inv, mul_comm, Basis.det_basis]
   rfl
 
-variable {X : Set (ι → ℝ)} (hX : ∀ ⦃x⦄ ⦃r : ℝ⦄, x ∈ X → 0 ≤ r → r • x ∈ X)
-variable {F : (ι → ℝ) → ℝ} (hF₁ : ∀ x ⦃r : ℝ⦄, 0 ≤ r →  F (r • x) = r ^ card ι * (F x))
+variable {X : Set (ι → ℝ)} (hX : ∀ ⦃x⦄ ⦃r : ℝ⦄, x ∈ X → 0 < r → r • x ∈ X)
+variable {F : (ι → ℝ) → ℝ} (hF₁ : ∀ x ⦃r : ℝ⦄, 0 < r →  F (r • x) = r ^ card ι * (F x))
   (hF₂ : IsBounded {x ∈ X | F x ≤ 1}) (hF₃ : MeasurableSet {x ∈ X | F x ≤ 1})
 
 theorem tendsto_card_le_div [Nonempty ι]:
@@ -278,8 +278,8 @@ theorem tendsto_card_div_pow' {s : Set E} (hs₁ : IsBounded s) (hs₂ : Measura
   · rw [volume_image_eq_volume_div_covolume hs₂, ENNReal.toReal_div, ENNReal.toReal_ofReal]
     exact le_of_lt (covolume_pos L)
 
-variable {X : Set E} (hX : ∀ ⦃x⦄ ⦃r : ℝ⦄, x ∈ X → 0 ≤ r → r • x ∈ X)
-variable {F : E → ℝ} (hF₁ : ∀ x ⦃r : ℝ⦄, 0 ≤ r →  F (r • x) = r ^ finrank ℝ E * (F x))
+variable {X : Set E} (hX : ∀ ⦃x⦄ ⦃r : ℝ⦄, x ∈ X → 0 < r → r • x ∈ X)
+variable {F : E → ℝ} (hF₁ : ∀ x ⦃r : ℝ⦄, 0 < r →  F (r • x) = r ^ finrank ℝ E * (F x))
   (hF₂ : IsBounded {x ∈ X | F x ≤ 1}) (hF₃ : MeasurableSet {x ∈ X | F x ≤ 1})
 
 theorem tendsto_card_le_div' [Nontrivial E]:

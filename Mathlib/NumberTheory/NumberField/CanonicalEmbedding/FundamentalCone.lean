@@ -180,53 +180,40 @@ to roots of unity, see `exists_unitSMul_mem` and `torsion_unitSMul_mem_of_mem`. 
 def fundamentalCone : Set (E K) :=
   logMap⁻¹' (Zspan.fundamentalDomain
     ((Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _)) \
-      {x | mixedEmbedding.norm x = 0} ∪ {0}
+      {x | mixedEmbedding.norm x = 0}
 
 namespace fundamentalCone
 
-protected theorem zero_mem : 0 ∈ fundamentalCone K := Set.mem_union_right _ rfl
-
 variable {K}
 
-theorem smul_mem_of_mem {x : E K} (hx : x ∈ fundamentalCone K)
-    (c : ℝ) : c • x ∈ fundamentalCone K := by
-  by_cases hc : c = 0
-  · rw [hc, zero_smul]
-    exact fundamentalCone.zero_mem K
-  · cases hx with
-  | inl hx =>
-      refine Set.mem_union_left _ ⟨?_, ?_⟩
-      · rw [Set.mem_preimage, logMap_smul hx.2 hc]
-        exact hx.1
-      · rw [Set.mem_setOf_eq, mixedEmbedding.norm_smul, mul_eq_zero, not_or]
-        exact ⟨pow_ne_zero _ (abs_ne_zero.mpr hc), hx.2⟩
-  | inr hx =>
-      rw [hx, smul_zero]
-      exact fundamentalCone.zero_mem K
+theorem smul_mem_of_mem {x : E K} (hx : x ∈ fundamentalCone K) {c : ℝ} (hc : c ≠ 0) :
+    c • x ∈ fundamentalCone K := by
+  refine ⟨?_, ?_⟩
+  · rw [Set.mem_preimage, logMap_smul hx.2 hc]
+    exact hx.1
+  · rw [Set.mem_setOf_eq, mixedEmbedding.norm_smul, mul_eq_zero, not_or]
+    exact ⟨pow_ne_zero _ (abs_ne_zero.mpr hc), hx.2⟩
 
 theorem exists_unitSMul_mem {x : E K} (hx : mixedEmbedding.norm x ≠ 0) :
     ∃ u : (𝓞 K)ˣ, u • x ∈ fundamentalCone K := by
   classical
   let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ
   rsuffices ⟨⟨_, ⟨u, _, rfl⟩⟩, hu⟩ : ∃ e : unitLattice K, e + logMap x ∈ Zspan.fundamentalDomain B
-  · exact ⟨u,
-      Set.mem_union_left _ ⟨by rwa [Set.mem_preimage, logMap_unitSMul u hx], by simp [hx]⟩⟩
+  · exact ⟨u, by rwa [Set.mem_preimage, logMap_unitSMul u hx], by simp [hx]⟩
   · obtain ⟨⟨e, h₁⟩, h₂, -⟩ := Zspan.exist_unique_vadd_mem_fundamentalDomain B (logMap x)
     exact ⟨⟨e, by rwa [← Basis.ofZlatticeBasis_span ℝ (unitLattice K)]⟩, h₂⟩
 
 theorem torsion_unitSMul_mem_of_mem {x : E K} (hx : x ∈ fundamentalCone K) {ζ : (𝓞 K)ˣ}
     (hζ : ζ ∈ torsion K) :
     ζ • x ∈ fundamentalCone K := by
-  by_cases hx' : x = 0
-  · refine Set.mem_union_right _ ?_
-    rw [hx', smul_zero, Set.mem_singleton_iff]
-  · refine Set.mem_union_left _ ⟨?_, ?_⟩
-    · rw [Set.mem_preimage, logMap_torsion_unitSMul _ hζ]
-      exact (hx.resolve_right hx').1
-    · simpa using (hx.resolve_right hx').2
+  refine ⟨?_, ?_⟩
+  · rw [Set.mem_preimage, logMap_torsion_unitSMul _ hζ]
+    exact hx.1
+  · simpa only [unitSMul_smul, Set.mem_setOf_eq, map_mul, norm_eq_norm, Rat.cast_abs, mul_eq_zero,
+    abs_eq_zero, Rat.cast_eq_zero, Algebra.norm_eq_zero_iff, RingOfIntegers.coe_eq_zero_iff,
+    Units.ne_zero, false_or] using hx.2
 
-theorem unitSMul_mem_iff_mem_torsion {x : E K} (hx : x ≠ 0) -- (hx : mixedEmbedding.norm x ≠ 0)
-    (hx' : x ∈ fundamentalCone K) (u : (𝓞 K)ˣ) :
+theorem unitSMul_mem_iff_mem_torsion {x : E K} (hx' : x ∈ fundamentalCone K) (u : (𝓞 K)ˣ) :
     u • x ∈ fundamentalCone K ↔ u ∈ torsion K := by
   classical
   refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
@@ -238,12 +225,10 @@ theorem unitSMul_mem_iff_mem_torsion {x : E K} (hx : x ≠ 0) -- (hx : mixedEmbe
       rw [Basis.ofZlatticeBasis_span ℝ (unitLattice K)]
       exact ⟨u, trivial, rfl⟩
     · exact Submodule.zero_mem _
-    · rw [AddSubmonoid.mk_vadd, vadd_eq_add, ← logMap_unitSMul _ (hx'.resolve_right hx).2]
-      refine (h.resolve_right ?_).1
-      rw [Set.mem_singleton_iff, unitSMul_eq_zero]
-      exact hx
+    · rw [AddSubmonoid.mk_vadd, vadd_eq_add, ← logMap_unitSMul _ hx'.2]
+      exact h.1
     · rw [AddSubmonoid.mk_vadd, vadd_eq_add, zero_add]
-      exact (hx'.resolve_right hx).1
+      exact hx'.1
   · exact torsion_unitSMul_mem_of_mem hx' h
 
 variable (K) in
@@ -262,14 +247,18 @@ theorem exists_unique_preimage_of_integralPoint {x : E K} (hx : x ∈ integralPo
     convert hx.2.choose_spec.2.symm
     exact hx.2.choose_spec.1.choose_spec
 
+open nonZeroDivisors
+
 /-- For `a : fundamentalCone K`, the unique algebraic integer which image by `mixedEmbedding` is
 equal to `a`. -/
-def preimageOfIntegralPoint (a : integralPoint K) : (𝓞 K) :=
-  a.prop.2.choose_spec.1.choose
+def preimageOfIntegralPoint (a : integralPoint K) : (𝓞 K)⁰ :=
+  ⟨a.prop.2.choose_spec.1.choose, sorry⟩
+
+#exit
 
 @[simp]
 theorem image_preimageOfIntegralPoint (a : integralPoint K) :
-    mixedEmbedding K (preimageOfIntegralPoint a) = a := by
+    mixedEmbedding K (preimageOfIntegralPoint a : 𝓞 K) = a := by
   rw [RingOfIntegers.coe_eq_algebraMap, ← a.prop.2.choose_spec.2, preimageOfIntegralPoint,
     a.prop.2.choose_spec.1.choose_spec]
 
@@ -279,31 +268,14 @@ theorem preimageOfIntegralPoint_mixedEmbedding {x : 𝓞 K}
   simp_rw [RingOfIntegers.ext_iff, ← (mixedEmbedding_injective K).eq_iff,
     image_preimageOfIntegralPoint]
 
-variable (K) in
-theorem zero_mem_integralPoint : 0 ∈ integralPoint K :=
-  ⟨fundamentalCone.zero_mem K, 0, ⟨0, rfl⟩, map_zero _⟩
-
-@[simp]
-theorem integralPoint_eq_zero {a : integralPoint K} :
-    a = ⟨0, zero_mem_integralPoint K⟩ ↔ (a : E K) = 0 := Subtype.ext_iff
-
-@[simp]
-theorem preimageOfIntegralPoint_eq_zero_iff {a : integralPoint K} :
-    preimageOfIntegralPoint a = 0 ↔ a = ⟨0, zero_mem_integralPoint K⟩ := by
-  simp_rw [RingOfIntegers.ext_iff, ← (mixedEmbedding_injective K).eq_iff,
-    image_preimageOfIntegralPoint, map_zero, integralPoint_eq_zero]
-
-theorem exists_unitSMul_mem_integralPoint {x : E K}
-    (hx : x ∈ mixedEmbedding K '' (Set.range (algebraMap (𝓞 K) K))) :
+theorem exists_unitSMul_mem_integralPoint {x : E K} (hx : x ≠ 0)
+    (hx' : x ∈ mixedEmbedding K '' (Set.range (algebraMap (𝓞 K) K))) :
     ∃ u : (𝓞 K)ˣ, u • x ∈ integralPoint K := by
-  by_cases hx' : x = 0
-  · simp_rw [hx', smul_zero]
-    refine ⟨1, ⟨fundamentalCone.zero_mem _, by simp⟩⟩
-  · replace hx' : mixedEmbedding.norm x ≠ 0 :=
-      (norm_eq_zero_iff' (Set.mem_range_of_mem_image (mixedEmbedding K) _ hx)).not.mpr hx'
-    obtain ⟨u, hu⟩ := exists_unitSMul_mem hx'
-    obtain ⟨_, ⟨⟨x, rfl⟩, ⟨_, rfl⟩⟩⟩ := hx
-    refine ⟨u, hu, (u * x : K), ⟨u * x, rfl⟩, by simp_rw [unitSMul_smul, ← map_mul]⟩
+  replace hx : mixedEmbedding.norm x ≠ 0 :=
+      (norm_eq_zero_iff' (Set.mem_range_of_mem_image (mixedEmbedding K) _ hx')).not.mpr hx
+  obtain ⟨u, hu⟩ := exists_unitSMul_mem hx
+  obtain ⟨_, ⟨⟨x, rfl⟩, ⟨_, rfl⟩⟩⟩ := hx'
+  exact ⟨u, hu, (u * x : K), ⟨u * x, rfl⟩, by simp_rw [unitSMul_smul, ← map_mul]⟩
 
 theorem torsion_unitSMul_mem_integralPoint {x : E K} {ζ : (𝓞 K)ˣ} (hζ : ζ ∈ torsion K)
     (hx : x ∈ integralPoint K) :
@@ -317,23 +289,23 @@ variable (K) in
 /-- The map that sends an element of `a : fundamentalCone K` to the associates class
 of its preimage in `(𝓞 K)`. By quotienting by the kernel of the map, which is equal to the group of
 roots of unity, we get the equivalence `integralPointQuotEquivAssociates`. -/
-def integralPointToAssociates (a : integralPoint K) : Associates (𝓞 K) :=
-  ⟦preimageOfIntegralPoint a⟧
+def integralPointToAssociates (a : integralPoint K) : Associates (𝓞 K)⁰ :=
+  ⟦⟨preimageOfIntegralPoint a, preimageOfIntegralPoint_nonZeroDivisors a⟩⟧
 
-@[simp]
-theorem integralPointToAssociates_apply (a : integralPoint K) :
-    integralPointToAssociates K a = ⟦preimageOfIntegralPoint a⟧ := rfl
+-- @[simp]
+-- theorem integralPointToAssociates_apply (a : integralPoint K) :
+--    integralPointToAssociates K a = ⟦preimageOfIntegralPoint a⟧ := rfl
 
-variable (K) in
-theorem integralPointToAssociates_surjective :
-    Function.Surjective (integralPointToAssociates K) := by
-  rintro ⟨x⟩
-  obtain ⟨u, hu⟩ : ∃ u : (𝓞 K)ˣ, u • (mixedEmbedding K x) ∈ integralPoint K :=
-    exists_unitSMul_mem_integralPoint ⟨x, Set.mem_range_self _, rfl⟩
-  refine ⟨⟨u • (mixedEmbedding K x), hu⟩, ?_⟩
-  refine Quotient.sound ⟨u⁻¹, ?_⟩
-  simp_rw [unitSMul_smul, ← map_mul, preimageOfIntegralPoint_mixedEmbedding, mul_comm,
-    Units.mul_inv_cancel_right]
+-- variable (K) in
+-- theorem integralPointToAssociates_surjective :
+--     Function.Surjective (integralPointToAssociates K) := by
+--   rintro ⟨x⟩
+--   obtain ⟨u, hu⟩ : ∃ u : (𝓞 K)ˣ, u • (mixedEmbedding K x) ∈ integralPoint K := sorry
+-- --    exists_unitSMul_mem_integralPoint ⟨x, Set.mem_range_self _, rfl⟩
+--   refine ⟨⟨u • (mixedEmbedding K x), hu⟩, ?_⟩
+--   refine Quotient.sound ⟨u⁻¹, ?_⟩
+--   simp_rw [unitSMul_smul, ← map_mul, preimageOfIntegralPoint_mixedEmbedding, mul_comm,
+--     Units.mul_inv_cancel_right]
 
 @[simps]
 instance integralPoint_torsionSMul: SMul (torsion K) (integralPoint K) where
@@ -355,26 +327,24 @@ theorem integralPointToAssociates_eq_iff (a b : integralPoint K) :
     rw [Associates.mk_eq_mk_iff_associated, Associated]]
   simp_rw [mul_comm, ← unitSMul_eq_iff_mul_eq, image_preimageOfIntegralPoint, Subtype.ext_iff,
     integralPoint_torsionSMul_smul_coe]
-  refine ⟨fun ⟨u, h⟩ ↦ ?_, fun ⟨⟨ζ, _⟩, h⟩ ↦ ⟨ζ, h⟩⟩
-  by_cases ha : (a : E K) = 0
-  · simp_rw [ha, smul_zero] at h ⊢
-    exact ⟨1, h⟩
-  · refine ⟨⟨u, (unitSMul_mem_iff_mem_torsion ha a.prop.1 u).mp ?_⟩, h⟩
-    rw [h]
-    exact b.prop.1
+  refine ⟨fun ⟨u, h⟩ ↦ ⟨⟨u, ?_⟩, h⟩, fun ⟨⟨ζ, _⟩, h⟩ ↦ ⟨ζ, h⟩⟩
+  exact (unitSMul_mem_iff_mem_torsion a.prop.1 _).mp (h ▸ b.prop.1)
+
+open nonZeroDivisors
 
 variable (K) in
 /-- The equivalence between `fundamentalCone.integralPoint K / torsion K` and `Associates K`. -/
 def integralPointQuotEquivAssociates :
-    Quotient (MulAction.orbitRel (torsion K) (integralPoint K)) ≃ Associates (𝓞 K) := by
-  refine Equiv.ofBijective (Quotient.lift (integralPointToAssociates K)
-    fun _ _ h ↦ ((integralPointToAssociates_eq_iff _ _).mpr h).symm)
-    ⟨?_, (Quot.surjective_lift _).mpr (integralPointToAssociates_surjective K)⟩
-  convert Setoid.ker_lift_injective (integralPointToAssociates K)
-  all_goals
-  · ext a b
-    rw [Setoid.ker_def, eq_comm, integralPointToAssociates_eq_iff b a,
-      MulAction.orbitRel_apply, MulAction.mem_orbit_iff]
+    Quotient (MulAction.orbitRel (torsion K) (integralPoint K)) ≃ Associates (𝓞 K)⁰ := by
+  sorry
+  -- refine Equiv.ofBijective (Quotient.lift (integralPointToAssociates K)
+  --   fun _ _ h ↦ ((integralPointToAssociates_eq_iff _ _).mpr h).symm)
+  --   ⟨?_, (Quot.surjective_lift _).mpr ?_⟩
+  -- convert Setoid.ker_lift_injective (integralPointToAssociates K)
+  -- all_goals
+  -- · ext a b
+  --   rw [Setoid.ker_def, eq_comm, integralPointToAssociates_eq_iff b a,
+  --     MulAction.orbitRel_apply, MulAction.mem_orbit_iff]
 
 @[simp]
 theorem integralPointQuotEquivAssociates_apply (a : integralPoint K) :
@@ -501,6 +471,12 @@ theorem finite2 (n : ℕ) : Finite {a : integralPoint K | intNorm a = n} := by
   · convert Finite.of_equiv _ (iso2 K (Nat.pos_of_ne_zero hn)).symm
     exact @Finite.instProd _ _ (finite1 K n) (Finite.of_fintype (torsion K))
 
+open nonZeroDivisors
+
+theorem card_isPrincipal_norm_le (n : ℕ) :
+    Nat.card {I : (Ideal (𝓞 K))⁰ | IsPrincipal I.val ∧ absNorm I.val ≤ n} * torsionOrder K =
+      Nat.card {a : integralPoint K | intNorm a ≤ n} := by sorry
+
 theorem card_isPrincipal_norm_in_Icc (n : ℕ) :
     Nat.card {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I ∈ Finset.Icc 1 n} * torsionOrder K =
       Nat.card {a : integralPoint K | intNorm a ∈ Finset.Icc 1 n} := by
@@ -543,7 +519,7 @@ theorem card_isPrincipal_norm_le_div_atTop :
       Nat.card {a : integralPoint K | intNorm a ≤ n} + (torsionOrder K - 1) := sorry
   simp_rw [this]
   simp_rw [div_div_div_cancel_right _ sorry, add_div, div_self sorry]
-
+  sorry
 
 #exit
 

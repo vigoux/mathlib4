@@ -3,6 +3,140 @@ import Mathlib.Algebra.Module.Zlattice.Covolume
 
 section Logic
 
+variable {α β : Type*} (p q : α → Prop)
+
+example : {a // p a ∧ q a} ≃ {a // q a ∧ p a} := by
+  refine Equiv.setCongr (by simp_rw [and_comm])
+end Logic
+
+noncomputable section Ring
+
+open nonZeroDivisors
+
+theorem Associated.mem_nonZeroDivisors_iff {α : Type*} [CommMonoidWithZero α] {a b : α}
+    (h : Associated a b) :
+    a ∈ α⁰ ↔ b ∈ α⁰ := by
+  obtain ⟨u, rfl⟩ := h
+  simp_rw [mul_mem_nonZeroDivisors, IsUnit.mem_nonZeroDivisors u.isUnit, and_true]
+
+theorem Ideal.associatesEquivIsPrincipal_mem_nonZeroDivisors (R : Type*) [CommRing R] [IsDomain R]
+    {x : R} :
+    ↑(Ideal.associatesEquivIsPrincipal R ⟦x⟧) ∈ (Ideal R)⁰ ↔ x ∈ R⁰ := by
+  rw [Ideal.associatesEquivIsPrincipal_apply, mem_nonZeroDivisors_iff, mem_nonZeroDivisors_iff,
+    ← not_iff_not]
+  push_neg
+  refine ⟨?_, ?_⟩
+  · rintro ⟨I, hI₁, hI₂⟩
+    rw [Ideal.zero_eq_bot, Submodule.ne_bot_iff] at hI₂
+    refine ⟨hI₂.choose, ?_, hI₂.choose_spec.2⟩
+    · have : hI₂.choose * x ∈ I * Ideal.span {x} := by
+        rw [Ideal.mem_mul_span_singleton]
+        exact ⟨hI₂.choose, hI₂.choose_spec.1, rfl⟩
+      rwa [hI₁] at this
+  · rintro ⟨y, hy₁, hy₂⟩
+    refine ⟨Ideal.span {y}, ?_, ?_⟩
+    · rw [Ideal.span_singleton_mul_span_singleton, hy₁, Set.singleton_zero, Ideal.span_zero,
+      Ideal.zero_eq_bot]
+    · rw [Ideal.zero_eq_bot, Submodule.ne_bot_iff]
+      exact ⟨y, Ideal.mem_span_singleton_self y, hy₂⟩
+
+theorem Associates_mk_mem_nonZeroDivisors {α : Type*} [CommMonoidWithZero α] (a : α) :
+    Associates.mk a ∈ (Associates α)⁰ ↔ a ∈ α⁰ := by
+  rw [mem_nonZeroDivisors_iff, mem_nonZeroDivisors_iff, ← not_iff_not]
+  push_neg
+  constructor
+  · rintro ⟨⟨x⟩, hx₁, hx₂⟩
+    refine ⟨x, ?_, ?_⟩
+    · rwa [← Associates.mk_eq_zero, ← Associates.mk_mul_mk, ← Associates.quot_mk_eq_mk]
+    · rwa [← Associates.mk_ne_zero, ← Associates.quot_mk_eq_mk]
+  · refine fun ⟨b, hb₁, hb₂⟩ ↦ ⟨Associates.mk b, ?_, by rwa [Associates.mk_ne_zero]⟩
+    rw [Associates.mk_mul_mk, hb₁, Associates.mk_zero]
+
+/-- The units of the monoid of non zero divisors of `α` are exactly the units of `α`. -/
+def nonZeroDivisorsUnitsEquiv (α : Type*) [MonoidWithZero α] :
+  (α⁰)ˣ ≃* αˣ :=
+  MulEquiv.ofBijective (Units.map α⁰.subtype) ⟨Units.map_injective Subtype.val_injective,
+    fun u ↦ ⟨IsUnit.unit ⟨⟨⟨u, IsUnit.mem_nonZeroDivisors u.isUnit⟩, ⟨(u⁻¹ : αˣ),
+        IsUnit.mem_nonZeroDivisors u⁻¹.isUnit⟩, by simp, by simp⟩, rfl⟩,
+      by rw [Units.ext_iff, IsUnit.unit_of_val_units, Units.coe_map, Submonoid.coe_subtype]⟩⟩
+
+@[simp]
+theorem nonZeroDivisorsUnitsEquiv_apply (α : Type*) [MonoidWithZero α] (u : (α⁰)ˣ) :
+    nonZeroDivisorsUnitsEquiv α u = (u : α) := rfl
+
+@[simp]
+theorem nonZeroDivisorsUnitsEquiv_symm_apply (α : Type*) [MonoidWithZero α] (u : αˣ) :
+    ((nonZeroDivisorsUnitsEquiv α).symm u : α) = (u : α) := by
+  obtain ⟨v, rfl⟩ := (nonZeroDivisorsUnitsEquiv α).surjective u
+  rw [MulEquiv.symm_apply_apply, nonZeroDivisorsUnitsEquiv_apply]
+
+/-- FIXME. The `MonoidHom` that sends the class of `x : α⁰` to the class of `x` coerced to an element of
+`α` which turns out to be a non zero divisor. It is in fact a `MulEquiv`, see
+`AssociatesNonZeroDivisorsMulEquiv`. -/
+def AssociatesNonZeroDivisorsMonoidHom (α : Type*) [CommMonoidWithZero α] :
+    Associates α⁰ →* (Associates α)⁰ where
+  toFun := Quotient.lift (fun ⟨x, _⟩ ↦  ⟨Associates.mk x, by
+      rwa [Associates_mk_mem_nonZeroDivisors]⟩) (by
+    rintro _ _ ⟨v, hv⟩
+    rw [Subtype.mk.injEq, Associates.mk_eq_mk_iff_associated]
+    exact ⟨nonZeroDivisorsUnitsEquiv α v, by
+      rw [nonZeroDivisorsUnitsEquiv_apply, ← hv, Submonoid.coe_mul]⟩)
+  map_one' := rfl
+  map_mul' x y := Quotient.inductionOn₂ x y fun _ _ ↦ rfl
+
+@[simp]
+theorem AssociatesNonZeroDivisorsMulHom_apply (α : Type*) [CommMonoidWithZero α] (a : α⁰) :
+    (AssociatesNonZeroDivisorsMonoidHom α ⟦a⟧ : Associates α) = Associates.mk (a : α) := rfl
+
+/-- FIXME -/
+def AssociatesNonZeroDivisorsMulEquiv (α : Type*) [CommMonoidWithZero α] :
+    Associates α⁰ ≃* (Associates α)⁰  := by
+  refine MulEquiv.ofBijective (AssociatesNonZeroDivisorsMonoidHom α) ⟨?_, ?_⟩
+  · rintro ⟨_⟩ ⟨_⟩ h
+    rw [Subtype.ext_iff, Associates.quot_mk_eq_mk, Associates.quot_mk_eq_mk,
+      AssociatesNonZeroDivisorsMulHom_apply, AssociatesNonZeroDivisorsMulHom_apply] at h
+    obtain ⟨u, hu⟩ := Associates.mk_eq_mk_iff_associated.mp h
+    rw [Associates.quot_mk_eq_mk, Associates.quot_mk_eq_mk]
+    refine Associates.mk_eq_mk_iff_associated.mpr ⟨?_, ?_⟩
+    · exact (nonZeroDivisorsUnitsEquiv α).symm u
+    · rwa [Subtype.ext_iff, Submonoid.coe_mul, nonZeroDivisorsUnitsEquiv_symm_apply]
+  · rintro ⟨⟨y⟩, hy⟩
+    refine ⟨⟦⟨y, ?_⟩⟧, ?_⟩
+    · rwa [← Associates_mk_mem_nonZeroDivisors, ← Associates.quot_mk_eq_mk]
+    · rw [Subtype.ext_iff, AssociatesNonZeroDivisorsMulHom_apply, ← Associates.quot_mk_eq_mk]
+
+@[simp]
+theorem AssociatesNonZeroDivisorsMulEquiv_apply (α : Type*) [CommMonoidWithZero α] (a : α⁰) :
+    (AssociatesNonZeroDivisorsMulEquiv α ⟦a⟧ : Associates α) = Associates.mk (a : α) := rfl
+
+open Submodule
+
+/-- A version of `Ideal.associatesEquivIsPrincipal` with non zero divisors generators. -/
+def Ideal.associatesNonZeroDivisorsEquivIsPrincipal (R : Type*) [CommRing R] [IsDomain R] :
+    Associates R⁰ ≃ {I : (Ideal R)⁰ // IsPrincipal (I : Ideal R)} :=
+  calc Associates R⁰ ≃ (Associates R)⁰ := (AssociatesNonZeroDivisorsMulEquiv R).toEquiv
+    _ ≃ {I : {I : Ideal R // IsPrincipal I} // I.1 ∈ (Ideal R)⁰} :=
+      Equiv.subtypeEquiv (Ideal.associatesEquivIsPrincipal R)
+        (fun x ↦ by rw [← Associates.quot_out x, Associates_mk_mem_nonZeroDivisors,
+          Ideal.associatesEquivIsPrincipal_mem_nonZeroDivisors])
+    _ ≃ {I : Ideal R // IsPrincipal I ∧ I ∈ (Ideal R)⁰} :=
+      Equiv.subtypeSubtypeEquivSubtypeInter (fun I ↦ IsPrincipal I) (fun I ↦ I ∈ (Ideal R)⁰)
+    _ ≃ {I : Ideal R // I ∈ (Ideal R)⁰ ∧ IsPrincipal I} := Equiv.setCongr (by simp_rw [and_comm])
+    _ ≃ {I : (Ideal R)⁰ // IsPrincipal I.1} := (Equiv.subtypeSubtypeEquivSubtypeInter _ _).symm
+
+@[simp]
+theorem Ideal.associatesNonZeroDivisorsEquivIsPrincipal_apply (R : Type*) [CommRing R] [IsDomain R]
+    (x : R⁰) :
+    Ideal.associatesNonZeroDivisorsEquivIsPrincipal R ⟦x⟧  = Ideal.span {(x : R)} := by
+  rw [← Ideal.associatesEquivIsPrincipal_apply]
+  rfl
+
+#lint
+
+#exit
+
+section Logic
+
 variable {α : Type*} (s t : Set α) (p : α → Prop)
 
 example : {a : α | a ∈ s ∧ p a} ≃ {a : s // p a} := by
@@ -364,7 +498,31 @@ def iso3 : ↑(↑(Λ K) ∩ X K) ≃ integralPoint K :=
 theorem iso3_apply (x : ↑(↑(Λ K) ∩ X K)) :
     iso3 K x = euclideanSpace.linearEquiv K (x : E₂ K) := rfl
 
-open Asymptotics
+open Asymptotics Submodule Ideal nonZeroDivisors
+
+example :
+    Tendsto (fun n : ℕ ↦
+      (Nat.card {I : (Ideal (𝓞 K))⁰ | IsPrincipal I.val ∧ absNorm I.val ≤ n} *
+        torsionOrder K : ℝ) / n) atTop
+          (𝓝 ((volume (X₁ K)).toReal / Zlattice.covolume (Λ K))) := by
+  refine Tendsto.congr' ?_
+    (Tendsto.comp (Zlattice.covolume.tendsto_card_le_div' (Λ K) ?_ ?_ ?_ ?_)
+      tendsto_natCast_atTop_atTop)
+  · filter_upwards with n
+    have := card_isPrincipal_norm_le K n
+    simp_rw [Function.comp_apply, ← Nat.cast_mul]
+    rw [this]
+    simp_rw [Set.setOf_inter_eq_sep, ← and_assoc, ← Set.mem_inter_iff]
+    congr 2
+    refine Nat.card_congr ?_
+    refine Equiv.trans (Equiv.Set.sep _ _) ?_
+    refine Equiv.subtypeEquiv (iso3 K) ?_
+    intro x
+    simp_rw [Set.mem_setOf_eq, ← Nat.cast_le (α := ℝ), intNorm_coe]
+    have := iso3_apply x
+    rw [this]
+
+#exit
 
 example :
     Tendsto (fun n : ℕ ↦
