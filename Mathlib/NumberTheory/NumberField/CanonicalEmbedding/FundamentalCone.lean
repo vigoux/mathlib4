@@ -169,7 +169,7 @@ end logMap
 
 noncomputable section
 
-open NumberField.Units NumberField.Units.dirichletUnitTheorem
+open NumberField.Units NumberField.Units.dirichletUnitTheorem nonZeroDivisors
 
 variable [NumberField K]
 
@@ -247,20 +247,27 @@ theorem exists_unique_preimage_of_integralPoint {x : E K} (hx : x ∈ integralPo
     convert hx.2.choose_spec.2.symm
     exact hx.2.choose_spec.1.choose_spec
 
-open nonZeroDivisors
+theorem integralPoint_ne_zero (a : integralPoint K) :
+    (a : E K) ≠ 0 := by
+  by_contra!
+  exact a.prop.1.2 (this.symm ▸ mixedEmbedding.norm.map_zero')
 
-/-- For `a : fundamentalCone K`, the unique algebraic integer which image by `mixedEmbedding` is
-equal to `a`. -/
-def preimageOfIntegralPoint (a : integralPoint K) : (𝓞 K)⁰ :=
-  ⟨a.prop.2.choose_spec.1.choose, sorry⟩
-
-#exit
+/-- For `a : fundamentalCone K`, the unique algebraic integer which image by `mixedEmbedding`
+is equal to `a`. -/
+def preimageOfIntegralPoint (a : integralPoint K) : 𝓞 K := a.prop.2.choose_spec.1.choose
 
 @[simp]
 theorem image_preimageOfIntegralPoint (a : integralPoint K) :
     mixedEmbedding K (preimageOfIntegralPoint a : 𝓞 K) = a := by
   rw [RingOfIntegers.coe_eq_algebraMap, ← a.prop.2.choose_spec.2, preimageOfIntegralPoint,
     a.prop.2.choose_spec.1.choose_spec]
+
+theorem preimageOfIntegralPoint_mem_nonZeroDivisors (a : integralPoint K) :
+    preimageOfIntegralPoint a ∈ (𝓞 K)⁰ := by
+  rw [mem_nonZeroDivisors_iff_ne_zero, ne_eq, RingOfIntegers.ext_iff]
+  by_contra!
+  simp_rw [← (mixedEmbedding_injective K).eq_iff, image_preimageOfIntegralPoint, map_zero] at this
+  exact (integralPoint_ne_zero a) this
 
 theorem preimageOfIntegralPoint_mixedEmbedding {x : 𝓞 K}
     (hx : mixedEmbedding K x ∈ integralPoint K) :
@@ -287,25 +294,26 @@ theorem torsion_unitSMul_mem_integralPoint {x : E K} {ζ : (𝓞 K)ˣ} (hζ : ζ
 
 variable (K) in
 /-- The map that sends an element of `a : fundamentalCone K` to the associates class
-of its preimage in `(𝓞 K)`. By quotienting by the kernel of the map, which is equal to the group of
-roots of unity, we get the equivalence `integralPointQuotEquivAssociates`. -/
+of its preimage in `(𝓞 K)⁰`. By quotienting by the kernel of the map, which is equal to the group
+of roots of unity, we get the equivalence `integralPointQuotEquivAssociates`. -/
 def integralPointToAssociates (a : integralPoint K) : Associates (𝓞 K)⁰ :=
-  ⟦⟨preimageOfIntegralPoint a, preimageOfIntegralPoint_nonZeroDivisors a⟩⟧
+  ⟦⟨preimageOfIntegralPoint a, preimageOfIntegralPoint_mem_nonZeroDivisors a⟩⟧
 
 -- @[simp]
 -- theorem integralPointToAssociates_apply (a : integralPoint K) :
---    integralPointToAssociates K a = ⟦preimageOfIntegralPoint a⟧ := rfl
+--    (integralPointToAssociates K a) = ⟦preimageOfIntegralPoint a⟧ := rfl
 
--- variable (K) in
--- theorem integralPointToAssociates_surjective :
---     Function.Surjective (integralPointToAssociates K) := by
---   rintro ⟨x⟩
---   obtain ⟨u, hu⟩ : ∃ u : (𝓞 K)ˣ, u • (mixedEmbedding K x) ∈ integralPoint K := sorry
--- --    exists_unitSMul_mem_integralPoint ⟨x, Set.mem_range_self _, rfl⟩
---   refine ⟨⟨u • (mixedEmbedding K x), hu⟩, ?_⟩
---   refine Quotient.sound ⟨u⁻¹, ?_⟩
---   simp_rw [unitSMul_smul, ← map_mul, preimageOfIntegralPoint_mixedEmbedding, mul_comm,
---     Units.mul_inv_cancel_right]
+variable (K) in
+theorem integralPointToAssociates_surjective :
+    Function.Surjective (integralPointToAssociates K) := by
+  rintro ⟨⟨x, hx⟩⟩
+  obtain ⟨u, hu⟩ : ∃ u : (𝓞 K)ˣ, u • (mixedEmbedding K x) ∈ integralPoint K := sorry
+--    exists_unitSMul_mem_integralPoint ⟨x, Set.mem_range_self _, rfl⟩
+  refine ⟨⟨u • (mixedEmbedding K x), hu⟩, ?_⟩
+  have := nonZeroDivisorsUnitsEquiv
+  refine Quotient.sound ⟨u⁻¹, ?_⟩
+  simp_rw [unitSMul_smul, ← map_mul, preimageOfIntegralPoint_mixedEmbedding, mul_comm,
+     Units.mul_inv_cancel_right]
 
 @[simps]
 instance integralPoint_torsionSMul: SMul (torsion K) (integralPoint K) where
