@@ -345,12 +345,13 @@ def integralPointQuotEquivAssociates :
   refine Equiv.ofBijective
     (Quotient.lift (integralPointToAssociates K)
       fun _ _ h ↦ ((integralPointToAssociates_eq_iff _ _).mpr h).symm)
-    ⟨?_, (Quot.surjective_lift _).mpr (integralPointToAssociates_surjective K)⟩
-  convert Setoid.ker_lift_injective (integralPointToAssociates K)
-  all_goals
-  · ext a b
-    rw [Setoid.ker_def, eq_comm, integralPointToAssociates_eq_iff b a,
-      MulAction.orbitRel_apply, MulAction.mem_orbit_iff]
+    ⟨by
+      convert Setoid.ker_lift_injective (integralPointToAssociates K)
+      all_goals
+      · ext a b
+        rw [Setoid.ker_def, eq_comm, integralPointToAssociates_eq_iff b a,
+        MulAction.orbitRel_apply, MulAction.mem_orbit_iff],
+      (Quot.surjective_lift _).mpr (integralPointToAssociates_surjective K)⟩
 
 @[simp]
 theorem integralPointQuotEquivAssociates_apply (a : integralPoint K) :
@@ -366,11 +367,6 @@ theorem integralPoint_torsionSMul_stabilizer {a : integralPoint K} :
   exact nonZeroDivisors.coe_ne_zero _
 
 open Submodule Ideal
-
-example : Quotient (MulAction.orbitRel (torsion K) (integralPoint K)) ≃
-    {I : (Ideal (𝓞 K))⁰ // IsPrincipal I.val} := by
-  refine (integralPointQuotEquivAssociates K).trans
-    (Ideal.associatesNonZeroDivisorsEquivIsPrincipal (𝓞 K))
 
 variable (K) in
 def integralPointEquiv :
@@ -402,10 +398,10 @@ theorem intNorm_coe (a : integralPoint K) :
 /-- The norm `intNorm` defined on `fundamentalCone.integralPoint K` lifts to a function
 on the classes of `fundamentalCone.integralPoint K` modulo `torsion K`. -/
 def quotIntNorm :
-    Quotient (MulAction.orbitRel (torsion K) (integralPoint K)) → ℕ := by
-  refine Quotient.lift (fun x ↦ intNorm x) fun a b ⟨u, hu⟩ ↦ ?_
-  rw [← Nat.cast_inj (R := ℝ), intNorm_coe, intNorm_coe, ← hu, integralPoint_torsionSMul_smul_coe,
-    norm_unitSMul]
+    Quotient (MulAction.orbitRel (torsion K) (integralPoint K)) → ℕ :=
+  Quotient.lift (fun x ↦ intNorm x) fun a b ⟨u, hu⟩ ↦ by
+    rw [← Nat.cast_inj (R := ℝ), intNorm_coe, intNorm_coe, ← hu, integralPoint_torsionSMul_smul_coe,
+      norm_unitSMul]
 
 @[simp]
 theorem quotIntNorm_apply (a : integralPoint K) : quotIntNorm ⟦a⟧ = intNorm a := rfl
