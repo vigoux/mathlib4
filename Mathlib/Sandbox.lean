@@ -4,6 +4,9 @@ import Mathlib.Logic.Equiv.Defs
 
 variable {α β : Type*} (p : α → Prop)
 
+example (q : α → Prop) (h : ∀ a, p a → q a) (a : α) :
+    q a ∧ p a ↔ p a := by exact Iff.symm ((fun {p q} ↦ iff_and_self.mpr) (h a))
+
 def Equiv.prodSubtypeEquivSubtypeProd : {s : α × β // p s.1} ≃ {a // p a} × β where
   toFun x := ⟨⟨x.1.1, x.2⟩, x.1.2⟩
   invFun x := ⟨⟨x.1.1, x.2⟩, x.1.2⟩

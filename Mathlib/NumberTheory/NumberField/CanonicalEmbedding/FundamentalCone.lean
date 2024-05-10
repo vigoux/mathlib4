@@ -454,162 +454,22 @@ theorem card_isPrincipal_norm_le (n : ℕ) :
       (fun I ↦ ⟨absNorm (I.1 : Ideal (𝓞 K)), Finset.mem_Iic.mpr I.1.2.2⟩)
       (fun a ↦ ⟨intNorm a.1, Finset.mem_Iic.mpr a.2⟩) fun ⟨i, hi⟩ ↦ ?_
   simp_rw [Subtype.mk.injEq]
-  let g : {a : {a : integralPoint K // intNorm a ≤ n} //
-      intNorm a.1 = i} ≃ {a : integralPoint K // intNorm a = i} := by
-    refine Equiv.subtypeSubtypeEquivSubtype (α := integralPoint K) (p := fun a ↦ intNorm a ≤ n)
-      (q := fun a ↦ intNorm a = i) fun h ↦ Finset.mem_Iic.mp (h ▸ hi)
-  refine Equiv.trans ?_ g.symm
-  refine Equiv.trans ?_ (integralPointEquivNorm K i).symm
-  let k := Equiv.prodSubtypeEquivSubtypeProd
-    (α := {I : (Ideal (𝓞 K))⁰ | IsPrincipal I.1 ∧ absNorm I.1 ≤ n})
-    (β := torsion K)
-    (fun I ↦ absNorm I.1.1 = i)
-  refine Equiv.trans k ?_
-  refine Equiv.prodCongrLeft fun _ ↦ ?_
-
-
-  let i := Equiv.subtypeSubtypeEquivSubtypeInter
-    (α := (Ideal (𝓞 K))⁰)
-    (p := fun I ↦ IsPrincipal I.1 ∧ absNorm I.1 ≤ n)
-    (q := fun I ↦ absNorm I.1 = i)
-  refine Equiv.trans i ?_
-  refine Equiv.subtypeEquivRight ?_
-  intro _
-  simp only [and_congr_left_iff, and_iff_left_iff_imp]
-  intro h _
-  rw [h]
-  exact Finset.mem_Iic.mp hi
-
-#exit
-
-  · intro i
-    refine Equiv.trans ?_ (Equiv.trans (integralPointEquivNorm K i).symm ?_)
-    · sorry
-    · simp only [Set.coe_setOf] --, Set.mem_setOf_eq]
-      let e := @Equiv.subtypeSubtypeEquivSubtype (integralPoint K) (fun a ↦ intNorm a ≤ n)
-        (fun a ↦ intNorm a = i) sorry
-      refine Equiv.trans e.symm ?_
-      -- exact eq_iff_eq_of_cmp_eq_cmp rfl
-
-
-
-#exit
-
-    refine Equiv.trans
-      (Equiv.subtypeEquivRight fun I ↦
-        (absNorm ⟨(I.1 : Ideal (𝓞 K)), Finset.mem_Iic.mpr I.1.2.2⟩ = n ↔
-          absNorm (I.1 : Ideal (𝓞 K))) = n) ?_
-    simp?
-
-
-
--- Equiv.sigmaFiberEquiv
--- Equiv.ofFiberEquiv
-
-
-theorem finite1 (n : ℕ) : Finite {I : (Ideal (𝓞 K))⁰ |
-    IsPrincipal (I : Ideal (𝓞 K)) ∧ absNorm (I : Ideal (𝓞 K)) = n} := by
-  by_cases hn : n = 0
-  · simp_rw [hn, absNorm_eq_zero_iff]
-    refine Set.Finite.subset (Set.finite_singleton ⊥) (by simp)
-  · exact Set.Finite.subset (finite_setOf_absNorm_eq (Nat.pos_of_ne_zero hn)) (by simp)
-
-theorem finite2 (n : ℕ) : Finite {a : integralPoint K | intNorm a = n} := by
-  by_cases hn : n = 0
-  · simp_rw [hn, intNorm, Int.natAbs_eq_zero, Algebra.norm_eq_zero_iff,
-      preimageOfIntegralPoint_eq_zero_iff]
-    exact Set.finite_singleton _
-  · convert Finite.of_equiv _ (iso2 K (Nat.pos_of_ne_zero hn)).symm
-    exact @Finite.instProd _ _ (finite1 K n) (Finite.of_fintype (torsion K))
-
-open nonZeroDivisors
-
-theorem card_isPrincipal_norm_le (n : ℕ) :
-    Nat.card {I : (Ideal (𝓞 K))⁰ | IsPrincipal I.val ∧ absNorm I.val ≤ n} * torsionOrder K =
-      Nat.card {a : integralPoint K | intNorm a ≤ n} := by sorry
-
-theorem card_isPrincipal_norm_in_Icc (n : ℕ) :
-    Nat.card {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I ∈ Finset.Icc 1 n} * torsionOrder K =
-      Nat.card {a : integralPoint K | intNorm a ∈ Finset.Icc 1 n} := by
-  have : ∀ i, Fintype {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I = i} :=
-    fun i ↦ @Fintype.ofFinite _ (finite1 K i)
-  have : ∀ i, Fintype {a : integralPoint K | intNorm a = i} :=
-    fun i ↦ @Fintype.ofFinite _ (finite2 K i)
-  have : Fintype {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I ∈ Finset.Icc 1 n} := by
-    rw [show {I | IsPrincipal I ∧ absNorm I ∈ Finset.Icc 1 n} =
-          (⋃ i ∈ Set.Icc 1 n, {I | IsPrincipal I ∧ absNorm I = i}) by ext; simp]
-    exact @Fintype.ofFinite _ <| Set.Finite.biUnion (Set.finite_Icc _ _) (fun _ _ ↦ Set.toFinite _)
-  have : Fintype {a : integralPoint K | intNorm a ∈ Finset.Icc 1 n} := by
-    rw [show {a | intNorm a ∈ Finset.Icc 1 n} =
-          (⋃ i ∈ Set.Icc 1 n, {a | intNorm a = i}) by ext; simp]
-    exact @Fintype.ofFinite _ <| Set.Finite.biUnion (Set.finite_Icc _ _) (fun _ _ ↦ Set.toFinite _)
-  rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card, ← Set.toFinset_card, ← Set.toFinset_card,
-    Finset.card_eq_sum_card_fiberwise fun _ h ↦ by convert (Set.mem_toFinset.mp h).2,
-    Finset.sum_mul, Finset.card_eq_sum_card_fiberwise fun _ h ↦ by convert (Set.mem_toFinset.mp h)]
-  refine Finset.sum_congr rfl fun i hi ↦ ?_
-  convert card_isPrincipal_norm_eq K (Finset.mem_Icc.mp hi).1
-  · rw [Nat.card_eq_fintype_card, ← Set.toFinset_card]
-    congr; ext
-    simpa only [Finset.mem_Icc, Finset.mem_filter, Set.mem_toFinset, Set.mem_setOf_eq,
-      and_congr_left_iff, and_iff_left_iff_imp] using fun h _ ↦ by rwa [← Finset.mem_Icc, h]
-  · rw [Nat.card_eq_fintype_card, ← Set.toFinset_card]
-    congr; ext
-    simpa only [Finset.mem_Icc, Finset.mem_filter, Set.mem_toFinset, Set.mem_setOf_eq,
-      and_iff_right_iff_imp] using fun h ↦ by rwa [← Finset.mem_Icc, h]
-
-open Filter Asymptotics
-
-theorem card_isPrincipal_norm_le_div_atTop :
-    (fun n ↦ (Nat.card {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I ≤ n} * torsionOrder K : ℝ) / n)
-      ~[atTop] fun n ↦ (Nat.card {a : integralPoint K | intNorm a ≤ n} : ℝ) / n := by
-  have : ∀ᶠ n in atTop, (Nat.card {a : integralPoint K | intNorm a ≤ n} : ℝ) / n ≠ 0 := sorry
-  rw [isEquivalent_iff_tendsto_one this]
-  simp_rw [Pi.div_def]
-  have : ∀ n,
-    (Nat.card {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I ≤ n} * torsionOrder K  : ℝ) =
-      Nat.card {a : integralPoint K | intNorm a ≤ n} + (torsionOrder K - 1) := sorry
-  simp_rw [this]
-  simp_rw [div_div_div_cancel_right _ sorry, add_div, div_self sorry]
-  sorry
-
-#exit
-
-
-  refine Asymptotics.IsLittleO.isEquivalent ?_
-  simp_rw [Pi.sub_def, ← sub_div]
-  have : ∀ n,
-    (Nat.card {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I ≤ n} * torsionOrder K  : ℝ) -
-      Nat.card {a : integralPoint K | intNorm a ≤ n} = torsionOrder K - 1 := sorry
-  simp_rw [this]
-  refine IsLittleO.trans ?_ (Asymptotics.isLittleO_zero (α := ℕ) (F' := ℝ) (E' := ℝ) _ atTop)
-  rw?
-
-
-#exit
-
-  rw?
-  rw [eventuallyEq_iff_sub, Pi.sub_def]
-  simp_rw [← sub_div]
-  have : ∀ n,
-    (Nat.card {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I ≤ n} * torsionOrder K  : ℝ) -
-      Nat.card {a : integralPoint K | intNorm a ≤ n} = torsionOrder K - 1 := sorry
-  conv =>
-    enter [2, i, 1]
-    rw [this]
-  refine Filter.eventuallyEq_of_left_inv_of_right_inv ?_ ?_ ?_
-
-  have : (fun n ↦ (Nat.card {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I ≤ n} *
-    torsionOrder K : ℝ) / n) =
-    (fun n ↦ (Nat.card {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I ∈ Finset.Icc 1 n} *
-      torsionOrder K  - 1 : ℝ) / n) := sorry
-  rw [this]
-  have : (fun n ↦ (Nat.card {a : integralPoint K | intNorm a ≤ n} : ℝ) / n) =
-    (fun n ↦ (Nat.card {a : integralPoint K | intNorm a ∈ Finset.Icc 1 n} - 1 : ℝ) / n) := sorry
-  rw [this]
-
-
-  sorry
-
+  calc
+    _ ≃ {I : {I : (Ideal (𝓞 K))⁰ // IsPrincipal I.1 ∧ absNorm I.1 ≤ n} // absNorm I.1.1 = i}
+          × torsion K := Equiv.prodSubtypeEquivSubtypeProd
+      (fun I : {I : (Ideal (𝓞 K))⁰ | IsPrincipal I.1 ∧ absNorm I.1 ≤ n} ↦ absNorm I.1.1 = i)
+    _ ≃ {I : (Ideal (𝓞 K))⁰ // (IsPrincipal I.1 ∧ absNorm I.1 ≤ n) ∧ absNorm I.1 = i}
+          × torsion K := Equiv.prodCongrLeft fun _ ↦ (Equiv.subtypeSubtypeEquivSubtypeInter
+      (p := fun I : (Ideal (𝓞 K))⁰ ↦ IsPrincipal I.1 ∧ absNorm I.1 ≤ n)
+      (q := fun I ↦ absNorm I.1 = i))
+    _ ≃ {I : (Ideal (𝓞 K))⁰ // IsPrincipal I.1 ∧ absNorm I.1 = i ∧ absNorm I.1 ≤ n}
+          × torsion K := Equiv.prodCongrLeft fun _ ↦ (Equiv.subtypeEquivRight fun _ ↦ by aesop)
+    _ ≃ {I : (Ideal (𝓞 K))⁰ // IsPrincipal I.1 ∧ absNorm I.1 = i} × torsion K :=
+      Equiv.prodCongrLeft fun _ ↦ (Equiv.subtypeEquivRight fun _ ↦ by
+      rw [and_iff_left_of_imp (a := absNorm _ = _) fun h ↦ Finset.mem_Iic.mp (h ▸ hi)])
+    _ ≃ {a : integralPoint K // intNorm a = i} := (integralPointEquivNorm K i).symm
+    _ ≃ {a : {a : integralPoint K // intNorm a ≤ n} // intNorm a.1 = i} :=
+      (Equiv.subtypeSubtypeEquivSubtype fun h ↦ Finset.mem_Iic.mp (h ▸ hi)).symm
 
 end fundamentalCone
 
