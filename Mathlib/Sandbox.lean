@@ -1,5 +1,29 @@
-import Mathlib.NumberTheory.NumberField.CanonicalEmbedding.FundamentalCone
-import Mathlib.Algebra.Module.Zlattice.Covolume
+import Mathlib.Logic.Equiv.Defs
+-- import Mathlib.NumberTheory.NumberField.CanonicalEmbedding.FundamentalCone
+-- import Mathlib.Algebra.Module.Zlattice.Covolume
+
+variable {α β : Type*} (p : α → Prop)
+
+example : {s : α × β // p s.1} ≃ {a // p a} × β where
+  toFun x := ⟨⟨x.1.1, x.2⟩, x.1.2⟩
+  invFun x := ⟨⟨x.1.1, x.2⟩, x.1.2⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+#exit
+
+  refine Equiv.trans (Equiv.subtypeProdEquivSigmaSubtype fun a ↦ fun b ↦ p a) ?_
+  exact?
+  refine Equiv.trans ?_ (Equiv.sigmaEquivProd _ _)
+
+  --refine Equiv.trans ?_ (Equiv.subtypeSigmaEquiv _ (fun a ↦ p a))
+  -- refine Equiv.trans (Equiv.subtypeSigmaEquiv _ (fun a ↦ p a)) ?_
+
+  sorry
+
+end logic
+
+#exit
 
 section Topo
 

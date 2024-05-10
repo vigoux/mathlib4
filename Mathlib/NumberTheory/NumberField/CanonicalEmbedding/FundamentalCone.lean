@@ -425,12 +425,15 @@ def integralPointEquivNorm (n : ℕ) :
       Equiv.prodCongrLeft fun _ ↦ (Equiv.subtypeSubtypeEquivSubtypeInter
         (fun I : (Ideal (𝓞 K))⁰ ↦ IsPrincipal I.1) (fun I ↦ absNorm I.1 = n))
 
+#exit
+
 @[simp]
 theorem integralPointEquivNorm_apply_fst {n : ℕ} {a : integralPoint K} (ha : intNorm a = n) :
     ((integralPointEquivNorm K n ⟨a, ha⟩).1 : Ideal (𝓞 K)) =
       span {(preimageOfIntegralPoint a : 𝓞 K)} := by
   simp_rw [← associatesNonZeroDivisorsEquivIsPrincipal_apply,
     ← integralPointQuotEquivAssociates_apply]
+  congr!
   rfl
 
 
