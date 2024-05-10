@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Xavier Roblot
 -/
 import Mathlib.NumberTheory.NumberField.Units.DirichletTheorem
+import Mathlib.Sandbox
 
 /-!
 # Fundamental Cone
@@ -416,16 +417,13 @@ def integralPointEquivNorm (n : ℕ) :
           absNorm (I.1 : Ideal (𝓞 K)) = n} :=
       (Equiv.subtypeEquiv (integralPointEquiv K) fun _ ↦ by simp [intNorm, absNorm_span_singleton])
     _ ≃ {I : {I : (Ideal (𝓞 K))⁰ // IsPrincipal I.1} // absNorm (I.1 : Ideal (𝓞 K)) = n} ×
-          torsion K := by
-      convert Equiv.trans (Equiv.subtypeProdEquivProd (q := fun _ : torsion K ↦ True))
-        (Equiv.prodCongrRight fun _ ↦ (Equiv.Set.univ _).symm).symm
-      rw [and_true]
+          torsion K :=
+      prodSubtypeEquivSubtypeProd (fun I : {I : (Ideal (𝓞 K))⁰ // IsPrincipal I.1} ↦
+        absNorm (I : Ideal (𝓞 K)) = n)
     _ ≃ {I : (Ideal (𝓞 K))⁰ // IsPrincipal (I : Ideal (𝓞 K)) ∧
           absNorm (I : Ideal (𝓞 K)) = n} × (torsion K) :=
       Equiv.prodCongrLeft fun _ ↦ (Equiv.subtypeSubtypeEquivSubtypeInter
         (fun I : (Ideal (𝓞 K))⁰ ↦ IsPrincipal I.1) (fun I ↦ absNorm I.1 = n))
-
-#exit
 
 @[simp]
 theorem integralPointEquivNorm_apply_fst {n : ℕ} {a : integralPoint K} (ha : intNorm a = n) :
@@ -433,39 +431,6 @@ theorem integralPointEquivNorm_apply_fst {n : ℕ} {a : integralPoint K} (ha : i
       span {(preimageOfIntegralPoint a : 𝓞 K)} := by
   simp_rw [← associatesNonZeroDivisorsEquivIsPrincipal_apply,
     ← integralPointQuotEquivAssociates_apply]
-  congr!
-  rfl
-
-
-#exit
-
-  let e := Equiv.subtypeSigmaEquiv
-    (fun I : {I : (Ideal (𝓞 K))⁰ // IsPrincipal I.1} ↦ torsion K)
-    (fun I ↦ absNorm (I.1 : Ideal (𝓞 K)) = n)
-  refine Equiv.trans e ?_
-  sorry
-
-variable (K) in
-def iso2 {n : ℕ} (hn : 0 < n) :
-    {a : integralPoint K // intNorm a = n} ≃
-      {I : Ideal (𝓞 K) // IsPrincipal I ∧ absNorm I = n} × (torsion K) := by
-  refine (Equiv.subtypeEquiv (p := fun a ↦ intNorm a = n)
-    (q := fun σ ↦ Ideal.absNorm σ.1.val = n) (iso1 K)
-    (fun _ ↦ by simp_rw [iso1_apply_fst, absNorm_span_singleton, intNorm])).trans
-    ?_
-  -- Defining everything in one go gives a timeout so we split the construction into two parts
-  refine Equiv.trans ((Equiv.subtypeSigmaEquiv
-    (fun I : { I : Ideal (𝓞 K) // IsPrincipal I } ↦ (torsion K ⧸ idealStab K I))
-    (fun I ↦ absNorm I.val = n)).trans
-      ((Equiv.subtypeSubtypeEquivSubtypeInter (fun I ↦ IsPrincipal I)
-        (fun I ↦ absNorm I = n)).sigmaCongr fun ⟨I, hI⟩ ↦ ?_)) (Equiv.sigmaEquivProd _ _)
-  rw [idealStab, if_neg (by rw [← absNorm_eq_zero_iff, hI]; linarith)]
-  exact QuotientGroup.quotientBot.toEquiv
-
-theorem iso2_apply_fst {n : ℕ} (hn : 0 < n) {a : integralPoint K} (ha : intNorm a = n):
-    (iso2 K hn ⟨a, ha⟩).fst = span { preimageOfIntegralPoint a} := by
-  unfold iso2
-  simp_rw [← associatesEquivIsPrincipal_apply, ← integralPointQuotEquivAssociates_apply]
   rfl
 
 variable (K)
@@ -473,14 +438,40 @@ variable (K)
 /-- For `n` positive, the number of `fundamentalCone.integralPoint K` of
 norm `n` is equal to the number of principal ideals in `𝓞 K` of norm `n` multiplied by the number
 of roots of unity in `K`. -/
-theorem card_isPrincipal_norm_eq {n : ℕ} (hn : 1 ≤ n) :
-    Nat.card {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I = n} * torsionOrder K =
+theorem card_isPrincipal_norm_eq (n : ℕ) :
+    Nat.card {I : (Ideal (𝓞 K))⁰ | IsPrincipal (I : Ideal (𝓞 K)) ∧
+      absNorm (I : Ideal (𝓞 K)) = n} * torsionOrder K =
         Nat.card {a : integralPoint K | intNorm a = n} := by
   rw [torsionOrder, PNat.mk_coe, ← Nat.card_eq_fintype_card, ← Nat.card_prod]
-  refine Nat.card_congr ?_
-  exact (iso2 K hn).symm
+  exact Nat.card_congr (integralPointEquivNorm K n).symm
 
-theorem finite1 (n : ℕ) : Finite {I : Ideal (𝓞 K) | IsPrincipal I ∧ absNorm I = n} := by
+theorem card_isPrincipal_norm_le (n : ℕ) :
+    Nat.card {I : (Ideal (𝓞 K))⁰ | IsPrincipal I.val ∧ absNorm I.val ≤ n} * torsionOrder K =
+      Nat.card {a : integralPoint K | intNorm a ≤ n} := by
+  rw [torsionOrder, PNat.mk_coe, ← Nat.card_eq_fintype_card, ← Nat.card_prod]
+  refine Nat.card_congr ?_
+  refine @Equiv.ofFiberEquiv
+      ({I : (Ideal (𝓞 K))⁰ | IsPrincipal I.val ∧ absNorm I.val ≤ n} × torsion K)
+      (Finset.Iic n)
+      {a : integralPoint K | intNorm a ≤ n}
+      (fun I ↦ ⟨absNorm (I.1 : Ideal (𝓞 K)), ?_⟩)
+      (fun a ↦ ⟨intNorm a.1, ?_⟩) ?_
+  · have := I.1.2.2
+    exact Finset.mem_Iic.mpr this
+  · have := a.2
+    exact Finset.mem_Iic.mpr this
+  · intro n
+    refine Equiv.trans (Equiv.subtypeEquivRight _) ?_
+    simp?
+
+
+
+-- Equiv.sigmaFiberEquiv
+-- Equiv.ofFiberEquiv
+
+
+theorem finite1 (n : ℕ) : Finite {I : (Ideal (𝓞 K))⁰ |
+    IsPrincipal (I : Ideal (𝓞 K)) ∧ absNorm (I : Ideal (𝓞 K)) = n} := by
   by_cases hn : n = 0
   · simp_rw [hn, absNorm_eq_zero_iff]
     refine Set.Finite.subset (Set.finite_singleton ⊥) (by simp)

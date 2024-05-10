@@ -4,7 +4,7 @@ import Mathlib.Logic.Equiv.Defs
 
 variable {α β : Type*} (p : α → Prop)
 
-example : {s : α × β // p s.1} ≃ {a // p a} × β where
+def prodSubtypeEquivSubtypeProd : {s : α × β // p s.1} ≃ {a // p a} × β where
   toFun x := ⟨⟨x.1.1, x.2⟩, x.1.2⟩
   invFun x := ⟨⟨x.1.1, x.2⟩, x.1.2⟩
   left_inv _ := rfl
