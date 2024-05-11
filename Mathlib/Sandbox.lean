@@ -1,32 +1,5 @@
-import Mathlib.Logic.Equiv.Defs
--- import Mathlib.NumberTheory.NumberField.CanonicalEmbedding.FundamentalCone
--- import Mathlib.Algebra.Module.Zlattice.Covolume
-
-variable {α β : Type*} (p : α → Prop)
-
-example (q : α → Prop) (h : ∀ a, p a → q a) (a : α) :
-    q a ∧ p a ↔ p a := by exact Iff.symm ((fun {p q} ↦ iff_and_self.mpr) (h a))
-
-def Equiv.prodSubtypeEquivSubtypeProd : {s : α × β // p s.1} ≃ {a // p a} × β where
-  toFun x := ⟨⟨x.1.1, x.2⟩, x.1.2⟩
-  invFun x := ⟨⟨x.1.1, x.2⟩, x.1.2⟩
-  left_inv _ := rfl
-  right_inv _ := rfl
-
-#exit
-
-  refine Equiv.trans (Equiv.subtypeProdEquivSigmaSubtype fun a ↦ fun b ↦ p a) ?_
-  exact?
-  refine Equiv.trans ?_ (Equiv.sigmaEquivProd _ _)
-
-  --refine Equiv.trans ?_ (Equiv.subtypeSigmaEquiv _ (fun a ↦ p a))
-  -- refine Equiv.trans (Equiv.subtypeSigmaEquiv _ (fun a ↦ p a)) ?_
-
-  sorry
-
-end logic
-
-#exit
+import Mathlib.NumberTheory.NumberField.CanonicalEmbedding.FundamentalCone
+import Mathlib.Algebra.Module.Zlattice.Covolume
 
 section Topo
 
@@ -69,67 +42,80 @@ end Module
 
 section PiLp
 
-open Bornology Filter
+open Bornology Filter BigOperators
 
-variable {ι : Type*} [Fintype ι] (R M : Type*) [NormedDivisionRing R] [SeminormedAddCommGroup M]
-  [Module R M] (b : Basis ι R M) (s : Set M)
+variable {ι : Type*} [Fintype ι] {R M : Type*} [NormedDivisionRing R] [SeminormedAddCommGroup M]
+  [Module R M]
 
 variable [BoundedSMul R M]
 
-example [IsEmpty ι] : Subsingleton M := by
-  refine subsingleton_of_forall_eq 0 fun y ↦ ?_
-  rw [← b.sum_repr y, Fintype.sum_empty]
-
-example (h : ∀ i, IsBounded ((fun x ↦ b.repr x i) '' s)) :
-    IsBounded s := by
-  by_cases hι : IsEmpty ι
-  · have : Subsingleton M := by
+theorem Bornology.isBoundedOfBoundedCoeff (v : ι → M) {s : Set R} (h : IsBounded s) :
+    IsBounded (Set.range fun (c : ι → s) ↦ ∑ i, (c i : R) • v i) := by
+  generalize Finset.univ (α := ι) = t
+  obtain ⟨C, hC⟩ : ∃ C, ∀ x ∈ s, ‖x‖ ≤ C := sorry
+  induction t using Finset.cons_induction_on with
+  | h₁ =>
+      rw [Metric.isBounded_range_iff]
+      refine ⟨0, by simp⟩
+  | h₂ h_ne h_bd =>
+      rw [isBounded_iff_forall_norm_le] at h_bd ⊢
+      
       sorry
-    have : IsBounded (⊤ : Set M) := by exact IsBounded.all ⊤
-    refine IsBounded.subset this le_top
-  · obtain ⟨C, hC⟩ : ∃ C, ∀ i, ‖b i‖ ≤ C := by
-      refine ⟨?_, ?_⟩
-      refine Finset.univ.sup' ?_ (fun i ↦ ‖b i‖)
-      rw [Finset.univ_nonempty_iff]
-      exact not_isEmpty_iff.mp hι
-      exact fun i ↦ Finset.le_sup' (fun i ↦ ‖b i‖) (Finset.mem_univ i)
-    obtain ⟨D, hD₁, hD₂⟩ : ∃ D ≥ 0, ∀ i, ∀ x ∈ s, ‖b.repr x i‖ ≤ D := by
-      simp_rw [Metric.isBounded_iff_subset_closedBall (0:R)] at h
-      let D := Finset.univ.sup' ?_ fun i ↦ (h i).choose
-      refine ⟨D, ?_, ?_⟩
-      sorry
-      intro i x hx
-      specialize h i
-      have := h.choose_spec
-      have : ‖b.repr x i‖ ≤ h.choose := by
-        sorry
-      sorry
-      sorry
-    refine (Metric.isBounded_iff_subset_closedBall 0).mpr ⟨?_, ?_⟩
-    · exact (Fintype.card ι) • (D * C)
-    · intro x hx
-      rw [mem_closedBall_zero_iff, ← b.sum_repr x]
-      refine le_trans (norm_sum_le _ _) ?_
-      simp_rw [norm_smul]
-      rw [Fintype.card, ← Finset.sum_const]
-      refine Finset.sum_le_sum fun i _ ↦ ?_
-      gcongr
-      · exact hD₂ i x hx
-      · exact hC i
 
-variable (p : ENNReal) (𝕜 : Type*) {ι : Type*} (β : ι → Type*) [Fact (1 ≤ p)] [Fintype ι]
-  [NormedField 𝕜] [(i : ι) → SeminormedAddCommGroup (β i)]  [(i : ι) → NormedSpace 𝕜 (β i)]
+-- example [IsEmpty ι] : Subsingleton M := by
+--   refine subsingleton_of_forall_eq 0 fun y ↦ ?_
+--   rw [← b.sum_repr y, Fintype.sum_empty]
 
-example (s : Set (PiLp p β)) :
-    IsBounded s ↔ ∀ i, IsBounded ((fun x ↦ ‖x i‖) '' s) := by
-  refine ⟨?_, ?_⟩
-  · rw [Metric.isBounded_iff_subset_ball 0]
-    intro h i
-    rw [Metric.isBounded_iff_subset_ball 0]
+-- example (h : ∀ i, IsBounded ((fun x ↦ b.repr x i) '' s)) :
+--     IsBounded s := by
+--   by_cases hι : IsEmpty ι
+--   · have : Subsingleton M := by
+--       sorry
+--     have : IsBounded (⊤ : Set M) := by exact IsBounded.all ⊤
+--     refine IsBounded.subset this le_top
+--   · obtain ⟨C, hC⟩ : ∃ C, ∀ i, ‖b i‖ ≤ C := by
+--       refine ⟨?_, ?_⟩
+--       refine Finset.univ.sup' ?_ (fun i ↦ ‖b i‖)
+--       rw [Finset.univ_nonempty_iff]
+--       exact not_isEmpty_iff.mp hι
+--       exact fun i ↦ Finset.le_sup' (fun i ↦ ‖b i‖) (Finset.mem_univ i)
+--     obtain ⟨D, hD₁, hD₂⟩ : ∃ D ≥ 0, ∀ i, ∀ x ∈ s, ‖b.repr x i‖ ≤ D := by
+--       simp_rw [Metric.isBounded_iff_subset_closedBall (0:R)] at h
+--       let D := Finset.univ.sup' ?_ fun i ↦ (h i).choose
+--       refine ⟨D, ?_, ?_⟩
+--       sorry
+--       intro i x hx
+--       specialize h i
+--       have := h.choose_spec
+--       have : ‖b.repr x i‖ ≤ h.choose := by
+--         sorry
+--       sorry
+--       sorry
+--     refine (Metric.isBounded_iff_subset_closedBall 0).mpr ⟨?_, ?_⟩
+--     · exact (Fintype.card ι) • (D * C)
+--     · intro x hx
+--       rw [mem_closedBall_zero_iff, ← b.sum_repr x]
+--       refine le_trans (norm_sum_le _ _) ?_
+--       simp_rw [norm_smul]
+--       rw [Fintype.card, ← Finset.sum_const]
+--       refine Finset.sum_le_sum fun i _ ↦ ?_
+--       gcongr
+--       · exact hD₂ i x hx
+--       · exact hC i
 
-    sorry
-  ·
-    sorry
+-- variable (p : ENNReal) (𝕜 : Type*) {ι : Type*} (β : ι → Type*) [Fact (1 ≤ p)] [Fintype ι]
+--   [NormedField 𝕜] [(i : ι) → SeminormedAddCommGroup (β i)]  [(i : ι) → NormedSpace 𝕜 (β i)]
+
+-- example (s : Set (PiLp p β)) :
+--     IsBounded s ↔ ∀ i, IsBounded ((fun x ↦ ‖x i‖) '' s) := by
+--   refine ⟨?_, ?_⟩
+--   · rw [Metric.isBounded_iff_subset_ball 0]
+--     intro h i
+--     rw [Metric.isBounded_iff_subset_ball 0]
+
+--     sorry
+--   ·
+--     sorry
 
 
 end PiLp
@@ -255,57 +241,51 @@ abbrev F₁ : Set (E₂ K) := {x ∈ X K | mixedEmbedding.norm (euclideanSpace.l
 
 variable {K}
 
-theorem aux00 {x : E₂ K} (hx : x ∈ X K) (hx' : x ≠ 0) :
-    0 < mixedEmbedding.norm (euclideanSpace.linearEquiv K x) := by
-  rw [X, fundamentalCone, Set.mem_preimage] at hx
-  have := hx.resolve_right ?_
-  refine lt_iff_le_and_ne.mpr ⟨?_, ?_⟩
-  · exact mixedEmbedding.norm_nonneg _
-  · exact Ne.symm this.2
-  rw [Set.mem_singleton_iff, AddEquivClass.map_eq_zero_iff]
-  exact hx'
+theorem aux00 {x : E₂ K} (hx : x ∈ X K) :
+    0 < mixedEmbedding.norm (euclideanSpace.linearEquiv K x) :=
+  lt_iff_le_and_ne.mpr ⟨mixedEmbedding.norm_nonneg _, Ne.symm hx.2⟩
 
-theorem aux0 {x : E₂ K} (hx : x ∈ X₁ K) (hx' : x ≠ 0) :
+theorem aux0 {x : E₂ K} (hx : x ∈ X₁ K) :
     ∃ c : ℝ, 1 ≤ c ∧ c • x ∈ F₁ K := by
-  refine ⟨((mixedEmbedding.norm (euclideanSpace.linearEquiv K x)) ^ (-(finrank ℚ K : ℝ)⁻¹)), ?_, ?_⟩
+  have : finrank ℚ K ≠ 0 := ne_of_gt finrank_pos
+  refine ⟨((mixedEmbedding.norm (euclideanSpace.linearEquiv K x)) ^ (-(finrank ℚ K : ℝ)⁻¹)),
+    ?_, ?_⟩
   · refine Real.one_le_rpow_of_pos_of_le_one_of_nonpos ?_ ?_ ?_
-    · exact aux00 hx.1 hx'
+    · exact aux00 hx.1
     · exact hx.2
-    · simp
+    · aesop
   · refine ⟨?_, ?_⟩
     · rw [X, Set.mem_preimage, _root_.map_smul]
-      exact smul_mem_of_mem hx.1 _
-    · rw [_root_.map_smul, mixedEmbedding.norm_smul, abs_eq_self.mpr]
+      refine smul_mem_of_mem hx.1 ?_
+      refine (Real.rpow_ne_zero ?_ ?_).mpr ?_
+      exact mixedEmbedding.norm_nonneg _
+      aesop
+      exact ne_of_gt (aux00 hx.1)
+    · have := aux00 hx.1
+      rw [_root_.map_smul, mixedEmbedding.norm_smul, abs_eq_self.mpr]
       rw [← Real.rpow_natCast, ← Real.rpow_mul, neg_mul, inv_mul_cancel, Real.rpow_neg_one,
         inv_mul_cancel]
-      · exact ne_of_gt (aux00 hx.1 hx')
-      · rw [Nat.cast_ne_zero]
-        exact ne_of_gt finrank_pos
-      · exact mixedEmbedding.norm_nonneg _
-      · refine Real.rpow_nonneg ?_ _
-        exact mixedEmbedding.norm_nonneg _
+      exact ne_of_gt (aux00 hx.1)
+      aesop
+      exact mixedEmbedding.norm_nonneg _
+      refine Real.rpow_nonneg (mixedEmbedding.norm_nonneg _) _
 
 theorem aux1 (h : IsBounded (F₁ K)) :
     IsBounded (X₁ K) := by
   rw [Metric.isBounded_iff_subset_ball 0]
   obtain ⟨r, hr₁, hr₂⟩ := h.subset_ball_lt 0 0
   refine ⟨r, ?_⟩
-  rintro x hx
-  by_cases hx' : x = 0
-  · rw [hx']
-    exact Metric.mem_ball_self hr₁
-  · obtain ⟨c, hc₁, hc₂⟩ := aux0 hx hx'
-    have := hr₂ hc₂
-    rw [mem_ball_zero_iff] at this ⊢
-    rw [norm_smul, ← lt_div_iff'] at this
-    refine lt_of_lt_of_le this ?_
-    refine div_le_self ?_ ?_
-    exact le_of_lt hr₁
-    rw [Real.norm_eq_abs]
-    exact le_trans hc₁ (le_abs_self _)
-    rw [norm_pos_iff]
-    refine ne_of_gt ?_
-    exact lt_of_lt_of_le zero_lt_one hc₁
+  intro x hx
+  obtain ⟨c, hc₁, hc₂⟩ := aux0 hx
+  have := hr₂ hc₂
+  rw [mem_ball_zero_iff] at this ⊢
+  rw [← smul_lt_smul_iff_of_pos_left (by linarith : 0 < c)]
+  rw [show c • ‖x‖ = ‖c • x‖ by
+    rw [norm_smul, Real.norm_eq_abs, abs_eq_self.mpr (by linarith), smul_eq_mul]]
+  refine lt_of_lt_of_le this ?_
+  refine le_smul_of_one_le_left ?_ ?_
+  exact le_of_lt hr₁
+  exact hc₁
 
 theorem aux11 : frontier (X₁ K) = F₁ K := sorry
 
@@ -321,45 +301,60 @@ theorem logMap_apply_F₁_ofIsComplex {x : E₂ K} (hx : x ∈ F₁ K) {w : Infi
   rw [logMap, dif_neg (not_isReal_iff_isComplex.mpr hw₂), hx.2, Real.log_one, zero_mul, sub_zero]
   rfl
 
-theorem aux2 : IsBounded (F₁ K) := by
-  rsuffices ⟨C, _, hC⟩ : ∃ C₁ C₂ : ℝ, 0 < C₁ ∧ 0 < C₂ ∧
-      ∀ x ∈ (F₁ K),
-        (∀ w, w.val ≠ w₀ → C₁ < ‖x.1 w‖ ∧ ‖x.1 w‖ < C₂) ∧
-        (∀ w, w.val ≠ w₀ → C₁ < ‖x.2 w‖ ∧ ‖x.2 w‖ < C₂) := by
-    let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
-    have := (Zspan.fundamentalDomain_isBounded B).subset_ball_lt 0 0
-    obtain ⟨r, hr₁, hr₂⟩ := this
-    refine ⟨Real.exp (- r), Real.exp r, Real.exp_pos _, Real.exp_pos _, fun x hx₁ ↦ ?_⟩
-    have hx₂ : x ≠ 0 := sorry
-    have hx₃ : (∀ w, x.1 w ≠ 0) ∧ (∀ w, x.2 w ≠ 0) := sorry
-    have hx₄ :  ∀ w : { w // w ≠ w₀ }, ‖logMap ((euclideanSpace.linearEquiv K) x) w‖ < r := by
-      rw [← pi_norm_lt_iff hr₁, ← mem_ball_zero_iff]
-      refine hr₂ ?_
-      have := hx₁.1
-      rw [X, fundamentalCone, Set.mem_preimage] at this
-      exact (this.resolve_right (by simp [hx₂])).1
+theorem aux20 :
+    ∃ s : Set ℝ, IsBounded s ∧ ∀ i, ∀ x ∈ F₁ K,
+      (euclideanSpace.stdOrthonormalBasis K).repr x i ∈ s := sorry
 
-    refine ⟨fun w hw ↦ ?_, fun w hw ↦ ?_⟩
-    · rw [← Real.log_lt_iff_lt_exp, ← Real.lt_log_iff_exp_lt, ← abs_lt]
-      rw [← logMap_apply_F₁_ofIsReal hx₁ hw]
-      exact hx₄ ⟨w.val, hw⟩
-      sorry
-      sorry
-    · rw [← Real.log_lt_iff_lt_exp, ← Real.lt_log_iff_exp_lt, ← abs_lt]
-      refine lt_trans ?_ (div_two_lt_of_pos hr₁)
-      rw [← mul_lt_mul_left (zero_lt_two)]
-      rw [mul_div_cancel₀ _ (two_ne_zero)]
-      rw [show (2:ℝ) = |2| by norm_num, ← abs_mul]
-      rw [← logMap_apply_F₁_ofIsComplex hx₁ hw]
-      exact hx₄ ⟨w.val, hw⟩
-      sorry
-      sorry
-  rw [Metric.isBounded_iff_subset_closedBall 0]
+theorem aux2 : IsBounded (F₁ K) := by
+  obtain ⟨s, hs₁, hs₂⟩ : ∃ s : Set ℝ, IsBounded s ∧ ∀ i, ∀ x ∈ F₁ K,
+    (euclideanSpace.stdOrthonormalBasis K).repr x i ∈ s := sorry
+  refine IsBounded.subset (isBoundedOfBoundedCoeff
+    (fun i ↦ euclideanSpace.stdOrthonormalBasis K i) hs₁) ?_
+  intro x hx
   refine ⟨?_, ?_⟩
-  · sorry
-  · intro x hx
-    rw [mem_closedBall_zero_iff, euclideanSpace.norm_apply]
-    sorry
+  · intro i
+    refine ⟨(euclideanSpace.stdOrthonormalBasis K).repr x i, ?_⟩
+    exact hs₂ i x hx
+  · simp_rw [OrthonormalBasis.sum_repr]
+
+  -- rsuffices ⟨C, _, hC⟩ : ∃ C₁ C₂ : ℝ, 0 < C₁ ∧ 0 < C₂ ∧
+  --     ∀ x ∈ (F₁ K),
+  --       (∀ w, w.val ≠ w₀ → C₁ < ‖x.1 w‖ ∧ ‖x.1 w‖ < C₂) ∧
+  --       (∀ w, w.val ≠ w₀ → C₁ < ‖x.2 w‖ ∧ ‖x.2 w‖ < C₂) := by
+  --   let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
+  --   have := (Zspan.fundamentalDomain_isBounded B).subset_ball_lt 0 0
+  --   obtain ⟨r, hr₁, hr₂⟩ := this
+  --   refine ⟨Real.exp (- r), Real.exp r, Real.exp_pos _, Real.exp_pos _, fun x hx₁ ↦ ?_⟩
+  --   have hx₂ : x ≠ 0 := sorry
+  --   have hx₃ : (∀ w, x.1 w ≠ 0) ∧ (∀ w, x.2 w ≠ 0) := sorry
+  --   have hx₄ :  ∀ w : { w // w ≠ w₀ }, ‖logMap ((euclideanSpace.linearEquiv K) x) w‖ < r := by
+  --     rw [← pi_norm_lt_iff hr₁, ← mem_ball_zero_iff]
+  --     refine hr₂ ?_
+  --     have := hx₁.1
+  --     rw [X, fundamentalCone, Set.mem_preimage] at this
+  --     exact (this.resolve_right (by simp [hx₂])).1
+
+  --   refine ⟨fun w hw ↦ ?_, fun w hw ↦ ?_⟩
+  --   · rw [← Real.log_lt_iff_lt_exp, ← Real.lt_log_iff_exp_lt, ← abs_lt]
+  --     rw [← logMap_apply_F₁_ofIsReal hx₁ hw]
+  --     exact hx₄ ⟨w.val, hw⟩
+  --     sorry
+  --     sorry
+  --   · rw [← Real.log_lt_iff_lt_exp, ← Real.lt_log_iff_exp_lt, ← abs_lt]
+  --     refine lt_trans ?_ (div_two_lt_of_pos hr₁)
+  --     rw [← mul_lt_mul_left (zero_lt_two)]
+  --     rw [mul_div_cancel₀ _ (two_ne_zero)]
+  --     rw [show (2:ℝ) = |2| by norm_num, ← abs_mul]
+  --     rw [← logMap_apply_F₁_ofIsComplex hx₁ hw]
+  --     exact hx₄ ⟨w.val, hw⟩
+  --     sorry
+  --     sorry
+  -- rw [Metric.isBounded_iff_subset_closedBall 0]
+  -- refine ⟨?_, ?_⟩
+  -- · sorry
+  -- · intro x hx
+  --   rw [mem_closedBall_zero_iff, euclideanSpace.norm_apply]
+  --   sorry
 
 variable (K) in
 def iso3 : ↑(↑(Λ K) ∩ X K) ≃ integralPoint K :=
@@ -379,12 +374,12 @@ def iso3 : ↑(↑(Λ K) ∩ X K) ≃ integralPoint K :=
 theorem iso3_apply (x : ↑(↑(Λ K) ∩ X K)) :
     iso3 K x = euclideanSpace.linearEquiv K (x : E₂ K) := rfl
 
-open Asymptotics Submodule Ideal nonZeroDivisors
+open Submodule Ideal nonZeroDivisors
 
 example :
     Tendsto (fun n : ℕ ↦
-      (Nat.card {I : (Ideal (𝓞 K))⁰ | IsPrincipal I.val ∧ absNorm I.val ≤ n} *
-        torsionOrder K : ℝ) / n) atTop
+      (Nat.card {I : (Ideal (𝓞 K))⁰ | IsPrincipal (I : Ideal (𝓞 K)) ∧
+        absNorm (I : Ideal (𝓞 K)) ≤ n} * torsionOrder K : ℝ) / n) atTop
           (𝓝 ((volume (X₁ K)).toReal / Zlattice.covolume (Λ K))) := by
   refine Tendsto.congr' ?_
     (Tendsto.comp (Zlattice.covolume.tendsto_card_le_div' (Λ K) ?_ ?_ ?_ ?_)
@@ -402,6 +397,10 @@ example :
     simp_rw [Set.mem_setOf_eq, ← Nat.cast_le (α := ℝ), intNorm_coe]
     have := iso3_apply x
     rw [this]
+  · sorry
+  · sorry
+  · sorry
+  · sorry
 
 #exit
 
