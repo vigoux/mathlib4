@@ -58,10 +58,16 @@ theorem Bornology.isBoundedOfBoundedCoeff (v : ι → M) {s : Set R} (h : IsBoun
       rw [Metric.isBounded_range_iff]
       refine ⟨0, by simp⟩
   | h₂ h_ne h_bd =>
+      rename_i a s
       rw [isBounded_iff_forall_norm_le] at h_bd ⊢
+      obtain ⟨C₁, hC₁⟩ := h_bd
+      refine ⟨?_, ?_⟩
+      exact C₁ + C * ‖v a‖
+      intro x
+      rw [@Set.mem_range]
+      rintro ⟨c, hc⟩
+      rw [@Finset.sum_cons] at hc
       
-      sorry
-
 -- example [IsEmpty ι] : Subsingleton M := by
 --   refine subsingleton_of_forall_eq 0 fun y ↦ ?_
 --   rw [← b.sum_repr y, Fintype.sum_empty]

@@ -9,8 +9,8 @@ import Mathlib.NumberTheory.NumberField.Units.DirichletTheorem
 # Fundamental Cone
 
 Let `K` be a number field of signature `(r₁, r₂)`. We define an action of the units `(𝓞 K)ˣ` on
-the space `ℝ^r₁ × ℂ^r₂`. The fundamental cone is a cone in `ℝ^r₁ × ℂ^r₂` that is a fundamental
-domain for the action of `(𝓞 K)ˣ` up to roots of unity.
+the space `ℝ^r₁ × ℂ^r₂` via the `mixedEmbedding`. The fundamental cone is a cone in `ℝ^r₁ × ℂ^r₂`
+that is a fundamental domain for the action of `(𝓞 K)ˣ` up to roots of unity.
 
 ## Main definitions and results
 
@@ -23,10 +23,10 @@ action of `(𝓞 K)ˣ` up to roots of unity, see `exists_unitSMul_me` and
 `torsion_unitSMul_mem_of_mem`.
 
 * `NumberField.mixedEmbedding.fundamentalCone.integralPoint`: the subset of elements of the
-fundamental cone that are images by `mixedEmbedding` of algebraic integers of `K`.
+fundamental cone that are images of algebraic integers of `K`.
 
-* `NumberField.mixedEmbedding.fundamentalCone.integralPointEquiv`: the equivalence
-between `fundamentalCone.integralPoint K` and the principal non-zero ideals of `𝓞 K` times the
+* `NumberField.mixedEmbedding.fundamentalCone.integralPointEquiv`: the equivalence between
+`fundamentalCone.integralPoint K` and the principal non-zero ideals of `𝓞 K` times the
 torsion of `K`.
 
 * `NumberField.mixedEmbedding.fundamentalCone.card_isPrincipal_norm_eq`: the number of principal
@@ -37,14 +37,6 @@ equal to the number of `fundamentalCone.integralPoint K` of norm `n`.
 
 number field, canonical embedding, principal ideals
 -/
-
-variable {α β : Type*} (p : α → Prop)
-
-def Equiv.prodSubtypeFstEquivSubtypeProd : {s : α × β // p s.1} ≃ {a // p a} × β where
-  toFun x := ⟨⟨x.1.1, x.2⟩, x.1.2⟩
-  invFun x := ⟨⟨x.1.1, x.2⟩, x.1.2⟩
-  left_inv _ := rfl
-  right_inv _ := rfl
 
 variable (K : Type*) [Field K]
 
@@ -426,7 +418,7 @@ def integralPointEquivNorm (n : ℕ) :
       (Equiv.subtypeEquiv (integralPointEquiv K) fun _ ↦ by simp [intNorm, absNorm_span_singleton])
     _ ≃ {I : {I : (Ideal (𝓞 K))⁰ // IsPrincipal I.1} // absNorm (I.1 : Ideal (𝓞 K)) = n} ×
           torsion K :=
-      Equiv.prodSubtypeFstEquivSubtypeProd (fun I : {I : (Ideal (𝓞 K))⁰ // IsPrincipal I.1} ↦
+      Equiv.prodSubtypeFstEquivSubtypeProd (p := fun I : {I : (Ideal (𝓞 K))⁰ // IsPrincipal I.1} ↦
         absNorm (I : Ideal (𝓞 K)) = n)
     _ ≃ {I : (Ideal (𝓞 K))⁰ // IsPrincipal (I : Ideal (𝓞 K)) ∧
           absNorm (I : Ideal (𝓞 K)) = n} × (torsion K) :=
@@ -465,7 +457,6 @@ theorem card_isPrincipal_norm_le (n : ℕ) :
   calc
     _ ≃ {I : {I : (Ideal (𝓞 K))⁰ // IsPrincipal I.1 ∧ absNorm I.1 ≤ n} // absNorm I.1.1 = i}
           × torsion K := Equiv.prodSubtypeFstEquivSubtypeProd
-      (fun I : {I : (Ideal (𝓞 K))⁰ | IsPrincipal I.1 ∧ absNorm I.1 ≤ n} ↦ absNorm I.1.1 = i)
     _ ≃ {I : (Ideal (𝓞 K))⁰ // (IsPrincipal I.1 ∧ absNorm I.1 ≤ n) ∧ absNorm I.1 = i}
           × torsion K := Equiv.prodCongrLeft fun _ ↦ (Equiv.subtypeSubtypeEquivSubtypeInter
       (p := fun I : (Ideal (𝓞 K))⁰ ↦ IsPrincipal I.1 ∧ absNorm I.1 ≤ n)
