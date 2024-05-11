@@ -3,7 +3,7 @@ Copyright (c) 2024 Xavier Roblot. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Xavier Roblot
 -/
-import Mathlib.NumberTheory.NumberField.Units.DirichletTheorem
+import Mathlib.NumberTheory.NumberField.Units
 
 /-!
 # Fundamental Cone
@@ -17,9 +17,9 @@ that is a fundamental domain for the action of `(𝓞 K)ˣ` up to roots of unity
 * `NumberField.mixedEmbedding.unitSMul`: the action of `(𝓞 K)ˣ` on `ℝ^r₁ × ℂ^r₂` defined, for
 `u : (𝓞 K)ˣ`, by multiplication component by component with `mixedEmbedding K u`.
 
-* `NumberField.mixedEmbedding.fundamentalCone`: a cone in `ℝ^r₁ × ℂ^r₂` --that is a subset fixed
-by multiplication by a scalar, see `smul_mem_of_mem`--, that is also a fundamental domain for the
-action of `(𝓞 K)ˣ` up to roots of unity, see `exists_unitSMul_me` and
+* `NumberField.mixedEmbedding.fundamentalCone`: a cone in `ℝ^r₁ × ℂ^r₂` --that is a subset stable
+by multiplication by a real number, see `smul_mem_of_mem`--, that is also a fundamental domain
+for the action of `(𝓞 K)ˣ` up to roots of unity, see `exists_unitSMul_me` and
 `torsion_unitSMul_mem_of_mem`.
 
 * `NumberField.mixedEmbedding.fundamentalCone.integralPoint`: the subset of elements of the
@@ -50,18 +50,18 @@ local notation "E" K =>
 
 noncomputable section UnitSMul
 
-/-- The action of `(𝓞 K)ˣ` on `ℝ^r₁ × ℂ^r₂` defined, for `u : (𝓞 K)ˣ`, by multiplication components
-by components with `mixedEmbedding K u`. -/
+/-- The action of `(𝓞 K)ˣ` on `ℝ^r₁ × ℂ^r₂` defined, for `u : (𝓞 K)ˣ`, by multiplication component
+by component with `mixedEmbedding K u`. -/
 @[simps]
 instance unitSMul : SMul (𝓞 K)ˣ (E K) where
   smul := fun u x ↦ (mixedEmbedding K u) * x
 
 instance : MulAction (𝓞 K)ˣ (E K) where
-  one_smul := fun _ ↦ by simp_rw [HSMul.hSMul, SMul.smul, Units.coe_one, map_one, one_mul]
-  mul_smul := fun _ _ _ ↦ by simp_rw [HSMul.hSMul, SMul.smul, Units.coe_mul, map_mul, mul_assoc]
+  one_smul := fun _ ↦ by simp_rw [unitSMul_smul, Units.coe_one, map_one, one_mul]
+  mul_smul := fun _ _ _ ↦ by simp_rw [unitSMul_smul, Units.coe_mul, map_mul, mul_assoc]
 
 instance : SMulZeroClass (𝓞 K)ˣ (E K) where
-  smul_zero := fun _ ↦ by simp_rw [HSMul.hSMul, SMul.smul, mul_zero]
+  smul_zero := fun _ ↦ by simp_rw [unitSMul_smul, mul_zero]
 
 variable [NumberField K]
 
@@ -70,11 +70,6 @@ theorem unitSMul_eq_iff_mul_eq {x y : (𝓞 K)} {u : (𝓞 K)ˣ} :
   rw [unitSMul_smul, ← map_mul, Function.Injective.eq_iff, ← RingOfIntegers.coe_eq_algebraMap,
     ← map_mul, ← RingOfIntegers.ext_iff]
   exact mixedEmbedding_injective K
-
-theorem norm_unit (u : (𝓞 K)ˣ) :
-    mixedEmbedding.norm (mixedEmbedding K u) = 1 := by
-  rw [norm_eq_norm, show |(Algebra.norm ℚ) (u : K)| = 1
-      by exact NumberField.isUnit_iff_norm.mp (Units.isUnit u), Rat.cast_one]
 
 theorem norm_unitSMul (u : (𝓞 K)ˣ) (x : E K) :
     mixedEmbedding.norm (u • x) = mixedEmbedding.norm x := by
@@ -104,7 +99,7 @@ variable [NumberField K] {K}
 
 open Classical in
 /-- The map from `ℝ^r₁ × ℂ^r₂` to `{w : InfinitePlace K // w ≠ w₀} → ℝ` (with `w₀` a fixed place)
-define in such way that: 1) it factors the map `logEmbedding`, see `logMap_eq_logEmbedding`;
+defined in such way that: 1) it factors the map `logEmbedding`, see `logMap_eq_logEmbedding`;
 2) it is constant on the lines `{c • x | c ∈ ℝ}`, see `logMap_smul`. -/
 def logMap (x : E K) : {w : InfinitePlace K // w ≠ w₀} → ℝ := fun w ↦
     if hw : IsReal w.val then
@@ -113,6 +108,7 @@ def logMap (x : E K) : {w : InfinitePlace K // w ≠ w₀} → ℝ := fun w ↦
       2 * (Real.log ‖x.2 ⟨w.val, not_isReal_iff_isComplex.mp hw⟩‖ -
         Real.log (mixedEmbedding.norm x) * (finrank ℚ K : ℝ)⁻¹)
 
+@[simp]
 theorem logMap_zero : logMap (0 : E K) = 0 := by
   ext
   simp_rw [logMap, Prod.fst_zero, Prod.snd_zero, map_zero, Pi.zero_apply, norm_zero, Real.log_zero,
@@ -174,7 +170,7 @@ open NumberField.Units NumberField.Units.dirichletUnitTheorem nonZeroDivisors
 
 variable [NumberField K]
 
-open Classical
+open Classical in
 /-- The fundamental cone is a cone in `ℝ^r₁ × ℂ^r₂` --that is a subset fixed by multiplication by
 a scalar, see `smul_mem_of_mem`--, that is also a fundamental domain for the action of `(𝓞 K)ˣ` up
 to roots of unity, see `exists_unitSMul_mem` and `torsion_unitSMul_mem_of_mem`. -/
@@ -214,7 +210,7 @@ theorem torsion_unitSMul_mem_of_mem {x : E K} (hx : x ∈ fundamentalCone K) {ζ
     abs_eq_zero, Rat.cast_eq_zero, Algebra.norm_eq_zero_iff, RingOfIntegers.coe_eq_zero_iff,
     Units.ne_zero, false_or] using hx.2
 
-theorem unitSMul_mem_iff_mem_torsion {x : E K} (hx' : x ∈ fundamentalCone K) (u : (𝓞 K)ˣ) :
+theorem unitSMul_mem_iff_mem_torsion {x : E K} (hx : x ∈ fundamentalCone K) (u : (𝓞 K)ˣ) :
     u • x ∈ fundamentalCone K ↔ u ∈ torsion K := by
   classical
   refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
@@ -226,11 +222,11 @@ theorem unitSMul_mem_iff_mem_torsion {x : E K} (hx' : x ∈ fundamentalCone K) (
       rw [Basis.ofZlatticeBasis_span ℝ (unitLattice K)]
       exact ⟨u, trivial, rfl⟩
     · exact Submodule.zero_mem _
-    · rw [AddSubmonoid.mk_vadd, vadd_eq_add, ← logMap_unitSMul _ hx'.2]
+    · rw [AddSubmonoid.mk_vadd, vadd_eq_add, ← logMap_unitSMul _ hx.2]
       exact h.1
     · rw [AddSubmonoid.mk_vadd, vadd_eq_add, zero_add]
-      exact hx'.1
-  · exact torsion_unitSMul_mem_of_mem hx' h
+      exact hx.1
+  · exact torsion_unitSMul_mem_of_mem hx h
 
 variable (K) in
 /-- The set of images by `mixedEmbedding` of algebraic integers of `K` contained in the
@@ -351,7 +347,7 @@ def integralPointQuotEquivAssociates :
       all_goals
       · ext a b
         rw [Setoid.ker_def, eq_comm, integralPointToAssociates_eq_iff b a,
-        MulAction.orbitRel_apply, MulAction.mem_orbit_iff],
+          MulAction.orbitRel_apply, MulAction.mem_orbit_iff],
       (Quot.surjective_lift _).mpr (integralPointToAssociates_surjective K)⟩
 
 @[simp]
