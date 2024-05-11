@@ -136,7 +136,24 @@ protected theorem coe_continuousLinearEquiv :
 instance : Nontrivial (E₂ K) := (euclideanSpace.linearEquiv K).toEquiv.nontrivial
 
 /-- Docs. -/
-protected def stdOrthonormalBasis : OrthonormalBasis (index K) ℝ (E₂ K) := sorry
+protected def stdOrthonormalBasis : OrthonormalBasis (index K) ℝ (E₂ K) := by
+  refine OrthonormalBasis.prod ?_ ?_
+  · exact EuclideanSpace.basisFun _ ℝ
+  · let B1 := Pi.orthonormalBasis (η := {w : InfinitePlace K // IsComplex w}) (𝕜 := ℝ)
+      fun _ ↦ Complex.orthonormalBasisOneI
+    let B2 := B1.reindex (Equiv.sigmaEquivProd _ _)
+    
+
+#exit
+    exact OrthonormalBasis.reindex
+      (Pi.orthonormalBasis fun _ : {w // IsComplex w} × (Fin 2) ↦ Complex.orthonormalBasisOneI)
+      (Equiv.sigmaEquivProd _ _)
+
+    sorry
+
+-- def stdBasis : Basis (index K) ℝ (E K) :=
+--  Basis.prod (Pi.basisFun ℝ _)
+--    (Basis.reindex (Pi.basis fun _ => basisOneI) (Equiv.sigmaEquivProd _ _))
 
 theorem stdOrthonormalBasis_equiv :
     (euclideanSpace.stdOrthonormalBasis K).toBasis.map (euclideanSpace.linearEquiv K) =
