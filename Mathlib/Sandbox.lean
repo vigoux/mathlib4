@@ -45,84 +45,25 @@ section PiLp
 open Bornology Filter BigOperators
 
 variable {ι : Type*} [Fintype ι] {R M : Type*} [NormedDivisionRing R] [SeminormedAddCommGroup M]
-  [Module R M]
-
-variable [BoundedSMul R M]
+  [Module R M] [BoundedSMul R M]
 
 theorem Bornology.isBoundedOfBoundedCoeff (v : ι → M) {s : Set R} (h : IsBounded s) :
     IsBounded (Set.range fun (c : ι → s) ↦ ∑ i, (c i : R) • v i) := by
   generalize Finset.univ (α := ι) = t
-  obtain ⟨C, hC⟩ : ∃ C, ∀ x ∈ s, ‖x‖ ≤ C := sorry
+  obtain ⟨C, hC⟩ : ∃ C, ∀ x ∈ s, ‖x‖ ≤ C := isBounded_iff_forall_norm_le.mp h
   induction t using Finset.cons_induction_on with
   | h₁ =>
-      rw [Metric.isBounded_range_iff]
-      refine ⟨0, by simp⟩
-  | h₂ h_ne h_bd =>
-      rename_i a s
+      exact Metric.isBounded_range_iff.mpr ⟨0, by simp⟩
+  | @h₂ a _ h_ne h_bd =>
       rw [isBounded_iff_forall_norm_le] at h_bd ⊢
       obtain ⟨C₁, hC₁⟩ := h_bd
-      refine ⟨?_, ?_⟩
-      exact C₁ + C * ‖v a‖
-      intro x
-      rw [@Set.mem_range]
-      rintro ⟨c, hc⟩
-      rw [@Finset.sum_cons] at hc
-      
--- example [IsEmpty ι] : Subsingleton M := by
---   refine subsingleton_of_forall_eq 0 fun y ↦ ?_
---   rw [← b.sum_repr y, Fintype.sum_empty]
-
--- example (h : ∀ i, IsBounded ((fun x ↦ b.repr x i) '' s)) :
---     IsBounded s := by
---   by_cases hι : IsEmpty ι
---   · have : Subsingleton M := by
---       sorry
---     have : IsBounded (⊤ : Set M) := by exact IsBounded.all ⊤
---     refine IsBounded.subset this le_top
---   · obtain ⟨C, hC⟩ : ∃ C, ∀ i, ‖b i‖ ≤ C := by
---       refine ⟨?_, ?_⟩
---       refine Finset.univ.sup' ?_ (fun i ↦ ‖b i‖)
---       rw [Finset.univ_nonempty_iff]
---       exact not_isEmpty_iff.mp hι
---       exact fun i ↦ Finset.le_sup' (fun i ↦ ‖b i‖) (Finset.mem_univ i)
---     obtain ⟨D, hD₁, hD₂⟩ : ∃ D ≥ 0, ∀ i, ∀ x ∈ s, ‖b.repr x i‖ ≤ D := by
---       simp_rw [Metric.isBounded_iff_subset_closedBall (0:R)] at h
---       let D := Finset.univ.sup' ?_ fun i ↦ (h i).choose
---       refine ⟨D, ?_, ?_⟩
---       sorry
---       intro i x hx
---       specialize h i
---       have := h.choose_spec
---       have : ‖b.repr x i‖ ≤ h.choose := by
---         sorry
---       sorry
---       sorry
---     refine (Metric.isBounded_iff_subset_closedBall 0).mpr ⟨?_, ?_⟩
---     · exact (Fintype.card ι) • (D * C)
---     · intro x hx
---       rw [mem_closedBall_zero_iff, ← b.sum_repr x]
---       refine le_trans (norm_sum_le _ _) ?_
---       simp_rw [norm_smul]
---       rw [Fintype.card, ← Finset.sum_const]
---       refine Finset.sum_le_sum fun i _ ↦ ?_
---       gcongr
---       · exact hD₂ i x hx
---       · exact hC i
-
--- variable (p : ENNReal) (𝕜 : Type*) {ι : Type*} (β : ι → Type*) [Fact (1 ≤ p)] [Fintype ι]
---   [NormedField 𝕜] [(i : ι) → SeminormedAddCommGroup (β i)]  [(i : ι) → NormedSpace 𝕜 (β i)]
-
--- example (s : Set (PiLp p β)) :
---     IsBounded s ↔ ∀ i, IsBounded ((fun x ↦ ‖x i‖) '' s) := by
---   refine ⟨?_, ?_⟩
---   · rw [Metric.isBounded_iff_subset_ball 0]
---     intro h i
---     rw [Metric.isBounded_iff_subset_ball 0]
-
---     sorry
---   ·
---     sorry
-
+      refine ⟨C * ‖v a‖ + C₁, fun x ⟨c, hc⟩ ↦ ?_⟩
+      simp_rw [← hc, Finset.sum_cons]
+      refine le_trans (norm_add_le _ _) ?_
+      rw [norm_smul]
+      gcongr
+      · exact hC (c a) (c a).prop
+      · exact hC₁ _ ⟨c, rfl⟩
 
 end PiLp
 
