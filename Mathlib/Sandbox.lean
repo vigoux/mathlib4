@@ -1,6 +1,41 @@
 import Mathlib.NumberTheory.NumberField.CanonicalEmbedding.FundamentalCone
 import Mathlib.Algebra.Module.Zlattice.Covolume
 
+-- variable {ι : Type*} [Fintype ι]
+
+-- example :
+--     (InnerProductSpace.complexToReal : InnerProductSpace ℝ (EuclideanSpace ℂ ι))
+--       = (PiLp.innerProductSpace _ : InnerProductSpace ℝ (EuclideanSpace ℂ ι)) := by
+--   unfold InnerProductSpace.complexToReal PiLp.innerProductSpace
+--   congr!
+--   simp [real_inner_eq_re_inner]
+
+
+-- example : OrthonormalBasis (ι × Fin 2) ℝ (EuclideanSpace ℂ ι) := by
+--   have : (InnerProductSpace.complexToReal : InnerProductSpace ℝ (EuclideanSpace ℂ ι))
+--       = (PiLp.innerProductSpace _ : InnerProductSpace ℝ (EuclideanSpace ℂ ι)) := sorry
+--   refine (Pi.orthonormalBasis fun _ : ι ↦ Complex.orthonormalBasisOneI).reindex ?_
+
+
+
+
+-- #exit
+
+-- example :
+--   (InnerProductSpace.complexToReal : InnerProductSpace ℝ (EuclideanSpace ℂ ι))
+--     = (PiLp.innerProductSpace _ : InnerProductSpace ℝ (EuclideanSpace ℂ ι)) := by
+-- unfold InnerProductSpace.complexToReal PiLp.innerProductSpace
+-- congr!
+
+
+
+
+-- example : InnerProductSpace ℝ (EuclideanSpace ℂ (Fin 1)) := by
+--   exact PiLp.innerProductSpace _
+
+-- example : InnerProductSpace ℝ (EuclideanSpace ℂ (Fin 1)) := by
+--   exact InnerProductSpace.complexToReal
+
 section Topo
 
 theorem closure_lt_eq_le {α β : Type*} [TopologicalSpace α] [PartialOrder α] [OrderClosedTopology α]
@@ -137,23 +172,12 @@ instance : Nontrivial (E₂ K) := (euclideanSpace.linearEquiv K).toEquiv.nontriv
 
 /-- Docs. -/
 protected def stdOrthonormalBasis : OrthonormalBasis (index K) ℝ (E₂ K) := by
-  refine OrthonormalBasis.prod ?_ ?_
-  · exact EuclideanSpace.basisFun _ ℝ
-  · let B1 := Pi.orthonormalBasis (η := {w : InfinitePlace K // IsComplex w}) (𝕜 := ℝ)
-      fun _ ↦ Complex.orthonormalBasisOneI
-    let B2 := B1.reindex (Equiv.sigmaEquivProd _ _)
-    
-
-#exit
-    exact OrthonormalBasis.reindex
-      (Pi.orthonormalBasis fun _ : {w // IsComplex w} × (Fin 2) ↦ Complex.orthonormalBasisOneI)
-      (Equiv.sigmaEquivProd _ _)
-
-    sorry
-
--- def stdBasis : Basis (index K) ℝ (E K) :=
---  Basis.prod (Pi.basisFun ℝ _)
---    (Basis.reindex (Pi.basis fun _ => basisOneI) (Equiv.sigmaEquivProd _ _))
+  sorry
+  -- refine OrthonormalBasis.prod ?_ ?_
+  -- · exact EuclideanSpace.basisFun _ ℝ
+  -- · let B1 := Pi.orthonormalBasis (η := {w : InfinitePlace K // IsComplex w}) (𝕜 := ℝ)
+  --     fun _ ↦ Complex.orthonormalBasisOneI
+  --   let B2 := B1.reindex (Equiv.sigmaEquivProd _ _)
 
 theorem stdOrthonormalBasis_equiv :
     (euclideanSpace.stdOrthonormalBasis K).toBasis.map (euclideanSpace.linearEquiv K) =
@@ -267,7 +291,31 @@ theorem logMap_apply_F₁_ofIsComplex {x : E₂ K} (hx : x ∈ F₁ K) {w : Infi
 
 theorem aux20 :
     ∃ s : Set ℝ, IsBounded s ∧ ∀ i, ∀ x ∈ F₁ K,
-      (euclideanSpace.stdOrthonormalBasis K).repr x i ∈ s := sorry
+      (euclideanSpace.stdOrthonormalBasis K).repr x i ∈ s := by
+  rsuffices ⟨C₁, C₂, hC⟩ : ∃ C₁ C₂ : ℝ, 0 < C₁ ∧ 0 < C₂ ∧
+      ∀ x ∈ (F₁ K),
+        (∀ w, w.val ≠ w₀ → C₁ < ‖x.1 w‖ ∧ ‖x.1 w‖ < C₂) ∧
+        (∀ w, w.val ≠ w₀ → C₁ < ‖x.2 w‖ ^ 2 ∧ ‖x.2 w‖ ^ 2 < C₂) := by
+    let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
+    obtain ⟨r, hr₁, hr₂⟩ := (Zspan.fundamentalDomain_isBounded B).subset_ball_lt 0 0
+    refine ⟨Real.exp (- r), Real.exp r, Real.exp_pos _, Real.exp_pos _,
+      fun x hx₁ ↦ ⟨fun w hw ↦ ?_, ?_⟩⟩
+
+
+    sorry
+
+  --   let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
+  --   have := (Zspan.fundamentalDomain_isBounded B).subset_ball_lt 0 0
+  --   obtain ⟨r, hr₁, hr₂⟩ := this
+  --   refine ⟨Real.exp (- r), Real.exp r, Real.exp_pos _, Real.exp_pos _, fun x hx₁ ↦ ?_⟩
+  --   have hx₂ : x ≠ 0 := sorry
+  --   have hx₃ : (∀ w, x.1 w ≠ 0) ∧ (∀ w, x.2 w ≠ 0) := sorry
+  --   have hx₄ :  ∀ w : { w // w ≠ w₀ }, ‖logMap ((euclideanSpace.linearEquiv K) x) w‖ < r := by
+  --     rw [← pi_norm_lt_iff hr₁, ← mem_ball_zero_iff]
+  --     refine hr₂ ?_
+  --     have := hx₁.1
+  --     rw [X, fundamentalCone, Set.mem_preimage] at this
+  --     exact (this.resolve_right (by simp [hx₂])).1
 
 theorem aux2 : IsBounded (F₁ K) := by
   obtain ⟨s, hs₁, hs₂⟩ : ∃ s : Set ℝ, IsBounded s ∧ ∀ i, ∀ x ∈ F₁ K,
