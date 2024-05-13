@@ -3102,7 +3102,6 @@ import Mathlib.NumberTheory.VonMangoldt
 import Mathlib.NumberTheory.WellApproximable
 import Mathlib.NumberTheory.Wilson
 import Mathlib.NumberTheory.ZetaFunctions.HurwitzZeta
-import Mathlib.NumberTheory.ZetaFunctions.HurwitzZetaOdd
 import Mathlib.NumberTheory.ZetaFunctions.ResidueClassZeta
 import Mathlib.NumberTheory.ZetaFunctions.RiemannZeta
 import Mathlib.NumberTheory.ZetaFunctions.SpecialValues

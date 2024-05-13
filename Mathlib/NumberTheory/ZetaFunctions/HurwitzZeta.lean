@@ -5,7 +5,7 @@ Authors: David Loeffler
 -/
 
 import Mathlib.NumberTheory.LSeries.HurwitzZetaEven
-import Mathlib.NumberTheory.ZetaFunctions.HurwitzZetaOdd
+import Mathlib.NumberTheory.LSeries.HurwitzZetaOdd
 import Mathlib.Analysis.SpecialFunctions.Gamma.Beta
 
 /-!
