@@ -228,6 +228,39 @@ theorem unitSMul_mem_iff_mem_torsion {x : E K} (hx : x ∈ fundamentalCone K) (u
       exact hx.1
   · exact torsion_unitSMul_mem_of_mem hx h
 
+theorem measurable :
+    MeasurableSet (fundamentalCone K) := by
+  classical
+  refine MeasurableSet.diff ?_ ?_
+  · have : Measurable (logMap : (E K) → _) := by
+      unfold logMap
+      refine measurable_pi_iff.mpr ?_
+      intro w
+      by_cases hw : IsReal w.1
+      · simp_rw [dif_pos hw]
+        refine Measurable.sub ?_ ?_
+        · refine Measurable.log ?_
+          refine Measurable.norm ?_
+          exact Measurable.eval measurable_fst
+        · refine Measurable.mul ?_ ?_
+          · refine Measurable.log ?_
+            exact (mixedEmbedding.continuous_norm K).measurable
+          · exact measurable_const
+      · simp_rw [dif_neg hw]
+        refine Measurable.mul measurable_const ?_
+        refine Measurable.sub ?_ ?_
+        · refine Measurable.log ?_
+          refine Measurable.norm ?_
+          exact Measurable.eval measurable_snd
+        · refine Measurable.mul ?_ ?_
+          · refine Measurable.log ?_
+            exact (mixedEmbedding.continuous_norm K).measurable
+          · exact measurable_const
+    refine MeasurableSet.preimage ?_ this
+    exact Zspan.fundamentalDomain_measurableSet _
+  · refine measurableSet_eq_fun ?_ measurable_const
+    exact (mixedEmbedding.continuous_norm K).measurable
+    
 variable (K) in
 /-- The set of images by `mixedEmbedding` of algebraic integers of `K` contained in the
 fundamental cone. -/
