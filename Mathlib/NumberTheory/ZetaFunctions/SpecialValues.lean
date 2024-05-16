@@ -6,7 +6,7 @@ Authors: David Loeffler
 
 import Mathlib.NumberTheory.ZetaValues
 import Mathlib.NumberTheory.ZetaFunctions.RiemannZeta
-import Mathlib.NumberTheory.ZetaFunctions.HurwitzZeta
+import Mathlib.NumberTheory.LSeries.HurwitzZeta
 
 /-!
 # Special values of Hurwitz and Riemann zeta functions

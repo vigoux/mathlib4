@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: David Loeffler
 -/
 import Mathlib.Analysis.SpecialFunctions.Gamma.Beta
-import Mathlib.NumberTheory.ZetaFunctions.HurwitzZeta
+import Mathlib.NumberTheory.LSeries.HurwitzZeta
 import Mathlib.Analysis.Complex.RemovableSingularity
 
 #align_import number_theory.zeta_function from "leanprover-community/mathlib"@"57f9349f2fe19d2de7207e99b0341808d977cdcf"
@@ -42,7 +42,7 @@ I haven't checked exactly what they are).
 ## Outline of proofs:
 
 These results are mostly special cases of more general results for Hurwitz zeta functions proved
-in `Mathlib.NumberTheory.ZetaFunctions.HurwitzZetaEven`.
+in `Mathlib.NumberTheory.LSeries.HurwitzZetaEven`.
 -/
 
 

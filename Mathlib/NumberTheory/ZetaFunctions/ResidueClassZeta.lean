@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: David Loeffler
 -/
 
-import Mathlib.NumberTheory.ZetaFunctions.HurwitzZeta
+import Mathlib.NumberTheory.LSeries.HurwitzZeta
 import Mathlib.NumberTheory.LSeries.Basic
 import Mathlib.NumberTheory.ZetaFunctions.ZModFourier
 import Mathlib.Analysis.NormedSpace.Connected
@@ -144,7 +144,7 @@ lemma congruenceLFunction_eq_LSeries {N : ℕ+} (Φ : ZMod N → ℂ) {s : ℂ} 
   have ha : (j.val / N : ℝ) ∈ Set.Icc 0 1 := ⟨by positivity, by
     rw [div_le_one (Nat.cast_pos.mpr N.pos), Nat.cast_le]
     exact (ZMod.val_lt _).le⟩
-  rw [toAddCircle_apply, ← (hasSum_nat_hurwitzZeta_of_mem_Icc ha hs).tsum_eq, ← mul_assoc,
+  rw [toAddCircle_apply, ← (hasSum_hurwitzZeta_of_one_lt_re ha hs).tsum_eq, ← mul_assoc,
     ← tsum_mul_left]
   congr 1 with m
   have aux0 : (m : ℂ) + ↑(j.val / N : ℝ) = ↑((j.val + N * m) / N : ℝ) := by
