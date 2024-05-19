@@ -1,16 +1,6 @@
 import Mathlib.NumberTheory.NumberField.CanonicalEmbedding.FundamentalCone
 import Mathlib.Algebra.Module.Zlattice.Covolume
 
-section Real
-
-theorem Real.sqrt_le_seft {x : ℝ} (hx : 1 ≤ x) :
-    Real.sqrt x ≤ x := by
-  refine sqrt_le_iff.mpr ⟨?_, ?_⟩
-  sorry
-  refine le_self_pow hx two_ne_zero
-
-end Real
-
 section Topo
 
 open Set
@@ -283,6 +273,35 @@ theorem logMap_apply_F₁_ofIsComplex {x : E₂ K} (hx : x ∈ F₁ K) {w : Infi
   rw [logMap, dif_neg (not_isReal_iff_isComplex.mpr hw₂), hx.2, Real.log_one, zero_mul, sub_zero]
   rfl
 
+theorem bounded_at_ne_w₀_isReal {x : E₂ K} (hx : x ∈ X K) {w : InfinitePlace K}
+    (hw : IsReal w) (hw' : w ≠ w₀) :
+    ∃ C₁ C₂, 0 < C₁ ∧ C₁ ≤ ‖x.1 ⟨w, hw⟩‖ ∧ ‖x.1 ⟨w, hw⟩‖ ≤ C₂ := sorry
+
+theorem bounded_at_ne_w₀_isComplex {x : E₂ K} (hx : x ∈ X K) {w : InfinitePlace K}
+    (hw : IsComplex w) (hw' : w ≠ w₀) :
+    ∃ C₁ C₂, 0 < C₁ ∧ C₁ ≤ ‖x.2 ⟨w, hw⟩‖ ∧ ‖x.2 ⟨w, hw⟩‖ ≤ C₂ := sorry
+
+theorem bounded_of_mem_F₁_at_w₀_isReal {x : E₂ K} (hx : x ∈ F₁ K) (hw₀ : IsReal w₀) :
+    ∃ C, ‖x.1 ⟨w₀, hw₀⟩‖ ≤ C := sorry
+
+theorem bounded_of_mem_F₁_at_w₀_isComplex {x : E₂ K} (hx : x ∈ F₁ K) (hw₀ : IsComplex w₀) :
+    ∃ C, ‖x.2 ⟨w₀, hw₀⟩‖ ≤ C := sorry
+
+theorem bounded_of_mem_F₁ {x : E₂ K} (hx : x ∈ F₁ K) {i : index K} :
+    ∃ C, |(euclideanSpace.stdOrthonormalBasis K).repr x i| ≤ C := by
+  sorry
+
+#exit
+
+
+theorem logMap_bounded_of_mem {x : E K} (hx : x ∈ fundamentalCone K) {w : InfinitePlace K}
+    (hw : w ≠ w₀) :
+    ∃ C, ‖logMap x ⟨w, hw⟩‖ < C := by
+  classical
+  let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
+  obtain ⟨r, hr₁, hr₂⟩ := (Zspan.fundamentalDomain_isBounded B).subset_ball_lt 0 0
+  exact ⟨r, (pi_norm_lt_iff hr₁).mp (mem_ball_zero_iff.mp (hr₂ hx.1)) ⟨w, hw⟩⟩
+
 theorem aux20 :
     ∃ s : Set ℝ, IsBounded s ∧ ∀ i, ∀ x ∈ F₁ K,
       (euclideanSpace.stdOrthonormalBasis K).repr x i ∈ s := by
@@ -319,7 +338,7 @@ theorem aux20 :
         replace h := ((h x hx).1 w hw).2
         refine le_trans ?_ (le_max_left _ _)
         exact h
-      · 
+      ·
         sorry
   | inr wj =>
       rcases wj with ⟨w, j⟩
@@ -347,7 +366,7 @@ theorem aux20 :
           sorry
       · sorry
 
-#exit
+
 
   --   let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
   --   have := (Zspan.fundamentalDomain_isBounded B).subset_ball_lt 0 0

@@ -232,35 +232,18 @@ theorem measurable :
     MeasurableSet (fundamentalCone K) := by
   classical
   refine MeasurableSet.diff ?_ ?_
-  · have : Measurable (logMap : (E K) → _) := by
-      unfold logMap
-      refine measurable_pi_iff.mpr ?_
-      intro w
-      by_cases hw : IsReal w.1
-      · simp_rw [dif_pos hw]
-        refine Measurable.sub ?_ ?_
-        · refine Measurable.log ?_
-          refine Measurable.norm ?_
-          exact Measurable.eval measurable_fst
-        · refine Measurable.mul ?_ ?_
-          · refine Measurable.log ?_
-            exact (mixedEmbedding.continuous_norm K).measurable
-          · exact measurable_const
-      · simp_rw [dif_neg hw]
-        refine Measurable.mul measurable_const ?_
-        refine Measurable.sub ?_ ?_
-        · refine Measurable.log ?_
-          refine Measurable.norm ?_
-          exact Measurable.eval measurable_snd
-        · refine Measurable.mul ?_ ?_
-          · refine Measurable.log ?_
-            exact (mixedEmbedding.continuous_norm K).measurable
-          · exact measurable_const
-    refine MeasurableSet.preimage ?_ this
-    exact Zspan.fundamentalDomain_measurableSet _
-  · refine measurableSet_eq_fun ?_ measurable_const
-    exact (mixedEmbedding.continuous_norm K).measurable
-    
+  · refine MeasurableSet.preimage (Zspan.fundamentalDomain_measurableSet _) ?_
+    unfold logMap
+    refine measurable_pi_iff.mpr fun w ↦ ?_
+    by_cases hw : IsReal w.1
+    · simp_rw [dif_pos hw]
+      refine measurable_fst.eval.norm.log.sub ?_
+      exact (mixedEmbedding.continuous_norm K).measurable.log.mul measurable_const
+    · simp_rw [dif_neg hw]
+      refine measurable_const.mul (measurable_snd.eval.norm.log.sub ?_)
+      exact (mixedEmbedding.continuous_norm K).measurable.log.mul measurable_const
+  · exact measurableSet_eq_fun (mixedEmbedding.continuous_norm K).measurable measurable_const
+
 variable (K) in
 /-- The set of images by `mixedEmbedding` of algebraic integers of `K` contained in the
 fundamental cone. -/
