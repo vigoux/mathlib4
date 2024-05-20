@@ -63,9 +63,13 @@ variable (f : InfinitePlace K → ℝ≥0)
 
 /-- The convex body defined by `f`: the set of points `x : E` such that `‖x w‖ < f w` for all
 infinite places `w`. -/
-abbrev convexBodyLT : Set (E K) :=
-  (Set.univ.pi (fun w : { w : InfinitePlace K // IsReal w } => ball 0 (f w))) ×ˢ
-  (Set.univ.pi (fun w : { w : InfinitePlace K // IsComplex w } => ball 0 (f w)))
+abbrev convexBodyLT : Set (E K) := by
+  with_reducible
+  exact (WithLp.equiv 2 _).symm '' ((WithLp.equiv 2 _).symm ''
+    (Set.univ.pi (fun w : { w : InfinitePlace K // IsReal w } => ball 0 (f w))))
+    ×ˢ
+      ((WithLp.equiv 2 _).symm ''
+    (Set.univ.pi (fun w : { w : InfinitePlace K // IsComplex w } => ball 0 (f w))))
 
 theorem convexBodyLT_mem {x : K} :
     mixedEmbedding K x ∈ (convexBodyLT K f) ↔ ∀ w : InfinitePlace K, w x < f w := by
@@ -96,18 +100,29 @@ instance : BorelSpace (E K)  :=  ⟨rfl⟩
 
 variable [NumberField K]
 
-protected theorem volume_eq_prod (s : Set (E K)):
-  volume s = (volume : Measure ({w : InfinitePlace K // IsReal w} → ℝ)) (s.1) *
-    (volume : Measure ({w : InfinitePlace K // IsComplex w} → ℂ)) (s.2) := sorry
+instance : MeasurableSpace (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w}) := borel _
 
--- instance : IsAddHaarMeasure (volume : Measure (E K)) := prod.instIsAddHaarMeasure volume volume
+instance : BorelSpace (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w}) := ⟨rfl⟩
 
-instance : NoAtoms (volume : Measure (E K)) := by
-  obtain ⟨w⟩ := (inferInstance : Nonempty (InfinitePlace K))
-  by_cases hw : IsReal w
-  · exact @prod.instNoAtoms_fst _ _ _ _ volume volume _ (pi_noAtoms ⟨w, hw⟩)
-  · exact @prod.instNoAtoms_snd _ _ _ _ volume volume _
-      (pi_noAtoms ⟨w, not_isReal_iff_isComplex.mp hw⟩)
+example : 0 = 1 := by
+  let v := (volume : Measure (E K))
+  let s₁ : Set (EuclideanSpace ℝ {w : InfinitePlace K // IsReal w}) := sorry
+  let s₂ : Set (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w}) := sorry
+  let s : Set (E K) := s₁ ×ˢ s₂
+  have : volume s = (volume s₁) * (volume s₂) := by
+    rw [← OrthonormalBasis.addHaar_eq_volume (stdBasis K)]
+    sorry
+
+protected theorem volume_eq_prod (s₁ : Set (EuclideanSpace ℝ {w : InfinitePlace K // IsReal w}))
+    (s₂ : Set (EuclideanSpace ℂ {w : InfinitePlace K // IsComplex w})) :
+    volume ((WithLp.equiv 2 _).symm '' s₁ ×ˢ s₂ : Set (E K)) = (volume s₁) * (volume s₂) := sorry
+
+instance : NoAtoms (volume : Measure (E K)) := by sorry
+  -- obtain ⟨w⟩ := (inferInstance : Nonempty (InfinitePlace K))
+  -- by_cases hw : IsReal w
+  -- · exact @prod.instNoAtoms_fst _ _ _ _ volume volume _ (pi_noAtoms ⟨w, hw⟩)
+  -- · exact @prod.instNoAtoms_snd _ _ _ _ volume volume _
+  --     (pi_noAtoms ⟨w, not_isReal_iff_isComplex.mp hw⟩)
 
 /-- The fudge factor that appears in the formula for the volume of `convexBodyLT`. -/
 abbrev convexBodyLTFactor : ℝ≥0 :=
@@ -127,7 +142,11 @@ theorem convexBodyLT_volume :
   calc
     _ = (∏ x : {w // InfinitePlace.IsReal w}, ENNReal.ofReal (2 * (f x.val))) *
           ∏ x : {w // InfinitePlace.IsComplex w}, ENNReal.ofReal (f x.val) ^ 2 * pi := by
-      simp_rw [volume_eq_prod, prod_prod, volume_pi, pi_pi, Real.volume_ball, Complex.volume_ball]
+      rw [convexBodyLT]
+      have := mixedEmbedding.volume_eq_prod K (Set.univ.pi fun w ↦ ball 0 (f w))
+        (Set.univ.pi fun w ↦ ball 0 (f w))
+--      rw [this]
+      simp_rw [mixedEmbedding.volume_eq_prod, volume_pi, pi_pi, Real.volume_ball, Complex.volume_ball]
     _ = ((2:ℝ≥0) ^ NrRealPlaces K * (∏ x : {w // InfinitePlace.IsReal w}, ENNReal.ofReal (f x.val)))
           * ((∏ x : {w // IsComplex w}, ENNReal.ofReal (f x.val) ^ 2) *
             NNReal.pi ^ NrComplexPlaces K) := by
