@@ -349,6 +349,12 @@ variable [NumberField K]
 /-- The type indexing the basis `stdBasis`. -/
 abbrev index := {w : InfinitePlace K // IsReal w} ⊕ ({w : InfinitePlace K // IsComplex w}) × (Fin 2)
 
+instance : Nonempty (index K) := by
+  obtain ⟨w⟩ := (inferInstance : Nonempty (InfinitePlace K))
+  obtain hw | hw := w.isReal_or_isComplex
+  · exact ⟨(Sum.inl ⟨w, hw⟩)⟩
+  · exact ⟨(Sum.inr ⟨⟨w, hw⟩, 0⟩)⟩
+
 /-- The `ℝ`-basis of `({w // IsReal w} → ℝ) × ({ w // IsComplex w } → ℂ)` formed by the vector
 equal to `1` at `w` and `0` elsewhere for `IsReal w` and by the couple of vectors equal to `1`
 (resp. `I`) at `w` and `0` elsewhere for `IsComplex w`. -/

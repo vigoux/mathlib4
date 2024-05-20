@@ -145,6 +145,12 @@ theorem linearEquiv_apply_ofIsComplex (x : E₂ K) {w : InfinitePlace K} (hw : I
 
 instance : Nontrivial (E₂ K) := (euclideanSpace.linearEquiv K).toEquiv.nontrivial
 
+protected theorem finrank :
+    FiniteDimensional.finrank ℝ (E₂ K) = FiniteDimensional.finrank ℚ K := by
+  rw [← mixedEmbedding.finrank]
+  refine  LinearEquiv.finrank_eq ?_
+  exact euclideanSpace.linearEquiv K
+
 /-- Docs. -/
 protected def stdOrthonormalBasis : OrthonormalBasis (index K) ℝ (E₂ K) :=
   OrthonormalBasis.prod (EuclideanSpace.basisFun _ ℝ)
@@ -273,100 +279,171 @@ theorem logMap_apply_F₁_ofIsComplex {x : E₂ K} (hx : x ∈ F₁ K) {w : Infi
   rw [logMap, dif_neg (not_isReal_iff_isComplex.mpr hw₂), hx.2, Real.log_one, zero_mul, sub_zero]
   rfl
 
-theorem bounded_at_ne_w₀_isReal {x : E₂ K} (hx : x ∈ X K) {w : InfinitePlace K}
-    (hw : IsReal w) (hw' : w ≠ w₀) :
-    ∃ C₁ C₂, 0 < C₁ ∧ C₁ ≤ ‖x.1 ⟨w, hw⟩‖ ∧ ‖x.1 ⟨w, hw⟩‖ ≤ C₂ := sorry
-
-theorem bounded_at_ne_w₀_isComplex {x : E₂ K} (hx : x ∈ X K) {w : InfinitePlace K}
-    (hw : IsComplex w) (hw' : w ≠ w₀) :
-    ∃ C₁ C₂, 0 < C₁ ∧ C₁ ≤ ‖x.2 ⟨w, hw⟩‖ ∧ ‖x.2 ⟨w, hw⟩‖ ≤ C₂ := sorry
-
-theorem bounded_of_mem_F₁_at_w₀_isReal {x : E₂ K} (hx : x ∈ F₁ K) (hw₀ : IsReal w₀) :
-    ∃ C, ‖x.1 ⟨w₀, hw₀⟩‖ ≤ C := sorry
-
-theorem bounded_of_mem_F₁_at_w₀_isComplex {x : E₂ K} (hx : x ∈ F₁ K) (hw₀ : IsComplex w₀) :
-    ∃ C, ‖x.2 ⟨w₀, hw₀⟩‖ ≤ C := sorry
-
-theorem bounded_of_mem_F₁ {x : E₂ K} (hx : x ∈ F₁ K) {i : index K} :
-    ∃ C, |(euclideanSpace.stdOrthonormalBasis K).repr x i| ≤ C := by
-  sorry
-
-#exit
-
-
-theorem logMap_bounded_of_mem {x : E K} (hx : x ∈ fundamentalCone K) {w : InfinitePlace K}
-    (hw : w ≠ w₀) :
-    ∃ C, ‖logMap x ⟨w, hw⟩‖ < C := by
+theorem logMap_bounded_of_mem {w : InfinitePlace K} (hw : w ≠ w₀) :
+    ∃ C, ∀ x ∈ fundamentalCone K, ‖logMap x ⟨w, hw⟩‖ ≤ C := by
   classical
   let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
-  obtain ⟨r, hr₁, hr₂⟩ := (Zspan.fundamentalDomain_isBounded B).subset_ball_lt 0 0
-  exact ⟨r, (pi_norm_lt_iff hr₁).mp (mem_ball_zero_iff.mp (hr₂ hx.1)) ⟨w, hw⟩⟩
+  obtain ⟨r, hr₁, hr₂⟩ := (Zspan.fundamentalDomain_isBounded B).subset_closedBall_lt 0 0
+  refine ⟨r, fun _ hx ↦ ?_⟩ -- (pi_norm_le_iff hr₁).mp (mem_closedBall_zero_iff.mp (hr₂ hx.1)) ⟨w, hw⟩⟩
+  have := mem_closedBall_zero_iff.mp (hr₂ hx.1)
+  sorry
+
+theorem bounded_at_ne_w₀_isReal {w : InfinitePlace K} (hw : IsReal w) (hw' : w ≠ w₀) :
+    ∃ C₁ C₂,∀ x ∈ F₁ K, 0 < C₁ ∧ C₁ ≤ ‖x.1 ⟨w, hw⟩‖ ∧ ‖x.1 ⟨w, hw⟩‖ ≤ C₂ := by
+  obtain ⟨r, hr⟩ := logMap_bounded_of_mem hw'
+  refine ⟨Real.exp (- r), Real.exp r, fun x hx ↦ ⟨Real.exp_pos _, ?_⟩⟩
+  rw [← Real.log_le_iff_le_exp, ← Real.le_log_iff_exp_le, ← abs_le]
+  sorry
+  sorry
+  sorry
+
+theorem bounded_at_ne_w₀_isComplex {w : InfinitePlace K} (hw : IsComplex w) (hw' : w ≠ w₀) :
+    ∃ C₁ C₂, ∀ x ∈ X K, 0 < C₁ ∧ C₁ ≤ ‖x.2 ⟨w, hw⟩‖ ∧ ‖x.2 ⟨w, hw⟩‖ ≤ C₂ := sorry
+
+theorem bounded_of_mem_F₁_at_w₀_isReal (hw₀ : IsReal w₀) :
+    ∃ C, ∀ x ∈ F₁ K, ‖x.1 ⟨w₀, hw₀⟩‖ ≤ C := sorry
+
+theorem bounded_of_mem_F₁_at_w₀_isComplex (hw₀ : IsComplex w₀) :
+    ∃ C, ∀ x ∈ F₁ K, ‖x.2 ⟨w₀, hw₀⟩‖ ≤ C := sorry
+
+variable (K)
+
+-- use this:  obtain hw | hw := w.isReal_or_isComplex
+
+theorem bounded_of_mem_F₁_at_index (i : index K) :
+    ∃ C, ∀ x ∈ F₁ K, |(euclideanSpace.stdOrthonormalBasis K).repr x i| ≤ C := by
+  cases i with
+  | inl w =>
+      simp only [stdOrthonormalBasis_repr_apply, stdBasis_apply_ofIsReal]
+      by_cases hw : w.val = w₀
+      · have : IsReal (w₀ : InfinitePlace K) := by
+          rw [← hw]
+          exact w.prop
+        have := bounded_of_mem_F₁_at_w₀_isReal this
+        convert this
+      · have := bounded_at_ne_w₀_isReal w.prop hw
+        obtain ⟨_, C, hC⟩ := this
+        refine ⟨C, ?_⟩
+        intro _ hx
+        exact (hC _ hx).2.2
+  | inr wj =>
+      rcases wj with ⟨w, j⟩
+      by_cases hw : w.val = w₀
+      · have : IsComplex (w₀ : InfinitePlace K) := by
+          rw [← hw]
+          exact w.prop
+        obtain ⟨C, hC⟩ := bounded_of_mem_F₁_at_w₀_isComplex this
+        fin_cases j
+        · refine ⟨C, ?_⟩
+          intro _ hx
+          refine le_trans (Complex.abs_re_le_abs _) ?_
+          convert hC _ hx
+        · refine ⟨C, ?_⟩
+          intro _ hx
+          refine le_trans (Complex.abs_im_le_abs _) ?_
+          convert hC _ hx
+      · have := bounded_at_ne_w₀_isComplex w.prop hw
+        obtain ⟨_, C, hC⟩ := this
+        fin_cases j
+        · simp only [Fin.zero_eta, stdOrthonormalBasis_repr_apply, Fin.isValue,
+            stdBasis_apply_ofIsComplex_fst]
+          refine ⟨C, ?_⟩
+          intro _ hx
+          refine le_trans (Complex.abs_re_le_abs _) ?_
+          exact (hC _ hx.1).2.2
+        · simp only [Fin.mk_one, stdOrthonormalBasis_repr_apply, Fin.isValue,
+            stdBasis_apply_ofIsComplex_snd]
+          refine ⟨C, ?_⟩
+          intro _ hx
+          refine le_trans (Complex.abs_im_le_abs _) ?_
+          exact (hC _ hx.1).2.2
 
 theorem aux20 :
     ∃ s : Set ℝ, IsBounded s ∧ ∀ i, ∀ x ∈ F₁ K,
       (euclideanSpace.stdOrthonormalBasis K).repr x i ∈ s := by
-  rsuffices ⟨C₁, C₂, hC₁, hC₂, h⟩ : ∃ C₁ C₂ : ℝ, 0 < C₁ ∧ 1 ≤ C₂ ∧
-      ∀ x ∈ (F₁ K),
-        (∀ w, w.val ≠ w₀ → C₁ < ‖x.1 w‖ ∧ ‖x.1 w‖ ≤ C₂) ∧
-        (∀ w, w.val ≠ w₀ → C₁ < ‖x.2 w‖ ^ 2 ∧ ‖x.2 w‖ ^ 2 ≤ C₂) := by
-    let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
-    obtain ⟨r, hr₁, hr₂⟩ := (Zspan.fundamentalDomain_isBounded B).subset_ball_lt 0 0
-    have h : ∀ x ∈ X K, ∀ w : { w // w ≠ w₀ },
-      ‖logMap ((euclideanSpace.linearEquiv K) x) w‖ < r :=
-        fun _ h ↦ (pi_norm_lt_iff hr₁).mp  <| mem_ball_zero_iff.mp (hr₂ h.1)
-    refine ⟨Real.exp (- r), Real.exp r, Real.exp_pos _, Real.one_le_exp (le_of_lt hr₁),
-      fun x hx ↦ ⟨fun w hw ↦ ?_, fun w hw ↦ ?_⟩⟩
-    · specialize h x hx.1 ⟨w.val, hw⟩
-      rw [← Real.log_lt_iff_lt_exp, ← Real.lt_log_iff_exp_lt, ← abs_lt]
-      rwa [logMap_apply_F₁_ofIsReal hx hw w.prop, Real.norm_eq_abs] at h
-      sorry
-      sorry
-    · specialize h x hx.1 ⟨w.val, hw⟩
-      rw [← Real.log_lt_iff_lt_exp, ← Real.lt_log_iff_exp_lt, ← abs_lt, Real.log_pow,
-        Nat.cast_ofNat]
-      rwa [logMap_apply_F₁_ofIsComplex hx hw w.prop, Real.norm_eq_abs] at h
-      sorry
-      sorry
-  let M := max C₂ (C₁ ^ (1 - Fintype.card (InfinitePlace K)))
-  refine ⟨Metric.closedBall 0 M, Metric.isBounded_closedBall, fun i x hx  ↦ ?_⟩
-  rw [mem_closedBall_zero_iff]
-  cases i with
-  | inl w =>
-      by_cases hw : w.1 ≠ w₀
-      · rw [stdOrthonormalBasis_repr_apply, stdBasis_apply_ofIsReal]
-        rw [euclideanSpace.linearEquiv_apply_ofIsReal]
-        replace h := ((h x hx).1 w hw).2
-        refine le_trans ?_ (le_max_left _ _)
-        exact h
-      ·
-        sorry
-  | inr wj =>
-      rcases wj with ⟨w, j⟩
-      by_cases hw : w.1 ≠ w₀
-      · fin_cases j
-        · rw [Fin.zero_eta, stdOrthonormalBasis_repr_apply, stdBasis_apply_ofIsComplex_fst,
-            Real.norm_eq_abs]
-          refine le_trans (Complex.abs_re_le_abs _) ?_
-          replace h := ((h x hx).2 w hw).2
-          refine le_trans ?_ (le_max_left _ _)
-          rw [← Real.le_sqrt] at h
-          refine le_trans h ?_
-          sorry
-          exact norm_nonneg _
-          sorry
-        · rw [Fin.mk_one, stdOrthonormalBasis_repr_apply, stdBasis_apply_ofIsComplex_snd,
-            Real.norm_eq_abs]
-          refine le_trans (Complex.abs_im_le_abs _) ?_
-          replace h := ((h x hx).2 w hw).2
-          refine le_trans ?_ (le_max_left _ _)
-          rw [← Real.le_sqrt] at h
-          refine le_trans h ?_
-          sorry
-          exact norm_nonneg _
-          sorry
-      · sorry
+  refine ⟨?_, ?_, ?_⟩
+  · let R := Finset.univ.sup' ?_ fun i : index K ↦ (bounded_of_mem_F₁_at_index K i).choose
+    exact Metric.closedBall 0 R
+    exact Finset.univ_nonempty
+  · exact Metric.isBounded_closedBall
+  · intro i _ hx
+    have := (bounded_of_mem_F₁_at_index K i).choose_spec _ hx
+    rw [mem_closedBall_zero_iff]
+    refine le_trans this ?_
+    refine Finset.univ.le_sup' (fun i : index K ↦ (bounded_of_mem_F₁_at_index K i).choose) ?_
+    exact Finset.mem_univ i
 
+-- theorem logMap_bounded_of_mem {x : E K} (hx : x ∈ fundamentalCone K) {w : InfinitePlace K}
+--     (hw : w ≠ w₀) :
+--     ∃ C, ‖logMap x ⟨w, hw⟩‖ < C := by
+--   classical
+--   let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
+--   obtain ⟨r, hr₁, hr₂⟩ := (Zspan.fundamentalDomain_isBounded B).subset_ball_lt 0 0
+--   exact ⟨r, (pi_norm_lt_iff hr₁).mp (mem_ball_zero_iff.mp (hr₂ hx.1)) ⟨w, hw⟩⟩
 
+-- theorem aux20 :
+--     ∃ s : Set ℝ, IsBounded s ∧ ∀ i, ∀ x ∈ F₁ K,
+--       (euclideanSpace.stdOrthonormalBasis K).repr x i ∈ s := by
+--   rsuffices ⟨C₁, C₂, hC₁, hC₂, h⟩ : ∃ C₁ C₂ : ℝ, 0 < C₁ ∧ 1 ≤ C₂ ∧
+--       ∀ x ∈ (F₁ K),
+--         (∀ w, w.val ≠ w₀ → C₁ < ‖x.1 w‖ ∧ ‖x.1 w‖ ≤ C₂) ∧
+--         (∀ w, w.val ≠ w₀ → C₁ < ‖x.2 w‖ ^ 2 ∧ ‖x.2 w‖ ^ 2 ≤ C₂) := by
+--     let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
+--     obtain ⟨r, hr₁, hr₂⟩ := (Zspan.fundamentalDomain_isBounded B).subset_ball_lt 0 0
+--     have h : ∀ x ∈ X K, ∀ w : { w // w ≠ w₀ },
+--       ‖logMap ((euclideanSpace.linearEquiv K) x) w‖ < r :=
+--         fun _ h ↦ (pi_norm_lt_iff hr₁).mp  <| mem_ball_zero_iff.mp (hr₂ h.1)
+--     refine ⟨Real.exp (- r), Real.exp r, Real.exp_pos _, Real.one_le_exp (le_of_lt hr₁),
+--       fun x hx ↦ ⟨fun w hw ↦ ?_, fun w hw ↦ ?_⟩⟩
+--     · specialize h x hx.1 ⟨w.val, hw⟩
+--       rw [← Real.log_lt_iff_lt_exp, ← Real.lt_log_iff_exp_lt, ← abs_lt]
+--       rwa [logMap_apply_F₁_ofIsReal hx hw w.prop, Real.norm_eq_abs] at h
+--       sorry
+--       sorry
+--     · specialize h x hx.1 ⟨w.val, hw⟩
+--       rw [← Real.log_lt_iff_lt_exp, ← Real.lt_log_iff_exp_lt, ← abs_lt, Real.log_pow,
+--         Nat.cast_ofNat]
+--       rwa [logMap_apply_F₁_ofIsComplex hx hw w.prop, Real.norm_eq_abs] at h
+--       sorry
+--       sorry
+--   let M := max C₂ (C₁ ^ (1 - Fintype.card (InfinitePlace K)))
+--   refine ⟨Metric.closedBall 0 M, Metric.isBounded_closedBall, fun i x hx  ↦ ?_⟩
+--   rw [mem_closedBall_zero_iff]
+--   cases i with
+--   | inl w =>
+--       by_cases hw : w.1 ≠ w₀
+--       · rw [stdOrthonormalBasis_repr_apply, stdBasis_apply_ofIsReal]
+--         rw [euclideanSpace.linearEquiv_apply_ofIsReal]
+--         replace h := ((h x hx).1 w hw).2
+--         refine le_trans ?_ (le_max_left _ _)
+--         exact h
+--       ·
+--         sorry
+--   | inr wj =>
+--       rcases wj with ⟨w, j⟩
+--       by_cases hw : w.1 ≠ w₀
+--       · fin_cases j
+--         · rw [Fin.zero_eta, stdOrthonormalBasis_repr_apply, stdBasis_apply_ofIsComplex_fst,
+--             Real.norm_eq_abs]
+--           refine le_trans (Complex.abs_re_le_abs _) ?_
+--           replace h := ((h x hx).2 w hw).2
+--           refine le_trans ?_ (le_max_left _ _)
+--           rw [← Real.le_sqrt] at h
+--           refine le_trans h ?_
+--           sorry
+--           exact norm_nonneg _
+--           sorry
+--         · rw [Fin.mk_one, stdOrthonormalBasis_repr_apply, stdBasis_apply_ofIsComplex_snd,
+--             Real.norm_eq_abs]
+--           refine le_trans (Complex.abs_im_le_abs _) ?_
+--           replace h := ((h x hx).2 w hw).2
+--           refine le_trans ?_ (le_max_left _ _)
+--           rw [← Real.le_sqrt] at h
+--           refine le_trans h ?_
+--           sorry
+--           exact norm_nonneg _
+--           sorry
+--       · sorry
 
   --   let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
   --   have := (Zspan.fundamentalDomain_isBounded B).subset_ball_lt 0 0
@@ -383,7 +460,7 @@ theorem aux20 :
 
 theorem aux2 : IsBounded (F₁ K) := by
   obtain ⟨s, hs₁, hs₂⟩ : ∃ s : Set ℝ, IsBounded s ∧ ∀ i, ∀ x ∈ F₁ K,
-    (euclideanSpace.stdOrthonormalBasis K).repr x i ∈ s := sorry
+    (euclideanSpace.stdOrthonormalBasis K).repr x i ∈ s := aux20 K
   refine IsBounded.subset (isBoundedOfBoundedCoeff
     (fun i ↦ euclideanSpace.stdOrthonormalBasis K i) hs₁) ?_
   intro x hx
@@ -393,46 +470,6 @@ theorem aux2 : IsBounded (F₁ K) := by
     exact hs₂ i x hx
   · simp_rw [OrthonormalBasis.sum_repr]
 
-  -- rsuffices ⟨C, _, hC⟩ : ∃ C₁ C₂ : ℝ, 0 < C₁ ∧ 0 < C₂ ∧
-  --     ∀ x ∈ (F₁ K),
-  --       (∀ w, w.val ≠ w₀ → C₁ < ‖x.1 w‖ ∧ ‖x.1 w‖ < C₂) ∧
-  --       (∀ w, w.val ≠ w₀ → C₁ < ‖x.2 w‖ ∧ ‖x.2 w‖ < C₂) := by
-  --   let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
-  --   have := (Zspan.fundamentalDomain_isBounded B).subset_ball_lt 0 0
-  --   obtain ⟨r, hr₁, hr₂⟩ := this
-  --   refine ⟨Real.exp (- r), Real.exp r, Real.exp_pos _, Real.exp_pos _, fun x hx₁ ↦ ?_⟩
-  --   have hx₂ : x ≠ 0 := sorry
-  --   have hx₃ : (∀ w, x.1 w ≠ 0) ∧ (∀ w, x.2 w ≠ 0) := sorry
-  --   have hx₄ :  ∀ w : { w // w ≠ w₀ }, ‖logMap ((euclideanSpace.linearEquiv K) x) w‖ < r := by
-  --     rw [← pi_norm_lt_iff hr₁, ← mem_ball_zero_iff]
-  --     refine hr₂ ?_
-  --     have := hx₁.1
-  --     rw [X, fundamentalCone, Set.mem_preimage] at this
-  --     exact (this.resolve_right (by simp [hx₂])).1
-
-  --   refine ⟨fun w hw ↦ ?_, fun w hw ↦ ?_⟩
-  --   · rw [← Real.log_lt_iff_lt_exp, ← Real.lt_log_iff_exp_lt, ← abs_lt]
-  --     rw [← logMap_apply_F₁_ofIsReal hx₁ hw]
-  --     exact hx₄ ⟨w.val, hw⟩
-  --     sorry
-  --     sorry
-  --   · rw [← Real.log_lt_iff_lt_exp, ← Real.lt_log_iff_exp_lt, ← abs_lt]
-  --     refine lt_trans ?_ (div_two_lt_of_pos hr₁)
-  --     rw [← mul_lt_mul_left (zero_lt_two)]
-  --     rw [mul_div_cancel₀ _ (two_ne_zero)]
-  --     rw [show (2:ℝ) = |2| by norm_num, ← abs_mul]
-  --     rw [← logMap_apply_F₁_ofIsComplex hx₁ hw]
-  --     exact hx₄ ⟨w.val, hw⟩
-  --     sorry
-  --     sorry
-  -- rw [Metric.isBounded_iff_subset_closedBall 0]
-  -- refine ⟨?_, ?_⟩
-  -- · sorry
-  -- · intro x hx
-  --   rw [mem_closedBall_zero_iff, euclideanSpace.norm_apply]
-  --   sorry
-
-variable (K) in
 def iso3 : ↑(↑(Λ K) ∩ X K) ≃ integralPoint K :=
   Equiv.subtypeEquiv (euclideanSpace.linearEquiv _).toEquiv fun x ↦ by
   simp only [Λ, coe_toAddSubgroup, Set.inter_comm _ (X K), Set.mem_inter_iff, Set.mem_preimage,
@@ -471,12 +508,17 @@ example :
     refine Equiv.subtypeEquiv (iso3 K) ?_
     intro x
     simp_rw [Set.mem_setOf_eq, ← Nat.cast_le (α := ℝ), intNorm_coe]
-    have := iso3_apply x
+    have := iso3_apply K x
     rw [this]
-  · sorry
-  · sorry
-  · sorry
-  · sorry
+  · intro x c hx hc
+    sorry
+  · intro x r hr
+    rw [LinearMapClass.map_smul, mixedEmbedding.norm_smul, euclideanSpace.finrank,
+      abs_eq_self.mpr hr.le]
+  · refine aux1 ?_
+    exact aux2 K
+  ·
+    sorry
 
 #exit
 
