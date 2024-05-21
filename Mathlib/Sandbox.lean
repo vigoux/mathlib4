@@ -72,7 +72,7 @@ end PiLp
 section FundamentalCone
 
 open NumberField NumberField.InfinitePlace NumberField.mixedEmbedding MeasureTheory
-  BigOperators Submodule Bornology
+  BigOperators Submodule Bornology NumberField.Units NumberField.Units.dirichletUnitTheorem
 
 local notation "E" K =>
   ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℂ)
@@ -85,9 +85,28 @@ abbrev S : Set (E K) := {x ∈ fundamentalCone K | mixedEmbedding.norm x ≤ 1}
 /-- Docs. -/
 abbrev S₁ : Set (E K) := {x ∈ fundamentalCone K | mixedEmbedding.norm x = 1}
 
-theorem isBounded_S : IsBounded (S K) := sorry
+theorem isBounded_S : IsBounded (S₁ K) := by
+  classical
+  let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
+  obtain ⟨r, hr₁, hr₂⟩ := (Zspan.fundamentalDomain_isBounded B).subset_closedBall_lt 0 0
+  have : ∀ x ∈ S₁ K, ∀ w, w ≠ w₀ →
+    if hw : IsReal w then |Real.log ‖x.1 ⟨w, hw⟩‖| ≤ r
+    else |Real.log ‖(x.2 ⟨w, not_isReal_iff_isComplex.mp hw⟩)‖| ≤ r / 2 := sorry
+  have : ∀ x ∈ S₁ K, if hw₀ : IsReal w₀ then |Real.log ‖x.1 ⟨w₀, hw₀⟩‖| ≤ r
+    else |Real.log ‖(x.2 ⟨w₀, not_isReal_iff_isComplex.mp hw₀⟩)‖| ≤ r / 2 := sorry
+  
+  rw [isBounded_iff_forall_norm_le]
+  refine ⟨?_, fun x hx ↦ ?_⟩
+  rotate_left
+  refine norm_prod_le_iff.mpr ⟨?_, ?_⟩
+  · rw [pi_norm_le_iff_of_nonneg sorry]
+    intro w
 
-theorem measurable_S : MeasurableSet (S K) := sorry
+#exit
+
+theorem measurable_S : MeasurableSet (S K) :=
+  fundamentalCone.measurable.inter <|
+    measurableSet_le (mixedEmbedding.continuous_norm K).measurable measurable_const
 
 theorem frontier_S_eq : frontier (S K) = S₁ K := sorry
 
@@ -267,7 +286,7 @@ example :
     (S K)
   erw [euclideanSpace.coe_continuousLinearEquiv, this, MeasurePreserving.measure_preimage
     (measurePreserving_euclideanLinearEquiv K), frontier_S_eq, frontier_ae_null]
-  
+
   sorry
 
 -- volume (frontier {x | x ∈ X K ∧ mixedEmbedding.norm ((euclideanSpace.linearEquiv K) x) ≤ 1}) = 0
