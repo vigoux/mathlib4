@@ -69,11 +69,38 @@ theorem Bornology.isBoundedOfBoundedCoeff (v : ι → M) {s : Set R} (h : IsBoun
 
 end PiLp
 
-open Classical
+section FundamentalCone
+
+open NumberField NumberField.InfinitePlace NumberField.mixedEmbedding MeasureTheory
+  BigOperators Submodule Bornology
+
+local notation "E" K =>
+  ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℂ)
 
 variable (K : Type*) [Field K] [NumberField K]
 
+/-- Docs. -/
+abbrev S : Set (E K) := {x ∈ fundamentalCone K | mixedEmbedding.norm x ≤ 1}
+
+/-- Docs. -/
+abbrev S₁ : Set (E K) := {x ∈ fundamentalCone K | mixedEmbedding.norm x = 1}
+
+theorem isBounded_S : IsBounded (S K) := sorry
+
+theorem measurable_S : MeasurableSet (S K) := sorry
+
+theorem frontier_S_eq : frontier (S K) = S₁ K := sorry
+
+open Classical in
+theorem frontier_ae_null : volume (S₁ K) = 0 := sorry
+
+end FundamentalCone
+
 noncomputable section
+
+open Classical
+
+variable (K : Type*) [Field K] [NumberField K]
 
 namespace NumberField.mixedEmbedding.euclideanSpace
 
@@ -199,6 +226,53 @@ instance : IsZlattice ℝ (Λ K) where
   span_top := by
     simp_rw [Λ, coe_toAddSubgroup, ← Zspan.map, map_coe, LinearEquiv.restrictScalars_apply,
       ← Submodule.map_span, Zspan.span_top, Submodule.map_top, LinearEquivClass.range]
+
+abbrev X : Set (E₂ K) := (euclideanSpace.linearEquiv K)⁻¹' (fundamentalCone K)
+
+theorem repl :
+  {x | x ∈ X K ∧ mixedEmbedding.norm ((euclideanSpace.linearEquiv K) x) ≤ 1} =
+    (euclideanSpace.linearEquiv K)⁻¹' (S K) := rfl
+
+theorem repl' :
+  {x | x ∈ X K ∧ mixedEmbedding.norm ((euclideanSpace.linearEquiv K) x) = 1} =
+    (euclideanSpace.linearEquiv K)⁻¹' (S₁ K) := rfl
+
+example :
+    IsBounded {x | x ∈ X K ∧ mixedEmbedding.norm ((euclideanSpace.linearEquiv K) x) ≤ 1} := by
+  have := (euclideanSpace.continuousLinearEquiv K).symm.lipschitz
+  have : AntilipschitzWith _ (euclideanSpace.linearEquiv K) := by
+    refine this.to_rightInverse ?_
+    exact Equiv.rightInverse_symm _
+  exact AntilipschitzWith.isBounded_preimage this (isBounded_S K)
+
+example :
+    MeasurableSet {x | x ∈ X K ∧ mixedEmbedding.norm ((euclideanSpace.linearEquiv K) x) ≤ 1} := by
+  have : Measurable (euclideanSpace.linearEquiv K) :=
+    (euclideanSpace.continuousLinearEquiv K).continuous.measurable
+  exact MeasurableSet.preimage (measurable_S K) this
+
+example :
+    frontier {x | x ∈ X K ∧ mixedEmbedding.norm ((euclideanSpace.linearEquiv K) x) ≤ 1} =
+      {x | x ∈ X K ∧ mixedEmbedding.norm ((euclideanSpace.linearEquiv K) x) = 1} := by
+  erw [repl, (euclideanSpace.continuousLinearEquiv K).toContinuousLinearMap.frontier_preimage,
+    frontier_S_eq, ← repl']
+  exact (euclideanSpace.continuousLinearEquiv K).surjective
+
+example :
+    volume (frontier {x | x ∈ X K ∧
+      mixedEmbedding.norm ((euclideanSpace.linearEquiv K) x) ≤ 1}) = 0 := by
+  have := ContinuousLinearMap.frontier_preimage
+    (euclideanSpace.continuousLinearEquiv K : (E₂ K) →L[ℝ] (E K))
+    (ContinuousLinearEquiv.surjective _)
+    (S K)
+  erw [euclideanSpace.coe_continuousLinearEquiv, this, MeasurePreserving.measure_preimage
+    (measurePreserving_euclideanLinearEquiv K), frontier_S_eq, frontier_ae_null]
+  
+  sorry
+
+-- volume (frontier {x | x ∈ X K ∧ mixedEmbedding.norm ((euclideanSpace.linearEquiv K) x) ≤ 1}) = 0
+
+#exit
 
 /-- Docs. -/
 abbrev X : Set (E₂ K) := (euclideanSpace.linearEquiv K)⁻¹' (fundamentalCone K)
