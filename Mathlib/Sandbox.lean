@@ -85,16 +85,106 @@ abbrev S : Set (E K) := {x ∈ fundamentalCone K | mixedEmbedding.norm x ≤ 1}
 /-- Docs. -/
 abbrev S₁ : Set (E K) := {x ∈ fundamentalCone K | mixedEmbedding.norm x = 1}
 
+variable {K} in
+@[simp]
+theorem logMap_eq_of_norm_one_at_isReal {x : E K} (hx : mixedEmbedding.norm x = 1)
+    {w : InfinitePlace K} (hw : IsReal w) (hw' : w ≠ w₀) :
+    logMap x ⟨w, hw'⟩ = Real.log ‖x.1 ⟨w, hw⟩‖ := by
+  rw [logMap, dif_pos hw, hx, Real.log_one, zero_mul, sub_zero]
+
+variable {K} in
+@[simp]
+theorem logMap_eq_of_norm_one_at_isComplex {x : E K} (hx : mixedEmbedding.norm x = 1)
+    {w : InfinitePlace K} (hw : IsComplex w) (hw' : w ≠ w₀) :
+    logMap x ⟨w, hw'⟩ = 2 * Real.log ‖x.2 ⟨w, hw⟩‖ := by
+  rw [logMap, dif_neg (not_isReal_iff_isComplex.mpr hw), hx, Real.log_one, zero_mul, sub_zero]
+
+variable {K} in
+open Classical in
+noncomputable def atPlace (w : InfinitePlace K) : (E K) →*₀ ℝ where
+  toFun x := if hw : IsReal w then ‖x.1 ⟨w, hw⟩‖ else ‖x.2 ⟨w, not_isReal_iff_isComplex.mp hw⟩‖
+  map_zero' := by simp
+  map_one' := by simp
+  map_mul' x y := by split_ifs <;> simp
+
+theorem atPlace_apply_isReal (x : E K) {w : InfinitePlace K} (hw : IsReal w) :
+    atPlace w x = ‖x.1 ⟨w, hw⟩‖ := by
+  rw [atPlace, MonoidWithZeroHom.coe_mk, ZeroHom.coe_mk, dif_pos]
+
+theorem atPlace_apply_isComplex (x : E K) {w : InfinitePlace K} (hw : IsComplex w) :
+    atPlace w x = ‖x.2 ⟨w, hw⟩‖ := by
+  rw [atPlace, MonoidWithZeroHom.coe_mk, ZeroHom.coe_mk, dif_neg (not_isReal_iff_isComplex.mpr hw)]
+
+
+
+set_option maxHeartbeats 5000000 in
+theorem norm_apply' (x : E K) :
+    mixedEmbedding.norm x = ∏ w, (atPlace x w) ^ (mult w) := by
+  classical
+  simp_rw [mixedEmbedding.norm_apply, atPlace, dite_pow, Finset.univ.prod_dite]
+  simp_rw [← Finset.prod_coe_sort_eq_attach]
+  rw [← Finset.prod_coe_sort, ← Finset.prod_coe_sort]
+
+  ·
+
+    sorry
+  ·
+    sorry
+
+#exit
+
+example :
+  ∃ C, 0 < C ∧ ∀ x (hx : mixedEmbedding.norm x = 1) w, w ≠ w₀ →
+
+
 theorem isBounded_S : IsBounded (S₁ K) := by
+  classical
+  rsuffices ⟨C, hC⟩ :
+      ∃ C, ∀ x ∈ S₁ K, ∀ w, w ≠ w₀ → if hw : IsReal w then |Real.log ‖x.1 ⟨w, hw⟩‖| ≤ C else
+      |Real.log ‖(x.2 ⟨w, not_isReal_iff_isComplex.mp hw⟩)‖| ≤ C := by
+    sorry
+  refine isBounded_image_fst_and_snd.mp ⟨?_, ?_⟩
+  · rw [isBounded_iff_forall_norm_le]
+    refine ⟨max (Real.exp C) 2, ?_⟩
+    rintro x₁ ⟨x, hx, rfl⟩
+    simp only [Set.mem_image, Set.mem_setOf_eq, Prod.exists, exists_and_right,
+      exists_eq_right] at hx
+    rw [pi_norm_le_iff_of_nonneg]
+    rintro ⟨w, hw⟩
+    by_cases hw' : w = w₀
+    · have := hx.2
+      rw [mixedEmbedding.norm_apply] at this
+      rw [hw'] at hw
+      rw [← Finset.univ.mul_prod_erase _ (by sorry : ⟨w₀, hw⟩  ∈ Finset.univ)]
+        at this
+      sorry
+    · specialize hC x hx w hw'
+      rw [dif_pos] at hC
+
+      sorry
+  ·
+    sorry
+
+#exit
+
   classical
   let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
   obtain ⟨r, hr₁, hr₂⟩ := (Zspan.fundamentalDomain_isBounded B).subset_closedBall_lt 0 0
+  have h₀ : ∀ x ∈ fundamentalCone K,
+    ‖logMap x‖ ≤ r := fun _ h ↦ mem_closedBall_zero_iff.mp (hr₂ h.1)
   have : ∀ x ∈ S₁ K, ∀ w, w ≠ w₀ →
-    if hw : IsReal w then |Real.log ‖x.1 ⟨w, hw⟩‖| ≤ r
-    else |Real.log ‖(x.2 ⟨w, not_isReal_iff_isComplex.mp hw⟩)‖| ≤ r / 2 := sorry
+      if hw : IsReal w then |Real.log ‖x.1 ⟨w, hw⟩‖| ≤ r
+      else |Real.log ‖(x.2 ⟨w, not_isReal_iff_isComplex.mp hw⟩)‖| ≤ r / 2 := by
+    intro x hx w hw'
+    split_ifs with hw
+    · rw [← logMap_eq_of_norm_one_at_isReal hx.2 hw hw']
+      exact (pi_norm_le_iff_of_nonneg hr₁.le).mp (h₀ x hx.1) ⟨w, hw'⟩
+    · rw [le_div_iff' zero_lt_two, show (2 : ℝ) = |2| by norm_num, ← abs_mul,
+        ← logMap_eq_of_norm_one_at_isComplex hx.2 (not_isReal_iff_isComplex.mp hw) hw']
+      exact (pi_norm_le_iff_of_nonneg hr₁.le).mp (h₀ x hx.1) ⟨w, hw'⟩
   have : ∀ x ∈ S₁ K, if hw₀ : IsReal w₀ then |Real.log ‖x.1 ⟨w₀, hw₀⟩‖| ≤ r
-    else |Real.log ‖(x.2 ⟨w₀, not_isReal_iff_isComplex.mp hw₀⟩)‖| ≤ r / 2 := sorry
-  
+      else |Real.log ‖(x.2 ⟨w₀, not_isReal_iff_isComplex.mp hw₀⟩)‖| ≤ r / 2 := sorry
+
   rw [isBounded_iff_forall_norm_le]
   refine ⟨?_, fun x hx ↦ ?_⟩
   rotate_left
