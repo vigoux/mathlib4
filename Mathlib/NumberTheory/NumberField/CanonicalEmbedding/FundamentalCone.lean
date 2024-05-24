@@ -222,7 +222,8 @@ theorem unitSMul_mem_iff_mem_torsion {x : E K} (hx : x ∈ fundamentalCone K) (u
       exact hx.1
   · exact torsion_unitSMul_mem_of_mem hx h
 
-theorem measurable :
+variable (K) in
+theorem measurableSet :
     MeasurableSet (fundamentalCone K) := by
   classical
   refine MeasurableSet.diff ?_ ?_
@@ -251,17 +252,28 @@ theorem smul_normEqOne {c : ℝ} (hc : 0 < c) :
     (pow_ne_zero _ (ne_of_gt hc)), Set.mem_setOf_eq, and_congr_left_iff]
   exact fun _ ↦ smul_mem_iff_mem (inv_ne_zero (ne_of_gt hc))
 
-theorem exists_smul_mem_normEqOne {x : E K} (hx : x ∈ normLessThanOne K) :
-    ∃ c : ℝ, 1 ≤ c ∧ c • x ∈ normEqOne K := by
-  refine ⟨(mixedEmbedding.norm x) ^ (- (finrank ℚ K : ℝ)⁻¹), ?_, ?_⟩
-  · exact Real.one_le_rpow_of_pos_of_le_one_of_nonpos (norm_pos_of_mem hx.1) hx.2 (by aesop)
-  · have h₁ : (finrank ℚ K : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (ne_of_gt finrank_pos)
-    have h₂ : 0 < mixedEmbedding.norm x ^ (finrank ℚ K : ℝ)⁻¹ :=
-      Real.rpow_pos_of_pos (norm_pos_of_mem hx.1) _
-    rw [Real.rpow_neg (mixedEmbedding.norm_nonneg _), ← Set.mem_smul_set_iff_inv_smul_mem₀
-      (ne_of_gt h₂), smul_normEqOne _ h₂, ← Real.rpow_natCast, ← Real.rpow_mul
-      (mixedEmbedding.norm_nonneg _), inv_mul_cancel h₁, Real.rpow_one, Set.mem_setOf_eq]
-    simp only [hx.1, and_self]
+variable {K} in
+theorem exists_mem_smul_normEqOne {x : E K} (hx : x ∈ normLessThanOne K) :
+    ∃ c : ℝ, 0 < c ∧ c ≤ 1 ∧ x ∈ c • normEqOne K := by
+  have h₁ : (finrank ℚ K : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (ne_of_gt finrank_pos)
+  have h₂ : 0 < mixedEmbedding.norm x ^ (finrank ℚ K : ℝ)⁻¹ :=
+    Real.rpow_pos_of_pos (norm_pos_of_mem hx.1) _
+  refine ⟨(mixedEmbedding.norm x) ^ (finrank ℚ K : ℝ)⁻¹, h₂, ?_, ?_⟩
+  · exact Real.rpow_le_one (mixedEmbedding.norm_nonneg _) hx.2 (inv_nonneg.mpr (Nat.cast_nonneg _))
+  · rw [smul_normEqOne K h₂]
+    refine ⟨hx.1, ?_⟩
+    rw [← Real.rpow_natCast, ← Real.rpow_mul (mixedEmbedding.norm_nonneg _), inv_mul_cancel h₁,
+      Real.rpow_one]
+
+theorem smul_normEqOne_subset {c : ℝ} (hc₁ : 0 < c) (hc₂ : c ≤ 1) :
+    c • normEqOne K ⊆ normLessThanOne K := by
+  rw [smul_normEqOne K hc₁]
+  refine fun x hx ↦ ⟨hx.1, ?_⟩
+  rw [hx.2]
+  exact pow_le_one _ hc₁.le hc₂
+
+theorem frontier_normLessThanOne :
+    frontier (normLessThanOne K) = normEqOne K := sorry
 
 theorem isBounded_normEqOne :
     IsBounded (normEqOne K) := sorry
@@ -271,101 +283,75 @@ theorem isBounded_normLessThanOne :
   classical
   obtain ⟨r, hr₁, hr₂⟩ := (isBounded_normEqOne K).subset_ball_lt 0 0
   refine (Metric.isBounded_iff_subset_ball 0).mpr ⟨r, fun x hx ↦ ?_⟩
-  obtain ⟨c, hc₁, hc₂⟩ := exists_smul_mem_normEqOne K hx
-  have hc₃ : c ≠ 0 := ne_of_gt <| lt_of_lt_of_le zero_lt_one hc₁
-  specialize hr₂ hc₂
-  rw [← Set.mem_inv_smul_set_iff₀ hc₃, smul_ball (inv_ne_zero hc₃), smul_zero] at hr₂
-  refine Metric.ball_subset_ball ?_ hr₂
-  rw [mul_le_iff_le_one_left hr₁, norm_inv, Real.norm_eq_abs, inv_le_one_iff]
-  right
-  rwa [abs_eq_self.mpr (zero_le_one.trans hc₁)]
+  obtain ⟨c, hc₁, _, hc₂⟩ := exists_mem_smul_normEqOne hx
+  suffices x ∈ c • Metric.ball (0 : (E K)) r by
+    rw [smul_ball (ne_of_gt hc₁), smul_zero] at this
+    refine Set.mem_of_subset_of_mem (Metric.ball_subset_ball ?_) this
+    rwa [mul_le_iff_le_one_left hr₁, Real.norm_eq_abs, abs_eq_self.mpr hc₁.le]
+  exact (Set.image_subset _ hr₂) hc₂
 
-theorem frontier_normLessThanOne :
-    frontier (normLessThanOne K) = normEqOne K := sorry
+theorem measurableSet_normEqOne :
+    MeasurableSet (normEqOne K) :=
+  MeasurableSet.inter (measurableSet K) <|
+    measurableSet_eq_fun (mixedEmbedding.continuous_norm K).measurable measurable_const
+
+theorem measurableSet_normLessThanOne :
+    MeasurableSet (normLessThanOne K) :=
+  MeasurableSet.inter (measurableSet K) <|
+    measurableSet_le (mixedEmbedding.continuous_norm K).measurable measurable_const
 
 open Classical in
 theorem volume_normEqOne :
     volume (normEqOne K) = 0 := by
-  let A : ℕ → (Set (E K)) := fun n ↦ (1 - (n + 1 : ℝ)⁻¹) • normEqOne K
-  have hn₀ : ∀ n : ℕ, 0 < 1 - (n + 1 : ℝ)⁻¹ := sorry
-  have hn₁ : ∀ n : ℕ, 1 - (n + 1 : ℝ)⁻¹ ≤ 1 := sorry
-  have h₁ : ∀ n : ℕ, A n ⊆ normLessThanOne K := by
-    intro n x hx
-    dsimp only [A] at hx
-    rw [smul_normEqOne _ (hn₀ n)] at hx
-    refine ⟨hx.1, ?_⟩
-    rw [hx.2]
-    refine pow_le_one _ ?_ ?_
-    exact (hn₀ n).le
-    exact hn₁ n
-  have h₂ : ∀ n : ℕ, volume (A n) =
-    ((1 - (n + 1 : ENNReal)⁻¹) ^ finrank ℚ K) * volume (normEqOne K) := by
+  let A : ℕ → (Set (E K)) := fun n ↦ (1 - (n + 2 : ℝ)⁻¹) • normEqOne K
+  have hn₀ : ∀ n : ℕ, 0 < 1 - (n + 2 : ℝ)⁻¹ := by
     intro n
-    rw [Measure.addHaar_smul, mixedEmbedding.finrank, abs_pow, ENNReal.ofReal_pow (abs_nonneg _)]
-    rw [abs_eq_self.mpr (hn₀ n).le]
-    congr
-    rw [ENNReal.ofReal_sub, ENNReal.ofReal_inv_of_pos, ENNReal.ofReal_add,
-      ENNReal.ofReal_one, ENNReal.ofReal_natCast]
-    · exact Nat.cast_nonneg n
-    · exact zero_le_one
-    · exact Nat.cast_add_one_pos n
-    · rw [inv_nonneg]
-      linarith
-  have h₃ : ∀ n, NullMeasurableSet (A n) := sorry
-  have h₄ : Pairwise (AEDisjoint volume on A) := by
-    intro n m hnm
-    have : (1 - (n + 1 : ℝ)⁻¹) ^ finrank ℚ K ≠ (1 - (m + 1 : ℝ)⁻¹) ^ finrank ℚ K := by
-      rw [← Real.rpow_natCast, ← Real.rpow_natCast]
-      have : (finrank ℚ K : ℝ) ≠ 0 := sorry
-      rwa [ne_eq, Real.rpow_left_inj, sub_right_inj, inv_eq_iff_eq_inv, inv_inv, add_left_inj,
-        Nat.cast_inj]
-      · rw [sub_nonneg, inv_le_one_iff]
-        right
-        linarith
-      · rw [sub_nonneg, inv_le_one_iff]
-        right
-        linarith
-      · exact this
-    refine Disjoint.aedisjoint ?_
-    rw [Set.disjoint_left]
-    intro x hx
-    dsimp [A] at hx ⊢
-    rw [smul_normEqOne, Set.mem_setOf_eq] at hx ⊢
-    rw [hx.2]
-    simp only [not_and]
-    intro _
-    convert this
-    sorry
-    sorry
-
-  have h₅ : volume (⋃ i, A i) ≤ volume (normLessThanOne K) := by
-    refine measure_mono ?h
-    exact Set.iUnion_subset h₁
-  have h₆ : Tendsto (fun n : ℕ ↦ (1 - (n + 1 : ENNReal)⁻¹) ^ finrank ℚ K) atTop (nhds 1) := by
-    rw [show nhds (1 : ENNReal) = nhds (1 ^ finrank ℚ K) by norm_num]
-    refine ENNReal.Tendsto.pow ?_
-    rw [show nhds (1 : ENNReal) = nhds (1 - 0) by norm_num]
-    refine ENNReal.Tendsto.sub ?_ ?_ ?_
-    · exact tendsto_const_nhds
-    · simp_rw [show ∀ n : ℕ, (n : ENNReal) + 1 = (n + 1 : ℕ) by exact fun _ ↦ by norm_cast]
-      rw [Filter.tendsto_add_atTop_iff_nat (f := fun n ↦ (n : ENNReal)⁻¹)]
-      exact ENNReal.tendsto_inv_nat_nhds_zero
-    · left
-      exact ENNReal.one_ne_top
-  have h := (isBounded_normLessThanOne K).measure_lt_top (μ := volume)
+    rw [sub_pos, inv_lt_one_iff]
+    exact Or.inr (by linarith)
+  have hn₁ : ∀ n : ℕ, 1 - (n + 2 : ℝ)⁻¹ ≤ 1 := by
+    intro n
+    refine (sub_le_self_iff _).mpr (by positivity)
+  -- The sets `A n` are all subsets of `normLessThanOne` and their volume is some multiple
+  -- of the volume of `normEqOne`. Since the corresponding series diverge if the volume
+  -- of `normEqOne` is non-zero and `normLessThanOne` has finite volume since it is bounded,
+  -- we get the result by contradiction.
+  have hA₁ : ∀ n : ℕ, A n ⊆ normLessThanOne K := fun n ↦ smul_normEqOne_subset _ (hn₀ n) (hn₁ n)
+  -- since the
+  have hA₂ : ∀ n : ℕ, volume (A n) =
+    ((1 - (n + 2 : ENNReal)⁻¹) ^ finrank ℚ K) * volume (normEqOne K) := fun n ↦ by
+    rw [Measure.addHaar_smul, mixedEmbedding.finrank, abs_pow, ENNReal.ofReal_pow (abs_nonneg _),
+      abs_eq_self.mpr (hn₀ n).le, ENNReal.ofReal_sub, ENNReal.ofReal_inv_of_pos,
+      ENNReal.ofReal_add,
+      ENNReal.ofReal_one, ENNReal.ofReal_natCast, ENNReal.ofReal_ofNat]
+    any_goals positivity
+  have hA₃ : ∀ n, NullMeasurableSet (A n) := fun n ↦
+    ((measurableSet_normEqOne K).const_smul₀  _).nullMeasurableSet
+  have hA₄ : Pairwise (AEDisjoint volume on A) := fun n m hnm ↦ by
+    suffices (1 - (n + 2 : ℝ)⁻¹) ^ finrank ℚ K ≠ (1 - (m + 2 : ℝ)⁻¹) ^ finrank ℚ K by
+      refine Disjoint.aedisjoint ?_
+      dsimp [A]
+      rw [smul_normEqOne _ (hn₀ n), smul_normEqOne _ (hn₀ m)]
+      refine Set.disjoint_iff_forall_ne.mpr fun _ hx _ hy hxy ↦ ?_
+      rw [← hx.2, ← hy.2, ← hxy] at this
+      exact this rfl
+    rwa [ne_eq, ← Real.rpow_natCast, ← Real.rpow_natCast, Real.rpow_left_inj (hn₀ n).le (hn₀ m).le
+      (Nat.cast_ne_zero.mpr (ne_of_gt finrank_pos)), sub_right_inj, inv_eq_iff_eq_inv, inv_inv,
+      add_left_inj, Nat.cast_inj]
+  have hA₅ : volume (⋃ i, A i) ≤ volume (normLessThanOne K) := measure_mono (Set.iUnion_subset hA₁)
+  have h : volume (normLessThanOne K) < ⊤ := (isBounded_normLessThanOne K).measure_lt_top
   contrapose! h
-  have := tsum_meas_le_meas_iUnion_of_disjoint₀ volume h₃ h₄
-  refine le_trans ?_ h₅
-  refine le_trans ?_ this
-  simp_rw [h₂]
-  simp_rw [top_le_iff]
-  rw [ENNReal.tsum_mul_right]
-  have : ∑' n : ℕ, (1 - (n + 1 : ENNReal)⁻¹) ^ finrank ℚ K = ⊤ := by
-    by_contra!
-    have := ENNReal.tendsto_atTop_zero_of_tsum_ne_top this
-    have := tendsto_nhds_unique this h₆
-    exact zero_ne_one this
-  rw [this, ENNReal.top_mul h]
+  refine (le_trans ?_ (tsum_meas_le_meas_iUnion_of_disjoint₀ volume hA₃ hA₄)).trans hA₅
+  simp_rw [hA₂, top_le_iff, ENNReal.tsum_mul_right]
+  refine ENNReal.mul_eq_top.mpr (Or.inr ⟨?_, h⟩)
+  suffices Tendsto (fun n : ℕ ↦ (1 - (n + 2 : ENNReal)⁻¹) ^ finrank ℚ K) atTop (nhds 1) by
+    by_contra! h
+    exact zero_ne_one <| tendsto_nhds_unique (ENNReal.tendsto_atTop_zero_of_tsum_ne_top h) this
+  rw [show nhds (1 : ENNReal) = nhds ((1 - 0) ^ finrank ℚ K) by norm_num]
+  refine ENNReal.Tendsto.pow <|
+    ENNReal.Tendsto.sub tendsto_const_nhds ?_ (Or.inr ENNReal.zero_ne_top)
+  simp_rw [show ∀ n : ℕ, (n : ENNReal) + 2 = (n + 2 : ℕ) by exact fun _ ↦ by norm_cast]
+  rw [Filter.tendsto_add_atTop_iff_nat (f := fun n ↦ (n : ENNReal)⁻¹)]
+  exact ENNReal.tendsto_inv_nat_nhds_zero
 
 end normLessOne
 
