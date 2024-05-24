@@ -342,6 +342,11 @@ theorem norm_eq_sup'_normAtPlace (x : E K) :
     ← NNReal.val_eq_coe, ← OrderHom.Subtype.val_coe, map_finset_sup', OrderHom.Subtype.val_coe]
   rfl
 
+theorem continuous_normAtPlace (w : InfinitePlace K) :
+    Continuous (normAtPlace w) := by
+  simp_rw [normAtPlace, MonoidWithZeroHom.coe_mk, ZeroHom.coe_mk]
+  split_ifs <;> fun_prop
+
 /-- The norm of `x` is `∏ w, (normedAtPlace x) ^ mult w`. It is defined such that the norm of
 `mixedEmbedding K a` for `a : K` is equal to the absolute value of the norm of `a` over `ℚ`,
 see `norm_eq_norm`. -/
@@ -394,15 +399,8 @@ theorem norm_unit (u : (𝓞 K)ˣ) :
     exact isUnit_iff_norm.mp (u.isUnit), Rat.cast_one]
 
 variable (K) in
-protected theorem continuous_norm : Continuous (mixedEmbedding.norm : (E K) → ℝ) := by
-  refine continuous_finset_prod Finset.univ fun _ _ ↦ ?_
-  simp_rw [normAtPlace, MonoidWithZeroHom.coe_mk, ZeroHom.coe_mk, dite_pow]
-  split_ifs <;> fun_prop
-
-variable (K) in
 protected theorem continuous_norm : Continuous (mixedEmbedding.norm : (E K) → ℝ) :=
-  Continuous.mul (continuous_finset_prod _ fun _ _ ↦ by fun_prop)
-    (continuous_finset_prod _ fun _ _ ↦ by fun_prop)
+  continuous_finset_prod Finset.univ fun _ _ ↦ (continuous_normAtPlace _).pow _
 
 end norm
 
