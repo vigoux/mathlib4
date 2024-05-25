@@ -20,6 +20,7 @@ import Mathlib.Algebra.Algebra.Subalgebra.Operations
 import Mathlib.Algebra.Algebra.Subalgebra.Order
 import Mathlib.Algebra.Algebra.Subalgebra.Pointwise
 import Mathlib.Algebra.Algebra.Subalgebra.Prod
+import Mathlib.Algebra.Algebra.Subalgebra.Rank
 import Mathlib.Algebra.Algebra.Subalgebra.Tower
 import Mathlib.Algebra.Algebra.Subalgebra.Unitization
 import Mathlib.Algebra.Algebra.Tower
@@ -185,6 +186,7 @@ import Mathlib.Algebra.GCDMonoid.Nat
 import Mathlib.Algebra.GeomSum
 import Mathlib.Algebra.GradedMonoid
 import Mathlib.Algebra.GradedMulAction
+import Mathlib.Algebra.Group.Action.Defs
 import Mathlib.Algebra.Group.AddChar
 import Mathlib.Algebra.Group.Aut
 import Mathlib.Algebra.Group.Basic
@@ -462,6 +464,7 @@ import Mathlib.Algebra.Order.Field.Defs
 import Mathlib.Algebra.Order.Field.InjSurj
 import Mathlib.Algebra.Order.Field.Pi
 import Mathlib.Algebra.Order.Field.Power
+import Mathlib.Algebra.Order.Field.Rat
 import Mathlib.Algebra.Order.Field.Subfield
 import Mathlib.Algebra.Order.Floor
 import Mathlib.Algebra.Order.Floor.Div
@@ -487,6 +490,7 @@ import Mathlib.Algebra.Order.Group.TypeTags
 import Mathlib.Algebra.Order.Group.Units
 import Mathlib.Algebra.Order.Group.WithTop
 import Mathlib.Algebra.Order.GroupWithZero.Canonical
+import Mathlib.Algebra.Order.GroupWithZero.Synonym
 import Mathlib.Algebra.Order.GroupWithZero.Unbundled
 import Mathlib.Algebra.Order.GroupWithZero.WithZero
 import Mathlib.Algebra.Order.Hom.Basic
@@ -635,6 +639,7 @@ import Mathlib.Algebra.Ring.Opposite
 import Mathlib.Algebra.Ring.Parity
 import Mathlib.Algebra.Ring.Pi
 import Mathlib.Algebra.Ring.Prod
+import Mathlib.Algebra.Ring.Rat
 import Mathlib.Algebra.Ring.Regular
 import Mathlib.Algebra.Ring.Semiconj
 import Mathlib.Algebra.Ring.Subring.Basic
@@ -682,6 +687,7 @@ import Mathlib.AlgebraicGeometry.GammaSpecAdjunction
 import Mathlib.AlgebraicGeometry.Gluing
 import Mathlib.AlgebraicGeometry.Limits
 import Mathlib.AlgebraicGeometry.Morphisms.Basic
+import Mathlib.AlgebraicGeometry.Morphisms.ClosedImmersion
 import Mathlib.AlgebraicGeometry.Morphisms.FiniteType
 import Mathlib.AlgebraicGeometry.Morphisms.OpenImmersion
 import Mathlib.AlgebraicGeometry.Morphisms.QuasiCompact
@@ -1355,6 +1361,7 @@ import Mathlib.CategoryTheory.Limits.FullSubcategory
 import Mathlib.CategoryTheory.Limits.FunctorCategory
 import Mathlib.CategoryTheory.Limits.FunctorToTypes
 import Mathlib.CategoryTheory.Limits.HasLimits
+import Mathlib.CategoryTheory.Limits.IndYoneda
 import Mathlib.CategoryTheory.Limits.Indization.IndObject
 import Mathlib.CategoryTheory.Limits.IsConnected
 import Mathlib.CategoryTheory.Limits.IsLimit
@@ -1454,6 +1461,7 @@ import Mathlib.CategoryTheory.Monad.Types
 import Mathlib.CategoryTheory.Monoidal.Bimod
 import Mathlib.CategoryTheory.Monoidal.Braided.Basic
 import Mathlib.CategoryTheory.Monoidal.Braided.Opposite
+import Mathlib.CategoryTheory.Monoidal.Cartesian.Comon_
 import Mathlib.CategoryTheory.Monoidal.Category
 import Mathlib.CategoryTheory.Monoidal.Center
 import Mathlib.CategoryTheory.Monoidal.CoherenceLemmas
@@ -1581,6 +1589,7 @@ import Mathlib.CategoryTheory.Sites.OneHypercover
 import Mathlib.CategoryTheory.Sites.Over
 import Mathlib.CategoryTheory.Sites.Plus
 import Mathlib.CategoryTheory.Sites.Preserves
+import Mathlib.CategoryTheory.Sites.PreservesSheafification
 import Mathlib.CategoryTheory.Sites.Pretopology
 import Mathlib.CategoryTheory.Sites.Pullback
 import Mathlib.CategoryTheory.Sites.Sheaf
@@ -2155,7 +2164,6 @@ import Mathlib.Data.Rat.Cast.Order
 import Mathlib.Data.Rat.Defs
 import Mathlib.Data.Rat.Denumerable
 import Mathlib.Data.Rat.Encodable
-import Mathlib.Data.Rat.Field
 import Mathlib.Data.Rat.Floor
 import Mathlib.Data.Rat.Init
 import Mathlib.Data.Rat.Lemmas
@@ -2707,6 +2715,7 @@ import Mathlib.LinearAlgebra.Matrix.MvPolynomial
 import Mathlib.LinearAlgebra.Matrix.Nondegenerate
 import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 import Mathlib.LinearAlgebra.Matrix.Orthogonal
+import Mathlib.LinearAlgebra.Matrix.Permutation
 import Mathlib.LinearAlgebra.Matrix.Polynomial
 import Mathlib.LinearAlgebra.Matrix.PosDef
 import Mathlib.LinearAlgebra.Matrix.ProjectiveSpecialLinearGroup
@@ -3382,6 +3391,7 @@ import Mathlib.Probability.StrongLaw
 import Mathlib.Probability.Variance
 import Mathlib.RepresentationTheory.Action.Basic
 import Mathlib.RepresentationTheory.Action.Concrete
+import Mathlib.RepresentationTheory.Action.Continuous
 import Mathlib.RepresentationTheory.Action.Limits
 import Mathlib.RepresentationTheory.Action.Monoidal
 import Mathlib.RepresentationTheory.Basic
@@ -3773,6 +3783,7 @@ import Mathlib.Tactic.Linarith.SimplexAlgorithm.SimplexAlgorithm
 import Mathlib.Tactic.Linarith.Verification
 import Mathlib.Tactic.LinearCombination
 import Mathlib.Tactic.Linter
+import Mathlib.Tactic.Linter.HashCommandLinter
 import Mathlib.Tactic.Linter.Lint
 import Mathlib.Tactic.Measurability
 import Mathlib.Tactic.Measurability.Init
