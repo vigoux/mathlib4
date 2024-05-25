@@ -8,6 +8,7 @@ import Mathlib.Order.Filter.Pointwise
 import Mathlib.Topology.Algebra.MulAction
 import Mathlib.Algebra.BigOperators.Pi
 import Mathlib.Topology.ContinuousFunction.Basic
+import Mathlib.Algebra.Group.ULift
 
 #align_import topology.algebra.monoid from "leanprover-community/mathlib"@"1ac8d4304efba9d03fa720d06516fac845aa5353"
 
@@ -22,9 +23,11 @@ the definitions.
 
 universe u v
 
-open Classical Set Filter TopologicalSpace
+open scoped Classical
+open Set Filter TopologicalSpace
 
-open Classical Topology BigOperators Pointwise
+open scoped Classical
+open Topology BigOperators Pointwise
 
 variable {ι α M N X : Type*} [TopologicalSpace X]
 
@@ -68,6 +71,13 @@ theorem continuous_mul : Continuous fun p : M × M => p.1 * p.2 :=
   ContinuousMul.continuous_mul
 #align continuous_mul continuous_mul
 #align continuous_add continuous_add
+
+@[to_additive]
+instance : ContinuousMul (ULift.{u} M) := by
+  constructor
+  apply continuous_uLift_up.comp
+  exact continuous_mul.comp₂ (continuous_uLift_down.comp continuous_fst)
+    (continuous_uLift_down.comp continuous_snd)
 
 @[to_additive]
 instance ContinuousMul.to_continuousSMul : ContinuousSMul M M :=
@@ -194,13 +204,32 @@ theorem Filter.TendstoNhdsWithinIio.mul_const [MulPosStrictMono 𝕜] [MulPosRef
 
 end tendsto_nhds
 
+@[to_additive]
+protected theorem Specializes.mul {a b c d : M} (hab : a ⤳ b) (hcd : c ⤳ d) : (a * c) ⤳ (b * d) :=
+  hab.smul hcd
+
+@[to_additive]
+protected theorem Inseparable.mul {a b c d : M} (hab : Inseparable a b) (hcd : Inseparable c d) :
+    Inseparable (a * c) (b * d) :=
+  hab.smul hcd
+
+@[to_additive]
+protected theorem Specializes.pow {M : Type*} [Monoid M] [TopologicalSpace M] [ContinuousMul M]
+    {a b : M} (h : a ⤳ b) (n : ℕ) : (a ^ n) ⤳ (b ^ n) :=
+  Nat.recOn n (by simp only [pow_zero, specializes_rfl]) fun _ ihn ↦ by
+    simpa only [pow_succ] using ihn.mul h
+
+@[to_additive]
+protected theorem Inseparable.pow {M : Type*} [Monoid M] [TopologicalSpace M] [ContinuousMul M]
+    {a b : M} (h : Inseparable a b) (n : ℕ) : Inseparable (a ^ n) (b ^ n) :=
+  (h.specializes.pow n).antisymm (h.specializes'.pow n)
+
 /-- Construct a unit from limits of units and their inverses. -/
 @[to_additive (attr := simps)
   "Construct an additive unit from limits of additive units and their negatives."]
 def Filter.Tendsto.units [TopologicalSpace N] [Monoid N] [ContinuousMul N] [T2Space N]
     {f : ι → Nˣ} {r₁ r₂ : N} {l : Filter ι} [l.NeBot] (h₁ : Tendsto (fun x => ↑(f x)) l (𝓝 r₁))
-    (h₂ : Tendsto (fun x => ↑(f x)⁻¹) l (𝓝 r₂)) : Nˣ
-    where
+    (h₂ : Tendsto (fun x => ↑(f x)⁻¹) l (𝓝 r₂)) : Nˣ where
   val := r₁
   inv := r₂
   val_inv := by
@@ -329,7 +358,7 @@ theorem isClosed_setOf_map_mul [Mul M₁] [Mul M₂] [ContinuousMul M₂] :
 #align is_closed_set_of_map_mul isClosed_setOf_map_mul
 #align is_closed_set_of_map_add isClosed_setOf_map_add
 
--- porting note: split variables command over two lines, can't change explicitness at the same time
+-- Porting note: split variables command over two lines, can't change explicitness at the same time
 -- as declaring new variables.
 variable {M₁ M₂}
 variable [MulOneClass M₁] [MulOneClass M₂] [ContinuousMul M₂]
@@ -343,8 +372,7 @@ homomorphisms that has a `MonoidHomClass` instance) to `M₁ → M₂`. -/
 and a proof that it belongs to the closure of the range of the coercion from `M₁ →+ M₂` (or another
 type of bundled homomorphisms that has an `AddMonoidHomClass` instance) to `M₁ → M₂`."]
 def monoidHomOfMemClosureRangeCoe (f : M₁ → M₂)
-    (hf : f ∈ closure (range fun (f : F) (x : M₁) => f x)) : M₁ →* M₂
-    where
+    (hf : f ∈ closure (range fun (f : F) (x : M₁) => f x)) : M₁ →* M₂ where
   toFun := f
   map_one' := (isClosed_setOf_map_one M₁ M₂).closure_subset_iff.2 (range_subset_iff.2 map_one) hf
   map_mul' := (isClosed_setOf_map_mul M₁ M₂).closure_subset_iff.2 (range_subset_iff.2 map_mul) hf
@@ -466,7 +494,7 @@ def Submonoid.topologicalClosure (s : Submonoid M) : Submonoid M where
 #align submonoid.topological_closure Submonoid.topologicalClosure
 #align add_submonoid.topological_closure AddSubmonoid.topologicalClosure
 
--- Porting note: new lemma
+-- Porting note (#10756): new lemma
 @[to_additive]
 theorem Submonoid.coe_topologicalClosure (s : Submonoid M) :
     (s.topologicalClosure : Set M) = _root_.closure (s : Set M) := rfl
@@ -550,7 +578,7 @@ theorem continuousOn_list_prod {f : ι → X → M} (l : List ι) {t : Set X}
     ContinuousOn (fun a => (l.map fun i => f i a).prod) t := by
   intro x hx
   rw [continuousWithinAt_iff_continuousAt_restrict _ hx]
-  refine' tendsto_list_prod _ fun i hi => _
+  refine tendsto_list_prod _ fun i hi => ?_
   specialize h i hi x hx
   rw [continuousWithinAt_iff_continuousAt_restrict _ hx] at h
   exact h
@@ -561,7 +589,7 @@ theorem continuousOn_list_prod {f : ι → X → M} (l : List ι) {t : Set X}
 theorem continuous_pow : ∀ n : ℕ, Continuous fun a : M => a ^ n
   | 0 => by simpa using continuous_const
   | k + 1 => by
-    simp only [pow_succ]
+    simp only [pow_succ']
     exact continuous_id.mul (continuous_pow _)
 #align continuous_pow continuous_pow
 #align continuous_nsmul continuous_nsmul
@@ -638,7 +666,7 @@ theorem Filter.tendsto_cocompact_mul_left {a b : M} (ha : b * a = 1) :
   simp only [comp_mul_left, ha, one_mul]
   exact Filter.tendsto_id
   -- Porting note: changed proof, original proof was:
-  /-refine' Filter.Tendsto.of_tendsto_comp _ (Filter.comap_cocompact_le (continuous_mul_left b))
+  /- refine' Filter.Tendsto.of_tendsto_comp _ (Filter.comap_cocompact_le (continuous_mul_left b))
   convert Filter.tendsto_id
   ext x
   simp [ha]-/
@@ -671,7 +699,7 @@ instance (priority := 100) IsScalarTower.continuousConstSMul {R A : Type*} [Mono
 /-- If the action of `R` on `A` commutes with left-multiplication, then continuous multiplication
 implies continuous scalar multiplication by constants.
 
-Notably, this instances applies when `R = Aᵐᵒᵖ`.-/
+Notably, this instances applies when `R = Aᵐᵒᵖ`. -/
 @[to_additive "If the action of `R` on `A` commutes with left-addition, then
 continuous addition implies continuous affine addition by constants.
 
@@ -799,7 +827,7 @@ theorem LocallyFinite.exists_finset_mulSupport {M : Type*} [CommMonoid M] {f : �
     (hf : LocallyFinite fun i => mulSupport <| f i) (x₀ : X) :
     ∃ I : Finset ι, ∀ᶠ x in 𝓝 x₀, (mulSupport fun i => f i x) ⊆ I := by
   rcases hf x₀ with ⟨U, hxU, hUf⟩
-  refine' ⟨hUf.toFinset, mem_of_superset hxU fun y hy i hi => _⟩
+  refine ⟨hUf.toFinset, mem_of_superset hxU fun y hy i hi => ?_⟩
   rw [hUf.coe_toFinset]
   exact ⟨y, hi, hy⟩
 #align locally_finite.exists_finset_mul_support LocallyFinite.exists_finset_mulSupport
@@ -817,9 +845,9 @@ theorem finprod_eventually_eq_prod {M : Type*} [CommMonoid M] {f : ι → X → 
 @[to_additive]
 theorem continuous_finprod {f : ι → X → M} (hc : ∀ i, Continuous (f i))
     (hf : LocallyFinite fun i => mulSupport (f i)) : Continuous fun x => ∏ᶠ i, f i x := by
-  refine' continuous_iff_continuousAt.2 fun x => _
+  refine continuous_iff_continuousAt.2 fun x => ?_
   rcases finprod_eventually_eq_prod hf x with ⟨s, hs⟩
-  refine' ContinuousAt.congr _ (EventuallyEq.symm hs)
+  refine ContinuousAt.congr ?_ (EventuallyEq.symm hs)
   exact tendsto_finset_prod _ fun i _ => (hc i).continuousAt
 #align continuous_finprod continuous_finprod
 #align continuous_finsum continuous_finsum
@@ -859,7 +887,7 @@ theorem continuousMul_sInf {ts : Set (TopologicalSpace M)}
 theorem continuousMul_iInf {ts : ι' → TopologicalSpace M}
     (h' : ∀ i, @ContinuousMul M (ts i) _) : @ContinuousMul M (⨅ i, ts i) _ := by
   rw [← sInf_range]
-  exact continuousMul_sInf (Set.forall_range_iff.mpr h')
+  exact continuousMul_sInf (Set.forall_mem_range.mpr h')
 #align has_continuous_mul_infi continuousMul_iInf
 #align has_continuous_add_infi continuousAdd_iInf
 
@@ -867,7 +895,7 @@ theorem continuousMul_iInf {ts : ι' → TopologicalSpace M}
 theorem continuousMul_inf {t₁ t₂ : TopologicalSpace M} (h₁ : @ContinuousMul M t₁ _)
     (h₂ : @ContinuousMul M t₂ _) : @ContinuousMul M (t₁ ⊓ t₂) _ := by
   rw [inf_eq_iInf]
-  refine' continuousMul_iInf fun b => _
+  refine continuousMul_iInf fun b => ?_
   cases b <;> assumption
 #align has_continuous_mul_inf continuousMul_inf
 #align has_continuous_add_inf continuousAdd_inf

@@ -62,7 +62,7 @@ def truncRecEmptyOption {P : Type u → Sort v} (of_equiv : ∀ {α β}, α ≃ 
     intro e
     exact of_equiv (Equiv.ulift.trans e.symm) h
   apply ind where
-    -- porting note: do a manual recursion, instead of `induction` tactic,
+    -- Porting note: do a manual recursion, instead of `induction` tactic,
     -- to ensure the result is computable
     /-- Internal induction hypothesis -/
     ind : ∀ n : ℕ, Trunc (P (ULift <| Fin n))
@@ -101,7 +101,7 @@ theorem induction_empty_option {P : ∀ (α : Type u) [Fintype α], Prop}
       convert h_option α (Pα _)
     @truncRecEmptyOption (fun α => ∀ h, @P α h) (@fun α β e hα hβ => @of_equiv α β hβ e (hα _))
       f_empty h_option α _ (Classical.decEq α)
-  · exact p _
+  exact p _
   -- ·
 #align fintype.induction_empty_option Fintype.induction_empty_option
 
@@ -113,6 +113,6 @@ theorem Finite.induction_empty_option {P : Type u → Prop} (of_equiv : ∀ {α 
     (h_empty : P PEmpty) (h_option : ∀ {α} [Fintype α], P α → P (Option α)) (α : Type u)
     [Finite α] : P α := by
   cases nonempty_fintype α
-  refine' Fintype.induction_empty_option _ _ _ α
+  refine Fintype.induction_empty_option ?_ ?_ ?_ α
   exacts [fun α β _ => of_equiv, h_empty, @h_option]
 #align finite.induction_empty_option Finite.induction_empty_option

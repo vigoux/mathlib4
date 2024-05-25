@@ -28,13 +28,12 @@ open Set Metric TopologicalSpace Function Asymptotics Filter
 
 open scoped Topology NNReal BigOperators
 
-variable {α β 𝕜 E F : Type*} [IsROrC 𝕜] [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+variable {α β 𝕜 E F : Type*} [RCLike 𝕜] [NormedAddCommGroup E] [NormedSpace 𝕜 E]
   [NormedAddCommGroup F] [CompleteSpace F] {u : α → ℝ}
 
 /-! ### Differentiability -/
 
 variable [NormedSpace 𝕜 F]
-
 variable {f : α → E → F} {f' : α → E → E →L[𝕜] F} {g : α → 𝕜 → F} {g' : α → 𝕜 → F} {v : ℕ → α → ℝ}
   {s : Set E} {t : Set 𝕜} {x₀ x : E} {y₀ y : 𝕜} {N : ℕ∞}
 
@@ -49,7 +48,7 @@ theorem summable_of_summable_hasFDerivAt_of_isPreconnected (hu : Summable u) (hs
   rw [summable_iff_cauchySeq_finset] at hf0 ⊢
   have A : UniformCauchySeqOn (fun t : Finset α => fun x => ∑ i in t, f' i x) atTop s :=
     (tendstoUniformlyOn_tsum hu hf').uniformCauchySeqOn
-  -- porting note: Lean 4 failed to find `f` by unification
+  -- Porting note: Lean 4 failed to find `f` by unification
   refine cauchy_map_of_uniformCauchySeqOn_fderiv (f := fun t x ↦ ∑ i in t, f i x)
     hs h's A (fun t y hy => ?_) hx₀ hx hf0
   exact HasFDerivAt.sum fun i _ => hf i y hy
@@ -235,7 +234,7 @@ theorem contDiff_tsum (hf : ∀ i, ContDiff 𝕜 N (f i)) (hv : ∀ k : ℕ, (k 
   constructor
   · intro m hm
     rw [iteratedFDeriv_tsum hf hv h'f hm]
-    refine' continuous_tsum _ (hv m hm) _
+    refine continuous_tsum ?_ (hv m hm) ?_
     · intro i
       exact ContDiff.continuous_iteratedFDeriv hm (hf i)
     · intro n x
@@ -280,15 +279,15 @@ theorem contDiff_tsum_of_eventually (hf : ∀ i, ContDiff 𝕜 N (f i))
     have : (fun x => ∑' i, f i x) = (fun x => ∑ i in T, f i x) +
         fun x => ∑' i : { i // i ∉ T }, f i x := by
       ext1 x
-      refine' (sum_add_tsum_subtype_compl _ T).symm
-      refine' .of_norm_bounded_eventually _ (hv 0 (zero_le _)) _
+      refine (sum_add_tsum_subtype_compl ?_ T).symm
+      refine .of_norm_bounded_eventually _ (hv 0 (zero_le _)) ?_
       filter_upwards [h'f 0 (zero_le _)] with i hi
       simpa only [norm_iteratedFDeriv_zero] using hi x
     rw [this]
     apply (ContDiff.sum fun i _ => (hf i).of_le hm).add
     have h'u : ∀ k : ℕ, (k : ℕ∞) ≤ m → Summable (v k ∘ ((↑) : { i // i ∉ T } → α)) := fun k hk =>
       (hv k (hk.trans hm)).subtype _
-    refine' contDiff_tsum (fun i => (hf i).of_le hm) h'u _
+    refine contDiff_tsum (fun i => (hf i).of_le hm) h'u ?_
     rintro k ⟨i, hi⟩ x hk
     simp only [t, T, Finite.mem_toFinset, mem_setOf_eq, Finset.mem_range, not_forall, not_le,
       exists_prop, not_exists, not_and, not_lt] at hi

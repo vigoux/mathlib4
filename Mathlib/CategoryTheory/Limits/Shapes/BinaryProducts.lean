@@ -424,7 +424,7 @@ theorem BinaryFan.isLimit_iff_isIso_fst {X Y : C} (h : IsTerminal Y) (c : Binary
 
 theorem BinaryFan.isLimit_iff_isIso_snd {X Y : C} (h : IsTerminal X) (c : BinaryFan X Y) :
     Nonempty (IsLimit c) ↔ IsIso c.snd := by
-  refine' Iff.trans _ (BinaryFan.isLimit_iff_isIso_fst h (BinaryFan.mk c.snd c.fst))
+  refine Iff.trans ?_ (BinaryFan.isLimit_iff_isIso_fst h (BinaryFan.mk c.snd c.fst))
   exact
     ⟨fun h => ⟨BinaryFan.isLimitFlip h.some⟩, fun h =>
       ⟨(BinaryFan.isLimitFlip h.some).ofIsoLimit (isoBinaryFanMk c).symm⟩⟩
@@ -482,7 +482,7 @@ theorem BinaryCofan.isColimit_iff_isIso_inl {X Y : C} (h : IsInitial Y) (c : Bin
 
 theorem BinaryCofan.isColimit_iff_isIso_inr {X Y : C} (h : IsInitial X) (c : BinaryCofan X Y) :
     Nonempty (IsColimit c) ↔ IsIso c.inr := by
-  refine' Iff.trans _ (BinaryCofan.isColimit_iff_isIso_inl h (BinaryCofan.mk c.inr c.inl))
+  refine Iff.trans ?_ (BinaryCofan.isColimit_iff_isIso_inl h (BinaryCofan.mk c.inr c.inl))
   exact
     ⟨fun h => ⟨BinaryCofan.isColimitFlip h.some⟩, fun h =>
       ⟨(BinaryCofan.isColimitFlip h.some).ofIsoColimit (isoBinaryCofanMk c).symm⟩⟩
@@ -1244,11 +1244,8 @@ section ProdComparison
 universe w
 
 variable {C} {D : Type u₂} [Category.{w} D]
-
 variable (F : C ⥤ D) {A A' B B' : C}
-
 variable [HasBinaryProduct A B] [HasBinaryProduct A' B']
-
 variable [HasBinaryProduct (F.obj A) (F.obj B)] [HasBinaryProduct (F.obj A') (F.obj B')]
 
 /-- The product comparison morphism.
@@ -1338,11 +1335,8 @@ section CoprodComparison
 universe w
 
 variable {C} {D : Type u₂} [Category.{w} D]
-
 variable (F : C ⥤ D) {A A' B B' : C}
-
 variable [HasBinaryCoproduct A B] [HasBinaryCoproduct A' B']
-
 variable [HasBinaryCoproduct (F.obj A) (F.obj B)] [HasBinaryCoproduct (F.obj A') (F.obj B')]
 
 /-- The coproduct comparison morphism.
@@ -1446,14 +1440,14 @@ def Over.coprod [HasBinaryCoproducts C] {A : C} : Over A ⥤ Over A ⥤ Over A w
     { app := fun g => Over.homMk (coprod.map k.left (𝟙 _)) (by
         dsimp; rw [coprod.map_desc, Category.id_comp, Over.w k])
       naturality := fun f g k => by
-        ext;
-          · dsimp; simp }
+        ext
+        dsimp; simp }
   map_id X := by
     ext
-    · dsimp; simp
+    dsimp; simp
   map_comp f g := by
     ext
-    · dsimp; simp
+    dsimp; simp
 #align category_theory.over.coprod CategoryTheory.Over.coprod
 
 end CategoryTheory

@@ -51,7 +51,7 @@ noncomputable section
 
 open BigOperators
 
-open Classical
+open scoped Classical
 
 open RealInnerProductSpace
 
@@ -66,9 +66,7 @@ Euclidean affine spaces.
 
 
 variable {V : Type*} {P : Type*}
-
 variable [NormedAddCommGroup V] [InnerProductSpace ℝ V] [MetricSpace P]
-
 variable [NormedAddTorsor V P]
 
 /-- The midpoint of the segment AB is the same distance from A as it is from B. -/
@@ -155,7 +153,7 @@ theorem eq_of_dist_eq_of_dist_eq_of_mem_of_finrank_eq_two {s : AffineSubspace �
     inner_vsub_vsub_of_dist_eq_of_dist_eq (hp₁c₁.trans hpc₁.symm) (hp₁c₂.trans hpc₂.symm)
   let b : Fin 2 → V := ![c₂ -ᵥ c₁, p₂ -ᵥ p₁]
   have hb : LinearIndependent ℝ b := by
-    refine' linearIndependent_of_ne_zero_of_inner_eq_zero _ _
+    refine linearIndependent_of_ne_zero_of_inner_eq_zero ?_ ?_
     · intro i
       fin_cases i <;> simp [b, hc.symm, hp.symm]
     · intro i j hij
@@ -164,7 +162,7 @@ theorem eq_of_dist_eq_of_dist_eq_of_mem_of_finrank_eq_two {s : AffineSubspace �
       · rw [real_inner_comm]
         exact ho
   have hbs : Submodule.span ℝ (Set.range b) = s.direction := by
-    refine' eq_of_le_of_finrank_eq _ _
+    refine eq_of_le_of_finrank_eq ?_ ?_
     · rw [Submodule.span_le, Set.range_subset_iff]
       intro i
       fin_cases i
@@ -448,9 +446,9 @@ theorem orthogonalProjection_vadd_eq_self {s : AffineSubspace ℝ P} [Nonempty s
     orthogonalProjection s (v +ᵥ p) = ⟨p, hp⟩ := by
   have h := vsub_orthogonalProjection_mem_direction_orthogonal s (v +ᵥ p)
   rw [vadd_vsub_assoc, Submodule.add_mem_iff_right _ hv] at h
-  refine' (eq_of_vsub_eq_zero _).symm
+  refine (eq_of_vsub_eq_zero ?_).symm
   ext
-  refine' Submodule.disjoint_def.1 s.direction.orthogonal_disjoint _ _ h
+  refine Submodule.disjoint_def.1 s.direction.orthogonal_disjoint _ ?_ h
   exact (_ : s.direction).2
 #align euclidean_geometry.orthogonal_projection_vadd_eq_self EuclideanGeometry.orthogonalProjection_vadd_eq_self
 
