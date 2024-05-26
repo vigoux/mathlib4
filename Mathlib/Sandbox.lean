@@ -1,5 +1,10 @@
-import Mathlib.NumberTheory.NumberField.CanonicalEmbedding.FundamentalCone
+-- import Mathlib.NumberTheory.NumberField.CanonicalEmbedding.FundamentalCone
 import Mathlib.Algebra.Module.Zlattice.Covolume
+
+example {a b c : ℝ} (ha : 0 < a) :
+  a * b ≤ c ↔ b ≤ c / a := by exact Iff.symm (le_div_iff' ha)
+
+#exit
 
 section Topo
 

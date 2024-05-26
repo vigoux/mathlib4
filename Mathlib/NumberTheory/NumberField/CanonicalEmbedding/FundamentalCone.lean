@@ -146,11 +146,17 @@ theorem logMap_smul {x : E K} (hx : mixedEmbedding.norm x ≠ 0) {c : ℝ} (hc :
   · rw [norm_real]
     exact pow_ne_zero _ (abs_ne_zero.mpr hc)
 
+@[simp]
+theorem logMap_apply_of_norm_one {x : E K} (hx : mixedEmbedding.norm x = 1) {w : InfinitePlace K}
+    (hw : w ≠ w₀) :
+    logMap x ⟨w, hw⟩ = mult w * Real.log (normAtPlace w x) := by
+  rw [logMap, hx, Real.log_one, zero_mul, sub_zero]
+
 end logMap
 
 noncomputable section
 
-open NumberField.Units NumberField.Units.dirichletUnitTheorem nonZeroDivisors
+open NumberField.Units NumberField.Units.dirichletUnitTheorem nonZeroDivisors BigOperators
 
 variable [NumberField K]
 
@@ -170,6 +176,11 @@ variable {K}
 theorem norm_pos_of_mem {x : E K} (hx : x ∈ fundamentalCone K) :
     0 < mixedEmbedding.norm x :=
   lt_iff_le_and_ne.mpr ⟨mixedEmbedding.norm_nonneg _, Ne.symm hx.2⟩
+
+theorem normAtPlace_pos_of_mem {x : E K} (hx : x ∈ fundamentalCone K) (w : InfinitePlace K) :
+    0 < normAtPlace w x :=
+  lt_iff_le_and_ne.mpr ⟨normAtPlace_nonneg _ _,
+    (mixedEmbedding.norm_ne_zero_iff.mp (ne_of_gt (norm_pos_of_mem hx)) w).symm⟩
 
 theorem smul_mem_of_mem {x : E K} (hx : x ∈ fundamentalCone K) {c : ℝ} (hc : c ≠ 0) :
     c • x ∈ fundamentalCone K := by
@@ -276,7 +287,71 @@ theorem frontier_normLessThanOne :
     frontier (normLessThanOne K) = normEqOne K := sorry
 
 theorem isBounded_normEqOne :
-    IsBounded (normEqOne K) := sorry
+    IsBounded (normEqOne K) := by
+  classical
+  let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
+  obtain ⟨r, hr₁, hr₂⟩ := (Zspan.fundamentalDomain_isBounded B).subset_closedBall_lt 0 0
+  have h₀ : ∀ x ∈ fundamentalCone K,
+    ‖logMap x‖ ≤ r := fun _ h ↦ mem_closedBall_zero_iff.mp (hr₂ h.1)
+  have h₁ : ∀ x ∈ normEqOne K, ∀ w, w ≠ w₀ → |mult w * Real.log (normAtPlace w x)| ≤ r := by
+    intro x hx w hw
+    have := h₀ _ hx.1
+    rw [pi_norm_le_iff_of_nonneg hr₁.le] at this
+    have := this ⟨w, hw⟩
+    rwa [logMap_apply_of_norm_one hx.2, Real.norm_eq_abs] at this
+  have h₂ : ∀ x ∈ normEqOne K, mult (w₀ : InfinitePlace K) * Real.log (normAtPlace w₀ x) ≤
+      (Finset.univ.erase w₀).card • r := by
+    intro x hx
+    have : ∑ w ∈ Finset.univ.erase w₀, mult w * Real.log (normAtPlace w x) =
+        - (mult (K := K) w₀ * Real.log (normAtPlace w₀ x)) := by
+      have h := congr_arg Real.log hx.2
+      rw [mixedEmbedding.norm_apply, Real.log_one, Real.log_prod, ← Finset.sum_erase_add _ _
+        (Finset.mem_univ w₀), ← eq_neg_iff_add_eq_zero] at h
+      simp_rw [Real.log_pow] at h
+      exact h
+      intro w _
+      refine pow_ne_zero _ ?_
+      refine ne_of_gt ?_
+      exact normAtPlace_pos_of_mem hx.1 _
+    rw [← neg_eq_iff_eq_neg] at this
+    rw [← this, ← Finset.sum_const, ← Finset.sum_neg_distrib]
+    refine Finset.sum_le_sum ?_
+    intro w hw
+    have : w ≠ w₀ := by
+      rw [Finset.mem_erase] at hw
+      exact hw.1
+    specialize h₁ x hx w this
+    rw [abs_le] at h₁
+    exact neg_le_of_neg_le h₁.1
+  have h₃ : ∀ x w c, 0 ≤ c → x ∈ fundamentalCone K →
+      mult w * Real.log (normAtPlace w x) ≤ c → normAtPlace w x ≤ Real.exp c := by
+    intro x w c hc hx h
+    rw [← le_div_iff' mult_pos, Real.log_le_iff_le_exp (normAtPlace_pos_of_mem hx w)] at h
+    refine le_trans h ?_
+    refine Real.exp_le_exp.mpr ?_
+    exact div_le_self hc one_le_mult
+  rw [Metric.isBounded_iff_subset_closedBall 0]
+  refine ⟨?_, ?_⟩
+  · exact max (Real.exp r) (Real.exp ((Finset.univ.erase (w₀ : InfinitePlace K)).card • r))
+  · intro x hx
+    rw [mem_closedBall_zero_iff]
+    rw [norm_eq_sup'_normAtPlace]
+    refine Finset.sup'_le _ _ fun w _ ↦ ?_
+    by_cases hw : w = w₀
+    · rw [hw]
+      refine le_trans ?_ (le_max_right _ _)
+      apply h₃
+      · refine nsmul_nonneg ?_ _
+        exact hr₁.le
+      · exact hx.1
+      · exact h₂ x hx
+    · refine le_trans ?_ (le_max_left _ _)
+      apply h₃
+      · exact hr₁.le
+      · exact hx.1
+      · specialize h₁ x hx w hw
+        rw [abs_le] at h₁
+        exact h₁.2
 
 theorem isBounded_normLessThanOne :
     IsBounded (normLessThanOne K) := by
@@ -303,6 +378,10 @@ theorem measurableSet_normLessThanOne :
 open Classical in
 theorem volume_normEqOne :
     volume (normEqOne K) = 0 := by
+  -- The sets `A n` are all subsets of `normLessThanOne` and their volume is some multiple
+  -- of the volume of `normEqOne`. Since the corresponding series diverge if the volume
+  -- of `normEqOne` is non-zero and `normLessThanOne` has finite volume since it is bounded,
+  -- we get the result by contradiction.
   let A : ℕ → (Set (E K)) := fun n ↦ (1 - (n + 2 : ℝ)⁻¹) • normEqOne K
   have hn₀ : ∀ n : ℕ, 0 < 1 - (n + 2 : ℝ)⁻¹ := by
     intro n
@@ -311,12 +390,7 @@ theorem volume_normEqOne :
   have hn₁ : ∀ n : ℕ, 1 - (n + 2 : ℝ)⁻¹ ≤ 1 := by
     intro n
     refine (sub_le_self_iff _).mpr (by positivity)
-  -- The sets `A n` are all subsets of `normLessThanOne` and their volume is some multiple
-  -- of the volume of `normEqOne`. Since the corresponding series diverge if the volume
-  -- of `normEqOne` is non-zero and `normLessThanOne` has finite volume since it is bounded,
-  -- we get the result by contradiction.
   have hA₁ : ∀ n : ℕ, A n ⊆ normLessThanOne K := fun n ↦ smul_normEqOne_subset _ (hn₀ n) (hn₁ n)
-  -- since the
   have hA₂ : ∀ n : ℕ, volume (A n) =
     ((1 - (n + 2 : ENNReal)⁻¹) ^ finrank ℚ K) * volume (normEqOne K) := fun n ↦ by
     rw [Measure.addHaar_smul, mixedEmbedding.finrank, abs_pow, ENNReal.ofReal_pow (abs_nonneg _),
