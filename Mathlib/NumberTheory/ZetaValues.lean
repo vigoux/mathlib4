@@ -15,7 +15,10 @@ import Mathlib.Analysis.PSeries
 # Critical values of the Riemann zeta function
 
 In this file we prove formulae for the critical values of `ζ(s)`, and more generally of Hurwitz
-zeta functions, in terms of Bernoulli polynomials.
+zeta functions, in terms of Bernoulli polynomials. (Note, however, that this file deliberately does
+not import any of the files in `NumberTheory/LSeries` where the Riemann and Hurwitz zeta functions
+are defined and their analytic continuation is proved; formulations of the special-value results
+in these terms are given elsewhere.)
 
 ## Main results:
 
@@ -230,8 +233,7 @@ section Cleanup
 
 -- This section is just reformulating the results in a nicer form.
 theorem hasSum_one_div_nat_pow_mul_fourier {k : ℕ} (hk : 2 ≤ k) {x : ℝ} (hx : x ∈ Icc 0 1) :
-    HasSum
-      (fun n : ℕ ↦
+    HasSum (fun n : ℕ ↦
         (1 : ℂ) / (n : ℂ) ^ k * (fourier n (x : 𝕌) + (-1 : ℂ) ^ k * fourier (-n) (x : 𝕌)))
       (-(2 * π * I) ^ k / k ! * bernoulliFun k x) := by
   convert (hasSum_one_div_pow_mul_fourier_mul_bernoulliFun hk hx).nat_add_neg using 1
