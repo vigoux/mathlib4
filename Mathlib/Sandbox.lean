@@ -1,11 +1,6 @@
 -- import Mathlib.NumberTheory.NumberField.CanonicalEmbedding.FundamentalCone
 import Mathlib.Algebra.Module.Zlattice.Covolume
 
-example {a b c : ℝ} (ha : 0 < a) :
-  a * b ≤ c ↔ b ≤ c / a := by exact Iff.symm (le_div_iff' ha)
-
-#exit
-
 section Topo
 
 open Set
@@ -35,6 +30,8 @@ theorem frontier_lt_eq_eq {α β : Type*} [TopologicalSpace α] [LinearOrder α]
   simpa only [eq_comm, ← not_lt, ← Set.compl_setOf, frontier_compl] using frontier_le_eq_eq hg hf h
 
 end Topo
+
+#exit
 
 -- section Module
 

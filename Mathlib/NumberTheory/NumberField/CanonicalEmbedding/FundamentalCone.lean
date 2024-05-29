@@ -5,6 +5,8 @@ Authors: Xavier Roblot
 -/
 import Mathlib.NumberTheory.NumberField.Units.DirichletTheorem
 
+import Mathlib.Sandbox
+
 /-!
 # Fundamental Cone
 
@@ -283,75 +285,43 @@ theorem smul_normEqOne_subset {c : ℝ} (hc₁ : 0 < c) (hc₂ : c ≤ 1) :
   rw [hx.2]
   exact pow_le_one _ hc₁.le hc₂
 
-theorem frontier_normLessThanOne :
-    frontier (normLessThanOne K) = normEqOne K := sorry
-
 theorem isBounded_normEqOne :
     IsBounded (normEqOne K) := by
   classical
   let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
   obtain ⟨r, hr₁, hr₂⟩ := (Zspan.fundamentalDomain_isBounded B).subset_closedBall_lt 0 0
-  have h₀ : ∀ x ∈ fundamentalCone K,
-    ‖logMap x‖ ≤ r := fun _ h ↦ mem_closedBall_zero_iff.mp (hr₂ h.1)
-  have h₁ : ∀ x ∈ normEqOne K, ∀ w, w ≠ w₀ → |mult w * Real.log (normAtPlace w x)| ≤ r := by
-    intro x hx w hw
-    have := h₀ _ hx.1
-    rw [pi_norm_le_iff_of_nonneg hr₁.le] at this
-    have := this ⟨w, hw⟩
-    rwa [logMap_apply_of_norm_one hx.2, Real.norm_eq_abs] at this
-  have h₂ : ∀ x ∈ normEqOne K, mult (w₀ : InfinitePlace K) * Real.log (normAtPlace w₀ x) ≤
+  have h₁ : ∀ ⦃x w⦄, x ∈ normEqOne K → w ≠ w₀ → |mult w * Real.log (normAtPlace w x)| ≤ r := by
+    intro x w hx hw
+    rw [← logMap_apply_of_norm_one hx.2]
+    suffices ‖logMap x‖ ≤ r by exact (pi_norm_le_iff_of_nonneg hr₁.le).mp this ⟨w, hw⟩
+    exact mem_closedBall_zero_iff.mp (hr₂ hx.1.1)
+  have h₂ : ∀ ⦃x⦄, x ∈ normEqOne K → mult (w₀ : InfinitePlace K) * Real.log (normAtPlace w₀ x) ≤
       (Finset.univ.erase w₀).card • r := by
     intro x hx
-    have : ∑ w ∈ Finset.univ.erase w₀, mult w * Real.log (normAtPlace w x) =
-        - (mult (K := K) w₀ * Real.log (normAtPlace w₀ x)) := by
-      have h := congr_arg Real.log hx.2
-      rw [mixedEmbedding.norm_apply, Real.log_one, Real.log_prod, ← Finset.sum_erase_add _ _
-        (Finset.mem_univ w₀), ← eq_neg_iff_add_eq_zero] at h
-      simp_rw [Real.log_pow] at h
-      exact h
-      intro w _
-      refine pow_ne_zero _ ?_
-      refine ne_of_gt ?_
-      exact normAtPlace_pos_of_mem hx.1 _
-    rw [← neg_eq_iff_eq_neg] at this
-    rw [← this, ← Finset.sum_const, ← Finset.sum_neg_distrib]
-    refine Finset.sum_le_sum ?_
-    intro w hw
-    have : w ≠ w₀ := by
-      rw [Finset.mem_erase] at hw
-      exact hw.1
-    specialize h₁ x hx w this
-    rw [abs_le] at h₁
-    exact neg_le_of_neg_le h₁.1
-  have h₃ : ∀ x w c, 0 ≤ c → x ∈ fundamentalCone K →
+    suffices mult (w₀ : InfinitePlace K) * Real.log (normAtPlace w₀ x) =
+        - ∑ w ∈ Finset.univ.erase w₀, mult w * Real.log (normAtPlace w x) by
+      rw [this, ← Finset.sum_neg_distrib, ← Finset.sum_const]
+      exact Finset.sum_le_sum fun w hw ↦
+        neg_le_of_neg_le (abs_le.mp (h₁ hx (Finset.mem_erase.mp hw).1)).1
+    simp_rw [← Real.log_pow]
+    rw [← add_eq_zero_iff_eq_neg, Finset.univ.add_sum_erase (fun w ↦
+      ((normAtPlace w x) ^ mult w).log) (Finset.mem_univ w₀), ← Real.log_prod,
+      ← mixedEmbedding.norm_apply, hx.2, Real.log_one]
+    exact fun w _ ↦  pow_ne_zero _ <| ne_of_gt (normAtPlace_pos_of_mem hx.1 w)
+  have h₃ : ∀ ⦃x w c⦄, 0 ≤ c → x ∈ fundamentalCone K →
       mult w * Real.log (normAtPlace w x) ≤ c → normAtPlace w x ≤ Real.exp c := by
-    intro x w c hc hx h
-    rw [← le_div_iff' mult_pos, Real.log_le_iff_le_exp (normAtPlace_pos_of_mem hx w)] at h
-    refine le_trans h ?_
-    refine Real.exp_le_exp.mpr ?_
-    exact div_le_self hc one_le_mult
-  rw [Metric.isBounded_iff_subset_closedBall 0]
-  refine ⟨?_, ?_⟩
-  · exact max (Real.exp r) (Real.exp ((Finset.univ.erase (w₀ : InfinitePlace K)).card • r))
-  · intro x hx
-    rw [mem_closedBall_zero_iff]
-    rw [norm_eq_sup'_normAtPlace]
-    refine Finset.sup'_le _ _ fun w _ ↦ ?_
-    by_cases hw : w = w₀
-    · rw [hw]
-      refine le_trans ?_ (le_max_right _ _)
-      apply h₃
-      · refine nsmul_nonneg ?_ _
-        exact hr₁.le
-      · exact hx.1
-      · exact h₂ x hx
-    · refine le_trans ?_ (le_max_left _ _)
-      apply h₃
-      · exact hr₁.le
-      · exact hx.1
-      · specialize h₁ x hx w hw
-        rw [abs_le] at h₁
-        exact h₁.2
+    intro x w c hc hx
+    rw [← le_div_iff' mult_pos, Real.log_le_iff_le_exp (normAtPlace_pos_of_mem hx w)]
+    exact fun h ↦ le_trans h <| Real.exp_le_exp.mpr (div_le_self hc one_le_mult)
+  refine (Metric.isBounded_iff_subset_closedBall 0).mpr
+    ⟨max (Real.exp r) (Real.exp ((Finset.univ.erase (w₀ : InfinitePlace K)).card • r)),
+      fun x hx ↦ mem_closedBall_zero_iff.mpr ?_⟩
+  rw [norm_eq_sup'_normAtPlace]
+  refine Finset.sup'_le _ _ fun w _ ↦ ?_
+  by_cases hw : w = w₀
+  · rw [hw]
+    exact (h₃ (nsmul_nonneg (hr₁.le) _) hx.1 (h₂ hx)).trans (le_max_right _ _)
+  · exact le_trans (h₃ hr₁.le hx.1 (abs_le.mp (h₁ hx hw)).2) (le_max_left _ _)
 
 theorem isBounded_normLessThanOne :
     IsBounded (normLessThanOne K) := by
@@ -375,6 +345,127 @@ theorem measurableSet_normLessThanOne :
   MeasurableSet.inter (measurableSet K) <|
     measurableSet_le (mixedEmbedding.continuous_norm K).measurable measurable_const
 
+variable {K}
+
+def gen : Fin (rank K) → (E K) := by
+  intro i
+  let ε := mixedEmbedding K (fundSystem K i)
+  refine ⟨?_, ?_⟩
+  · intro w
+    exact normAtPlace w.val ε
+  · intro w
+    exact (normAtPlace w.val ε : ℂ)
+
+theorem normAtPlace_gen (w : InfinitePlace K) (i : Fin (rank K)) :
+    normAtPlace w (gen i) = w (fundSystem K i) := by
+  obtain hw | hw := isReal_or_isComplex w
+  · simp_rw [normAtPlace_apply_isReal hw, gen, normAtPlace_apply, Real.norm_eq_abs,
+      abs_eq_self.mpr (apply_nonneg _ _)]
+  · simp_rw [normAtPlace_apply_isComplex hw, gen, normAtPlace_apply, Complex.norm_eq_abs,
+      Complex.abs_ofReal, abs_eq_self.mpr (apply_nonneg _ _)]
+
+theorem norm_gen (i : Fin (rank K)) :
+    mixedEmbedding.norm (gen i) = 1 := by
+  simp_rw [mixedEmbedding.norm_apply, normAtPlace_gen, prod_eq_abs_norm, show
+    |(Algebra.norm ℚ) (fundSystem K i : K)| = 1 by exact isUnit_iff_norm.mp (fundSystem K i).isUnit,
+    Rat.cast_one]
+
+theorem logMap_gen (i : Fin (rank K)) :
+    logMap (gen i) = logEmbedding K (fundSystem K i) := by
+  ext
+  rw [logMap_apply_of_norm_one (norm_gen i), normAtPlace_gen, logEmbedding_component]
+
+variable (K) in
+def Ξ : Set (E K) := {x : E K | ∀ w, normAtPlace w x = 1}
+
+theorem normAtPlace_of_mem_Xi (w : InfinitePlace K) {x : E K} (hx : x ∈ Ξ K) :
+    normAtPlace w x = 1 := hx w
+
+theorem norm_one_of_mem_Xi {x : E K} (hx : x ∈ Ξ K) :
+    mixedEmbedding.norm x = 1 := by
+  simp_rw [mixedEmbedding.norm_apply, normAtPlace_of_mem_Xi _ hx, one_pow, Finset.prod_const_one]
+
+theorem logMap_of_mem_Xi {x : E K} (hx : x ∈ Ξ K) :
+    logMap x = 0 := by
+  ext
+  simp_rw [logMap_apply_of_norm_one (norm_one_of_mem_Xi hx), normAtPlace_of_mem_Xi _ hx,
+    Real.log_one, mul_zero, Pi.zero_apply]
+
+theorem logMap_eq_logMap_iff {x y : E K} (hx : mixedEmbedding.norm x = 1)
+    (hy : mixedEmbedding.norm y = 1) :
+    logMap x = logMap y ↔ ∃ ξ ∈ Ξ K, x = ξ * y := by
+  refine ⟨?_, ?_⟩
+  · intro h
+    have : ∀ w, w ≠ w₀ → normAtPlace w x = normAtPlace w y := by
+      intro w hw
+      have := congr_fun h ⟨w, hw⟩
+      rw [logMap_apply_of_norm_one hx, logMap_apply_of_norm_one hy] at this
+      have := mul_left_cancel₀ ?_ this
+      · refine Real.log_injOn_pos ?_ ?_ this
+        all_goals
+        · exact lt_iff_le_and_ne.mpr ⟨normAtPlace_nonneg _ _,
+            (mixedEmbedding.norm_ne_zero_iff.mp (by simp [hx, hy]) w).symm⟩
+      · refine ne_of_gt mult_pos
+    refine ⟨x * y⁻¹, ?_, ?_⟩
+    · sorry
+    · ext
+      · simp_rw [Prod.fst_mul, Prod.fst_inv, Pi.mul_apply, Pi.inv_apply]
+        rw [inv_mul_cancel_right₀]
+        sorry
+      · simp_rw [Prod.snd_mul, Prod.snd_inv, Pi.mul_apply, Pi.inv_apply]
+        rw [inv_mul_cancel_right₀]
+        sorry
+  · rintro ⟨ξ, hξ, rfl⟩
+    rw [logMap_mul, logMap_of_mem_Xi hξ, zero_add]
+    · simp [norm_one_of_mem_Xi hξ]
+    · simp [hy]
+
+def gen_pow (e : Fin (rank K) → ℝ) : E K := by
+  sorry
+
+variable (K) in
+theorem normEqOne_eq :
+    normEqOne K = Set.range (fun ξv : (Ξ K) × ((Fin (rank K) → Set.Ico (0 : ℝ) 1)) ↦
+      (ξv.1 : E K) * gen_pow (fun i ↦ ξv.2 i)) := by
+  sorry
+
+
+#exit
+
+
+open Classical in
+example : volume (frontier (normLessThanOne K)) = 0 := by
+  set F := frontier (normLessThanOne K) with F_def
+  let A : ℕ → (Set (E K)) := fun n ↦ (1 - (n + 2 : ℝ)⁻¹) • F
+  have hn₀ : ∀ n : ℕ, 0 < 1 - (n + 2 : ℝ)⁻¹ := by
+    intro n
+    rw [sub_pos, inv_lt_one_iff]
+    exact Or.inr (by linarith)
+  have hn₁ : ∀ n : ℕ, 1 - (n + 2 : ℝ)⁻¹ ≤ 1 := by
+    intro n
+    refine (sub_le_self_iff _).mpr (by positivity)
+  have h : ∀ x ∈ F, mixedEmbedding.norm x = 1 := by
+    rw [F_def]
+    intro x hx
+    unfold normLessThanOne at hx
+
+    have := Continuous.frontier_preimage_subset (X := fundamentalCone K) (f := Subtype.val) sorry
+      (t := {x | mixedEmbedding.norm x ≤ 1})
+    dsimp at this
+    have := Continuous.frontier_preimage_subset (X := {x : E K | mixedEmbedding.norm x ≤ 1})
+      (f := Subtype.val) sorry (t := fundamentalCone K)
+    dsimp at this
+    have := Continuous.frontier_preimage_subset (X := {x : E K | mixedEmbedding.norm x ≤ 1})
+      (f := Subtype.val) sorry (t := fundamentalCone K)
+    dsimp at this
+    have := Continuous.frontier_preimage_subset (X := E K)
+      (f := fun x ↦ mixedEmbedding.norm (x : E K)) sorry
+      (t := Set.Icc 0 1)
+
+    sorry
+  sorry
+
+
 open Classical in
 theorem volume_normEqOne :
     volume (normEqOne K) = 0 := by
@@ -392,7 +483,7 @@ theorem volume_normEqOne :
     refine (sub_le_self_iff _).mpr (by positivity)
   have hA₁ : ∀ n : ℕ, A n ⊆ normLessThanOne K := fun n ↦ smul_normEqOne_subset _ (hn₀ n) (hn₁ n)
   have hA₂ : ∀ n : ℕ, volume (A n) =
-    ((1 - (n + 2 : ENNReal)⁻¹) ^ finrank ℚ K) * volume (normEqOne K) := fun n ↦ by
+      ((1 - (n + 2 : ENNReal)⁻¹) ^ finrank ℚ K) * volume (normEqOne K) := fun n ↦ by
     rw [Measure.addHaar_smul, mixedEmbedding.finrank, abs_pow, ENNReal.ofReal_pow (abs_nonneg _),
       abs_eq_self.mpr (hn₀ n).le, ENNReal.ofReal_sub, ENNReal.ofReal_inv_of_pos,
       ENNReal.ofReal_add,
@@ -426,6 +517,91 @@ theorem volume_normEqOne :
   simp_rw [show ∀ n : ℕ, (n : ENNReal) + 2 = (n + 2 : ℕ) by exact fun _ ↦ by norm_cast]
   rw [Filter.tendsto_add_atTop_iff_nat (f := fun n ↦ (n : ENNReal)⁻¹)]
   exact ENNReal.tendsto_inv_nat_nhds_zero
+
+theorem frontier_normLessThanOne' :
+    frontier (normLessThanOne K) ⊆ closure (normEqOne K) := by
+
+  have := Continuous.frontier_preimage_subset (X := fundamentalCone K) (f := Subtype.val) sorry
+    (t := {x | mixedEmbedding.norm x ≤ 1})
+  simp at this
+
+  have t₀ := frontier_le_subset_eq (β := fundamentalCone K) (α := ℝ)
+    (f := fun x ↦ mixedEmbedding.norm (x : E K))
+    (g := fun _ ↦ 1) sorry sorry
+  simp at t₀
+
+  have t₁ : frontier {x : fundamentalCone K | mixedEmbedding.norm (x : E K) ≤ 1} =
+    {x : fundamentalCone K | mixedEmbedding.norm (x : E K) = 1} := sorry
+
+
+
+  simp at this
+  rw [t₁] at this
+
+
+
+
+
+
+#exit
+
+theorem frontier_normLessThanOne :
+    frontier (normLessThanOne K) = normEqOne K := by
+  have := frontier_le_eq_eq (β := fundamentalCone K) (α := ℝ)
+    (f := fun x ↦ mixedEmbedding.norm (x : E K))
+    (g := fun _ ↦ 1) ?_ ?_ ?_
+  · rw [normLessThanOne, normEqOne]
+    have := congr_arg (fun s ↦ Subtype.val '' s) this
+    simp at this
+    convert this
+    · ext x
+      simp only [Set.mem_image, Subtype.exists, exists_and_right, exists_eq_right]
+      refine ⟨?_, ?_⟩
+      · intro hx
+        refine ⟨?_, ?_⟩
+        ·
+          sorry
+        ·
+          sorry
+      ·
+        sorry
+    · sorry
+  · refine Continuous.comp' ?_ ?_
+    · exact mixedEmbedding.continuous_norm K
+    · exact continuous_subtype_val
+  · exact continuous_const
+  · rintro ⟨x, hx⟩ hx'
+    simp at hx'
+    simp
+    refine frequently_iff_seq_forall.mpr ?_
+    refine ⟨?_, ?_, ?_⟩
+    · intro n
+      refine ⟨?_, ?_⟩
+      exact (1 + 1 / (n + 1 : ℝ)) • x
+      refine smul_mem_of_mem hx ?_
+      positivity
+    · rw [show nhds (⟨x, hx⟩ : fundamentalCone K)= nhds ⟨(1 + 0 : ℝ) • x, by simp [hx]⟩ by norm_num]
+      refine tendsto_subtype_rng.mpr ?_
+      dsimp only
+      refine Tendsto.smul_const ?_ _
+      refine Tendsto.add ?_ ?_
+      · exact tendsto_const_nhds
+      · exact tendsto_one_div_add_atTop_nhds_zero_nat
+    · intro n
+      rw [mixedEmbedding.norm_smul, ← hx', mul_one]
+      refine one_lt_pow ?_ ?_
+      · rw [lt_abs]
+        left
+        rw [lt_add_iff_pos_right]
+        positivity
+      · refine ne_of_gt ?_
+        exact finrank_pos
+
+
+
+
+
+
 
 end normLessOne
 
