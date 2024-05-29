@@ -345,7 +345,35 @@ theorem measurableSet_normLessThanOne :
   MeasurableSet.inter (measurableSet K) <|
     measurableSet_le (mixedEmbedding.continuous_norm K).measurable measurable_const
 
-variable {K}
+example : 0 = 1 := by
+  classical
+  let E₀ := (InfinitePlace K) → ℝ
+  let u : Fin (rank K) → E₀ := sorry
+  let s : Set (Fin (rank K) → ℝ) := Set.univ.pi fun _ ↦ Set.Ico 0 1
+  let f : E₀ → E₀ := by
+    intro x i
+    exact ∏ j, (u j) i ^ x i
+  have hs : MeasurableSet s := sorry
+  --  Real.hasStrictDerivAt_const_rpow
+  let f' : E₀ → E₀ →L[ℝ] E₀ := by
+    intro x
+    refine ⟨⟨⟨?_, sorry⟩, sorry⟩, sorry⟩
+    intro y i
+    exact ((u i) ^ (x i) * Real.log (u i)) * y i
+  have hf' : ∀ x ∈ s, HasFDerivWithinAt f (f' x) s x := sorry
+  have hf : Set.InjOn f s := sorry
+  have h'f : Measurable f := sorry
+  let g : E₀ → ENNReal := fun _ ↦ 1
+  have t₀ := lintegral_image_eq_lintegral_abs_det_fderiv_mul volume hs hf' hf g
+  simp [g] at t₀
+  let R : ℝ := sorry
+  have t₁ : ∀ x, (f' x).det = R := sorry
+  simp_rw [t₁] at t₀
+  simp at t₀
+
+
+
+#exit
 
 def gen : Fin (rank K) → (E K) := by
   intro i
