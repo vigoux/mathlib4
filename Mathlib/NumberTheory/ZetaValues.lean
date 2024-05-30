@@ -15,10 +15,7 @@ import Mathlib.Analysis.PSeries
 # Critical values of the Riemann zeta function
 
 In this file we prove formulae for the critical values of `ζ(s)`, and more generally of Hurwitz
-zeta functions, in terms of Bernoulli polynomials. (Note, however, that this file deliberately does
-not import any of the files in `NumberTheory/LSeries` where the Riemann and Hurwitz zeta functions
-are defined and their analytic continuation is proved; formulations of the special-value results
-in these terms are given elsewhere.)
+zeta functions, in terms of Bernoulli polynomials.
 
 ## Main results:
 
@@ -75,14 +72,14 @@ theorem hasDerivAt_bernoulliFun (k : ℕ) (x : ℝ) :
 #align has_deriv_at_bernoulli_fun hasDerivAt_bernoulliFun
 
 theorem antideriv_bernoulliFun (k : ℕ) (x : ℝ) :
-    HasDerivAt (bernoulliFun (k + 1) · / (k + 1)) (bernoulliFun k x) x := by
+    HasDerivAt (fun x => bernoulliFun (k + 1) x / (k + 1)) (bernoulliFun k x) x := by
   convert (hasDerivAt_bernoulliFun (k + 1) x).div_const _ using 1
   field_simp [Nat.cast_add_one_ne_zero k]
 #align antideriv_bernoulli_fun antideriv_bernoulliFun
 
 theorem integral_bernoulliFun_eq_zero {k : ℕ} (hk : k ≠ 0) :
     ∫ x : ℝ in (0)..1, bernoulliFun k x = 0 := by
-  rw [integral_eq_sub_of_hasDerivAt (fun x _ ↦ antideriv_bernoulliFun k x)
+  rw [integral_eq_sub_of_hasDerivAt (fun x _ => antideriv_bernoulliFun k x)
       ((Polynomial.continuous _).intervalIntegrable _ _)]
   rw [bernoulliFun_eval_one]
   split_ifs with h
@@ -98,7 +95,8 @@ section BernoulliFourierCoeffs
 
 
 /-- The `n`-th Fourier coefficient of the `k`-th Bernoulli function on the interval `[0, 1]`. -/
-def bernoulliFourierCoeff (k : ℕ) (n : ℤ) : ℂ := fourierCoeffOn zero_lt_one (bernoulliFun k ·) n
+def bernoulliFourierCoeff (k : ℕ) (n : ℤ) : ℂ :=
+  fourierCoeffOn zero_lt_one (fun x => bernoulliFun k x) n
 #align bernoulli_fourier_coeff bernoulliFourierCoeff
 
 /-- Recurrence relation (in `k`) for the `n`-th Fourier coefficient of `Bₖ`. -/
@@ -107,7 +105,7 @@ theorem bernoulliFourierCoeff_recurrence (k : ℕ) {n : ℤ} (hn : n ≠ 0) :
       1 / (-2 * π * I * n) * (ite (k = 1) 1 0 - k * bernoulliFourierCoeff (k - 1) n) := by
   unfold bernoulliFourierCoeff
   rw [fourierCoeffOn_of_hasDerivAt zero_lt_one hn
-      (fun x _ ↦ (hasDerivAt_bernoulliFun k x).ofReal_comp)
+      (fun x _ => (hasDerivAt_bernoulliFun k x).ofReal_comp)
       ((continuous_ofReal.comp <|
             continuous_const.mul <| Polynomial.continuous _).intervalIntegrable
         _ _)]
@@ -134,15 +132,16 @@ theorem bernoulliFourierCoeff_zero {k : ℕ} (hk : k ≠ 0) : bernoulliFourierCo
 theorem bernoulliFourierCoeff_eq {k : ℕ} (hk : k ≠ 0) (n : ℤ) :
     bernoulliFourierCoeff k n = -k ! / (2 * π * I * n) ^ k := by
   rcases eq_or_ne n 0 with (rfl | hn)
-  · rw [bernoulliFourierCoeff_zero hk, Int.cast_zero, mul_zero, zero_pow hk, div_zero]
-  refine Nat.le_induction ?_ (fun k hk h'k ↦ ?_) k (Nat.one_le_iff_ne_zero.mpr hk)
+  · rw [bernoulliFourierCoeff_zero hk, Int.cast_zero, mul_zero, zero_pow hk,
+      div_zero]
+  refine Nat.le_induction ?_ (fun k hk h'k => ?_) k (Nat.one_le_iff_ne_zero.mpr hk)
   · rw [bernoulliFourierCoeff_recurrence 1 hn]
     simp only [Nat.cast_one, tsub_self, neg_mul, one_mul, eq_self_iff_true, if_true,
       Nat.factorial_one, pow_one, inv_I, mul_neg]
     rw [bernoulli_zero_fourier_coeff hn, sub_zero, mul_one, div_neg, neg_div]
   · rw [bernoulliFourierCoeff_recurrence (k + 1) hn, Nat.add_sub_cancel k 1]
     split_ifs with h
-    · exact absurd h (ne_of_gt (Nat.lt_succ_iff.mpr hk))
+    · exfalso; exact (ne_of_gt (Nat.lt_succ_iff.mpr hk)) h
     · rw [h'k, Nat.factorial_succ, zero_sub, Nat.cast_mul, pow_add, pow_one, neg_div, mul_neg,
         mul_neg, mul_neg, neg_neg, neg_mul, neg_mul, neg_mul, div_neg]
       field_simp [Int.cast_ne_zero.mpr hn, I_ne_zero]
@@ -178,13 +177,13 @@ theorem fourierCoeff_bernoulli_eq {k : ℕ} (hk : k ≠ 0) (n : ℤ) :
 #align fourier_coeff_bernoulli_eq fourierCoeff_bernoulli_eq
 
 theorem summable_bernoulli_fourier {k : ℕ} (hk : 2 ≤ k) :
-    Summable (fun n ↦ -k ! / (2 * π * I * n) ^ k : ℤ → ℂ) := by
+    Summable (fun n => -k ! / (2 * π * I * n) ^ k : ℤ → ℂ) := by
   have :
       ∀ n : ℤ, -(k ! : ℂ) / (2 * π * I * n) ^ k = -k ! / (2 * π * I) ^ k * (1 / (n : ℂ) ^ k) := by
     intro n; rw [mul_one_div, div_div, ← mul_pow]
   simp_rw [this]
   refine Summable.mul_left _ <| .of_norm ?_
-  have : (fun x : ℤ ↦ ‖1 / (x : ℂ) ^ k‖) = fun x : ℤ ↦ |1 / (x : ℝ) ^ k| := by
+  have : (fun x : ℤ => ‖1 / (x : ℂ) ^ k‖) = fun x : ℤ => |1 / (x : ℝ) ^ k| := by
     ext1 x
     rw [norm_eq_abs, ← Complex.abs_ofReal]
     congr 1
@@ -195,7 +194,7 @@ theorem summable_bernoulli_fourier {k : ℕ} (hk : 2 ≤ k) :
 
 theorem hasSum_one_div_pow_mul_fourier_mul_bernoulliFun {k : ℕ} (hk : 2 ≤ k) {x : ℝ}
     (hx : x ∈ Icc (0 : ℝ) 1) :
-    HasSum (fun n : ℤ ↦ 1 / (n : ℂ) ^ k * fourier n (x : 𝕌))
+    HasSum (fun n : ℤ => 1 / (n : ℂ) ^ k * fourier n (x : 𝕌))
       (-(2 * π * I) ^ k / k ! * bernoulliFun k x) := by
   -- first show it suffices to prove result for `Ico 0 1`
   suffices ∀ {y : ℝ}, y ∈ Ico (0 : ℝ) 1 →
@@ -215,7 +214,7 @@ theorem hasSum_one_div_pow_mul_fourier_mul_bernoulliFun {k : ℕ} (hk : 2 ≤ k)
     rw [ContinuousMap.coe_mk]; exact fourierCoeff_bernoulli_eq (by omega : k ≠ 0)
   have step2 :=
     has_pointwise_sum_fourier_series_of_summable
-      ((summable_bernoulli_fourier hk).congr fun n ↦ (step1 n).symm) y
+      ((summable_bernoulli_fourier hk).congr fun n => (step1 n).symm) y
   simp_rw [step1] at step2
   convert step2.mul_left (-(2 * ↑π * I) ^ k / (k ! : ℂ)) using 2 with n
   · rw [smul_eq_mul, ← mul_assoc, mul_div, mul_neg, div_mul_cancel₀, neg_neg, mul_pow _ (n : ℂ),
@@ -232,8 +231,9 @@ end BernoulliPeriodized
 section Cleanup
 
 -- This section is just reformulating the results in a nicer form.
-theorem hasSum_one_div_nat_pow_mul_fourier {k : ℕ} (hk : 2 ≤ k) {x : ℝ} (hx : x ∈ Icc 0 1) :
-    HasSum (fun n : ℕ ↦
+theorem hasSum_one_div_nat_pow_mul_fourier {k : ℕ} (hk : 2 ≤ k) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+    HasSum
+      (fun n : ℕ =>
         (1 : ℂ) / (n : ℂ) ^ k * (fourier n (x : 𝕌) + (-1 : ℂ) ^ k * fourier (-n) (x : 𝕌)))
       (-(2 * π * I) ^ k / k ! * bernoulliFun k x) := by
   convert (hasSum_one_div_pow_mul_fourier_mul_bernoulliFun hk hx).nat_add_neg using 1
@@ -249,11 +249,11 @@ theorem hasSum_one_div_nat_pow_mul_fourier {k : ℕ} (hk : 2 ≤ k) {x : ℝ} (h
 #align has_sum_one_div_nat_pow_mul_fourier hasSum_one_div_nat_pow_mul_fourier
 
 theorem hasSum_one_div_nat_pow_mul_cos {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
-    HasSum (fun n : ℕ ↦ 1 / (n : ℝ) ^ (2 * k) * Real.cos (2 * π * n * x))
+    HasSum (fun n : ℕ => 1 / (n : ℝ) ^ (2 * k) * Real.cos (2 * π * n * x))
       ((-1 : ℝ) ^ (k + 1) * (2 * π) ^ (2 * k) / 2 / (2 * k)! *
         (Polynomial.map (algebraMap ℚ ℝ) (Polynomial.bernoulli (2 * k))).eval x) := by
   have :
-    HasSum (fun n : ℕ ↦ 1 / (n : ℂ) ^ (2 * k) * (fourier n (x : 𝕌) + fourier (-n) (x : 𝕌)))
+    HasSum (fun n : ℕ => 1 / (n : ℂ) ^ (2 * k) * (fourier n (x : 𝕌) + fourier (-n) (x : 𝕌)))
       ((-1 : ℂ) ^ (k + 1) * (2 * (π : ℂ)) ^ (2 * k) / (2 * k)! * bernoulliFun (2 * k) x) := by
     convert
       hasSum_one_div_nat_pow_mul_fourier (by omega : 2 ≤ 2 * k)
@@ -286,11 +286,11 @@ theorem hasSum_one_div_nat_pow_mul_cos {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : 
 #align has_sum_one_div_nat_pow_mul_cos hasSum_one_div_nat_pow_mul_cos
 
 theorem hasSum_one_div_nat_pow_mul_sin {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
-    HasSum (fun n : ℕ ↦ 1 / (n : ℝ) ^ (2 * k + 1) * Real.sin (2 * π * n * x))
+    HasSum (fun n : ℕ => 1 / (n : ℝ) ^ (2 * k + 1) * Real.sin (2 * π * n * x))
       ((-1 : ℝ) ^ (k + 1) * (2 * π) ^ (2 * k + 1) / 2 / (2 * k + 1)! *
         (Polynomial.map (algebraMap ℚ ℝ) (Polynomial.bernoulli (2 * k + 1))).eval x) := by
   have :
-    HasSum (fun n : ℕ ↦ 1 / (n : ℂ) ^ (2 * k + 1) * (fourier n (x : 𝕌) - fourier (-n) (x : 𝕌)))
+    HasSum (fun n : ℕ => 1 / (n : ℂ) ^ (2 * k + 1) * (fourier n (x : 𝕌) - fourier (-n) (x : 𝕌)))
       ((-1 : ℂ) ^ (k + 1) * I * (2 * π : ℂ) ^ (2 * k + 1) / (2 * k + 1)! *
         bernoulliFun (2 * k + 1) x) := by
     convert
@@ -330,7 +330,7 @@ theorem hasSum_one_div_nat_pow_mul_sin {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : 
 #align has_sum_one_div_nat_pow_mul_sin hasSum_one_div_nat_pow_mul_sin
 
 theorem hasSum_zeta_nat {k : ℕ} (hk : k ≠ 0) :
-    HasSum (fun n : ℕ ↦ 1 / (n : ℝ) ^ (2 * k))
+    HasSum (fun n : ℕ => 1 / (n : ℝ) ^ (2 * k))
       ((-1 : ℝ) ^ (k + 1) * (2 : ℝ) ^ (2 * k - 1) * π ^ (2 * k) *
         bernoulli (2 * k) / (2 * k)!) := by
   convert hasSum_one_div_nat_pow_mul_cos hk (left_mem_Icc.mpr zero_le_one) using 1
@@ -352,13 +352,13 @@ end Cleanup
 
 section Examples
 
-theorem hasSum_zeta_two : HasSum (fun n : ℕ ↦ (1 : ℝ) / (n : ℝ) ^ 2) (π ^ 2 / 6) := by
+theorem hasSum_zeta_two : HasSum (fun n : ℕ => (1 : ℝ) / (n : ℝ) ^ 2) (π ^ 2 / 6) := by
   convert hasSum_zeta_nat one_ne_zero using 1; rw [mul_one]
   rw [bernoulli_eq_bernoulli'_of_ne_one (by decide : 2 ≠ 1), bernoulli'_two]
   norm_num [Nat.factorial]; field_simp; ring
 #align has_sum_zeta_two hasSum_zeta_two
 
-theorem hasSum_zeta_four : HasSum (fun n : ℕ ↦ (1 : ℝ) / (n : ℝ) ^ 4) (π ^ 4 / 90) := by
+theorem hasSum_zeta_four : HasSum (fun n : ℕ => (1 : ℝ) / (n : ℝ) ^ 4) (π ^ 4 / 90) := by
   convert hasSum_zeta_nat two_ne_zero using 1; norm_num
   rw [bernoulli_eq_bernoulli'_of_ne_one, bernoulli'_four]
   · norm_num [Nat.factorial]; field_simp; ring
@@ -379,7 +379,7 @@ theorem Polynomial.bernoulli_three_eval_one_quarter :
 /-- Explicit formula for `L(χ, 3)`, where `χ` is the unique nontrivial Dirichlet character modulo 4.
 -/
 theorem hasSum_L_function_mod_four_eval_three :
-    HasSum (fun n : ℕ ↦ (1 : ℝ) / (n : ℝ) ^ 3 * Real.sin (π * n / 2)) (π ^ 3 / 32) := by
+    HasSum (fun n : ℕ => (1 : ℝ) / (n : ℝ) ^ 3 * Real.sin (π * n / 2)) (π ^ 3 / 32) := by
   -- Porting note: times out with
   -- convert hasSum_one_div_nat_pow_mul_sin one_ne_zero (_ : 1 / 4 ∈ Icc (0 : ℝ) 1)
   apply (congr_arg₂ HasSum ?_ ?_).to_iff.mp <|
