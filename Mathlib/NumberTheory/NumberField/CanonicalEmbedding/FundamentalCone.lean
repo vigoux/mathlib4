@@ -347,7 +347,7 @@ theorem measurableSet_normLessThanOne :
 
 example : 0 = 1 := by
   classical
-  let E₀ := (InfinitePlace K) → ℝ
+  let E₀ := Fin (rank K) → ℝ
   let u : Fin (rank K) → E₀ := sorry
   let s : Set (Fin (rank K) → ℝ) := Set.univ.pi fun _ ↦ Set.Ico 0 1
   let f : E₀ → E₀ := by
