@@ -5,39 +5,50 @@ Authors: David Loeffler
 -/
 
 import Mathlib.NumberTheory.ZetaValues
-import Mathlib.NumberTheory.ZetaFunctions.RiemannZeta
-import Mathlib.NumberTheory.LSeries.HurwitzZeta
+import Mathlib.NumberTheory.LSeries.RiemannZeta
 
 /-!
 # Special values of Hurwitz and Riemann zeta functions
 
 This file gives the formula for `ζ (2 * k)`, for `k` a non-zero integer, in terms of Bernoulli
 numbers. More generally, we give formulae for any Hurwitz zeta functions at any (strictly) negative
-integer.
+integer in terms of Bernoulli polynomials.
 
-(Note that some supporting results – those which do not explicitly invoke the definitions of the
-Riemann zeta and related functions – are in a different file `Mathlib.NumberTheory.ZetaValues`.)
+(Note that most of the actual work for these formulae is done elsewhere, in
+`Mathlib.NumberTheory.ZetaValues`. This file has only those results which really need the
+definition of Hurwitz zeta and related functions, rather than working directly with the defining
+sums in the convergence range.)
 
 ## Main results
+
 - `hurwitzZeta_neg_nat`: for `k : ℕ` with `k ≠ 0`, and any `x ∈ ℝ / ℤ`, the special value
   `hurwitzZeta x (-k)` is equal to `-(Polynomial.bernoulli (k + 1) x) / (k + 1)`.
-- `riemannZeta_neg_nat_eq_bernoulli` and `riemannZeta_neg_nat_eq_bernoulli'`: special case of the
-  Riemann zeta function (2 formulations according to taste) – note that this _does_ allow `k = 0`.
+- `riemannZeta_neg_nat_eq_bernoulli` : for any `k ∈ ℕ` we have the formula
+  `riemannZeta (-k) = (-1) ^ k * bernoulli (k + 1) / (k + 1)`
+- `riemannZeta_two_mul_nat`: formula for `ζ(2 * k)` for `k ∈ ℕ, k ≠ 0` in terms of Bernoulli
+  numbers
 
 ## TODO
 
-The results on the Hurwitz zeta function are incomplete since the value at `s = 0` is not included.
-This is difficult to approach using the methods in the library at the present time.
+* Extend to cover Dirichlet L-functions.
+* The formulae are correct for `s = 0` as well, but we do not prove this case, since this requires
+  Fourier series which are only conditionally convergent, which is difficult to approach using the
+  methods in the library at the present time (May 2024).
 -/
 
 open Complex Real Set
+
 open scoped Nat
+
+namespace HurwitzZeta
+
+variable {k : ℕ} {x : ℝ}
 
 /-- Express the value of `cosZeta` at a positive even integer as a value
 of the Bernoulli polynomial. -/
-theorem cosZeta_two_mul_nat {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+theorem cosZeta_two_mul_nat (hk : k ≠ 0) (hx : x ∈ Icc 0 1) :
     cosZeta x (2 * k) = (-1) ^ (k + 1) * (2 * π) ^ (2 * k) / 2 / (2 * k)! *
-      ((Polynomial.bernoulli (2 * k)).map (algebraMap ℚ ℂ)).eval ↑x := by
+      ((Polynomial.bernoulli (2 * k)).map (algebraMap ℚ ℂ)).eval (x : ℂ) := by
   rw [← (hasSum_nat_cosZeta x (?_ : 1 < re (2 * k))).tsum_eq]
   refine Eq.trans ?_ <| (congr_arg ofReal' (hasSum_one_div_nat_pow_mul_cos hk hx).tsum_eq).trans ?_
   · rw [ofReal_tsum]
@@ -62,9 +73,9 @@ Note that this formula is also correct for `k = 0` (i.e. for the value at `s = 1
 prove it in this case, owing to the additional difficulty of working with series that are only
 conditionally convergent.
 -/
-theorem sinZeta_two_mul_nat_add_one {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+theorem sinZeta_two_mul_nat_add_one (hk : k ≠ 0) (hx : x ∈ Icc 0 1) :
     sinZeta x (2 * k + 1) = (-1) ^ (k + 1) * (2 * π) ^ (2 * k + 1) / 2 / (2 * k + 1)! *
-      ((Polynomial.bernoulli (2 * k + 1)).map (algebraMap ℚ ℂ)).eval ↑x := by
+      ((Polynomial.bernoulli (2 * k + 1)).map (algebraMap ℚ ℂ)).eval (x : ℂ) := by
   rw [← (hasSum_nat_sinZeta x (?_ : 1 < re (2 * k + 1))).tsum_eq]
   refine Eq.trans ?_ <| (congr_arg ofReal' (hasSum_one_div_nat_pow_mul_sin hk hx).tsum_eq).trans ?_
   · rw [ofReal_tsum]
@@ -86,23 +97,22 @@ theorem sinZeta_two_mul_nat_add_one {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x �
     exact mul_pos two_pos (Nat.pos_of_ne_zero hk)
 
 /-- Reformulation of `cosZeta_two_mul_nat` using `Gammaℂ`. -/
-theorem cosZeta_two_mul_nat' {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+theorem cosZeta_two_mul_nat' (hk : k ≠ 0) (hx : x ∈ Icc (0 : ℝ) 1) :
     cosZeta x (2 * k) = (-1) ^ (k + 1) / (2 * k) / Gammaℂ (2 * k) *
-      ((Polynomial.bernoulli (2 * k)).map (algebraMap ℚ ℂ)).eval ↑x := by
+      ((Polynomial.bernoulli (2 * k)).map (algebraMap ℚ ℂ)).eval (x : ℂ) := by
   rw [cosZeta_two_mul_nat hk hx]
   congr 1
   have : (2 * k)! = (2 * k) * Complex.Gamma (2 * k) := by
     rw [(by { norm_cast; omega } : 2 * (k : ℂ) = ↑(2 * k - 1) + 1), Complex.Gamma_nat_eq_factorial,
       ← Nat.cast_add_one, ← Nat.cast_mul, ← Nat.factorial_succ, Nat.sub_add_cancel (by omega)]
   simp_rw [this, Gammaℂ, cpow_neg, ← div_div, div_inv_eq_mul, div_mul_eq_mul_div, div_div]
-  congr 2
-  · rw [(by simp : 2 * (k : ℂ) = ↑(2 * k)), cpow_natCast]
-  · ring
+  norm_cast
+  ring_nf
 
 /-- Reformulation of `sinZeta_two_mul_nat_add_one` using `Gammaℂ`. -/
-theorem sinZeta_two_mul_nat_add_one' {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+theorem sinZeta_two_mul_nat_add_one' (hk : k ≠ 0) (hx : x ∈ Icc (0 : ℝ) 1) :
     sinZeta x (2 * k + 1) = (-1) ^ (k + 1) / (2 * k + 1) / Gammaℂ (2 * k + 1) *
-      ((Polynomial.bernoulli (2 * k + 1)).map (algebraMap ℚ ℂ)).eval ↑x := by
+      ((Polynomial.bernoulli (2 * k + 1)).map (algebraMap ℚ ℂ)).eval (x : ℂ) := by
   rw [sinZeta_two_mul_nat_add_one hk hx]
   congr 1
   have : (2 * k + 1)! = (2 * k + 1) * Complex.Gamma (2 * k + 1) := by
@@ -110,13 +120,12 @@ theorem sinZeta_two_mul_nat_add_one' {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x 
        Complex.Gamma_nat_eq_factorial, ← Nat.cast_ofNat (R := ℂ), ← Nat.cast_mul,
       ← Nat.cast_add_one, ← Nat.cast_mul, ← Nat.factorial_succ]
   simp_rw [this, Gammaℂ, cpow_neg, ← div_div, div_inv_eq_mul, div_mul_eq_mul_div, div_div]
-  congr 2
-  · rw [(by simp : 2 * (k : ℂ) + 1 = ↑(2 * k + 1)), cpow_natCast]
-  · ring
+  rw [(by simp : 2 * (k : ℂ) + 1 = ↑(2 * k + 1)), cpow_natCast]
+  ring
 
-theorem hurwitzZetaEven_one_sub_two_mul_nat {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+theorem hurwitzZetaEven_one_sub_two_mul_nat (hk : k ≠ 0) (hx : x ∈ Icc (0 : ℝ) 1) :
     hurwitzZetaEven x (1 - 2 * k) =
-      -1 / (2 * k) * ((Polynomial.bernoulli (2 * k)).map (algebraMap ℚ ℂ)).eval ↑x := by
+      -1 / (2 * k) * ((Polynomial.bernoulli (2 * k)).map (algebraMap ℚ ℂ)).eval (x : ℂ) := by
   have h1 (n : ℕ) : (2 * k : ℂ) ≠ -n := by
     rw [← Int.cast_ofNat, ← Int.cast_natCast, ← Int.cast_mul, ← Int.cast_natCast n, ← Int.cast_neg,
       Ne, Int.cast_inj, ← Ne]
@@ -136,9 +145,9 @@ theorem hurwitzZetaEven_one_sub_two_mul_nat {k : ℕ} (hk : k ≠ 0) {x : ℝ} (
     ofReal_pow, ofReal_neg, ofReal_one, pow_succ, mul_neg_one, mul_neg, ← mul_pow, neg_one_mul,
     neg_neg, one_pow]
 
-theorem hurwitzZetaOdd_neg_two_mul_nat {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+theorem hurwitzZetaOdd_neg_two_mul_nat (hk : k ≠ 0) (hx : x ∈ Icc (0 : ℝ) 1) :
     hurwitzZetaOdd x (-(2 * k)) =
-    -1 / (2 * k + 1) * ((Polynomial.bernoulli (2 * k + 1)).map (algebraMap ℚ ℂ)).eval ↑x := by
+    -1 / (2 * k + 1) * ((Polynomial.bernoulli (2 * k + 1)).map (algebraMap ℚ ℂ)).eval (x : ℂ) := by
   have h1 (n : ℕ) : (2 * k + 1 : ℂ) ≠ -n := by
     rw [← Int.cast_ofNat, ← Int.cast_natCast, ← Int.cast_mul, ← Int.cast_natCast n, ← Int.cast_neg,
       ← Int.cast_one, ← Int.cast_add, Ne, Int.cast_inj, ← Ne]
@@ -159,18 +168,20 @@ theorem hurwitzZetaOdd_neg_two_mul_nat {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : 
     ofReal_pow, ofReal_neg, ofReal_one, pow_succ, mul_neg_one, mul_neg, ← mul_pow, neg_one_mul,
     neg_neg, one_pow]
 
-theorem hurwitzZeta_one_sub_two_mul_nat {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+-- private because it is superseded by `hurwitzZeta_neg_nat` below
+private lemma hurwitzZeta_one_sub_two_mul_nat (hk : k ≠ 0) (hx : x ∈ Icc (0 : ℝ) 1) :
     hurwitzZeta x (1 - 2 * k) =
-      -1 / (2 * k) * ((Polynomial.bernoulli (2 * k)).map (algebraMap ℚ ℂ)).eval ↑x := by
+      -1 / (2 * k) * ((Polynomial.bernoulli (2 * k)).map (algebraMap ℚ ℂ)).eval (x : ℂ) := by
   suffices hurwitzZetaOdd x (1 - 2 * k) = 0 by
     rw [hurwitzZeta, this, add_zero, hurwitzZetaEven_one_sub_two_mul_nat hk hx]
   obtain ⟨k, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hk
-  rw [Nat.cast_succ, show (1 : ℂ) - 2 * (k + 1) = - 2 * k - 1 by ring]
-  apply hurwitzZetaOdd_neg_two_mul_nat_sub_one
+  rw [Nat.cast_succ, show (1 : ℂ) - 2 * (k + 1) = - 2 * k - 1 by ring,
+    hurwitzZetaOdd_neg_two_mul_nat_sub_one]
 
-theorem hurwitzZeta_neg_two_mul_nat {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
-    hurwitzZeta x (-(2 * k)) =
-      -1 / (2 * k + 1) * ((Polynomial.bernoulli (2 * k + 1)).map (algebraMap ℚ ℂ)).eval ↑x := by
+-- private because it is superseded by `hurwitzZeta_neg_nat` below
+private lemma hurwitzZeta_neg_two_mul_nat (hk : k ≠ 0) (hx : x ∈ Icc (0 : ℝ) 1) :
+    hurwitzZeta x (-(2 * k)) = -1 / (2 * k + 1) *
+      ((Polynomial.bernoulli (2 * k + 1)).map (algebraMap ℚ ℂ)).eval (x : ℂ) := by
   suffices hurwitzZetaEven x (-(2 * k)) = 0 by
     rw [hurwitzZeta, this, zero_add, hurwitzZetaOdd_neg_two_mul_nat hk hx]
   obtain ⟨k, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hk
@@ -180,13 +191,16 @@ theorem hurwitzZeta_neg_two_mul_nat {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x �
 
 TODO: This formula is also correct for `k = 0`; but our current proof does not work in this
 case. -/
-theorem hurwitzZeta_neg_nat {k : ℕ} (hk : k ≠ 0) {x : ℝ} (hx : x ∈ Icc (0 : ℝ) 1) :
+theorem hurwitzZeta_neg_nat (hk : k ≠ 0) (hx : x ∈ Icc (0 : ℝ) 1) :
     hurwitzZeta x (-k) =
-    -1 / (k + 1) * ((Polynomial.bernoulli (k + 1)).map (algebraMap ℚ ℂ)).eval ↑x := by
+    -1 / (k + 1) * ((Polynomial.bernoulli (k + 1)).map (algebraMap ℚ ℂ)).eval (x : ℂ) := by
   rcases Nat.even_or_odd' k with ⟨n, (rfl | rfl)⟩
-  · have : n ≠ 0 := by contrapose! hk; rw [hk, mul_zero]
-    exact_mod_cast hurwitzZeta_neg_two_mul_nat this hx
+  · exact_mod_cast hurwitzZeta_neg_two_mul_nat (by omega : n ≠ 0) hx
   · exact_mod_cast hurwitzZeta_one_sub_two_mul_nat (by omega : n + 1 ≠ 0) hx
+
+end HurwitzZeta
+
+open HurwitzZeta
 
 /-- Explicit formula for `ζ (2 * k)`, for `k ∈ ℕ` with `k ≠ 0`: we have
 `ζ (2 * k) = (-1) ^ (k + 1) * 2 ^ (2 * k - 1) * π ^ (2 * k) * bernoulli (2 * k) / (2 * k)!`.

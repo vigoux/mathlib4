@@ -363,7 +363,8 @@ import Mathlib.Algebra.Lie.Normalizer
 import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Algebra.Lie.Quotient
 import Mathlib.Algebra.Lie.Rank
-import Mathlib.Algebra.Lie.Semisimple
+import Mathlib.Algebra.Lie.Semisimple.Basic
+import Mathlib.Algebra.Lie.Semisimple.Defs
 import Mathlib.Algebra.Lie.SkewAdjoint
 import Mathlib.Algebra.Lie.Sl2
 import Mathlib.Algebra.Lie.Solvable
@@ -1595,6 +1596,7 @@ import Mathlib.CategoryTheory.Sites.Limits
 import Mathlib.CategoryTheory.Sites.Localization
 import Mathlib.CategoryTheory.Sites.LocallyInjective
 import Mathlib.CategoryTheory.Sites.LocallySurjective
+import Mathlib.CategoryTheory.Sites.NonabelianCohomology.H1
 import Mathlib.CategoryTheory.Sites.OneHypercover
 import Mathlib.CategoryTheory.Sites.Over
 import Mathlib.CategoryTheory.Sites.Plus
@@ -1836,7 +1838,6 @@ import Mathlib.Data.FP.Basic
 import Mathlib.Data.Fin.Basic
 import Mathlib.Data.Fin.Fin2
 import Mathlib.Data.Fin.FlagRange
-import Mathlib.Data.Fin.OrderHom
 import Mathlib.Data.Fin.SuccPred
 import Mathlib.Data.Fin.Tuple.Basic
 import Mathlib.Data.Fin.Tuple.BubbleSortInduction
@@ -3096,8 +3097,10 @@ import Mathlib.NumberTheory.LSeries.Dirichlet
 import Mathlib.NumberTheory.LSeries.HurwitzZeta
 import Mathlib.NumberTheory.LSeries.HurwitzZetaEven
 import Mathlib.NumberTheory.LSeries.HurwitzZetaOdd
+import Mathlib.NumberTheory.LSeries.HurwitzZetaValues
 import Mathlib.NumberTheory.LSeries.Linearity
 import Mathlib.NumberTheory.LSeries.MellinEqDirichlet
+import Mathlib.NumberTheory.LSeries.RiemannZeta
 import Mathlib.NumberTheory.LegendreSymbol.AddCharacter
 import Mathlib.NumberTheory.LegendreSymbol.Basic
 import Mathlib.NumberTheory.LegendreSymbol.GaussEisensteinLemmas
@@ -3162,9 +3165,6 @@ import Mathlib.NumberTheory.VonMangoldt
 import Mathlib.NumberTheory.WellApproximable
 import Mathlib.NumberTheory.Wilson
 import Mathlib.NumberTheory.ZetaFunctions.ResidueClassZeta
-import Mathlib.NumberTheory.ZetaFunctions.RiemannZeta
-import Mathlib.NumberTheory.ZetaFunctions.SpecialValues
-import Mathlib.NumberTheory.ZetaFunctions.ZModFourier
 import Mathlib.NumberTheory.ZetaValues
 import Mathlib.NumberTheory.Zsqrtd.Basic
 import Mathlib.NumberTheory.Zsqrtd.GaussianInt
@@ -3500,6 +3500,7 @@ import Mathlib.RingTheory.Ideal.Colon
 import Mathlib.RingTheory.Ideal.Cotangent
 import Mathlib.RingTheory.Ideal.IdempotentFG
 import Mathlib.RingTheory.Ideal.IsPrimary
+import Mathlib.RingTheory.Ideal.IsPrincipal
 import Mathlib.RingTheory.Ideal.LocalRing
 import Mathlib.RingTheory.Ideal.Maps
 import Mathlib.RingTheory.Ideal.MinimalPrime

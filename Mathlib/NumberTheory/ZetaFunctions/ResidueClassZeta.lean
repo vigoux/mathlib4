@@ -6,7 +6,7 @@ Authors: David Loeffler
 
 import Mathlib.NumberTheory.LSeries.HurwitzZeta
 import Mathlib.NumberTheory.LSeries.Basic
-import Mathlib.NumberTheory.ZetaFunctions.ZModFourier
+import Mathlib.Analysis.Fourier.ZMod
 import Mathlib.Analysis.NormedSpace.Connected
 
 /-!

@@ -21,8 +21,8 @@ import Mathlib.Analysis.Complex.RemovableSingularity
   `Λ₀(s) = Λ(s) + 1 / (s - 1) - 1 / s` wherever the RHS is defined.
 
 Note that mathematically `ζ(s)` is undefined at `s = 1`, while `Λ(s)` is undefined at both `s = 0`
-and `s = 1`. Our construction assigns some values at these points (which are not arbitrary, but
-I haven't checked exactly what they are).
+and `s = 1`. Our construction assigns some values at these points; exact formulae involving the
+Euler-Mascheroni constant will follow in a subsequent PR.
 
 ## Main results:
 
@@ -34,19 +34,20 @@ I haven't checked exactly what they are).
   `ζ(s) = ∑' (n : ℕ), 1 / (n + 1) ^ s`.
 * `completedRiemannZeta₀_one_sub`, `completedRiemannZeta_one_sub`, and `riemannZeta_one_sub` :
   functional equation relating values at `s` and `1 - s`
-* `riemannZeta_neg_nat_eq_bernoulli` : for any `k ∈ ℕ` we have the formula
-  `riemannZeta (-k) = (-1) ^ k * bernoulli (k + 1) / (k + 1)`
-* `riemannZeta_two_mul_nat`: formula for `ζ(2 * k)` for `k ∈ ℕ, k ≠ 0` in terms of Bernoulli
-  numbers
+
+For special-value formulae expressing `ζ (2 * k)` and `ζ (1 - 2 * k)` in terms of Bernoulli numbers
+see `Mathlib.NumberTheory.LSeries.HurwitzZetaValues`. For computation of the constant term as
+`s → 1`, see `Mathlib.NumberTheory.Harmonic.ZetaAsymp`.
 
 ## Outline of proofs:
 
-These results are mostly special cases of more general results for Hurwitz zeta functions proved
-in `Mathlib.NumberTheory.LSeries.HurwitzZetaEven`.
+These results are mostly special cases of more general results for even Hurwitz zeta functions
+proved in `Mathlib.NumberTheory.LSeries.HurwitzZetaEven`.
 -/
 
 
-open MeasureTheory Set Filter Asymptotics TopologicalSpace Real Asymptotics Classical
+open MeasureTheory Set Filter Asymptotics TopologicalSpace Real Asymptotics
+  Classical HurwitzZeta
 
 open Complex hiding exp norm_eq_abs abs_of_nonneg abs_two continuous_exp
 
@@ -67,17 +68,17 @@ def completedRiemannZeta₀ (s : ℂ) : ℂ := completedHurwitzZetaEven₀ 0 s
 def completedRiemannZeta (s : ℂ) : ℂ := completedHurwitzZetaEven 0 s
 #align riemann_completed_zeta completedRiemannZeta
 
-lemma completedHurwitzZetaEven_zero (s : ℂ) :
+lemma HurwitzZeta.completedHurwitzZetaEven_zero (s : ℂ) :
     completedHurwitzZetaEven 0 s = completedRiemannZeta s := by rfl
 
-lemma completedHurwitzZetaEven₀_zero (s : ℂ) :
+lemma HurwitzZeta.completedHurwitzZetaEven₀_zero (s : ℂ) :
     completedHurwitzZetaEven₀ 0 s = completedRiemannZeta₀ s := by rfl
 
-lemma completedCosZeta_zero (s : ℂ) :
+lemma HurwitzZeta.completedCosZeta_zero (s : ℂ) :
     completedCosZeta 0 s = completedRiemannZeta s := by
   rw [completedRiemannZeta, completedHurwitzZetaEven, completedCosZeta, hurwitzEvenFEPair_zero_symm]
 
-lemma completedCosZeta₀_zero (s : ℂ) :
+lemma HurwitzZeta.completedCosZeta₀_zero (s : ℂ) :
     completedCosZeta₀ 0 s = completedRiemannZeta₀ s := by
   rw [completedRiemannZeta₀,
     completedHurwitzZetaEven₀, completedCosZeta₀, hurwitzEvenFEPair_zero_symm]
@@ -123,17 +124,17 @@ lemma completedRiemannZeta_residue_one :
 def riemannZeta := hurwitzZetaEven 0
 #align riemann_zeta riemannZeta
 
-lemma hurwitzZetaEven_zero : hurwitzZetaEven 0 = riemannZeta := rfl
+lemma HurwitzZeta.hurwitzZetaEven_zero : hurwitzZetaEven 0 = riemannZeta := rfl
 
-lemma cosZeta_zero : cosZeta 0 = riemannZeta := by
+lemma HurwitzZeta.cosZeta_zero : cosZeta 0 = riemannZeta := by
   simp_rw [cosZeta, riemannZeta, hurwitzZetaEven, if_true, completedHurwitzZetaEven_zero,
     completedCosZeta_zero]
 
-lemma hurwitzZeta_zero : hurwitzZeta 0 = riemannZeta := by
+lemma HurwitzZeta.hurwitzZeta_zero : hurwitzZeta 0 = riemannZeta := by
   ext1 s
   simpa [hurwitzZeta, hurwitzZetaEven_zero] using hurwitzZetaOdd_neg 0 s
 
-lemma expZeta_zero : expZeta 0 = riemannZeta := by
+lemma HurwitzZeta.expZeta_zero : expZeta 0 = riemannZeta := by
   ext1 s
   rw [expZeta, cosZeta_zero, add_right_eq_self, mul_eq_zero, eq_false_intro I_ne_zero, false_or,
     ← eq_neg_self_iff, ← sinZeta_neg, neg_zero]
@@ -177,15 +178,13 @@ def RiemannHypothesis : Prop :=
 theorem completedZeta_eq_tsum_of_one_lt_re {s : ℂ} (hs : 1 < re s) :
     completedRiemannZeta s = (π : ℂ) ^ (-s / 2) * Gamma (s / 2) *
     ∑' n : ℕ, 1 / (n : ℂ) ^ s := by
-  convert (hasSum_nat_completedCosZeta 0 hs).tsum_eq.symm
-  · ext1 x
-    rw [QuotientAddGroup.mk_zero, completedCosZeta_zero]
-  · have : s ≠ 0 := fun h ↦ (not_lt.mpr zero_le_one) (zero_re ▸ h ▸ hs)
-    simp_rw [← tsum_mul_left, mul_zero, zero_mul, Real.cos_zero, ofReal_one, mul_one,
-      mul_one_div]
-    congr 1 with n
-    split_ifs with h <;>
-    simp only [Gammaℝ_def, h, Nat.cast_zero, zero_cpow this, div_zero]
+  have := (hasSum_nat_completedCosZeta 0 hs).tsum_eq.symm
+  simp only [QuotientAddGroup.mk_zero, completedCosZeta_zero] at this
+  simp only [this, Gammaℝ_def, mul_zero, zero_mul, Real.cos_zero, ofReal_one, mul_one, mul_one_div,
+    ← tsum_mul_left]
+  congr 1 with n
+  split_ifs with h <;>
+  simp only [h, Nat.cast_zero, zero_cpow (Complex.ne_zero_of_one_lt_re hs), div_zero, mul_zero]
 #align completed_zeta_eq_tsum_of_one_lt_re completedZeta_eq_tsum_of_one_lt_re
 
 /-- The Riemann zeta function agrees with the naive Dirichlet-series definition when the latter
@@ -193,9 +192,8 @@ converges. (Note that this is false without the assumption: when `re s ≤ 1` th
 and we use a different definition to obtain the analytic continuation to all `s`.) -/
 theorem zeta_eq_tsum_one_div_nat_cpow {s : ℂ} (hs : 1 < re s) :
     riemannZeta s = ∑' n : ℕ, 1 / (n : ℂ) ^ s := by
-  convert (hasSum_nat_cosZeta 0 hs).tsum_eq.symm using 3 with n
-  · rw [QuotientAddGroup.mk_zero, cosZeta_zero]
-  · simp_rw [mul_zero, zero_mul, Real.cos_zero, ofReal_one]
+  simpa only [QuotientAddGroup.mk_zero, cosZeta_zero, mul_zero, zero_mul, Real.cos_zero,
+    ofReal_one] using (hasSum_nat_cosZeta 0 hs).tsum_eq.symm
 #align zeta_eq_tsum_one_div_nat_cpow zeta_eq_tsum_one_div_nat_cpow
 
 /-- Alternate formulation of `zeta_eq_tsum_one_div_nat_cpow` with a `+ 1` (to avoid relying
@@ -225,3 +223,24 @@ theorem zeta_nat_eq_tsum_of_gt_one {k : ℕ} (hk : 1 < k) :
 /-- The residue of `ζ(s)` at `s = 1` is equal to 1. -/
 lemma riemannZeta_residue_one : Tendsto (fun s ↦ (s - 1) * riemannZeta s) (𝓝[≠] 1) (𝓝 1) := by
   exact hurwitzZetaEven_residue_one 0
+
+/- naming scheme was changed from from `riemannCompletedZeta` to `completedRiemannZeta`; add
+aliases for the old names -/
+section aliases
+
+@[deprecated completedRiemannZeta₀ (since := "2024-05-27")]
+noncomputable alias riemannCompletedZeta₀ := completedRiemannZeta₀
+
+@[deprecated completedRiemannZeta (since := "2024-05-27")]
+noncomputable alias riemannCompletedZeta := completedRiemannZeta
+
+@[deprecated completedRiemannZeta_one_sub (since := "2024-05-27")]
+alias riemannCompletedZeta_one_sub := completedRiemannZeta_one_sub
+
+@[deprecated completedRiemannZeta₀_one_sub (since := "2024-05-27")]
+alias riemannCompletedZeta₀_one_sub := completedRiemannZeta₀_one_sub
+
+@[deprecated completedRiemannZeta_residue_one (since := "2024-05-27")]
+alias riemannCompletedZeta_residue_one := completedRiemannZeta_residue_one
+
+end aliases
