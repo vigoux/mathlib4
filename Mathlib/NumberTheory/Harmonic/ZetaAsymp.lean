@@ -379,6 +379,7 @@ lemma tendsto_riemannZeta_sub_one_div_Gammaℝ :
   convert this using 1
   ring_nf
 
+open HurwitzZeta in
 lemma riemannZeta_one : riemannZeta 1 = (γ - Complex.log (4 * ↑π)) / 2 := by
   have := (tendsto_hurwitzZetaEven_sub_one_div_nhds_one 0).mono_left
     <| nhdsWithin_le_nhds (s := {1}ᶜ)
