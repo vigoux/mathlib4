@@ -345,6 +345,51 @@ theorem measurableSet_normLessThanOne :
   MeasurableSet.inter (measurableSet K) <|
     measurableSet_le (mixedEmbedding.continuous_norm K).measurable measurable_const
 
+abbrev normLessThanOne₀ : Set (E K) :=
+    {x | x ∈ normLessThanOne K ∧ ∀ w, (hw : IsReal w) → x.1 ⟨w, hw⟩ ≥ 0}
+
+abbrev normUnits : {w : InfinitePlace K // w ≠ w₀} → ((InfinitePlace K) → ℝ) := by
+  let e : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) := sorry
+  intro i w
+  exact w (fundSystem K (e i))
+
+open Classical
+
+def eval : ((InfinitePlace K) → ℝ) → ((InfinitePlace K) → ℝ) :=
+  fun v ↦ v w₀ • ∏ i, normUnits K i ^ (v i)
+
+abbrev normLessThanOne₁ : Set ((InfinitePlace K) → ℝ) := by
+  let s : Set ((InfinitePlace K) → ℝ) := Set.univ.pi fun _ ↦ Set.Ico 0 1
+  exact eval K '' s
+
+theorem volume_normLessOne :
+    volume (normLessThanOne K) = 2 ^ (NrRealPlaces K) * volume (normLessThanOne₀ K) := by
+  sorry
+
+theorem volume_normLessOne₀ :
+    volume (normLessThanOne₀ K) =
+      (2 * NNReal.pi) ^ (NrRealPlaces K) * volume (normLessThanOne₁ K) := by
+  sorry
+
+theorem volume_normLessOne₁ :
+    volume (normLessThanOne₁ K) = 0 := by
+  sorry
+
+
+#exit
+
+  Set.range (fun v : (InfinitePlace K) → Set.Ico 0 1 ↦ Π i : Fin (rank K), (normUnits K i)
+    )
+theorem normLessThanOne₂
+example {ι : Type*} [Fintype ι] (u : ι → (ι → ℝ)) : sorry := by
+  let s : Set (ι → ℝ) := Set.univ.pi fun _ ↦ Set.Ico 0 1
+  let f : (ι → ℝ) → (ι → ℝ) := by
+    intro a
+    exact ∏ i, (u i) ^ (a i)
+
+
+#exit
+
 example : 0 = 1 := by
   classical
   let E₀ := Fin (rank K) → ℝ
