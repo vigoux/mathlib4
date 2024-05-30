@@ -41,9 +41,8 @@ analytic continuation.
     * `differentiable_completedCongruenceLFunctionOdd`
 -/
 
-open BigOperators Filter Topology Asymptotics
+open Filter Topology Asymptotics HurwitzZeta Complex ZMod Finset
 open scoped Nat Real
-open Complex ZMod Finset
 
 section LemmasToBeRehomed
 
@@ -74,28 +73,6 @@ lemma Nat.sumByResidueClasses {f : ℕ → ℂ} (hf : Summable f) (N : ℕ+) :
   rw [← (residueClassesEquiv N).symm.tsum_eq f, tsum_prod, tsum_fintype, residueClassesEquiv,
     Equiv.coe_fn_symm_mk]
   exact hf.comp_injective (residueClassesEquiv N).symm.injective
-
--- /-- Equivalence between `ℕ` and `ZMod N × ℕ`, sending `n` to `(n mod N, n / N)`. -/
--- def Int.residueClassesEquiv (N : ℕ+) : ℤ ≃ ZMod N × ℤ where
---   toFun n := (↑n, n / N)
---   invFun p := p.1.val + N * p.2
---   left_inv n := by
---     simp only [ZMod.val_int_cast]
---     exact Int.emod_add_ediv n N
---   right_inv p := by
---     ext1
---     · simp only [nat_cast_val, cast_add, int_cast_cast, cast_id', id_eq, cast_mul, cast_ofNat,
---         CharP.cast_eq_zero, zero_mul, add_zero]
---     · simp_rw [add_mul_ediv_left _ _ (Nat.cast_ne_zero.mpr N.ne_zero), add_left_eq_self]
---       exact Int.ediv_eq_zero_of_lt (Nat.cast_nonneg _) <| Nat.cast_lt.mpr (ZMod.val_lt _)
-
--- /-- If `f` is a summable function on `ℤ`, and `0 < N`, then we may compute `∑' n : ℤ, f n` by
--- summing each residue class mod `N` separately. -/
--- lemma Int.sumByResidueClasses {f : ℤ → ℂ} (hf : Summable f) (N : ℕ+) :
---     ∑' n, f n = ∑ j : ZMod N, ∑' m, f (j.val + N * m) := by
---   rw [← (residueClassesEquiv N).symm.tsum_eq f, tsum_prod, tsum_fintype, residueClassesEquiv,
---     Equiv.coe_fn_symm_mk]
---   exact hf.comp_injective (residueClassesEquiv N).symm.injective
 
 /-- The complement of a point is preconnected in `ℂ`.-/
 lemma isPreconnected_compl_singleton (a : ℂ) : IsPreconnected ({a}ᶜ : Set ℂ) := by
