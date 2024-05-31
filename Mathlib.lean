@@ -1097,6 +1097,7 @@ import Mathlib.Analysis.NormedSpace.lpSpace
 import Mathlib.Analysis.ODE.Gronwall
 import Mathlib.Analysis.ODE.PicardLindelof
 import Mathlib.Analysis.PSeries
+import Mathlib.Analysis.PSeriesComplex
 import Mathlib.Analysis.Quaternion
 import Mathlib.Analysis.RCLike.Basic
 import Mathlib.Analysis.RCLike.Lemmas
