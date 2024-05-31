@@ -240,9 +240,6 @@ alias riemannCompletedZeta₀_one_sub := completedRiemannZeta₀_one_sub
 @[deprecated completedRiemannZeta_one_sub (since := "2024-05-27")]
 alias riemannCompletedZeta_one_sub := completedRiemannZeta_one_sub
 
-@[deprecated completedRiemannZeta₀_one_sub (since := "2024-05-27")]
-alias riemannCompletedZeta₀_one_sub := completedRiemannZeta₀_one_sub
-
 @[deprecated completedRiemannZeta_residue_one (since := "2024-05-27")]
 alias riemannCompletedZeta_residue_one := completedRiemannZeta_residue_one
 
