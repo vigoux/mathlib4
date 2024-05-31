@@ -6,6 +6,7 @@ Authors: Kexing Ying
 import Mathlib.Algebra.Group.Subgroup.Basic
 import Mathlib.Algebra.Group.Submonoid.Membership
 import Mathlib.Data.Set.Finite
+import Mathlib.SetTheory.Cardinal.Finite
 
 #align_import group_theory.subgroup.finite from "leanprover-community/mathlib"@"f93c11933efbc3c2f0299e47b8ff83e9b539cbf6"
 
@@ -126,6 +127,14 @@ theorem card_bot {_ : Fintype (⊥ : Subgroup G)} : Fintype.card (⊥ : Subgroup
 theorem card_top [Fintype G] : Fintype.card (⊤ : Subgroup G) = Fintype.card G := by
   rw [Fintype.card_eq]
   exact Nonempty.intro Subgroup.topEquiv.toEquiv
+
+@[to_additive] -- Porting note: removed `simp` because `simpNF` says it can prove it.
+theorem nat_card_bot : Nat.card (⊥ : Subgroup G) = 1 :=
+  Nat.card_unique
+
+@[to_additive]
+theorem nat_card_top : Nat.card (⊤ : Subgroup G) = Nat.card G :=
+  Nat.card_congr Subgroup.topEquiv.toEquiv
 
 @[to_additive]
 theorem eq_top_of_card_eq [Fintype H] [Fintype G] (h : Fintype.card H = Fintype.card G) :

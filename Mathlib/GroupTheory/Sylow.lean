@@ -187,29 +187,24 @@ theorem Sylow.exists_comap_subtype_eq {H : Subgroup G} (P : Sylow p H) :
 #align sylow.exists_comap_subtype_eq Sylow.exists_comap_subtype_eq
 
 /-- If the kernel of `f : H →* G` is a `p`-group,
-  then `Fintype (Sylow p G)` implies `Fintype (Sylow p H)`. -/
-noncomputable def Sylow.fintypeOfKerIsPGroup {H : Type*} [Group H] {f : H →* G}
-    (hf : IsPGroup p f.ker) [Fintype (Sylow p G)] : Fintype (Sylow p H) :=
+  then `Finite (Sylow p G)` implies `Finite (Sylow p H)`. -/
+def Sylow.finiteOfKerIsPGroup {H : Type*} [Group H] {f : H →* G}
+    (hf : IsPGroup p f.ker) [Finite (Sylow p G)] : Finite (Sylow p H) :=
   let h_exists := fun P : Sylow p H => P.exists_comap_eq_of_ker_isPGroup hf
   let g : Sylow p H → Sylow p G := fun P => Classical.choose (h_exists P)
   have hg : ∀ P : Sylow p H, (g P).1.comap f = P := fun P => Classical.choose_spec (h_exists P)
-  Fintype.ofInjective g fun P Q h => Sylow.ext (by rw [← hg, h]; exact (h_exists Q).choose_spec)
-#align sylow.fintype_of_ker_is_p_group Sylow.fintypeOfKerIsPGroup
+  Finite.of_injective g fun P Q h => Sylow.ext (by rw [← hg, h]; exact (h_exists Q).choose_spec)
+#align sylow.fintype_of_ker_is_p_group Sylow.finiteOfKerIsPGroup
 
-/-- If `f : H →* G` is injective, then `Fintype (Sylow p G)` implies `Fintype (Sylow p H)`. -/
-noncomputable def Sylow.fintypeOfInjective {H : Type*} [Group H] {f : H →* G}
-    (hf : Function.Injective f) [Fintype (Sylow p G)] : Fintype (Sylow p H) :=
-  Sylow.fintypeOfKerIsPGroup (IsPGroup.ker_isPGroup_of_injective hf)
-#align sylow.fintype_of_injective Sylow.fintypeOfInjective
-
-/-- If `H` is a subgroup of `G`, then `Fintype (Sylow p G)` implies `Fintype (Sylow p H)`. -/
-noncomputable instance (H : Subgroup G) [Fintype (Sylow p G)] : Fintype (Sylow p H) :=
-  Sylow.fintypeOfInjective H.subtype_injective
+/-- If `f : H →* G` is injective, then `Finite (Sylow p G)` implies `Finite (Sylow p H)`. -/
+def Sylow.finiteOfInjective {H : Type*} [Group H] {f : H →* G}
+    (hf : Function.Injective f) [Finite (Sylow p G)] : Finite (Sylow p H) :=
+  Sylow.finiteOfKerIsPGroup (IsPGroup.ker_isPGroup_of_injective hf)
+#align sylow.fintype_of_injective Sylow.finiteOfInjective
 
 /-- If `H` is a subgroup of `G`, then `Finite (Sylow p G)` implies `Finite (Sylow p H)`. -/
-instance (H : Subgroup G) [Finite (Sylow p G)] : Finite (Sylow p H) := by
-  cases nonempty_fintype (Sylow p G)
-  infer_instance
+instance (H : Subgroup G) [Finite (Sylow p G)] : Finite (Sylow p H) :=
+  Sylow.finiteOfInjective H.subtype_injective
 
 open Pointwise
 
@@ -296,7 +291,6 @@ theorem IsPGroup.sylow_mem_fixedPoints_iff {P : Subgroup G} (hP : IsPGroup p P) 
 instance [hp : Fact p.Prime] [Finite (Sylow p G)] : IsPretransitive G (Sylow p G) :=
   ⟨fun P Q => by
     classical
-      cases nonempty_fintype (Sylow p G)
       have H := fun {R : Sylow p G} {S : orbit G P} =>
         calc
           S ∈ fixedPoints R (orbit G P) ↔ S.1 ∈ fixedPoints R (Sylow p G) :=
@@ -310,20 +304,19 @@ instance [hp : Fact p.Prime] [Finite (Sylow p G)] : IsPretransitive G (Sylow p G
       apply Q.2.nonempty_fixed_point_of_prime_not_dvd_card
       refine fun h => hp.out.not_dvd_one (Nat.modEq_zero_iff_dvd.mp ?_)
       calc
-        1 = card (fixedPoints P (orbit G P)) := ?_
-        _ ≡ card (orbit G P) [MOD p] := (P.2.card_modEq_card_fixedPoints (orbit G P)).symm
+        1 = Nat.card (fixedPoints P (orbit G P)) := ?_
+        _ ≡ Nat.card (orbit G P) [MOD p] := (P.2.card_modEq_card_fixedPoints (orbit G P)).symm
         _ ≡ 0 [MOD p] := Nat.modEq_zero_iff_dvd.mpr h
-      rw [← Set.card_singleton (⟨P, mem_orbit_self P⟩ : orbit G P)]
-      refine card_congr' (congr_arg _ (Eq.symm ?_))
-      rw [Set.eq_singleton_iff_unique_mem]
-      exact ⟨H.mpr rfl, fun R h => Subtype.ext (Sylow.ext (H.mp h))⟩⟩
+      rw [eq_comm, Nat.card_eq_one_iff_unique]
+      refine' ⟨⟨fun R S ↦ Subtype.ext (Subtype.ext (Sylow.ext _))⟩, ⟨⟨P, mem_orbit_self P⟩, H.mpr rfl⟩⟩
+      exact (H.mp R.2).trans (H.mp S.2).symm⟩
 
 variable (p) (G)
 
 /-- A generalization of **Sylow's third theorem**.
   If the number of Sylow `p`-subgroups is finite, then it is congruent to `1` modulo `p`. -/
-theorem card_sylow_modEq_one [Fact p.Prime] [Fintype (Sylow p G)] :
-    card (Sylow p G) ≡ 1 [MOD p] := by
+theorem card_sylow_modEq_one [Fact p.Prime] [Finite (Sylow p G)] :
+    Nat.card (Sylow p G) ≡ 1 [MOD p] := by
   refine Sylow.nonempty.elim fun P : Sylow p G => ?_
   have : fixedPoints P.1 (Sylow p G) = {P} :=
     Set.ext fun Q : Sylow p G =>
@@ -332,14 +325,14 @@ theorem card_sylow_modEq_one [Fact p.Prime] [Fintype (Sylow p G)] :
         _ ↔ Q.1 = P.1 := ⟨P.3 Q.2, ge_of_eq⟩
         _ ↔ Q ∈ {P} := Sylow.ext_iff.symm.trans Set.mem_singleton_iff.symm
 
-  have fin : Fintype (fixedPoints P.1 (Sylow p G)) := by
+  have fin : Finite (fixedPoints P.1 (Sylow p G)) := by
     rw [this]
     infer_instance
-  have : card (fixedPoints P.1 (Sylow p G)) = 1 := by simp [this]
+  have : Nat.card (fixedPoints P.1 (Sylow p G)) = 1 := by simp [this]
   exact (P.2.card_modEq_card_fixedPoints (Sylow p G)).trans (by rw [this])
 #align card_sylow_modeq_one card_sylow_modEq_one
 
-theorem not_dvd_card_sylow [hp : Fact p.Prime] [Fintype (Sylow p G)] : ¬p ∣ card (Sylow p G) :=
+theorem not_dvd_card_sylow [hp : Fact p.Prime] [Finite (Sylow p G)] : ¬p ∣ Nat.card (Sylow p G) :=
   fun h =>
   hp.1.ne_one
     (Nat.dvd_one.mp
@@ -405,22 +398,22 @@ noncomputable def Sylow.equivQuotientNormalizer [Fact p.Prime] [Finite (Sylow p 
 
 #align sylow.equiv_quotient_normalizer Sylow.equivQuotientNormalizer
 
-noncomputable instance [Fact p.Prime] [Fintype (Sylow p G)] (P : Sylow p G) :
-    Fintype (G ⧸ (P : Subgroup G).normalizer) :=
-  ofEquiv (Sylow p G) P.equivQuotientNormalizer
+noncomputable instance [Fact p.Prime] [Finite (Sylow p G)] (P : Sylow p G) :
+    Finite (G ⧸ (P : Subgroup G).normalizer) :=
+  Finite.of_equiv (Sylow p G) P.equivQuotientNormalizer
 
-theorem card_sylow_eq_card_quotient_normalizer [Fact p.Prime] [Fintype (Sylow p G)]
-    (P : Sylow p G) : card (Sylow p G) = card (G ⧸ (P : Subgroup G).normalizer) :=
-  card_congr P.equivQuotientNormalizer
+theorem card_sylow_eq_card_quotient_normalizer [Fact p.Prime] [Finite (Sylow p G)]
+    (P : Sylow p G) : Nat.card (Sylow p G) = Nat.card (G ⧸ (P : Subgroup G).normalizer) :=
+  Nat.card_congr P.equivQuotientNormalizer
 #align card_sylow_eq_card_quotient_normalizer card_sylow_eq_card_quotient_normalizer
 
-theorem card_sylow_eq_index_normalizer [Fact p.Prime] [Fintype (Sylow p G)] (P : Sylow p G) :
-    card (Sylow p G) = (P : Subgroup G).normalizer.index :=
-  (card_sylow_eq_card_quotient_normalizer P).trans (P : Subgroup G).normalizer.index_eq_card.symm
+theorem card_sylow_eq_index_normalizer [Fact p.Prime] [Finite (Sylow p G)] (P : Sylow p G) :
+    Nat.card (Sylow p G) = (P : Subgroup G).normalizer.index :=
+  (card_sylow_eq_card_quotient_normalizer P)
 #align card_sylow_eq_index_normalizer card_sylow_eq_index_normalizer
 
-theorem card_sylow_dvd_index [Fact p.Prime] [Fintype (Sylow p G)] (P : Sylow p G) :
-    card (Sylow p G) ∣ (P : Subgroup G).index :=
+theorem card_sylow_dvd_index [Fact p.Prime] [Finite (Sylow p G)] (P : Sylow p G) :
+    Nat.card (Sylow p G) ∣ (P : Subgroup G).index :=
   ((congr_arg _ (card_sylow_eq_index_normalizer P)).mp dvd_rfl).trans
     (index_dvd_of_le le_normalizer)
 #align card_sylow_dvd_index card_sylow_dvd_index
@@ -428,10 +421,10 @@ theorem card_sylow_dvd_index [Fact p.Prime] [Fintype (Sylow p G)] (P : Sylow p G
 theorem not_dvd_index_sylow' [hp : Fact p.Prime] (P : Sylow p G) [(P : Subgroup G).Normal]
     [fP : FiniteIndex (P : Subgroup G)] : ¬p ∣ (P : Subgroup G).index := by
   intro h
-  letI : Fintype (G ⧸ (P : Subgroup G)) := (P : Subgroup G).fintypeQuotientOfFiniteIndex
-  rw [index_eq_card (P : Subgroup G)] at h
-  obtain ⟨x, hx⟩ := exists_prime_orderOf_dvd_card (G := G ⧸ (P : Subgroup G)) p h
-  have h := IsPGroup.of_card ((Fintype.card_zpowers.trans hx).trans (pow_one p).symm)
+  letI : Finite (G ⧸ (P : Subgroup G)) := (P : Subgroup G).finite_quotient_of_finiteIndex
+  rw [index] at h
+  obtain ⟨x, hx⟩ := exists_prime_orderOf_dvd_card' (G := G ⧸ (P : Subgroup G)) p h
+  have h := IsPGroup.of_card (((Nat.card_zpowers x).trans hx).trans (pow_one p).symm)
   let Q := (zpowers x).comap (QuotientGroup.mk' (P : Subgroup G))
   have hQ : IsPGroup p Q := by
     apply h.comap_of_ker_isPGroup
@@ -446,7 +439,6 @@ theorem not_dvd_index_sylow' [hp : Fact p.Prime] (P : Sylow p G) [(P : Subgroup 
 
 theorem not_dvd_index_sylow [hp : Fact p.Prime] [Finite (Sylow p G)] (P : Sylow p G)
     (hP : relindex ↑P (P : Subgroup G).normalizer ≠ 0) : ¬p ∣ (P : Subgroup G).index := by
-  cases nonempty_fintype (Sylow p G)
   rw [← relindex_mul_index le_normalizer, ← card_sylow_eq_index_normalizer]
   haveI : (P.subtype le_normalizer : Subgroup (P : Subgroup G).normalizer).Normal :=
     Subgroup.normal_in_normalizer
@@ -687,47 +679,47 @@ lemma exists_subgroup_le_card_le {k p : ℕ} (hp : p.Prime) (h : IsPGroup p G) {
   refine ⟨H', H'H, ?_⟩
   simpa only [pow_succ', H'card] using And.intro hmk hkm
 
-theorem pow_dvd_card_of_pow_dvd_card [Fintype G] {p n : ℕ} [hp : Fact p.Prime] (P : Sylow p G)
-    (hdvd : p ^ n ∣ card G) : p ^ n ∣ card P :=
+theorem pow_dvd_card_of_pow_dvd_card [Finite G] {p n : ℕ} [hp : Fact p.Prime] (P : Sylow p G)
+    (hdvd : p ^ n ∣ Nat.card G) : p ^ n ∣ Nat.card P :=
   (hp.1.coprime_pow_of_not_dvd
           (not_dvd_index_sylow P index_ne_zero_of_finite)).symm.dvd_of_dvd_mul_left
-    ((index_mul_card P.1).symm ▸ hdvd)
+    (by rwa [mul_comm, card_mul_index])
 #align sylow.pow_dvd_card_of_pow_dvd_card Sylow.pow_dvd_card_of_pow_dvd_card
 
-theorem dvd_card_of_dvd_card [Fintype G] {p : ℕ} [Fact p.Prime] (P : Sylow p G)
-    (hdvd : p ∣ card G) : p ∣ card P := by
+theorem dvd_card_of_dvd_card [Finite G] {p : ℕ} [Fact p.Prime] (P : Sylow p G)
+    (hdvd : p ∣ Nat.card G) : p ∣ Nat.card P := by
   rw [← pow_one p] at hdvd
   have key := P.pow_dvd_card_of_pow_dvd_card hdvd
   rwa [pow_one] at key
 #align sylow.dvd_card_of_dvd_card Sylow.dvd_card_of_dvd_card
 
 /-- Sylow subgroups are Hall subgroups. -/
-theorem card_coprime_index [Fintype G] {p : ℕ} [hp : Fact p.Prime] (P : Sylow p G) :
-    (card P).Coprime (index (P : Subgroup G)) :=
+theorem card_coprime_index [Finite G] {p : ℕ} [hp : Fact p.Prime] (P : Sylow p G) :
+    (Nat.card P).Coprime (index (P : Subgroup G)) :=
   let ⟨_n, hn⟩ := IsPGroup.iff_card.mp P.2
   hn.symm ▸ (hp.1.coprime_pow_of_not_dvd (not_dvd_index_sylow P index_ne_zero_of_finite)).symm
 #align sylow.card_coprime_index Sylow.card_coprime_index
 
-theorem ne_bot_of_dvd_card [Fintype G] {p : ℕ} [hp : Fact p.Prime] (P : Sylow p G)
-    (hdvd : p ∣ card G) : (P : Subgroup G) ≠ ⊥ := by
+theorem ne_bot_of_dvd_card [Finite G] {p : ℕ} [hp : Fact p.Prime] (P : Sylow p G)
+    (hdvd : p ∣ Nat.card G) : (P : Subgroup G) ≠ ⊥ := by
   refine fun h => hp.out.not_dvd_one ?_
-  have key : p ∣ card (P : Subgroup G) := P.dvd_card_of_dvd_card hdvd
-  rwa [h, card_bot] at key
+  have key : p ∣ Nat.card (P : Subgroup G) := P.dvd_card_of_dvd_card hdvd
+  rwa [h, nat_card_bot] at key
 #align sylow.ne_bot_of_dvd_card Sylow.ne_bot_of_dvd_card
 
 /-- The cardinality of a Sylow subgroup is `p ^ n`
  where `n` is the multiplicity of `p` in the group order. -/
-theorem card_eq_multiplicity [Fintype G] {p : ℕ} [hp : Fact p.Prime] (P : Sylow p G) :
-    card P = p ^ Nat.factorization (card G) p := by
-  obtain ⟨n, heq : card P = _⟩ := IsPGroup.iff_card.mp P.isPGroup'
+theorem card_eq_multiplicity [Finite G] {p : ℕ} [hp : Fact p.Prime] (P : Sylow p G) :
+    Nat.card P = p ^ Nat.factorization (Nat.card G) p := by
+  obtain ⟨n, heq : Nat.card P = _⟩ := IsPGroup.iff_card.mp P.isPGroup'
   refine Nat.dvd_antisymm ?_ (P.pow_dvd_card_of_pow_dvd_card (Nat.ord_proj_dvd _ p))
-  rw [heq, ← hp.out.pow_dvd_iff_dvd_ord_proj (show card G ≠ 0 from card_ne_zero), ← heq]
+  rw [heq, ← hp.out.pow_dvd_iff_dvd_ord_proj (show Nat.card G ≠ 0 from Nat.card_pos.ne'), ← heq]
   exact P.1.card_subgroup_dvd_card
 #align sylow.card_eq_multiplicity Sylow.card_eq_multiplicity
 
 /-- A subgroup with cardinality `p ^ n` is a Sylow subgroup
  where `n` is the multiplicity of `p` in the group order. -/
-def ofCard [Fintype G] {p : ℕ} [Fact p.Prime] (H : Subgroup G) [Fintype H]
+def ofCard [Finite G] {p : ℕ} [Fact p.Prime] (H : Subgroup G) [Fintype H]
     (card_eq : card H = p ^ (card G).factorization p) : Sylow p G where
   toSubgroup := H
   isPGroup' := IsPGroup.of_card card_eq

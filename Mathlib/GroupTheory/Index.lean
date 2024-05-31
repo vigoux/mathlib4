@@ -230,12 +230,6 @@ theorem index_bot : (⊥ : Subgroup G).index = Nat.card G :=
 #align subgroup.index_bot Subgroup.index_bot
 #align add_subgroup.index_bot AddSubgroup.index_bot
 
-@[to_additive]
-theorem index_bot_eq_card [Fintype G] : (⊥ : Subgroup G).index = Fintype.card G :=
-  index_bot.trans Nat.card_eq_fintype_card
-#align subgroup.index_bot_eq_card Subgroup.index_bot_eq_card
-#align add_subgroup.index_bot_eq_card AddSubgroup.index_bot_eq_card
-
 @[to_additive (attr := simp)]
 theorem relindex_top_left : (⊤ : Subgroup G).relindex H = 1 :=
   index_top
@@ -253,12 +247,6 @@ theorem relindex_bot_left : (⊥ : Subgroup G).relindex H = Nat.card H := by
   rw [relindex, bot_subgroupOf, index_bot]
 #align subgroup.relindex_bot_left Subgroup.relindex_bot_left
 #align add_subgroup.relindex_bot_left AddSubgroup.relindex_bot_left
-
-@[to_additive]
-theorem relindex_bot_left_eq_card [Fintype H] : (⊥ : Subgroup G).relindex H = Fintype.card H :=
-  H.relindex_bot_left.trans Nat.card_eq_fintype_card
-#align subgroup.relindex_bot_left_eq_card Subgroup.relindex_bot_left_eq_card
-#align add_subgroup.relindex_bot_left_eq_card AddSubgroup.relindex_bot_left_eq_card
 
 @[to_additive (attr := simp)]
 theorem relindex_bot_right : H.relindex ⊥ = 1 := by rw [relindex, subgroupOf_bot_eq_top, index_top]
@@ -293,33 +281,12 @@ theorem card_mul_index : Nat.card H * H.index = Nat.card G := by
 #align add_subgroup.card_mul_index AddSubgroup.card_mul_index
 
 @[to_additive]
-theorem nat_card_dvd_of_injective {G H : Type*} [Group G] [Group H] (f : G →* H)
-    (hf : Function.Injective f) : Nat.card G ∣ Nat.card H := by
-  rw [Nat.card_congr (MonoidHom.ofInjective hf).toEquiv]
-  exact Dvd.intro f.range.index f.range.card_mul_index
-#align subgroup.nat_card_dvd_of_injective Subgroup.nat_card_dvd_of_injective
-#align add_subgroup.nat_card_dvd_of_injective AddSubgroup.nat_card_dvd_of_injective
-
-@[to_additive]
-theorem nat_card_dvd_of_le (hHK : H ≤ K) : Nat.card H ∣ Nat.card K :=
-  nat_card_dvd_of_injective (inclusion hHK) (inclusion_injective hHK)
-#align subgroup.nat_card_dvd_of_le Subgroup.nat_card_dvd_of_le
-#align add_subgroup.nat_card_dvd_of_le AddSubgroup.nat_card_dvd_of_le
-
-@[to_additive]
-theorem nat_card_dvd_of_surjective {G H : Type*} [Group G] [Group H] (f : G →* H)
+theorem card_dvd_of_surjective {G H : Type*} [Group G] [Group H] (f : G →* H)
     (hf : Function.Surjective f) : Nat.card H ∣ Nat.card G := by
   rw [← Nat.card_congr (QuotientGroup.quotientKerEquivOfSurjective f hf).toEquiv]
   exact Dvd.intro_left (Nat.card f.ker) f.ker.card_mul_index
-#align subgroup.nat_card_dvd_of_surjective Subgroup.nat_card_dvd_of_surjective
-#align add_subgroup.nat_card_dvd_of_surjective AddSubgroup.nat_card_dvd_of_surjective
-
-@[to_additive]
-theorem card_dvd_of_surjective {G H : Type*} [Group G] [Group H] [Fintype G] [Fintype H]
-    (f : G →* H) (hf : Function.Surjective f) : Fintype.card H ∣ Fintype.card G := by
-  simp only [← Nat.card_eq_fintype_card, nat_card_dvd_of_surjective f hf]
-#align subgroup.card_dvd_of_surjective Subgroup.card_dvd_of_surjective
-#align add_subgroup.card_dvd_of_surjective AddSubgroup.card_dvd_of_surjective
+#align subgroup.nat_card_dvd_of_surjective Subgroup.card_dvd_of_surjective
+#align add_subgroup.nat_card_dvd_of_surjective AddSubgroup.card_dvd_of_surjective
 
 @[to_additive]
 theorem index_map {G' : Type*} [Group G'] (f : G →* G') :
@@ -352,22 +319,20 @@ theorem index_map_eq {G' : Type*} [Group G'] {f : G →* G'} (hf1 : Function.Sur
 #align add_subgroup.index_map_eq AddSubgroup.index_map_eq
 
 @[to_additive]
-theorem index_eq_card [Fintype (G ⧸ H)] : H.index = Fintype.card (G ⧸ H) :=
-  Nat.card_eq_fintype_card
+theorem index_eq_card : H.index = Nat.card (G ⧸ H) :=
+  rfl
 #align subgroup.index_eq_card Subgroup.index_eq_card
 #align add_subgroup.index_eq_card AddSubgroup.index_eq_card
 
 @[to_additive index_mul_card]
-theorem index_mul_card [Fintype G] [hH : Fintype H] :
-    H.index * Fintype.card H = Fintype.card G := by
-  rw [← relindex_bot_left_eq_card, ← index_bot_eq_card, mul_comm];
-    exact relindex_mul_index bot_le
+theorem index_mul_card : H.index * Nat.card H = Nat.card G := by
+  rw [← mul_comm, card_mul_index]
 #align subgroup.index_mul_card Subgroup.index_mul_card
 #align add_subgroup.index_mul_card AddSubgroup.index_mul_card
 
 @[to_additive]
-theorem index_dvd_card [Fintype G] : H.index ∣ Fintype.card G := by
-  classical exact ⟨Fintype.card H, H.index_mul_card.symm⟩
+theorem index_dvd_card : H.index ∣ Nat.card G := by
+  classical exact ⟨Nat.card H, H.index_mul_card.symm⟩
 #align subgroup.index_dvd_card Subgroup.index_dvd_card
 #align add_subgroup.index_dvd_card AddSubgroup.index_dvd_card
 
@@ -504,19 +469,18 @@ theorem card_eq_one : Nat.card H = 1 ↔ H = ⊥ :=
 
 @[to_additive]
 theorem index_ne_zero_of_finite [hH : Finite (G ⧸ H)] : H.index ≠ 0 := by
-  cases nonempty_fintype (G ⧸ H)
   rw [index_eq_card]
-  exact Fintype.card_ne_zero
+  exact Nat.card_pos.ne'
 #align subgroup.index_ne_zero_of_finite Subgroup.index_ne_zero_of_finite
 #align add_subgroup.index_ne_zero_of_finite AddSubgroup.index_ne_zero_of_finite
 
 -- Porting note: changed due to error with `Cardinal.toNat_apply_of_aleph0_le`
 /-- Finite index implies finite quotient. -/
 @[to_additive "Finite index implies finite quotient."]
-noncomputable def fintypeOfIndexNeZero (hH : H.index ≠ 0) : Fintype (G ⧸ H) :=
-  @Fintype.ofFinite _ (Nat.finite_of_card_ne_zero hH)
-#align subgroup.fintype_of_index_ne_zero Subgroup.fintypeOfIndexNeZero
-#align add_subgroup.fintype_of_index_ne_zero AddSubgroup.fintypeOfIndexNeZero
+theorem finite_of_index_ne_zero (hH : H.index ≠ 0) : Finite (G ⧸ H) :=
+  Nat.finite_of_card_ne_zero hH
+#align subgroup.fintype_of_index_ne_zero Subgroup.finite_of_index_ne_zero
+#align add_subgroup.fintype_of_index_ne_zero AddSubgroup.finite_of_index_ne_zero
 
 @[to_additive one_lt_index_of_ne_top]
 theorem one_lt_index_of_ne_top [Finite (G ⧸ H)] (hH : H ≠ ⊤) : 1 < H.index :=
@@ -540,21 +504,14 @@ class _root_.AddSubgroup.FiniteIndex {G : Type*} [AddGroup G] (H : AddSubgroup G
   finiteIndex : H.index ≠ 0
 #align add_subgroup.finite_index AddSubgroup.FiniteIndex
 
-/-- A finite index subgroup has finite quotient. -/
-@[to_additive "A finite index subgroup has finite quotient"]
-noncomputable def fintypeQuotientOfFiniteIndex [FiniteIndex H] : Fintype (G ⧸ H) :=
-  fintypeOfIndexNeZero FiniteIndex.finiteIndex
-#align subgroup.fintype_quotient_of_finite_index Subgroup.fintypeQuotientOfFiniteIndex
-#align add_subgroup.fintype_quotient_of_finite_index AddSubgroup.fintypeQuotientOfFiniteIndex
-
 @[to_additive]
 instance finite_quotient_of_finiteIndex [FiniteIndex H] : Finite (G ⧸ H) :=
-  H.fintypeQuotientOfFiniteIndex.finite
+  finite_of_index_ne_zero FiniteIndex.finiteIndex
 #align subgroup.finite_quotient_of_finite_index Subgroup.finite_quotient_of_finiteIndex
 #align add_subgroup.finite_quotient_of_finite_index AddSubgroup.finite_quotient_of_finiteIndex
 
 @[to_additive]
-theorem finiteIndex_of_finite_quotient [Finite (G ⧸ H)] : FiniteIndex H :=
+instance finiteIndex_of_finite_quotient [Finite (G ⧸ H)] : FiniteIndex H :=
   ⟨index_ne_zero_of_finite⟩
 #align subgroup.finite_index_of_finite_quotient Subgroup.finiteIndex_of_finite_quotient
 #align add_subgroup.finite_index_of_finite_quotient AddSubgroup.finiteIndex_of_finite_quotient
