@@ -380,14 +380,34 @@ lemma tendsto_riemannZeta_sub_one_div_Gammaℝ :
   convert this using 1
   ring_nf
 
-open HurwitzZeta in
-lemma riemannZeta_one : riemannZeta 1 = (γ - Complex.log (4 * ↑π)) / 2 := by
-  have := (tendsto_hurwitzZetaEven_sub_one_div_nhds_one 0).mono_left
+/-- Formula for `ζ 1`. Note that mathematically `ζ 1` is undefined, but our construction ascribes
+this particular value to it. -/
+lemma _root_.riemannZeta_one : riemannZeta 1 = (γ - Complex.log (4 * ↑π)) / 2 := by
+  have := (HurwitzZeta.tendsto_hurwitzZetaEven_sub_one_div_nhds_one 0).mono_left
     <| nhdsWithin_le_nhds (s := {1}ᶜ)
-  simp only [hurwitzZetaEven_zero, div_right_comm _ _ (Gammaℝ _)] at this
+  simp only [HurwitzZeta.hurwitzZetaEven_zero, div_right_comm _ _ (Gammaℝ _)] at this
   exact tendsto_nhds_unique this tendsto_riemannZeta_sub_one_div_Gammaℝ
 
-lemma riemannZeta_one_ne_zero : riemannZeta 1 ≠ 0 := by
+/-- Formula for `Λ 1`. Note that mathematically `Λ 1` is undefined, but our construction ascribes
+this particular value to it. -/
+lemma _root_.completedRiemannZeta_one :
+    completedRiemannZeta 1 = (γ - Complex.log (4 * ↑π)) / 2 :=
+  (riemannZeta_one ▸ div_one (_ : ℂ) ▸ Gammaℝ_one ▸ riemannZeta_def_of_ne_zero one_ne_zero).symm
+
+/-- Formula for `Λ₀ 1`, where `Λ₀` is the entire function satisfying
+`Λ₀ s = π ^ (-s / 2) Γ(s / 2) ζ(s) + 1 / s + 1 / (1 - s)` away from `s = 0, 1`.
+
+Note that `s = 1` is _not_ a pole of `Λ₀`, so this statement (unlike `riemannZeta_one`) is
+a mathematically meaningful statement and is not dependent on Mathlib's particular conventions for
+division by zero. -/
+lemma _root_.completedRiemannZeta₀_one :
+    completedRiemannZeta₀ 1 = (γ - Complex.log (4 * ↑π)) / 2 + 1 := by
+  have := completedRiemannZeta_eq 1
+  rw [sub_self, div_zero, div_one, sub_zero, eq_sub_iff_add_eq] at this
+  rw [← this, completedRiemannZeta_one]
+
+/-- With Mathlib's particular conventions, we have `ζ 1 ≠ 0`. -/
+lemma _root_.riemannZeta_one_ne_zero : riemannZeta 1 ≠ 0 := by
   -- This one's for you, Kevin.
   rw [riemannZeta_one, ← ofReal_ofNat, ← ofReal_mul, ← ofReal_log (by positivity),
     ← ofReal_sub, ← ofReal_ofNat, ← ofReal_div, ofReal_ne_zero]
