@@ -409,8 +409,8 @@ def ofWithBot (boxes : Finset (WithBot (Box ι)))
     Prepartition I where
   boxes := Finset.eraseNone boxes
   le_of_mem' J hJ := by
-    rw [mem_eraseNone] at hJ
-    simpa only [WithBot.some_eq_coe, WithBot.coe_le_coe] using le_of_mem _ hJ
+    rw [mem_eraseNone, WithBot.some_eq_coe] at hJ
+    simpa only [WithBot.coe_le_coe] using le_of_mem _ hJ
   pairwiseDisjoint J₁ h₁ J₂ h₂ hne := by
     simp only [mem_coe, mem_eraseNone] at h₁ h₂
     exact Box.disjoint_coe.1 (pairwise_disjoint h₁ h₂ (mt Option.some_inj.1 hne))
@@ -464,11 +464,13 @@ theorem ofWithBot_mono {boxes₁ : Finset (WithBot (Box ι))}
   le_ofWithBot _ fun J hJ => H J (mem_ofWithBot.1 hJ) WithBot.coe_ne_bot
 #align box_integral.prepartition.of_with_bot_mono BoxIntegral.Prepartition.ofWithBot_mono
 
+#check Option.elim'
+
 theorem sum_ofWithBot {M : Type*} [AddCommMonoid M] (boxes : Finset (WithBot (Box ι)))
     (le_of_mem : ∀ J ∈ boxes, (J : WithBot (Box ι)) ≤ I)
     (pairwise_disjoint : Set.Pairwise (boxes : Set (WithBot (Box ι))) Disjoint) (f : Box ι → M) :
     (∑ J ∈ (ofWithBot boxes le_of_mem pairwise_disjoint).boxes, f J) =
-      ∑ J ∈ boxes, Option.elim' 0 f J :=
+      ∑ J ∈ boxes, WithBot.recBotCoe 0 f J :=
   Finset.sum_eraseNone _ _
 #align box_integral.prepartition.sum_of_with_bot BoxIntegral.Prepartition.sum_ofWithBot
 
