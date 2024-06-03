@@ -134,9 +134,8 @@ theorem logMap_unitSMul (u : (𝓞 K)ˣ) {x : E K} (hx : mixedEmbedding.norm x �
 theorem logMap_torsion_unitSMul (x : E K) {ζ : (𝓞 K)ˣ} (hζ : ζ ∈ torsion K) :
     logMap (ζ • x) = logMap x := by
   ext
-  simp_rw [logMap, unitSMul_smul, map_mul, norm_eq_norm, show |(Algebra.norm ℚ) (ζ : K)| = 1 by
-    exact isUnit_iff_norm.mp ζ.isUnit, Rat.cast_one, one_mul, normAtPlace_apply,
-    (mem_torsion K).mp hζ, one_mul]
+  simp_rw [logMap, unitSMul_smul, map_mul, norm_eq_norm, Units.norm, Rat.cast_one, one_mul,
+    normAtPlace_apply, (mem_torsion K).mp hζ, one_mul]
 
 theorem logMap_smul {x : E K} (hx : mixedEmbedding.norm x ≠ 0) {c : ℝ} (hc : c ≠ 0) :
     logMap (c • x) = logMap x := by
@@ -311,7 +310,8 @@ theorem isBounded_normEqOne :
   have h₃ : ∀ ⦃x w c⦄, 0 ≤ c → x ∈ fundamentalCone K →
       mult w * Real.log (normAtPlace w x) ≤ c → normAtPlace w x ≤ Real.exp c := by
     intro x w c hc hx
-    rw [← le_div_iff' mult_pos, Real.log_le_iff_le_exp (normAtPlace_pos_of_mem hx w)]
+    rw [← le_div_iff' (Nat.cast_pos.mpr mult_pos),
+      Real.log_le_iff_le_exp (normAtPlace_pos_of_mem hx w)]
     exact fun h ↦ le_trans h <| Real.exp_le_exp.mpr (div_le_self hc one_le_mult)
   refine (Metric.isBounded_iff_subset_closedBall 0).mpr
     ⟨max (Real.exp r) (Real.exp ((Finset.univ.erase (w₀ : InfinitePlace K)).card • r)),
