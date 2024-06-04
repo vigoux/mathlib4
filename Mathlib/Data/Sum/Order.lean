@@ -174,7 +174,7 @@ instance instPreorderSum : Preorder (Sum α β) :=
     le_refl := fun x => LiftRel.refl _ _ _,
     le_trans := fun _ _ _ => LiftRel.trans _ _,
     lt_iff_le_not_le := fun a b => by
-      refine' ⟨fun hab => ⟨hab.mono (fun _ _ => le_of_lt) fun _ _ => le_of_lt, _⟩, _⟩
+      refine ⟨fun hab => ⟨hab.mono (fun _ _ => le_of_lt) fun _ _ => le_of_lt, ?_⟩, ?_⟩
       · rintro (⟨hba⟩ | ⟨hba⟩)
         · exact hba.not_lt (inl_lt_inl_iff.1 hab)
         · exact hba.not_lt (inr_lt_inr_iff.1 hab)
@@ -382,7 +382,7 @@ instance preorder : Preorder (α ⊕ₗ β) :=
     le_refl := refl_of (Lex (· ≤ ·) (· ≤ ·)),
     le_trans := fun _ _ _ => trans_of (Lex (· ≤ ·) (· ≤ ·)),
     lt_iff_le_not_le := fun a b => by
-      refine' ⟨fun hab => ⟨hab.mono (fun _ _ => le_of_lt) fun _ _ => le_of_lt, _⟩, _⟩
+      refine ⟨fun hab => ⟨hab.mono (fun _ _ => le_of_lt) fun _ _ => le_of_lt, ?_⟩, ?_⟩
       · rintro (⟨hba⟩ | ⟨hba⟩ | ⟨b, a⟩)
         · exact hba.not_lt (inl_lt_inl_iff.1 hab)
         · exact hba.not_lt (inr_lt_inr_iff.1 hab)
@@ -787,8 +787,7 @@ def orderIsoSumLexPUnit : WithTop α ≃o α ⊕ₗ PUnit :=
     · simp only [lex_inr_inl, false_iff]
       exact not_top_le_coe _
     · simp only [Lex.sep, le_top]
-    · simp only [lex_inl_inl, coe_le_coe]
-  ⟩
+    · simp only [lex_inl_inl, coe_le_coe]⟩
 #align with_top.order_iso_sum_lex_punit WithTop.orderIsoSumLexPUnit
 
 @[simp]
