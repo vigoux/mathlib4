@@ -1,5 +1,27 @@
 -- import Mathlib.NumberTheory.NumberField.CanonicalEmbedding.FundamentalCone
-import Mathlib.Algebra.Module.Zlattice.Covolume
+import Mathlib.MeasureTheory.Function.Jacobian
+import Mathlib.Analysis.Calculus.FDeriv.Prod
+
+section FDeriv
+
+open Classical
+
+example {𝕜 n m : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜] [Fintype n] [Fintype m]
+    (f : (n → 𝕜) → (m → 𝕜))
+    (f' : (n → 𝕜) → m → n → 𝕜) (x : (n → 𝕜)) : sorry := by
+  let M := (Matrix.of fun i j ↦ f' x i j)
+  let L := LinearMap.toContinuousLinearMap (Matrix.toLin' M)
+  have : HasFDerivAt f L x := by
+    rw [hasFDerivAt_pi']
+    sorry
+
+  sorry
+
+--    (hd : ∀ i j x, HasDerivAt (f i j) (f' i j) x) :
+--    sorry := sorry
+
+
+end FDeriv
 
 section Topo
 

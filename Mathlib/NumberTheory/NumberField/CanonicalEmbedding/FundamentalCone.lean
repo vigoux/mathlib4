@@ -3,9 +3,11 @@ Copyright (c) 2024 Xavier Roblot. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Xavier Roblot
 -/
+import Mathlib.Analysis.Calculus.FDeriv.Pi
 import Mathlib.NumberTheory.NumberField.Units.Regulator
 
-import Mathlib.Sandbox
+
+-- import Mathlib.Sandbox
 
 /-!
 # Fundamental Cone
@@ -345,35 +347,124 @@ theorem measurableSet_normLessThanOne :
   MeasurableSet.inter (measurableSet K) <|
     measurableSet_le (mixedEmbedding.continuous_norm K).measurable measurable_const
 
+-- To prove that the frontier of `X` is of measure zero?
+-- MeasureTheory.addHaar_image_eq_zero_of_differentiableOn_of_addHaar_eq_zero
+
 abbrev normLessThanOne₀ : Set (E K) :=
     {x | x ∈ normLessThanOne K ∧ ∀ w, (hw : IsReal w) → x.1 ⟨w, hw⟩ ≥ 0}
 
-abbrev normUnits : {w : InfinitePlace K // w ≠ w₀} → ((InfinitePlace K) → ℝ) := by
-  let e : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) := sorry
-  intro i w
-  exact w (fundSystem K (e i))
-
 open Classical
-
-def eval : ((InfinitePlace K) → ℝ) → ((InfinitePlace K) → ℝ) :=
-  fun v ↦ v w₀ • ∏ i, normUnits K i ^ (v i)
-
-abbrev normLessThanOne₁ : Set ((InfinitePlace K) → ℝ) := by
-  let s : Set ((InfinitePlace K) → ℝ) := Set.univ.pi fun _ ↦ Set.Ico 0 1
-  exact eval K '' s
 
 theorem volume_normLessOne :
     volume (normLessThanOne K) = 2 ^ (NrRealPlaces K) * volume (normLessThanOne₀ K) := by
   sorry
+
+def equivFinRank : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) := by
+  refine Fintype.equivOfCardEq ?_
+  rw [Fintype.card_subtype_compl, Fintype.card_ofSubsingleton, Fintype.card_fin, rank]
+
+abbrev normUnits : {w : InfinitePlace K // w ≠ w₀} → ((InfinitePlace K) → ℝ) :=
+  fun i w ↦ w (fundSystem K (equivFinRank K i)) ^ mult w
+
+def normUnitsEval₀ : (InfinitePlace K → ℝ) → (InfinitePlace K) → ℝ :=
+  fun c ↦ ∏ i, (normUnits K i) ^ (c i)
+
+def normUnitsEval : (InfinitePlace K → ℝ) → InfinitePlace K → ℝ :=
+  fun c ↦ c w₀ • normUnitsEval₀ K c
+
+abbrev normLessThanOne₁ : Set ((InfinitePlace K) → ℝ) :=
+  normUnitsEval K '' (Set.univ.pi fun _ ↦ Set.Ico 0 1)
 
 theorem volume_normLessOne₀ :
     volume (normLessThanOne₀ K) =
       (2 * NNReal.pi) ^ (NrRealPlaces K) * volume (normLessThanOne₁ K) := by
   sorry
 
+def jacobian_normUnitsEval :
+    (InfinitePlace K → ℝ) → Matrix (InfinitePlace K) (InfinitePlace K) ℝ :=
+  fun c ↦
+    Matrix.of fun i w : InfinitePlace K ↦
+      if hi : i = w₀ then normUnitsEval₀ K c w else
+        (c w₀) * (normUnits K ⟨i, hi⟩ w).log * normUnitsEval₀ K c w
+
+example : (InfinitePlace K → ℝ) →ₗ[ℝ] (InfinitePlace K → ℝ) →ₗ[ℝ] ℝ := by
+  exact Fintype.total ℝ ℝ
+
+def lin (c : InfinitePlace K → ℝ) (w : InfinitePlace K) : (InfinitePlace K → ℝ) →ₗ[ℝ] ℝ := by
+  refine Fintype.total ℝ ℝ ?_
+  intro i
+  exact if hi : i = w₀ then normUnitsEval₀ K c w else
+        (c w₀) * (normUnits K ⟨i, hi⟩ w).log * normUnitsEval₀ K c w
+
+def fDeriv_normUnitsEval :
+    (InfinitePlace K → ℝ) → (InfinitePlace K → ℝ) →L[ℝ] (InfinitePlace K → ℝ) := by
+  intro c
+  refine ContinuousLinearMap.pi ?_
+  intro i
+
+  exact LinearMap.toContinuousLinearMap (lin K c i)
+
+theorem hasFDeriv_normUnitsEval (c : InfinitePlace K → ℝ) :
+    HasFDerivAt (normUnitsEval K) (fDeriv_normUnitsEval K c) c := by
+  rw [fDeriv_normUnitsEval]
+  rw [hasFDerivAt_pi']
+  intro w
+  simp only [normUnitsEval, Pi.smul_apply, smul_eq_mul]
+  simp only [lin]
+  rw [ContinuousLinearMap.proj_pi]
+  rw [LinearMap.pi_apply_eq_sum_univ]
+  rw [map_sum]
+  simp only [dite_smul]
+  rw [← Finset.univ.add_sum_erase _ (Finset.mem_univ w₀)]
+  rw [dif_pos rfl]
+
+--  rw [Finset.sum_apply_dite]
+--  simp [Finset.filter_eq]
+
+#exit
+
+  let F := InfinitePlace K → ℝ
+  have := @hasFDerivAt_single ℝ (InfinitePlace K) _ _ _ (fun _ ↦ ℝ) _ _ w₀
+  have : HasFDerivAt (fun x : F ↦ x w₀)
+    (ContinuousLinearMap.pi (Pi.single w (ContinuousLinearMap.id ℝ _))) c := sorry
+
+#exit
+
+
+  refine hasFDerivAt_pi'' ?_
+  intro w
+  simp [fDeriv_normUnitsEval, ContinuousLinearMap.proj_pi]
+  let F := InfinitePlace K → ℝ
+  have : HasFDerivAt (fun x : F ↦ x w₀) _ x := sorry
+
+  simp [fDeriv_normUnitsEval, jacobian_normUnitsEval, Finset.prod_apply, Pi.pow_apply,
+    Real.log_pow, Matrix.toLin'_apply', ContinuousLinearMap.proj_pi]
+  simp [normUnitsEval]
+
+  let F := InfinitePlace K → ℝ
+  have : HasFDerivAt (fun x : F ↦ x w₀)
+    (ContinuousLinearMap.pi (Pi.single i (ContinuousLinearMap.id 𝕜 (E i)))) x := sorry
+
+
+
+
+
+#exit
+  split_ifs
+
 theorem volume_normLessOne₁ :
-    volume (normLessThanOne₁ K) = 0 := by
-  sorry
+    (volume (normLessThanOne₁ K)).toReal = regulator K := by
+  let s : Set (InfinitePlace K → ℝ) := Set.univ.pi fun _ ↦ Set.Ico 0 1
+  have hs : MeasurableSet s := sorry
+  have hf₁ : Set.InjOn (normUnitsEval K) s := sorry
+  have hf₂ : Measurable (normUnitsEval K) := sorry
+  have hf₃ : ∀ x ∈ s, HasFDerivWithinAt (normUnitsEval K) (fDeriv_normUnitsEval K x) s x := sorry
+  have t₀ := lintegral_image_eq_lintegral_abs_det_fderiv_mul volume hs hf₃ hf₁ (fun _ ↦ 1)
+  simp only [lintegral_const, MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter, one_mul,
+    mul_one] at t₀
+  rw [t₀]
+
+
 
 
 #exit
