@@ -171,7 +171,7 @@ variable {n : ℕ} {α : Fin (n + 1) → Type*} {f : ∀ i, α i} {s : ∀ i, Fi
 
 open Fintype
 
-lemma mem_piFinset_iff_zero_tail : 
+lemma mem_piFinset_iff_zero_tail :
     f ∈ Fintype.piFinset s ↔ f 0 ∈ s 0 ∧ tail f ∈ piFinset (tail s) := by
   simp only [Fintype.mem_piFinset, forall_fin_succ, tail]
 
