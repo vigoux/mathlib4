@@ -363,14 +363,44 @@ def equivFinRank : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) := by
   refine Fintype.equivOfCardEq ?_
   rw [Fintype.card_subtype_compl, Fintype.card_ofSubsingleton, Fintype.card_fin, rank]
 
-abbrev normUnits : {w : InfinitePlace K // w ≠ w₀} → ((InfinitePlace K) → ℝ) :=
+def normUnits : {w : InfinitePlace K // w ≠ w₀} → ((InfinitePlace K) → ℝ) :=
   fun i w ↦ w (fundSystem K (equivFinRank K i)) ^ mult w
 
-def normUnitsEval₀ : (InfinitePlace K → ℝ) → (InfinitePlace K) → ℝ :=
-  fun c ↦ ∏ i, (normUnits K i) ^ (c i)
+theorem normUnits_pos (i : {w : InfinitePlace K // w ≠ w₀}) (w : InfinitePlace K) :
+    0 < normUnits K i w := sorry
+
+def normUnitsEval₀ (i w : InfinitePlace K) : (InfinitePlace K → ℝ) → ℝ :=
+  fun x ↦ if hi : i = w₀ then x w₀ else normUnits K ⟨i, hi⟩ w ^ (x i)
+
+def FDeriv_normUnitsEval₀ (i w : InfinitePlace K) (x : InfinitePlace K → ℝ) :
+    (InfinitePlace K → ℝ) →L[ℝ] ℝ := by
+  exact if hi : i = w₀ then ContinuousLinearMap.proj w₀ else
+    (normUnitsEval₀ K i w x * (normUnits K ⟨i, hi⟩ w).log) • ContinuousLinearMap.proj i
+
+theorem hasFDeriv_normUnitsEval₀ (i w : InfinitePlace K) (x : InfinitePlace K → ℝ) :
+    HasFDerivAt (normUnitsEval₀ K i w) (FDeriv_normUnitsEval₀ K i w x) x := by
+  unfold normUnitsEval₀
+  unfold FDeriv_normUnitsEval₀
+  split_ifs
+  · exact hasFDerivAt_apply w₀ x
+  · unfold normUnitsEval₀
+    rw [dif_neg]
+    exact HasFDerivAt.const_rpow (hasFDerivAt_apply i x) (normUnits_pos K _ _)
 
 def normUnitsEval : (InfinitePlace K → ℝ) → InfinitePlace K → ℝ :=
-  fun c ↦ c w₀ • normUnitsEval₀ K c
+  fun x w ↦ ∏ i, normUnitsEval₀ K i w x
+
+def prodNormUnitsEval (w : InfinitePlace K) (c : InfinitePlace K → ℝ) : ℝ :=
+  ∏ i ∈ Finset.univ.erase w₀, normUnitsEval₀ K i w c
+
+def jacobianCoeff (w i : InfinitePlace K) : (InfinitePlace K → ℝ) → ℝ :=
+    fun c ↦ if hi : i = w₀ then 1 else (c w₀) * normUnits K ⟨i, hi⟩ w
+
+def jacobian : (InfinitePlace K → ℝ) → (InfinitePlace K → ℝ) →L[ℝ] InfinitePlace K → ℝ := by
+  intro c
+  refine ContinuousLinearMap.pi ?_
+  intro i
+  exact (prodNormUnitsEval K i c • ∑ w, (jacobianCoeff K i w c) • ContinuousLinearMap.proj w)
 
 abbrev normLessThanOne₁ : Set ((InfinitePlace K) → ℝ) :=
   normUnitsEval K '' (Set.univ.pi fun _ ↦ Set.Ico 0 1)
@@ -380,32 +410,131 @@ theorem volume_normLessOne₀ :
       (2 * NNReal.pi) ^ (NrRealPlaces K) * volume (normLessThanOne₁ K) := by
   sorry
 
-def jacobian_normUnitsEval :
-    (InfinitePlace K → ℝ) → Matrix (InfinitePlace K) (InfinitePlace K) ℝ :=
-  fun c ↦
-    Matrix.of fun i w : InfinitePlace K ↦
-      if hi : i = w₀ then normUnitsEval₀ K c w else
-        (c w₀) * (normUnits K ⟨i, hi⟩ w).log * normUnitsEval₀ K c w
+-- def jacobian_normUnitsEval :
+--     (InfinitePlace K → ℝ) → Matrix (InfinitePlace K) (InfinitePlace K) ℝ :=
+--   fun c ↦
+--     Matrix.of fun i w : InfinitePlace K ↦
+--       if hi : i = w₀ then normUnitsEval₀ K c w else
+--         (c w₀) * (normUnits K ⟨i, hi⟩ w).log * normUnitsEval₀ K c w
 
-example : (InfinitePlace K → ℝ) →ₗ[ℝ] (InfinitePlace K → ℝ) →ₗ[ℝ] ℝ := by
-  exact Fintype.total ℝ ℝ
+-- example : (InfinitePlace K → ℝ) →ₗ[ℝ] (InfinitePlace K → ℝ) →ₗ[ℝ] ℝ := by
+--   exact Fintype.total ℝ ℝ
 
-def lin (c : InfinitePlace K → ℝ) (w : InfinitePlace K) : (InfinitePlace K → ℝ) →ₗ[ℝ] ℝ := by
-  refine Fintype.total ℝ ℝ ?_
-  intro i
-  exact if hi : i = w₀ then normUnitsEval₀ K c w else
-        (c w₀) * (normUnits K ⟨i, hi⟩ w).log * normUnitsEval₀ K c w
+-- def lin (c : InfinitePlace K → ℝ) (w : InfinitePlace K) : (InfinitePlace K → ℝ) →ₗ[ℝ] ℝ := by
+--   refine Fintype.total ℝ ℝ ?_
+--   intro i
+--   exact if hi : i = w₀ then normUnitsEval₀ K c w else
+--         (c w₀) * (normUnits K ⟨i, hi⟩ w).log * normUnitsEval₀ K c w
 
-def fDeriv_normUnitsEval :
-    (InfinitePlace K → ℝ) → (InfinitePlace K → ℝ) →L[ℝ] (InfinitePlace K → ℝ) := by
-  intro c
-  refine ContinuousLinearMap.pi ?_
-  intro i
+-- def fDeriv_normUnitsEval :
+--     (InfinitePlace K → ℝ) → (InfinitePlace K → ℝ) →L[ℝ] (InfinitePlace K → ℝ) := by
+--   intro c
+--   refine ContinuousLinearMap.pi ?_
+--   intro i
 
-  exact LinearMap.toContinuousLinearMap (lin K c i)
+--   exact LinearMap.toContinuousLinearMap (lin K c i)
 
 theorem hasFDeriv_normUnitsEval (c : InfinitePlace K → ℝ) :
-    HasFDerivAt (normUnitsEval K) (fDeriv_normUnitsEval K c) c := by
+    HasFDerivAt (𝕜 := ℝ) (normUnitsEval K) (jacobian K c) c := by
+  rw [hasFDerivAt_pi']
+  intro w
+  simp_rw [normUnitsEval]
+  have t₀ := fun i ↦ hasFDeriv_normUnitsEval₀ K i w c
+  have := HasFDerivAt.finset_prod (u := Finset.univ) (fun i _ ↦ t₀ i)
+  simp at this
+  -- unfold FDeriv_normUnitsEval₀ at this
+  -- simp at this
+  convert this
+  rw [← Finset.univ.sum_erase_add _ (Finset.mem_univ w₀)]
+  rw [Finset.sum_subtype (p := fun x ↦ x ≠ w₀)]
+  unfold FDeriv_normUnitsEval₀
+  simp_rw [Subtype.coe_eta, dite_eq_ite, smul_ite, dif_pos]
+  rw [Finset.univ.sum_ite_of_false]
+  simp_rw [smul_smul, ← mul_assoc]
+  simp_rw [Finset.univ.prod_erase_mul _ sorry]
+  simp_rw [← smul_smul]
+  rw [← Finset.smul_sum]
+  rw [← Finset.univ.prod_erase_mul _ (Finset.mem_univ w₀)]
+  rw [← smul_smul]
+  rw [Finset.smul_sum]
+  unfold jacobian
+  rw [ContinuousLinearMap.proj_pi]
+  unfold jacobianCoeff
+  unfold prodNormUnitsEval
+  rw [← Finset.univ.sum_erase_add _ (Finset.mem_univ w₀)]
+  rw [dif_pos rfl]
+  ext
+  rw [one_smul]
+  rw [smul_add]
+  congr 3
+  sorry
+  sorry
+  sorry
+
+
+
+#exit
+
+  rw [Finset.sum_subtype (p := fun x ↦ x ≠ w₀)] at this
+  · unfold FDeriv_normUnitsEval₀ at this
+    simp_rw [Subtype.coe_eta, dite_eq_ite, smul_ite] at this
+    simp_rw [dif_pos] at this
+    rw [Finset.univ.sum_ite_of_false] at this
+
+    simp_rw [← mul_smul_comm] at this
+--    simp only [ne_eq, smul_ite, ↓reduceDite] at this
+--    simp only [ne_eq, Subtype.coe_eta, dite_eq_ite, smul_ite, ↓reduceDite] at this
+
+    sorry
+  · refine fun x ↦ ⟨fun hx ↦ Finset.ne_of_mem_erase hx,
+      fun hx ↦ Finset.mem_erase.mpr ⟨hx, Finset.mem_univ x⟩⟩
+
+
+
+
+#exit
+
+  rw [show ∑ x ∈ Finset.univ.erase w₀, (∏ j ∈ Finset.univ.erase x, normUnitsEval₀ K j w c) •
+    FDeriv_normUnitsEval₀ K x w c = ∑ x ∈ Finset.univ.erase w₀, (∏ j ∈ Finset.univ.erase x,
+    normUnitsEval₀ K j w c) • ((normUnitsEval₀ K x w c * (normUnits K ⟨x, ?_⟩ w).log) •
+    ContinuousLinearMap.proj x) by sorry] at this
+
+#exit
+
+
+  rw [show (∑ x ∈ Finset.univ.erase (w₀ : InfinitePlace K), if h : x = w₀ then
+    (∏ j ∈ Finset.univ.erase x, normUnitsEval₀ K j w c) • ContinuousLinearMap.proj w₀ else
+    (∏ j ∈ Finset.univ.erase x, normUnitsEval₀ K j w c) •
+        (normUnitsEval₀ K x w c * (normUnits K ⟨x, h⟩ w).log) • ContinuousLinearMap.proj x) = 0
+    by sorry] at this
+
+
+  rw [Finset.sum_dite_of_false (fun x hx ↦ Finset.ne_of_mem_erase hx)] at this
+  simp at this
+  rw [Finset.sum_attach] at this
+
+
+#exit
+
+  rw [Finset.sum_congr rfl ?_] at this
+  · sorry
+  · sorry
+  · intro x hx
+    rw [dif_neg (Finset.ne_of_mem_erase hx)]
+
+#exit
+
+  rw [Finset.sum_dite_of_false] at this
+  · simp at this
+    sorry
+  · intro x hx
+    exact Finset.ne_of_mem_erase hx
+  ·
+
+
+
+#exit
+
   rw [fDeriv_normUnitsEval]
   rw [hasFDerivAt_pi']
   intro w

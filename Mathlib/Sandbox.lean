@@ -1,18 +1,56 @@
 -- import Mathlib.NumberTheory.NumberField.CanonicalEmbedding.FundamentalCone
-import Mathlib.MeasureTheory.Function.Jacobian
-import Mathlib.Analysis.Calculus.FDeriv.Prod
+import Mathlib
 
 section FDeriv
 
-open Classical
+open Classical BigOperators
+
+variable {ι : Type*} [Fintype ι]
+
+example (p : ι → ℝ) : sorry := by
+  have := fun i ↦ HasFDerivAt.const_rpow (E := ι → ℝ) (c := (2:ℝ)) (f := fun x ↦ x i)
+      (f' := ContinuousLinearMap.proj i) (x := p) (hasFDerivAt_apply i p) zero_lt_two
+  have := HasFDerivAt.finset_prod (ι := ι) (u := Finset.univ) (fun i _ ↦ this i)
+  
+
+#exit
+
+  have := @HasFDerivAt.finset_prod ℝ _ (E := ι → ℝ) _ _ ι ℝ _ _ Finset.univ (fun i x ↦ 2 ^ (x i))
+    ?_ _ p ?_
+  · sorry
+  · sorry
+  · intro i _
+    have := HasFDerivAt.const_rpow (E := ι → ℝ) (c := (2:ℝ)) (f := fun x ↦ x i)
+      (f' := ContinuousLinearMap.proj i) (x := p) (hasFDerivAt_apply i p) zero_lt_two
+    simp at this
+
+--      ((2 ^ (p i) * Real.log 2) • ContinuousLinearMap.proj i)
+    -- ((2 ^ (p i) * Real.log 2) • ContinuousLinearMap.proj )
+
+
+
+#exit
 
 example {𝕜 n m : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜] [Fintype n] [Fintype m]
-    (f : (n → 𝕜) → (m → 𝕜))
-    (f' : (n → 𝕜) → m → n → 𝕜) (x : (n → 𝕜)) : sorry := by
+    (f : (n → 𝕜) → (n → 𝕜))
+    (f' : (n → 𝕜) → n → n → 𝕜) (x : (n → 𝕜)) : sorry := by
   let M := (Matrix.of fun i j ↦ f' x i j)
+  let g := Matrix.toLin' M
   let L := LinearMap.toContinuousLinearMap (Matrix.toLin' M)
+  have s₁ : ∀ i, (ContinuousLinearMap.proj i).comp L =
+     ∑ k : n, M i k • ContinuousLinearMap.proj k := by
+--    LinearMap.toContinuousLinearMap (Fintype.total 𝕜 𝕜 (fun k ↦ M i k)) := by
+    intro i
+    ext
+    simp [g, L]
+    rfl
+
   have : HasFDerivAt f L x := by
     rw [hasFDerivAt_pi']
+    intro i
+    simp [L]
+    rw [s₁ i]
+
     sorry
 
   sorry
@@ -20,6 +58,7 @@ example {𝕜 n m : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜] [
 --    (hd : ∀ i j x, HasDerivAt (f i j) (f' i j) x) :
 --    sorry := sorry
 
+#exit
 
 end FDeriv
 
