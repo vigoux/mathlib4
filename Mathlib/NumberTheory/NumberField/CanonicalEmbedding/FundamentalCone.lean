@@ -371,13 +371,99 @@ theorem measurableSet_normLessThanOne :
 -- MeasureTheory.addHaar_image_eq_zero_of_differentiableOn_of_addHaar_eq_zero
 
 abbrev normLessThanOne₀ : Set (E K) :=
-    {x | x ∈ normLessThanOne K ∧ ∀ w, (hw : IsReal w) → x.1 ⟨w, hw⟩ ≥ 0}
+    {x | x ∈ normLessThanOne K ∧ ∀ w, (hw : IsReal w) → x.1 ⟨w, hw⟩ > 0}
 
 open Classical
 
+theorem volume_normLessOne₀_aux (s : Finset {w : InfinitePlace K // IsReal w}) :
+    volume (normLessThanOne K) = 2 ^ Finset.card s *
+      volume {x | x ∈ normLessThanOne K ∧ ∀ w ∈ s, x.1 w > 0} := by
+  induction s using Finset.induction with
+  | empty =>
+      sorry
+  | @insert w s hs h_ind =>
+      have f₁ : ∀ ⦃x⦄, x ∈ fundamentalCone K → x.1 w ≠ 0 := sorry
+      have f₂ : MeasurableSet {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w < 0} := sorry
+      have h₁ : {x | x ∈ normLessThanOne K ∧ ∀ z ∈ s, x.1 z > 0} =
+          {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w > 0} ∪
+          {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w < 0} := by
+        ext x
+        simp_rw [Set.mem_setOf_eq, gt_iff_lt, Subtype.forall, Set.mem_union]
+        simp_rw [Set.mem_setOf_eq]
+        simp_rw [← and_or_left, and_congr_right_iff, iff_self_and, and_imp]
+        simp only [lt_or_lt_iff_ne]
+        intro hx _ _
+        exact (f₁ hx).symm
+      have h₂ : Disjoint {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w > 0}
+          {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w < 0} := by
+        refine Set.disjoint_iff_forall_ne.mpr ?_
+        rintro _ ⟨_, ⟨_, hx⟩⟩ _ ⟨_, ⟨_, hy⟩⟩
+        contrapose! hx
+        rw [hx]
+        exact hy.le
+      have h₃ : volume {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w < 0} =
+          volume {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w > 0} := by
+        let f : (E K) → (E K) := fun x ↦ ⟨fun z ↦ if z = w then - x.1 z else x.1 z, x.2⟩
+        have hf₁ : MeasurePreserving f := sorry
+        have hf₂ : ∀ x, mixedEmbedding.norm (f x) = mixedEmbedding.norm x := sorry
+        have hf₃ : ∀ x, f x ∈ normLessThanOne K ↔ x ∈ normLessThanOne K := sorry
+        rw [← hf₁.measure_preimage f₂]
+        simp_rw [Set.preimage_setOf_eq, if_pos, hf₃]
+        simp_rw [Left.neg_neg_iff]
+#exit
+        simp only [Set.mem_setOf_eq, gt_iff_lt, Subtype.forall, Set.preimage_setOf_eq, ↓reduceIte,
+          Left.neg_neg_iff, hf₂, hf₃]
+
+        ext
+        simp
+        congr! 2
+        · exact hf₃ _
+        · rw [hf₂]
+        · refine ⟨?_, ?_⟩
+          · intro h z hz hz'
+            specialize h z hz
+            sorry
+          ·
+            sorry
+      rw [h_ind, h₁, measure_union h₂, h₃, ← two_mul, ← mul_assoc, ← pow_succ]
+      congr
+      · exact (Finset.card_insert_of_not_mem hs).symm
+      · have : ∀ x : E K, (∀ z ∈ s, x.1 z > 0) ∧ x.1 w > 0 ↔ (∀ z ∈ insert w s, x.1 z > 0) := by
+          intro x
+          refine ⟨?_, ?_⟩
+          · intro h z hz
+            sorry
+          · intro h
+            refine ⟨?_, ?_⟩
+            · intro z hz
+              sorry
+            · sorry
+        simp_rw [this]
+      · refine MeasurableSet.inter ?_ ?_
+        · exact measurableSet_normLessThanOne K
+        · refine MeasurableSet.inter ?_ ?_
+          · sorry
+          · refine measurableSet_lt (g := fun _ ↦ (0 : ℝ)) ?_ measurable_const
+            exact Measurable.comp (measurable_pi_apply w) measurable_fst
+#exit
+
+
+        simp_rw [this]
+
+        -- have : ∀ x : E K, (∀ z ∈ s, x.1 z > 0 ∧ x.1 w > 0) ↔ (∀ z ∈ s, x.1 z > 0 ∧ x.1 w > 0) := sorry
+        -- simp_rw [this]
+
+
+        sorry
+      sorry
+
+
 theorem volume_normLessOne :
     volume (normLessThanOne K) = 2 ^ (NrRealPlaces K) * volume (normLessThanOne₀ K) := by
-  sorry
+  induction NrRealPlaces K with
+  | zero => sorry
+  | succ n ih =>
+      sorry
 
 def equivFinRank : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) := by
   refine Fintype.equivOfCardEq ?_
@@ -440,16 +526,31 @@ def jacobian : (InfinitePlace K → ℝ) → (InfinitePlace K → ℝ) →L[ℝ]
   exact (prodNormUnitsEval K i c • ∑ w, (jacobianCoeff K i w c) • ContinuousLinearMap.proj w)
 
 theorem jacobian_det (c : InfinitePlace K → ℝ) :
-    (jacobian K c).det = 1 := by
+    |(jacobian K c).det| = |c w₀| ^ (rank K) * regulator K := by
   have : LinearMap.toMatrix' (jacobian K c) =
       Matrix.of fun i w ↦ prodNormUnitsEval K i c * jacobianCoeff K i w c := by
     ext; simp [jacobian]
   rw [ContinuousLinearMap.det, ← LinearMap.det_toMatrix', this]
   rw [Matrix.det_mul_column]
-  rw [prod_prodNormUnitsEval, one_mul]
+  rw [prod_prodNormUnitsEval, one_mul, ← Matrix.det_transpose]
   simp_rw [jacobianCoeff, normUnits, Real.log_pow]
-  
-  sorry
+  rw [regulator_eq_det' K (equivFinRank K)]
+  have : |c w₀| ^ rank K = |∏ w : InfinitePlace K, if w = w₀ then 1 else c w₀| := by
+    rw [Finset.prod_ite, Finset.prod_const_one, Finset.prod_const, one_mul, abs_pow,
+      ← Units.finrank_eq_rank]
+    congr
+    rw [← Fintype.card_subtype]
+    exact finrank_fintype_fun_eq_card ℝ
+  -- simp_rw [← Units.finrank_eq_rank K]
+  rw [this, ← abs_mul]
+  rw [← Matrix.det_mul_column]
+  simp_rw [Matrix.of_apply, ite_mul, one_mul]
+  congr
+  ext
+  simp only [Matrix.transpose_apply, Matrix.of_apply]
+  split_ifs
+  · ring
+  · rfl
 
 abbrev normLessThanOne₁ : Set ((InfinitePlace K) → ℝ) :=
   normUnitsEval K '' (Set.univ.pi fun _ ↦ Set.Ico 0 1)
@@ -458,30 +559,6 @@ theorem volume_normLessOne₀ :
     volume (normLessThanOne₀ K) =
       (2 * NNReal.pi) ^ (NrRealPlaces K) * volume (normLessThanOne₁ K) := by
   sorry
-
--- def jacobian_normUnitsEval :
---     (InfinitePlace K → ℝ) → Matrix (InfinitePlace K) (InfinitePlace K) ℝ :=
---   fun c ↦
---     Matrix.of fun i w : InfinitePlace K ↦
---       if hi : i = w₀ then normUnitsEval₀ K c w else
---         (c w₀) * (normUnits K ⟨i, hi⟩ w).log * normUnitsEval₀ K c w
-
--- example : (InfinitePlace K → ℝ) →ₗ[ℝ] (InfinitePlace K → ℝ) →ₗ[ℝ] ℝ := by
---   exact Fintype.total ℝ ℝ
-
--- def lin (c : InfinitePlace K → ℝ) (w : InfinitePlace K) : (InfinitePlace K → ℝ) →ₗ[ℝ] ℝ := by
---   refine Fintype.total ℝ ℝ ?_
---   intro i
---   exact if hi : i = w₀ then normUnitsEval₀ K c w else
---         (c w₀) * (normUnits K ⟨i, hi⟩ w).log * normUnitsEval₀ K c w
-
--- def fDeriv_normUnitsEval :
---     (InfinitePlace K → ℝ) → (InfinitePlace K → ℝ) →L[ℝ] (InfinitePlace K → ℝ) := by
---   intro c
---   refine ContinuousLinearMap.pi ?_
---   intro i
-
---   exact LinearMap.toContinuousLinearMap (lin K c i)
 
 theorem hasFDeriv_normUnitsEval (c : InfinitePlace K → ℝ) :
     HasFDerivAt (𝕜 := ℝ) (normUnitsEval K) (jacobian K c) c := by
@@ -534,6 +611,18 @@ theorem volume_normLessOne₁ :
 
   simp only [lintegral_const, MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter, one_mul,
     mul_one] at t₀
+  simp_rw [t₀, jacobian_det, ENNReal.ofReal_mul sorry]
+  rw [lintegral_mul_const, ENNReal.toReal_mul, ENNReal.toReal_ofReal]
+  simp_rw [@volume_pi, s]
+  sorry
+
+
+
+#exit
+
+  rw [← MeasureTheory.integral_toReal]
+
+
   sorry
 
 #exit

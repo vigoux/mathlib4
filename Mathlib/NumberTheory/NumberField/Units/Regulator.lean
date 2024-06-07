@@ -56,7 +56,7 @@ local instance : CommGroup (𝓞 K)ˣ := inferInstance
 -/
 set_option maxSynthPendingDepth 2 -- Note this is active for the remainder of the file.
 
-theorem regulator_eq_det' (e : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K)) :
+theorem regulator_eq_det'' (e : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K)) :
     regulator K = |(Matrix.of fun i ↦ (logEmbedding K) (fundSystem K (e i))).det| := by
   simp_rw [regulator, Zlattice.covolume_eq_det _
     (((basisModTorsion K).map (logEmbeddingEquiv K)).reindex e.symm), Basis.coe_reindex,
@@ -101,13 +101,12 @@ theorem regulator_eq_det (w' : InfinitePlace K) (e : {w // w ≠ w'} ≃ Fin (ra
       (w.val (fundSystem K (e i) : K)).log).det| := by
   let e' : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) := Fintype.equivOfCardEq (by
     rw [Fintype.card_subtype_compl, Fintype.card_ofSubsingleton, Fintype.card_fin, rank])
-  simp_rw [regulator_eq_det' K e', logEmbedding, AddMonoidHom.coe_mk, ZeroHom.coe_mk]
+  simp_rw [regulator_eq_det'' K e', logEmbedding, AddMonoidHom.coe_mk, ZeroHom.coe_mk]
   exact abs_det_eq_abs_det K (fun i ↦ fundSystem K i) e' e
 
-example (e : {w // w ≠ (w₀ : InfinitePlace K)} ≃ Fin (rank K)) :
+theorem regulator_eq_det' (e : {w // w ≠ (w₀ : InfinitePlace K)} ≃ Fin (rank K)) :
     regulator K =
-      (Matrix.det fun i w : InfinitePlace K ↦
+      |(Matrix.of (fun i w : InfinitePlace K ↦
         if h : i = w₀ then 1
-        else w.mult * (w (fundSystem K (e ⟨i, h⟩))).log) := by sorry
-  
+        else w.mult * (w (fundSystem K (e ⟨i, h⟩))).log)).det| := by
   sorry
