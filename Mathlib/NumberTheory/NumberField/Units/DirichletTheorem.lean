@@ -377,37 +377,28 @@ theorem unitLattice_rank :
     finrank ℤ (unitLattice K) = Units.rank K := by
   rw [← Units.finrank_eq_rank, Zlattice.rank ℝ]
 
--- <<<<<<< HEAD
--- /-- The map obtained by quotienting by the kernel of `logEmbedding`. -/
--- def logEmbeddingQuot :
---     Additive ((𝓞 K)ˣ ⧸ (torsion K)) →+ ({w : InfinitePlace K // w ≠ w₀} → ℝ) :=
---   MonoidHom.toAdditive' <|
---     (QuotientGroup.kerLift (AddMonoidHom.toMultiplicative' (logEmbedding K))).comp
---       (QuotientGroup.quotientMulEquivOfEq (by
---         ext
---         rw [MonoidHom.mem_ker, AddMonoidHom.toMultiplicative'_apply_apply, ofAdd_eq_one,
---           ← logEmbedding_eq_zero_iff]
---         rfl)).toMonoidHom
--- =======
--- #adaptation_note
--- /--
--- After https://github.com/leanprover/lean4/pull/4119
--- the `Module ℤ (Additive ((𝓞 K)ˣ ⧸ NumberField.Units.torsion K))` instance required below isn't found
--- unless we use `set_option maxSynthPendingDepth 2`, or add
--- explicit instances:
--- ```
--- local instance : CommGroup (𝓞 K)ˣ := inferInstance
--- ```
--- -/
--- set_option maxSynthPendingDepth 2 -- Note this is active for the remainder of the file.
+/-- The map obtained by quotienting by the kernel of `logEmbedding`. -/
+def logEmbeddingQuot :
+    Additive ((𝓞 K)ˣ ⧸ (torsion K)) →+ ({w : InfinitePlace K // w ≠ w₀} → ℝ) :=
+  MonoidHom.toAdditive' <|
+    (QuotientGroup.kerLift (AddMonoidHom.toMultiplicative' (logEmbedding K))).comp
+      (QuotientGroup.quotientMulEquivOfEq (by
+        ext
+        rw [MonoidHom.mem_ker, AddMonoidHom.toMultiplicative'_apply_apply, ofAdd_eq_one,
+          ← logEmbedding_eq_zero_iff]
+        rfl)).toMonoidHom
 
--- private theorem unitLatticeEquiv_aux1 :
---     (logEmbedding K).ker = (MonoidHom.toAdditive (QuotientGroup.mk' (torsion K))).ker := by
---   ext
---   rw [MonoidHom.coe_toAdditive_ker, QuotientGroup.ker_mk', AddMonoidHom.mem_ker,
---     logEmbedding_eq_zero_iff]
---   rfl
--- >>>>>>> origin/master
+#adaptation_note
+/--
+After https://github.com/leanprover/lean4/pull/4119
+the `Module ℤ (Additive ((𝓞 K)ˣ ⧸ NumberField.Units.torsion K))` instance required below isn't found
+unless we use `set_option maxSynthPendingDepth 2`, or add
+explicit instances:
+```
+local instance : CommGroup (𝓞 K)ˣ := inferInstance
+```
+-/
+set_option maxSynthPendingDepth 2 -- Note this is active for the remainder of the file.
 
 @[simp]
 theorem logEmbeddingQuot_apply (x : (𝓞 K)ˣ) :
