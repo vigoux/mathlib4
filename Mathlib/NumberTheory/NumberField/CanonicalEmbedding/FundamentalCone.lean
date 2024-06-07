@@ -337,6 +337,27 @@ theorem isBounded_normLessThanOne :
     rwa [mul_le_iff_le_one_left hr₁, Real.norm_eq_abs, abs_eq_self.mpr hc₁.le]
   exact (Set.image_subset _ hr₂) hc₂
 
+theorem frontier_normLessThanOne :
+    frontier (normLessThanOne K) ⊆ frontier (fundamentalCone K) ∪ normEqOne K := by
+  rw [show normLessThanOne K = fundamentalCone K ∩ {x | mixedEmbedding.norm x ≤ 1} by ext; simp]
+  refine le_trans (frontier_inter_subset _ _) ?_
+  intro x hx
+  cases hx with
+  | inl h =>
+      left
+      exact Set.mem_of_mem_inter_left h
+  | inr h =>
+      rw [show frontier {x | mixedEmbedding.norm x ≤ 1} = {x | mixedEmbedding.norm x = 1} by sorry]
+        at h
+      by_cases hx : x ∈ fundamentalCone K
+      · right
+        refine ⟨hx, h.2⟩
+      · left
+        have : x ∉ interior (fundamentalCone K) := by
+          by_contra h
+          exact hx <| interior_subset h
+        refine ⟨h.1, this⟩
+
 theorem measurableSet_normEqOne :
     MeasurableSet (normEqOne K) :=
   MeasurableSet.inter (measurableSet K) <|
@@ -812,7 +833,7 @@ theorem volume_normEqOne :
   exact ENNReal.tendsto_inv_nat_nhds_zero
 
 theorem frontier_normLessThanOne' :
-    frontier (normLessThanOne K) ⊆ closure (normEqOne K) := by
+    frontier (normLessThanOne K) ⊆ frontier X ∪ normEqOne K := by
 
   have := Continuous.frontier_preimage_subset (X := fundamentalCone K) (f := Subtype.val) sorry
     (t := {x | mixedEmbedding.norm x ≤ 1})
