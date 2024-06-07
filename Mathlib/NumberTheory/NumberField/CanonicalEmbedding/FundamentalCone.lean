@@ -423,6 +423,18 @@ def jacobian : (InfinitePlace K → ℝ) → (InfinitePlace K → ℝ) →L[ℝ]
   intro i
   exact (prodNormUnitsEval K i c • ∑ w, (jacobianCoeff K i w c) • ContinuousLinearMap.proj w)
 
+theorem jacobian_det (c : InfinitePlace K → ℝ) :
+    (jacobian K c).det = 1 := by
+  have : LinearMap.toMatrix' (jacobian K c) =
+      Matrix.of fun i w ↦ prodNormUnitsEval K i c * jacobianCoeff K i w c := by
+    ext; simp [jacobian]
+  rw [ContinuousLinearMap.det, ← LinearMap.det_toMatrix', this]
+  rw [Matrix.det_mul_column]
+  
+  sorry
+
+#exit
+
 abbrev normLessThanOne₁ : Set ((InfinitePlace K) → ℝ) :=
   normUnitsEval K '' (Set.univ.pi fun _ ↦ Set.Ico 0 1)
 
