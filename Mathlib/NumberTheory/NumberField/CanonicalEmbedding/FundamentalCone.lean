@@ -393,6 +393,16 @@ theorem normUnits_pos (i : {w : InfinitePlace K // w ≠ w₀}) (w : InfinitePla
 def normUnitsEval₀ (i w : InfinitePlace K) : (InfinitePlace K → ℝ) → ℝ :=
   fun x ↦ if hi : i = w₀ then x w₀ else normUnits K ⟨i, hi⟩ w ^ (x i)
 
+theorem prod_normUnitsEval₀ {i : InfinitePlace K} (hi : i ≠ w₀) {c : InfinitePlace K → ℝ} :
+    ∏ w : InfinitePlace K, normUnitsEval₀ K i w c = 1 := by
+  simp_rw [normUnitsEval₀, dif_neg hi, normUnits]
+  rw [Real.finset_prod_rpow]
+  rw [prod_eq_abs_norm]
+  simp_rw [Units.norm, Rat.cast_one, Real.one_rpow]
+  intro w _
+  refine pow_nonneg ?_ _
+  exact apply_nonneg _ _
+
 def FDeriv_normUnitsEval₀ (i w : InfinitePlace K) (x : InfinitePlace K → ℝ) :
     (InfinitePlace K → ℝ) →L[ℝ] ℝ := by
   exact if hi : i = w₀ then ContinuousLinearMap.proj w₀ else
@@ -414,6 +424,13 @@ def normUnitsEval : (InfinitePlace K → ℝ) → InfinitePlace K → ℝ :=
 def prodNormUnitsEval (w : InfinitePlace K) (c : InfinitePlace K → ℝ) : ℝ :=
   ∏ i ∈ Finset.univ.erase w₀, normUnitsEval₀ K i w c
 
+theorem prod_prodNormUnitsEval {c : InfinitePlace K → ℝ} :
+    ∏ i, prodNormUnitsEval K i c = 1 := by
+  simp_rw [prodNormUnitsEval]
+  rw [Finset.prod_comm]
+  rw [Finset.prod_congr rfl fun w hw ↦ prod_normUnitsEval₀ K (Finset.mem_erase.mp hw).1]
+  rw [Finset.prod_const_one]
+
 def jacobianCoeff (w i : InfinitePlace K) : (InfinitePlace K → ℝ) → ℝ :=
     fun c ↦ if hi : i = w₀ then 1 else (c w₀) * normUnits K ⟨i, hi⟩ w
 
@@ -430,7 +447,7 @@ theorem jacobian_det (c : InfinitePlace K → ℝ) :
     ext; simp [jacobian]
   rw [ContinuousLinearMap.det, ← LinearMap.det_toMatrix', this]
   rw [Matrix.det_mul_column]
-  
+
   sorry
 
 #exit
