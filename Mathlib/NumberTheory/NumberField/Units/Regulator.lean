@@ -97,10 +97,17 @@ theorem _root_.NumberField.Units.abs_det_eq_abs_det (u : Fin (rank K) → (𝓞 
 /-- For any infinite place `w'`, the regulator is equal to the absolute value of the determinant
 of the matrix `(mult w * log w (fundSystem K i)))_i, {w ≠ w'}`. -/
 theorem regulator_eq_det (w' : InfinitePlace K) (e : {w // w ≠ w'} ≃ Fin (rank K)) :
-    regulator K =
-      |(Matrix.of fun i w : {w // w ≠ w'} ↦ (mult w.val : ℝ) *
-        Real.log (w.val (fundSystem K (e i) : K))).det| := by
+    regulator K = |(Matrix.of fun i w : {w // w ≠ w'} ↦ (mult w.val : ℝ) *
+      (w.val (fundSystem K (e i) : K)).log).det| := by
   let e' : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) := Fintype.equivOfCardEq (by
     rw [Fintype.card_subtype_compl, Fintype.card_ofSubsingleton, Fintype.card_fin, rank])
   simp_rw [regulator_eq_det' K e', logEmbedding, AddMonoidHom.coe_mk, ZeroHom.coe_mk]
   exact abs_det_eq_abs_det K (fun i ↦ fundSystem K i) e' e
+
+example (e : {w // w ≠ (w₀ : InfinitePlace K)} ≃ Fin (rank K)) :
+    regulator K =
+      (Matrix.det fun i w : InfinitePlace K ↦
+        if h : i = w₀ then 1
+        else w.mult * (w (fundSystem K (e ⟨i, h⟩))).log) := by sorry
+  
+  sorry

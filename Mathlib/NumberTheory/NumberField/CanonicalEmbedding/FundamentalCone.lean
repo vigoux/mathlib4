@@ -6,7 +6,6 @@ Authors: Xavier Roblot
 import Mathlib.Analysis.Calculus.FDeriv.Pi
 import Mathlib.NumberTheory.NumberField.Units.Regulator
 
-
 -- import Mathlib.Sandbox
 
 /-!
@@ -297,7 +296,7 @@ theorem isBounded_normEqOne :
     suffices ‖logMap x‖ ≤ r by exact (pi_norm_le_iff_of_nonneg hr₁.le).mp this ⟨w, hw⟩
     exact mem_closedBall_zero_iff.mp (hr₂ hx.1.1)
   have h₂ : ∀ ⦃x⦄, x ∈ normEqOne K → mult (w₀ : InfinitePlace K) * Real.log (normAtPlace w₀ x) ≤
-      (Finset.univ.erase w₀).card • r := by
+      (Finset.univ.erase (w₀ : InfinitePlace K)).card • r := by
     intro x hx
     suffices mult (w₀ : InfinitePlace K) * Real.log (normAtPlace w₀ x) =
         - ∑ w ∈ Finset.univ.erase w₀, mult w * Real.log (normAtPlace w x) by
@@ -432,7 +431,7 @@ theorem prod_prodNormUnitsEval {c : InfinitePlace K → ℝ} :
   rw [Finset.prod_const_one]
 
 def jacobianCoeff (w i : InfinitePlace K) : (InfinitePlace K → ℝ) → ℝ :=
-    fun c ↦ if hi : i = w₀ then 1 else (c w₀) * normUnits K ⟨i, hi⟩ w
+    fun c ↦ if hi : i = w₀ then 1 else (c w₀) * (normUnits K ⟨i, hi⟩ w).log
 
 def jacobian : (InfinitePlace K → ℝ) → (InfinitePlace K → ℝ) →L[ℝ] InfinitePlace K → ℝ := by
   intro c
@@ -447,10 +446,10 @@ theorem jacobian_det (c : InfinitePlace K → ℝ) :
     ext; simp [jacobian]
   rw [ContinuousLinearMap.det, ← LinearMap.det_toMatrix', this]
   rw [Matrix.det_mul_column]
-
+  rw [prod_prodNormUnitsEval, one_mul]
+  simp_rw [jacobianCoeff, normUnits, Real.log_pow]
+  
   sorry
-
-#exit
 
 abbrev normLessThanOne₁ : Set ((InfinitePlace K) → ℝ) :=
   normUnitsEval K '' (Set.univ.pi fun _ ↦ Set.Ico 0 1)
@@ -517,10 +516,31 @@ theorem hasFDeriv_normUnitsEval (c : InfinitePlace K → ℝ) :
   rw [one_smul]
   rw [smul_add]
   congr 3
-  sorry
-  sorry
+  · simp_rw [normUnitsEval₀, dif_pos, dite_smul]
+
+    sorry
+  · sorry
+  · sorry
+
+theorem volume_normLessOne₁ :
+    (volume (normLessThanOne₁ K)).toReal = regulator K := by
+  let s : Set (InfinitePlace K → ℝ) := Set.univ.pi fun _ ↦ Set.Ico 0 1
+  have hs : MeasurableSet s := sorry
+  have hf₁ : Set.InjOn (normUnitsEval K) s := sorry
+  have hf₂ : Measurable (normUnitsEval K) := sorry
+  have hf₃ := fun c ↦ hasFDeriv_normUnitsEval K c
+  have t₀ := lintegral_image_eq_lintegral_abs_det_fderiv_mul volume hs (fun c _ ↦
+    HasFDerivAt.hasFDerivWithinAt (hf₃ c)) hf₁ (fun _ ↦ 1)
+
+  simp only [lintegral_const, MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter, one_mul,
+    mul_one] at t₀
   sorry
 
+#exit
+  have hf₃ : ∀ x ∈ s, HasFDerivWithinAt (normUnitsEval K) (fDeriv_normUnitsEval K x) s x := sorry
+  have t₀ := lintegral_image_eq_lintegral_abs_det_fderiv_mul volume hs hf₃ hf₁ (fun _ ↦ 1)
+  simp only [lintegral_const, MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter, one_mul,
+    mul_one]
 
 
 #exit
