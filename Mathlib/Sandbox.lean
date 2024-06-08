@@ -1,5 +1,74 @@
 -- import Mathlib.NumberTheory.NumberField.CanonicalEmbedding.FundamentalCone
-import Mathlib
+import Mathlib.Topology.Algebra.Module.Basic
+
+def ContinuousLinearEquiv.piCongrRight {R : Type*} [Semiring R] {ι : Type*} {M : ι → Type*}
+    [∀ i, TopologicalSpace (M i)] [∀ i, AddCommMonoid (M i)] [∀ i, Module R (M i)] {N : ι → Type*}
+    [∀ i, TopologicalSpace (N i)] [∀ i, AddCommMonoid (N i)] [∀ i, Module R (N i)]
+    (f : (i : ι) → M i ≃L[R] N i) :
+    ((i : ι) → M i) ≃L[R] (i : ι) → N i :=
+  { LinearEquiv.piCongrRight fun i ↦ f i with
+    continuous_toFun := by
+      exact continuous_pi fun i ↦ (f i).continuous_toFun.comp (continuous_apply i)
+    continuous_invFun := by
+      exact continuous_pi fun i => (f i).continuous_invFun.comp (continuous_apply i) }
+
+@[simp]
+theorem ContinuousLinearEquiv.piCongrRight_apply {R : Type*} [Semiring R] {ι : Type*}
+    {M : ι → Type*} [∀ i, TopologicalSpace (M i)] [∀ i, AddCommMonoid (M i)] [∀ i, Module R (M i)]
+    {N : ι → Type*} [∀ i, TopologicalSpace (N i)] [∀ i, AddCommMonoid (N i)] [∀ i, Module R (N i)]
+    (f : (i : ι) → M i ≃L[R] N i) (m : (i : ι) → M i) (i : ι) :
+    ContinuousLinearEquiv.piCongrRight f m i = (f i) (m i) := rfl
+
+def ContinuousLinearEquiv.neg (R : Type*) {M : Type*} [Semiring R] [AddCommGroup M]
+    [TopologicalSpace M] [ContinuousNeg M] [Module R M] :
+    M ≃L[R] M :=
+  { LinearEquiv.neg R with
+    continuous_toFun := continuous_neg
+    continuous_invFun := continuous_neg }
+
+@[simp]
+theorem ContinuousLinearEquiv.coe_neg {R : Type*} {M : Type*} [Semiring R] [AddCommGroup M]
+    [TopologicalSpace M] [ContinuousNeg M] [Module R M] :
+    ⇑(neg R : M ≃L[R] M) = -id := rfl
+
+theorem ContinuousLinearEquiv.neg_apply {R : Type*} {M : Type*} [Semiring R] [AddCommGroup M]
+    [TopologicalSpace M] [ContinuousNeg M] [Module R M] (x : M) : neg R x = -x := by simp
+
+@[simp]
+theorem ContinuousLinearEquiv.symm_neg {R : Type*} {M : Type*} [Semiring R] [AddCommGroup M]
+    [TopologicalSpace M] [ContinuousNeg M] [Module R M] :
+    (neg R : M ≃L[R] M).symm = neg R := rfl
+
+#exit
+
+  { LinearEquiv.piCongrRight fun i ↦ (f i).toLinearEquiv with
+    toFun := sorry
+  }
+-- piCongrRight_apply
+-- piCongrRight_apply
+#exit
+open MeasureTheory Classical
+
+example {ι : Type*} [Fintype ι] {E F : Type*} [MeasureSpace E] [MeasureSpace F]
+    [hE : TopologicalSpace E] [BorelSpace E]
+    [SFinite (volume : Measure E)] [SFinite (volume : Measure F)]
+    (e : ι → E ≃ᵐ F) (h : ∀ i, MeasurePreserving (e i) volume volume) :
+    MeasurePreserving (MeasurableEquiv.piCongrRight e) volume volume := by
+  convert ((MeasurableEquiv.piCongrRight e).symm.measurable.measurePreserving volume).symm
+  have := pi_eq_generateFrom (T := fun _ : ι ↦ hE)
+  let A := {g : Set (ι → E) | ∃ (s : ι → Set E) (i : Finset ι),
+    (∀ a ∈ i, IsOpen (s a)) ∧ g = i.toSet.pi s}
+  refine Measure.ext_of_generateFrom_of_cover _ _ _ _ _ _ _
+#exit
+
+
+def MeasurePreserving.piCongrRight {δ δ' : Type*} {π : δ' → Type*} {π' : δ' → Type*}
+    [(x : δ') → MeasureSpace (π x)] [(x : δ') → MeasureSpace (π' x)]
+    (e : (a : δ') → π a → π' a) (h : ∀ a : δ', MeasurePreserving (e a) volume volume) :
+    MeasurePreserving
+      (fun a x ↦ x (e a) (x a) : ((a : δ') → π a) → ((a : δ') → π' a)) volume volume := sorry
+
+#exit
 
 section FDeriv
 
@@ -11,7 +80,7 @@ example (p : ι → ℝ) : sorry := by
   have := fun i ↦ HasFDerivAt.const_rpow (E := ι → ℝ) (c := (2:ℝ)) (f := fun x ↦ x i)
       (f' := ContinuousLinearMap.proj i) (x := p) (hasFDerivAt_apply i p) zero_lt_two
   have := HasFDerivAt.finset_prod (ι := ι) (u := Finset.univ) (fun i _ ↦ this i)
-  
+
 
 #exit
 
