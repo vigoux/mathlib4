@@ -19,6 +19,13 @@ theorem ContinuousLinearEquiv.piCongrRight_apply {R : Type*} [Semiring R] {ι : 
     (f : (i : ι) → M i ≃L[R] N i) (m : (i : ι) → M i) (i : ι) :
     ContinuousLinearEquiv.piCongrRight f m i = (f i) (m i) := rfl
 
+@[simp]
+theorem ContinuousLinearEquiv.piCongrRight_symm_apply {R : Type*} [Semiring R] {ι : Type*}
+    {M : ι → Type*} [∀ i, TopologicalSpace (M i)] [∀ i, AddCommMonoid (M i)] [∀ i, Module R (M i)]
+    {N : ι → Type*} [∀ i, TopologicalSpace (N i)] [∀ i, AddCommMonoid (N i)] [∀ i, Module R (N i)]
+    (f : (i : ι) → M i ≃L[R] N i) (n : (i : ι) → N i) (i : ι) :
+    (ContinuousLinearEquiv.piCongrRight f).symm n i = (f i).symm (n i) := rfl
+
 def ContinuousLinearEquiv.neg (R : Type*) {M : Type*} [Semiring R] [AddCommGroup M]
     [TopologicalSpace M] [ContinuousNeg M] [Module R M] :
     M ≃L[R] M :=

@@ -379,10 +379,17 @@ theorem volume_normLessOne₀_aux (s : Finset {w : InfinitePlace K // IsReal w})
     volume (normLessThanOne K) = 2 ^ Finset.card s *
       volume {x | x ∈ normLessThanOne K ∧ ∀ w ∈ s, x.1 w > 0} := by
   induction s using Finset.induction with
-  | empty =>
-      sorry
+  | empty => simp
   | @insert w s hs h_ind =>
-      have f₁ : ∀ ⦃x⦄, x ∈ fundamentalCone K → x.1 w ≠ 0 := sorry
+      have f₁ : ∀ ⦃x⦄, x ∈ fundamentalCone K → x.1 w ≠ 0 := by
+        intro x hx
+        contrapose! hx
+        have : mixedEmbedding.norm x = 0 := by
+          rw [mixedEmbedding.norm_eq_zero_iff]
+          refine ⟨w, ?_⟩
+          rw [normAtPlace_apply_isReal w.prop]
+          rw [hx, norm_zero]
+        exact Set.not_mem_diff_of_mem this
       have f₂ : MeasurableSet {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w < 0} := sorry
       have h₁ : {x | x ∈ normLessThanOne K ∧ ∀ z ∈ s, x.1 z > 0} =
           {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w > 0} ∪
@@ -411,9 +418,9 @@ theorem volume_normLessOne₀_aux (s : Finset {w : InfinitePlace K // IsReal w})
           convert (T.toHomeomorph.toMeasurableEquiv.measurable.measurePreserving volume)
           rw [Homeomorph.toMeasurableEquiv_coe, ContinuousLinearEquiv.coe_toHomeomorph]
           rw [show Measure.map (⇑T) volume =
-            ((Pi.basisFun ℝ {w : InfinitePlace K // w.IsReal}).map T.toLinearEquiv).addHaar by sorry]
---          simp_rw [← addHaarMeasure_eq_volume_pi, ← Basis.parallelepiped_basisFun,
---            ← Basis.addHaar_def, Basis.map_addHaar]
+            ((Pi.basisFun ℝ {w : InfinitePlace K // w.IsReal}).map T.toLinearEquiv).addHaar by
+              rw [← addHaarMeasure_eq_volume_pi, ← Basis.parallelepiped_basisFun,
+                ← Basis.addHaar_def, Basis.map_addHaar]]
           rw [eq_comm, Basis.addHaar_eq_iff]
           rw [volume_pi]
           rw [Basis.coe_parallelepiped]
@@ -421,16 +428,45 @@ theorem volume_normLessOne₀_aux (s : Finset {w : InfinitePlace K // IsReal w})
           rw [Basis.map_repr]
           simp_rw [LinearEquiv.trans_apply, Pi.basisFun_repr]
           have : {x | ∀ (i : { w // w.IsReal }), T.symm x i ∈ Set.Icc 0 1} =
-            Set.univ.pi fun z ↦ if z = w then Set.Icc (-1) 0 else Set.Icc 0 1 := by sorry
+              Set.univ.pi fun z ↦ if z = w then Set.Icc (-1) 0 else Set.Icc 0 1 := by
+            ext
+            simp_rw [Set.mem_setOf_eq, Set.mem_pi, Set.mem_univ, true_implies]
+            refine forall_congr' fun z ↦ ?_
+            dsimp [T]
+            by_cases hz : z = w
+            · simp_rw [if_pos hz, ContinuousLinearEquiv.symm_neg, ContinuousLinearEquiv.coe_neg]
+              simp only [ContinuousLinearEquiv.symm_neg, ContinuousLinearEquiv.coe_neg,
+                Pi.neg_apply, id_eq, Set.mem_Icc, Left.nonneg_neg_iff]
+              rw [neg_le, and_comm]
+            · simp_rw [if_neg hz, ContinuousLinearEquiv.refl_symm, ContinuousLinearEquiv.coe_refl',
+                id_eq]
           erw [this, Measure.pi_pi]
           simp [apply_ite]
         simp_rw [Measure.volume_eq_prod, ← (hT.prod (MeasurePreserving.id _)).measure_preimage f₂,
           Set.preimage_setOf_eq, Prod.map]
         congr! 4 with x
         · simp_rw [id_eq, Set.mem_setOf_eq]
-          have : ∀ x, mixedEmbedding.norm (T x.1, x.2) = mixedEmbedding.norm x := sorry
-          rw [this]
-          have : ∀ x, (T x.1, x.2) ∈ fundamentalCone K ↔ x ∈ fundamentalCone K := sorry
+          have hx₁ : ∀ x, ∀ z, normAtPlace z (T x.1, x.2) = normAtPlace z x := by
+            intro x z
+            dsimp [T]
+            by_cases hz : IsReal z
+            · simp_rw [normAtPlace_apply_isReal hz, ContinuousLinearEquiv.piCongrRight_apply]
+              by_cases hz' : ⟨z, hz⟩ = w
+              · rw [if_pos hz', ContinuousLinearEquiv.coe_neg, Pi.neg_apply, id_eq, norm_neg]
+              · rw [if_neg hz', ContinuousLinearEquiv.coe_refl', id_eq]
+            · simp_rw [normAtPlace_apply_isComplex (not_isReal_iff_isComplex.mp hz)]
+          have hx₂ : ∀ x, mixedEmbedding.norm (T x.1, x.2) = mixedEmbedding.norm x := by
+            intro x
+            simp_rw [mixedEmbedding.norm_apply, hx₁]
+          rw [hx₂]
+          have : ∀ x, (T x.1, x.2) ∈ fundamentalCone K ↔ x ∈ fundamentalCone K := by
+            intro x
+            simp_rw [fundamentalCone, Set.mem_diff, Set.mem_preimage]
+            have : logMap (T x.1, x.2) = logMap x := by
+              unfold logMap
+              ext
+              simp [hx₁, hx₂]
+            simp_rw [this, Set.mem_setOf_eq, hx₂]
           rw [this]
         · simp [T]
           intro hw
