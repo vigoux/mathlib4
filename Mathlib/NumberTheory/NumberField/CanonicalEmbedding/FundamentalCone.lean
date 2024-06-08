@@ -403,28 +403,68 @@ theorem volume_normLessOne₀_aux (s : Finset {w : InfinitePlace K // IsReal w})
         exact hy.le
       have h₃ : volume {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w < 0} =
           volume {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w > 0} := by
-        let f : (E K) → (E K) := fun x ↦ ⟨fun z ↦ if z = w then - x.1 z else x.1 z, x.2⟩
-        have hf₁ : MeasurePreserving f := sorry
+        let f₀ : ({w : InfinitePlace K // IsReal w} → ℝ) ≃L[ℝ]
+          {w : InfinitePlace K // IsReal w} → ℝ :=
+        {
+          toFun := fun x z ↦ if z = w then - x w else x w
+          map_add' := sorry
+          map_smul' := sorry
+          invFun := sorry
+          left_inv := sorry
+          right_inv := sorry
+          continuous_toFun := sorry
+          continuous_invFun := sorry
+        }
+
+
+
+
+
+        let f : (E K) ≃L[ℝ] (E K) := by
+          refine ContinuousLinearEquiv.prod f₀ (ContinuousLinearEquiv.refl _ _)
+
+          -- refine MeasurableEquiv.prodCongr ?_ ?_
+          -- · refine MeasurableEquiv.piCongrRight ?_
+          --   intro z
+          --   exact if z = w then MeasurableEquiv.neg _ else MeasurableEquiv.refl _
+          -- · exact MeasurableEquiv.refl _
+        have hf₁ : MeasurePreserving f := by
+          convert (f.toHomeomorph.toMeasurableEquiv.measurable.measurePreserving volume)
+          simp_rw [Measure.volume_eq_prod, ← addHaarMeasure_eq_volume_pi,
+            ← Basis.parallelepiped_basisFun]
+          simp only [Homeomorph.toMeasurableEquiv_coe, ContinuousLinearEquiv.coe_toHomeomorph]
+          erw [← Measure.map_prod_map]
+          · simp only [Measure.map_id']
+            congr
+
+
+            erw [← Basis.addHaar, Basis.map_addHaar _ f₀, eq_comm]
+            refine (Basis.addHaar_eq_iff _ _).mpr ?_
+            simp only [Basis.coe_parallelepiped]
+            
+
+          -- · simp only [MeasurableEquiv.coe_toEquiv, MeasurableEquiv.refl_toEquiv, Equiv.coe_refl,
+          --   Measure.map_id]
+          --   congr
+          --   erw [← Basis.addHaar, Basis.map_addHaar]
+
+
+          --   sorry
+          -- · sorry
+          -- · sorry
+
+--        let f : (E K) → (E K) := fun x ↦ ⟨fun z ↦ if z = w then - x.1 z else x.1 z, x.2⟩
+--        have hf₁ : MeasurePreserving f := by
+
         have hf₂ : ∀ x, mixedEmbedding.norm (f x) = mixedEmbedding.norm x := sorry
         have hf₃ : ∀ x, f x ∈ normLessThanOne K ↔ x ∈ normLessThanOne K := sorry
         rw [← hf₁.measure_preimage f₂]
-        simp_rw [Set.preimage_setOf_eq, if_pos, hf₃]
-        simp_rw [Left.neg_neg_iff]
-#exit
-        simp only [Set.mem_setOf_eq, gt_iff_lt, Subtype.forall, Set.preimage_setOf_eq, ↓reduceIte,
-          Left.neg_neg_iff, hf₂, hf₃]
-
-        ext
-        simp
-        congr! 2
-        · exact hf₃ _
-        · rw [hf₂]
-        · refine ⟨?_, ?_⟩
-          · intro h z hz hz'
-            specialize h z hz
-            sorry
-          ·
-            sorry
+        have : ∀ x, ∀ z ∈ s, (f x).1 z = x.1 z := sorry
+        simp_rw [Set.preimage_setOf_eq, hf₃, gt_iff_lt]
+        congr! 5
+        · sorry
+        · sorry
+--        refine ne_of_mem_of_not_mem hz hs
       rw [h_ind, h₁, measure_union h₂, h₃, ← two_mul, ← mul_assoc, ← pow_succ]
       congr
       · exact (Finset.card_insert_of_not_mem hs).symm
