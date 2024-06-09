@@ -1,5 +1,7 @@
 -- import Mathlib.NumberTheory.NumberField.CanonicalEmbedding.FundamentalCone
 import Mathlib.Topology.Algebra.Module.Basic
+import Mathlib.MeasureTheory.Constructions.Prod.Basic
+import Mathlib.MeasureTheory.Constructions.Pi
 
 def ContinuousLinearEquiv.piCongrRight {R : Type*} [Semiring R] {ι : Type*} {M : ι → Type*}
     [∀ i, TopologicalSpace (M i)] [∀ i, AddCommMonoid (M i)] [∀ i, Module R (M i)] {N : ι → Type*}
@@ -48,13 +50,30 @@ theorem ContinuousLinearEquiv.symm_neg {R : Type*} {M : Type*} [Semiring R] [Add
 
 #exit
 
+open MeasureTheory Classical
+
+example {ι : Type*} [Fintype ι] {E F : Type*} [MeasureSpace E] [MeasureSpace F]
+    [SFinite (volume : Measure E)] [SFinite (volume : Measure F)]
+    (e : E → F) (h : MeasurePreserving e volume volume) (s : Finset ι) :
+    MeasurePreserving (fun x i ↦  e (x i) : (s → E) → s → F) volume volume := by
+  induction s using Finset.induction with
+  | empty =>
+      sorry
+
+  | insert =>
+
+      sorry
+
+
+#exit
+
   { LinearEquiv.piCongrRight fun i ↦ (f i).toLinearEquiv with
     toFun := sorry
   }
 -- piCongrRight_apply
 -- piCongrRight_apply
 #exit
-open MeasureTheory Classical
+
 
 example {ι : Type*} [Fintype ι] {E F : Type*} [MeasureSpace E] [MeasureSpace F]
     [hE : TopologicalSpace E] [BorelSpace E]

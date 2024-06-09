@@ -390,7 +390,29 @@ theorem volume_normLessOne₀_aux (s : Finset {w : InfinitePlace K // IsReal w})
           rw [normAtPlace_apply_isReal w.prop]
           rw [hx, norm_zero]
         exact Set.not_mem_diff_of_mem this
-      have f₂ : MeasurableSet {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w < 0} := sorry
+      have f₂ : MeasurableSet {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w < 0} := by
+        refine MeasurableSet.inter (measurableSet_normLessThanOne K) (MeasurableSet.inter ?_ ?_)
+        · have : (fun x : E K ↦ ∀ z ∈ s, x.1 z > 0) = ⋂ z ∈ s, {x | x.1 z > 0} := by
+
+#exit
+
+          -- rw [show {x | ∀ z ∈ s, x.1 z > 0} = ⋂ z ∈ s, {x | x.1 z > 0} by sorry]
+          convert MeasurableSet.iInter (β := {w : InfinitePlace K // IsReal w})
+            (f := fun z ↦ {x : E K | x.1 z > 0}) ?_
+          swap
+          · sorry
+          swap
+
+          · exact s.toSet
+          · rfl
+          ·
+            intro _
+            refine measurableSet_lt (f := fun _ ↦ (0 : ℝ)) measurable_const ?_
+            exact Measurable.comp (measurable_pi_apply _) measurable_fst
+          · simp
+
+        · refine measurableSet_lt (g := fun _ ↦ (0 : ℝ)) ?_ measurable_const
+          exact Measurable.comp (measurable_pi_apply w) measurable_fst
       have h₁ : {x | x ∈ normLessThanOne K ∧ ∀ z ∈ s, x.1 z > 0} =
           {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w > 0} ∪
           {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w < 0} := by
