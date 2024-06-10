@@ -2,6 +2,7 @@
 import Mathlib.Topology.Algebra.Module.Basic
 import Mathlib.MeasureTheory.Constructions.Prod.Basic
 import Mathlib.MeasureTheory.Constructions.Pi
+import Mathlib.Analysis.SpecialFunctions.PolarCoord
 
 def ContinuousLinearEquiv.piCongrRight {R : Type*} [Semiring R] {ι : Type*} {M : ι → Type*}
     [∀ i, TopologicalSpace (M i)] [∀ i, AddCommMonoid (M i)] [∀ i, Module R (M i)] {N : ι → Type*}
@@ -48,22 +49,23 @@ theorem ContinuousLinearEquiv.symm_neg {R : Type*} {M : Type*} [Semiring R] [Add
     [TopologicalSpace M] [ContinuousNeg M] [Module R M] :
     (neg R : M ≃L[R] M).symm = neg R := rfl
 
+theorem Complex.integral_pi_comp_polarCoord_symm {ι E : Type*} [Fintype ι] [NormedCommRing E]
+    [NormedSpace ℝ E] (f : (ι → ℂ) → E) :
+    ∫ (p : ι → ℝ × ℝ) in Set.univ.pi fun _ ↦ polarCoord.target,
+      (∏ i, (p i).1) • f (fun i ↦ Complex.polarCoord.symm (p i)) =
+    ∫ (p : ι → ℂ), f p := by
+  sorry
+
+
 #exit
+
 
 open MeasureTheory Classical
 
-example {ι : Type*} [Fintype ι] {E F : Type*} [MeasureSpace E] [MeasureSpace F]
+theorem MeasurePreserving.pi {ι : Type*} [Fintype ι] {E F : Type*} [MeasureSpace E] [MeasureSpace F]
     [SFinite (volume : Measure E)] [SFinite (volume : Measure F)]
-    (e : E → F) (h : MeasurePreserving e volume volume) (s : Finset ι) :
-    MeasurePreserving (fun x i ↦  e (x i) : (s → E) → s → F) volume volume := by
-  induction s using Finset.induction with
-  | empty =>
-      sorry
-
-  | insert =>
-
-      sorry
-
+    (e : E → F) (h : MeasurePreserving e volume volume) :
+    MeasurePreserving (fun x i ↦  e (x i) : (ι → E) → ι → F) volume volume := sorry
 
 #exit
 
