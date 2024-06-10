@@ -307,19 +307,8 @@ theorem Monotone.mul (hf : Monotone f) (hg : Monotone g) (hf₀ : ∀ x, 0 ≤ f
 
 end Monotone
 
-section
-set_option linter.deprecated false
-
-theorem bit1_pos [Nontrivial α] (h : 0 ≤ a) : 0 < bit1 a :=
-  zero_lt_one.trans_le <| bit1_zero.symm.trans_le <| bit1_mono h
-#align bit1_pos bit1_pos
-
-theorem bit1_pos' (h : 0 < a) : 0 < bit1 a := by
-  nontriviality
-  exact bit1_pos h.le
-#align bit1_pos' bit1_pos'
-
-end
+#noalign bit1_pos
+#noalign bit1_pos'
 
 theorem mul_le_one (ha : a ≤ 1) (hb' : 0 ≤ b) (hb : b ≤ 1) : a * b ≤ 1 :=
   one_mul (1 : α) ▸ mul_le_mul ha hb hb' zero_le_one
