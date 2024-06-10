@@ -438,7 +438,7 @@ theorem bit_cases_on_inj {C : ℕ → Sort u} (H₁ H₂ : ∀ b n, C (bit b n))
 #align nat.bit_cases_on_inj Nat.bit_cases_on_inj
 
 protected theorem bit0_eq_zero {n : ℕ} : bit0 n = 0 ↔ n = 0 :=
-  ⟨Nat.eq_zero_of_add_eq_zero_left, fun h => by simp [h]⟩
+  ⟨Nat.eq_zero_of_add_eq_zero_left, fun h => by rw [h]; rfl⟩
 #align nat.bit0_eq_zero Nat.bit0_eq_zero
 
 theorem bit_eq_zero_iff {n : ℕ} {b : Bool} : bit b n = 0 ↔ n = 0 ∧ b = false := by

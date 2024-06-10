@@ -1589,8 +1589,8 @@ theorem divMod_to_nat (d n : PosNum) :
     (n / d : ℕ) = (divMod d n).1 ∧ (n % d : ℕ) = (divMod d n).2 := by
   rw [Nat.div_mod_unique (PosNum.cast_pos _)]
   induction' n with n IH n IH
-  · exact
-      divMod_to_nat_aux (by simp) (Nat.mul_le_mul_left 2 (PosNum.cast_pos d : (0 : ℕ) < d))
+  · exact divMod_to_nat_aux (by simp [_root_.bit0])
+      (Nat.mul_le_mul_left 2 (PosNum.cast_pos d : (0 : ℕ) < d))
   · unfold divMod
     -- Porting note: `cases'` didn't rewrite at `this`, so `revert` & `intro` are required.
     revert IH; cases' divMod d n with q r; intro IH

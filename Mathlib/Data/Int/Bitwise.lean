@@ -286,7 +286,7 @@ theorem bit1_ne_bit0 (m n : ℤ) : bit1 m ≠ bit0 n :=
 #align int.bit1_ne_bit0 Int.bit1_ne_bit0
 
 @[deprecated]
-theorem bit1_ne_zero (m : ℤ) : bit1 m ≠ 0 := by simpa only [bit0_zero] using bit1_ne_bit0 m 0
+theorem bit1_ne_zero (m : ℤ) : bit1 m ≠ 0 := bit1_ne_bit0 m 0
 #align int.bit1_ne_zero Int.bit1_ne_zero
 
 end deprecated
