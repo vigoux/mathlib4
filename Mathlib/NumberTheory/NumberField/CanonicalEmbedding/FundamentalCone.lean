@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Xavier Roblot
 -/
 import Mathlib.Analysis.Calculus.FDeriv.Pi
+import Mathlib.MeasureTheory.Integral.Marginal
 import Mathlib.NumberTheory.NumberField.Units.Regulator
 
 import Mathlib.Sandbox
@@ -167,9 +168,8 @@ open Classical in
 a scalar, see `smul_mem_of_mem`--, that is also a fundamental domain for the action of `(𝓞 K)ˣ` up
 to roots of unity, see `exists_unitSMul_mem` and `torsion_unitSMul_mem_of_mem`. -/
 def fundamentalCone : Set (E K) :=
-  logMap⁻¹' (Zspan.fundamentalDomain
-    ((Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _)) \
-      {x | mixedEmbedding.norm x = 0}
+  logMap⁻¹' (Zspan.fundamentalDomain ((basisUnitLattice K).ofZlatticeBasis ℝ _)) \
+    {x | mixedEmbedding.norm x = 0}
 
 namespace fundamentalCone
 
@@ -215,7 +215,7 @@ theorem smul_mem_iff_mem {x : E K} {c : ℝ} (hc : c ≠ 0) :
 theorem exists_unitSMul_mem {x : E K} (hx : mixedEmbedding.norm x ≠ 0) :
     ∃ u : (𝓞 K)ˣ, u • x ∈ fundamentalCone K := by
   classical
-  let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ
+  let B := (basisUnitLattice K).ofZlatticeBasis ℝ
   rsuffices ⟨⟨_, ⟨u, _, rfl⟩⟩, hu⟩ : ∃ e : unitLattice K, e + logMap x ∈ Zspan.fundamentalDomain B
   · exact ⟨u, by rwa [Set.mem_preimage, logMap_unitSMul u hx], by simp [hx]⟩
   · obtain ⟨⟨e, h₁⟩, h₂, -⟩ := Zspan.exist_unique_vadd_mem_fundamentalDomain B (logMap x)
@@ -236,7 +236,7 @@ theorem unitSMul_mem_iff_mem_torsion {x : E K} (hx : x ∈ fundamentalCone K) (u
   classical
   refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
   · rw [← logEmbedding_eq_zero_iff]
-    let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ
+    let B := (basisUnitLattice K).ofZlatticeBasis ℝ
     refine (Subtype.mk_eq_mk (h := ?_) (h' := ?_)).mp <|
       ExistsUnique.unique (Zspan.exist_unique_vadd_mem_fundamentalDomain B (logMap x)) ?_ ?_
     · change logEmbedding K u ∈ (Submodule.span ℤ (Set.range B)).toAddSubgroup
@@ -269,6 +269,7 @@ abbrev normLessThanOne : Set (E K) := {x | x ∈ fundamentalCone K ∧ mixedEmbe
 
 abbrev normEqOne : Set (E K) := {x | x ∈ fundamentalCone K ∧ mixedEmbedding.norm x = 1}
 
+variable {K} in
 theorem mem_normLessThanOne_of_normAtPlace_eq {x y : E K} (hx : x ∈ normLessThanOne K)
     (hy : ∀ w, normAtPlace w y = normAtPlace w x) :
     y ∈ normLessThanOne K := by
@@ -317,7 +318,7 @@ theorem smul_normEqOne_subset {c : ℝ} (hc₁ : 0 < c) (hc₂ : c ≤ 1) :
 theorem isBounded_normEqOne :
     IsBounded (normEqOne K) := by
   classical
-  let B := (Module.Free.chooseBasis ℤ (unitLattice K)).ofZlatticeBasis ℝ _
+  let B := (basisUnitLattice K).ofZlatticeBasis ℝ
   obtain ⟨r, hr₁, hr₂⟩ := (Zspan.fundamentalDomain_isBounded B).subset_closedBall_lt 0 0
   have h₁ : ∀ ⦃x w⦄, x ∈ normEqOne K → w ≠ w₀ → |mult w * Real.log (normAtPlace w x)| ≤ r := by
     intro x w hx hw
@@ -400,7 +401,7 @@ theorem measurableSet_normLessThanOne :
 -- MeasureTheory.addHaar_image_eq_zero_of_differentiableOn_of_addHaar_eq_zero
 
 abbrev normLessThanOne₀ : Set (E K) :=
-    {x | x ∈ normLessThanOne K ∧ ∀ w, (hw : IsReal w) → x.1 ⟨w, hw⟩ > 0}
+    {x | x ∈ normLessThanOne K ∧ ∀ w, (hw : IsReal w) → 0 < x.1 ⟨w, hw⟩}
 
 open Classical
 
@@ -408,7 +409,7 @@ open Classical
 set_option linter.unreachableTactic false in
 theorem volume_normLessThanOne_aux (s : Finset {w : InfinitePlace K // IsReal w}) :
     volume (normLessThanOne K) = 2 ^ Finset.card s *
-      volume {x | x ∈ normLessThanOne K ∧ ∀ w ∈ s, x.1 w > 0} := by
+      volume {x | x ∈ normLessThanOne K ∧ ∀ w ∈ s, 0 < x.1 w} := by
   induction s using Finset.induction with
   | empty => simp
   | @insert w s hs h_ind =>
@@ -421,7 +422,7 @@ theorem volume_normLessThanOne_aux (s : Finset {w : InfinitePlace K // IsReal w}
           rw [normAtPlace_apply_isReal w.prop]
           rw [hx, norm_zero]
         exact Set.not_mem_diff_of_mem this
-      have f₂ : MeasurableSet {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w < 0} := by
+      have f₂ : MeasurableSet {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, 0 < x.1 z) ∧ x.1 w < 0} := by
         refine MeasurableSet.inter (measurableSet_normLessThanOne K) (MeasurableSet.inter ?_ ?_)
         · refine MeasurableSet.congr (s := ⋂ z ∈ s, {x | x.1 z > 0}) ?_ ?_
           · refine  MeasurableSet.biInter ?_ fun z _ ↦ ?_
@@ -434,8 +435,8 @@ theorem volume_normLessThanOne_aux (s : Finset {w : InfinitePlace K // IsReal w}
         · refine measurableSet_lt (g := fun _ ↦ (0 : ℝ)) ?_ measurable_const
           exact Measurable.comp (measurable_pi_apply w) measurable_fst
       have h₁ : {x | x ∈ normLessThanOne K ∧ ∀ z ∈ s, x.1 z > 0} =
-          {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w > 0} ∪
-          {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w < 0} := by
+          {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, 0 < x.1 z) ∧ 0 < x.1 w} ∪
+          {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, 0 < x.1 z) ∧ x.1 w < 0} := by
         ext x
         simp_rw [Set.mem_setOf_eq, gt_iff_lt, Subtype.forall, Set.mem_union]
         simp_rw [Set.mem_setOf_eq]
@@ -443,7 +444,7 @@ theorem volume_normLessThanOne_aux (s : Finset {w : InfinitePlace K // IsReal w}
         simp only [lt_or_lt_iff_ne]
         intro hx _ _
         exact (f₁ hx).symm
-      have h₂ : Disjoint {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w > 0}
+      have h₂ : Disjoint {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ 0 < x.1 w}
           {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w < 0} := by
         refine Set.disjoint_iff_forall_ne.mpr ?_
         rintro _ ⟨_, ⟨_, hx⟩⟩ _ ⟨_, ⟨_, hy⟩⟩
@@ -451,7 +452,7 @@ theorem volume_normLessThanOne_aux (s : Finset {w : InfinitePlace K // IsReal w}
         rw [hx]
         exact hy.le
       have h₃ : volume {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w < 0} =
-          volume {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w > 0} := by
+          volume {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ 0 < x.1 w} := by
         let T : ({w : InfinitePlace K // IsReal w} → ℝ) ≃L[ℝ]
             {w : InfinitePlace K // IsReal w} → ℝ := by
           refine ContinuousLinearEquiv.piCongrRight fun z ↦ ?_
@@ -539,69 +540,43 @@ theorem volume_normLessThanOne :
   convert volume_normLessThanOne_aux K Finset.univ
   simp
 
-abbrev normLessThanOne₁ : Set (InfinitePlace K → ℝ) := sorry
+def normLessThanOne₁ :
+    Set (({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ)) :=
+    {x | (∀ w, 0 < x.1 w) ∧ (∀ w, 0 < x.2 w) ∧
+      (fun w : {w : InfinitePlace K // IsReal w} ↦ x.1 w,
+        fun w : {w : InfinitePlace K // IsComplex w} ↦ (x.2 w : ℂ)) ∈ normLessThanOne K}
 
-theorem volume_normLessOne₀ :
-    volume (normLessThanOne₀ K) = 1 := by
-  rw [← set_lintegral_one, Measure.volume_eq_prod, ← lintegral_indicator, lintegral_lintegral]
--- use lintegral_marginal!
-#exit
+def normEqOne₁ :
+    Set (InfinitePlace K → ℝ) :=
+    {x | (∀ w, 0 < x w) ∧ (fun w : {w : InfinitePlace K // IsReal w} ↦ x w,
+        fun w : {w : InfinitePlace K // IsComplex w} ↦ (x w : ℂ)) ∈ normEqOne K}
 
-  rw [← integral_indicator_one, Measure.volume_eq_prod, integral_prod]
-  simp_rw [← Complex.integral_pi_comp_polarCoord_symm]
-  have : ∀ (x : { w : InfinitePlace K // w.IsReal } → ℝ)
-      (p : { w : InfinitePlace K // w.IsComplex } → ℝ × ℝ),
-      (normLessThanOne₀ K).indicator 1 (x, fun i ↦ Complex.polarCoord.symm (p i)) =
-      (normLessThanOne₁ K).indicator (fun _ ↦ (1 : ℝ)) (fun w ↦ if hw : IsReal w then x ⟨w, hw⟩ else
-          (p ⟨w, not_isReal_iff_isComplex.mp hw⟩).1) := by
-    sorry
-  simp_rw [this]
-  rw?
+variable {K}
 
-ℝ
-
-ℂ
-#exit
-      (normLessThanOne₁ K).indicator 1
-        (fun w ↦ if hw : IsReal w then x ⟨w, hw⟩ else
-          (p ⟨w, not_isReal_iff_isComplex.mp hw⟩).1) := sorry
-
-
-
-
-
+theorem indicator_eq_indicator (x : {w : InfinitePlace K // IsReal w} → ℝ)
+    (y : {w : InfinitePlace K // IsComplex w} → ℂ) :
+    (normLessThanOne₀ K).indicator (fun _ ↦ (1 : ENNReal)) (x, y) =
+      (normLessThanOne₁ K).indicator (fun _ ↦ (1 : ENNReal)) (x, fun w ↦ ‖y w‖) := by
   sorry
 
-
-#exit
-
-
 theorem volume_normLessOne₀ :
-    volume (normLessThanOne₀ K) = 1 := by
-  let Φ₀ : PartialHomeomorph ({w : InfinitePlace K // IsReal w} → ℝ)
-    ({w : InfinitePlace K // IsReal w} → ℝ) := PartialHomeomorph.refl _
-  let Φ₁ : PartialHomeomorph ({w : InfinitePlace K // IsComplex w} → ℂ)
-      ({w : InfinitePlace K // IsComplex w} → ℝ × ℝ) :=
-    PartialHomeomorph.pi fun _ ↦ Complex.polarCoord
-  let Φ := PartialHomeomorph.prod Φ₀ Φ₁
-  let Ψ : ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℂ) ≃ᵐ
-      ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ × ℝ) := by
-    refine MeasurableEquiv.prodCongr ?_ ?_
-    · exact MeasurableEquiv.refl _
-    · exact MeasurableEquiv.piCongrRight fun _ ↦ Complex.measurableEquivRealProd
-  have hΨ : MeasurePreserving Ψ.symm := by
-    sorry
-  have : ∀ x, (Ψ.symm x).1 = x.1 := fun x ↦ rfl
+    volume (normLessThanOne₀ K) =
+      (2 * NNReal.pi) ^ NrComplexPlaces K * volume (normLessThanOne₁ K)  := by
+  rw [← set_lintegral_one, Measure.volume_eq_prod, ← lintegral_indicator, lintegral_prod]
+  conv_lhs =>
+    enter [2, x]
+    rw [zap (fun y ↦ (normLessThanOne₀ K).indicator _ (x, y))
+      (fun y ↦ (normLessThanOne₁ K).indicator (fun _ ↦ 1) (x, y))
+      (fun y ↦ indicator_eq_indicator x y)]
+  rw [lintegral_const_mul, ← lintegral_prod, ← Measure.volume_eq_prod, lintegral_indicator,
+    set_lintegral_one, NrComplexPlaces]
+  · sorry
+  · sorry
+  · sorry
+  · sorry
+  · sorry
 
-  have : ∫ x, (Set.indicator (normLessThanOne₀ K) (fun _ ↦ (1 : ℝ))) x = 1 := by
-    rw [← MeasurePreserving.integral_comp hΨ]
-    simp_rw [Set.indicator_apply]
-
-
-
-
-#exit
-
+variable (K)
 
 def equivFinRank : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) := by
   refine Fintype.equivOfCardEq ?_
@@ -609,6 +584,25 @@ def equivFinRank : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) := by
 
 def normUnits : {w : InfinitePlace K // w ≠ w₀} → ((InfinitePlace K) → ℝ) :=
   fun i w ↦ w (fundSystem K (equivFinRank K i)) ^ mult w
+
+def f : (InfinitePlace K → ℝ) → (InfinitePlace K → ℝ) := fun c ↦ ∏ i, (normUnits K i) ^ (c i)
+
+example : normEqOne₁ K = (f K) '' (Set.univ.pi fun _ ↦ Set.Ico 0 1) := by
+  ext x
+  simp [normEqOne₁, f]
+  refine ⟨?_, ?_⟩
+  · rintro ⟨h₁, h₂, h₃⟩
+    replace h₂ := h₂.1
+    rw [Set.mem_preimage, Zspan.mem_fundamentalDomain] at h₂
+    refine ⟨?_, ?_⟩
+    · intro w
+      
+      have := fun w : {w : InfinitePlace K // w ≠ w₀} ↦ logMap_apply_of_norm_one h₃ w.prop
+
+
+    · sorry
+  ·
+    sorry
 
 theorem normUnits_pos (i : {w : InfinitePlace K // w ≠ w₀}) (w : InfinitePlace K) :
     0 < normUnits K i w := by
@@ -691,13 +685,13 @@ theorem jacobian_det (c : InfinitePlace K → ℝ) :
   · ring
   · rfl
 
-abbrev normLessThanOne₁ : Set ((InfinitePlace K) → ℝ) :=
-  normUnitsEval K '' (Set.univ.pi fun _ ↦ Set.Ico 0 1)
+-- abbrev normLessThanOne₁ : Set ((InfinitePlace K) → ℝ) :=
+--  normUnitsEval K '' (Set.univ.pi fun _ ↦ Set.Ico 0 1)
 
-theorem volume_normLessOne₀ :
-    volume (normLessThanOne₀ K) =
-      (2 * NNReal.pi) ^ (NrRealPlaces K) * volume (normLessThanOne₁ K) := by
-  sorry
+-- theorem volume_normLessOne₀ :
+--    volume (normLessThanOne₀ K) =
+--      (2 * NNReal.pi) ^ (NrRealPlaces K) * volume (normLessThanOne₁ K) := by
+--  sorry
 
 theorem hasFDeriv_normUnitsEval (c : InfinitePlace K → ℝ) :
     HasFDerivAt (𝕜 := ℝ) (normUnitsEval K) (jacobian K c) c := by
