@@ -106,6 +106,8 @@ theorem toto (f : ℂ → ℝ) (g : ℝ → ℝ) (h_eq : ∀ z, f z = g ‖z‖)
   · sorry
   · exact hf
 
+#exit
+
 theorem zap {ι : Type*} [Fintype ι] (f : (ι → ℂ) → ℝ) (g : (ι → ℝ) → ℝ)
     (hf : Measurable f)
     (h_eq : ∀ z, f z = g (fun i ↦ ‖z i‖)) {a : ι → ℂ} :
