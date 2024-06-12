@@ -199,7 +199,7 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           rw [Polynomial.IsRoot.def, hxr]
           simp only [← hp_r, and_true]
           intro hpr_zero
-          contrapose! hr2
+          apply hr2
           rw [hp_i', ← this, hpr_zero, Polynomial.natDegree_zero]
           have hp_r0 : p_r.coeff 0 = 0 := by rw [hpr_zero, Polynomial.coeff_zero]
           rw [← hp_r0, Polynomial.coeff_map]
@@ -272,7 +272,9 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
         exact
           Nat.mul_le_mul_right (S.card ^ n) (le_of_eq (Nat.sub_add_cancel (le_of_add_le_right h0)))
 
-lemma schwartz_zippel_pass_through_equivalence_version (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : ℕ)
+/-
+lemma schwartz_zippel_pass_through_equivalence_version (F : Type)
+    [CommRing F] [IsDomain F] [DecidableEq F] (n : ℕ)
     (p : MvPolynomial (Fin n) F) (hp : p ≠ 0) (S : Finset F) :
     (Finset.filter
       (fun f => MvPolynomial.eval f p = 0)
@@ -309,12 +311,14 @@ lemma schwartz_zippel_pass_through_equivalence_version (F : Type) [CommRing F] [
     set i := p'.natDegree with hi
     set p_i' := Polynomial.coeff p' i with hp_i'
     have h0 : p_i'.totalDegree + i ≤ (((MvPolynomial.finSuccEquiv F n).symm p').totalDegree) := by
-      have hi : ((MvPolynomial.finSuccEquiv F n) ((MvPolynomial.finSuccEquiv F n).symm p')).coeff i ≠ 0 := by
+      have hi : ((MvPolynomial.finSuccEquiv F n)
+                  ((MvPolynomial.finSuccEquiv F n).symm p')).coeff i ≠ 0 := by
         simp only [AlgEquiv.apply_symm_apply]
         rw [hi]
         simp only [Polynomial.coeff_natDegree, ne_eq, Polynomial.leadingCoeff_eq_zero]
         exact p_nonzero
-      convert MvPolynomial.totalDegree_coeff_finSuccEquiv_add_le (((MvPolynomial.finSuccEquiv F n).symm p')) i hi
+      convert MvPolynomial.totalDegree_coeff_finSuccEquiv_add_le
+                  (((MvPolynomial.finSuccEquiv F n).symm p')) i hi
       simp only [AlgEquiv.apply_symm_apply]
     have h1 : p_i' ≠ 0 := by
       rw [hp_i', hi, ← Polynomial.leadingCoeff, Polynomial.leadingCoeff_ne_zero]
@@ -330,7 +334,8 @@ lemma schwartz_zippel_pass_through_equivalence_version (F : Type) [CommRing F] [
           (fun r ↦ MvPolynomial.eval (r ∘ Fin.succ) p_i' = 0)
           (((Fintype.piFinset (fun _ => S)))))
       ≤
-      (MvPolynomial.totalDegree ((MvPolynomial.finSuccEquiv F n).symm p') - i) * (Finset.card S) ^ n := by
+      (MvPolynomial.totalDegree ((MvPolynomial.finSuccEquiv F n).symm p') - i)
+        * (Finset.card S) ^ n := by
       -- In this case, we bound the size of the set via the inductive hypothesis
       calc
         _ ≤ (MvPolynomial.totalDegree p_i') * (Finset.card S) ^ n := by
@@ -345,7 +350,8 @@ lemma schwartz_zippel_pass_through_equivalence_version (F : Type) [CommRing F] [
     have h_second_half :
       Finset.card
           (Finset.filter
-            (fun r ↦ MvPolynomial.eval r ((MvPolynomial.finSuccEquiv F n).symm p') = 0 ∧ MvPolynomial.eval (r ∘ Fin.succ) p_i' ≠ 0)
+            (fun r ↦ MvPolynomial.eval r ((MvPolynomial.finSuccEquiv F n).symm p') = 0
+              ∧ MvPolynomial.eval (r ∘ Fin.succ) p_i' ≠ 0)
             ((Fintype.piFinset (fun _ => S))))
       ≤
       (i) * (Finset.card S) ^ n := by
@@ -361,7 +367,8 @@ lemma schwartz_zippel_pass_through_equivalence_version (F : Type) [CommRing F] [
             -- Note that ((Equiv.piFinSucc n F).invFun (f, r))
             -- can be more simply written with Fin.cons
             (t := fun r => Finset.filter
-                    (fun f => (MvPolynomial.eval ((Equiv.piFinSucc n F).invFun (f, r))) ((MvPolynomial.finSuccEquiv F n).symm p') = 0) S)]
+                    (fun f => (MvPolynomial.eval ((Equiv.piFinSucc n F).invFun (f, r)))
+                                ((MvPolynomial.finSuccEquiv F n).symm p') = 0) S)]
       · simp_rw [← Finset.card_eq_sum_ones]
         apply le_trans (Finset.sum_le_sum (g := fun _ => i) _)
         · rw [Finset.sum_const, smul_eq_mul, mul_comm]
@@ -420,12 +427,14 @@ lemma schwartz_zippel_pass_through_equivalence_version (F : Type) [CommRing F] [
       -- Pr [A ∩ B] + Pr [A ∩ Bᶜ]
       (Finset.card
         (Finset.filter
-          (fun r ↦ MvPolynomial.eval r ((MvPolynomial.finSuccEquiv F n).symm p') = 0 ∧ MvPolynomial.eval (r ∘ Fin.succ) p_i' = 0)
+          (fun r ↦ MvPolynomial.eval r ((MvPolynomial.finSuccEquiv F n).symm p') = 0 ∧
+            MvPolynomial.eval (r ∘ Fin.succ) p_i' = 0)
           (Fintype.piFinset (fun _ => S)))
       +
       Finset.card
         (Finset.filter
-          (fun r ↦ MvPolynomial.eval r ((MvPolynomial.finSuccEquiv F n).symm p') = 0 ∧ MvPolynomial.eval (r ∘ Fin.succ) p_i' ≠ 0)
+          (fun r ↦ MvPolynomial.eval r ((MvPolynomial.finSuccEquiv F n).symm p') = 0 ∧
+            MvPolynomial.eval (r ∘ Fin.succ) p_i' ≠ 0)
           (Fintype.piFinset (fun _ => S)))
       )
       * Finset.card S := by
@@ -441,7 +450,8 @@ lemma schwartz_zippel_pass_through_equivalence_version (F : Type) [CommRing F] [
       +
       Finset.card
         (Finset.filter
-          (fun r ↦ MvPolynomial.eval r ((MvPolynomial.finSuccEquiv F n).symm p') = 0 ∧ MvPolynomial.eval (r ∘ Fin.succ) p_i' ≠ 0)
+          (fun r ↦ MvPolynomial.eval r ((MvPolynomial.finSuccEquiv F n).symm p') = 0 ∧
+            MvPolynomial.eval (r ∘ Fin.succ) p_i' ≠ 0)
           (Fintype.piFinset (fun _ => S)))
       )
       * Finset.card S := by
@@ -455,15 +465,18 @@ lemma schwartz_zippel_pass_through_equivalence_version (F : Type) [CommRing F] [
         simp_all only [ne_eq, MvPolynomial.finSuccEquiv_apply, MvPolynomial.coe_eval₂Hom,
           Polynomial.coeff_natDegree, Polynomial.leadingCoeff_eq_zero, ge_iff_le, not_and, not_not,
           le_Prop_eq, and_imp, implies_true]
-      _ ≤ ((MvPolynomial.totalDegree ((MvPolynomial.finSuccEquiv F n).symm p') - i) * (Finset.card S) ^ n
+      _ ≤ ((MvPolynomial.totalDegree
+        ((MvPolynomial.finSuccEquiv F n).symm p') - i) * (Finset.card S) ^ n
           +
           (i) * (Finset.card S) ^ n
           )
       * Finset.card S := Nat.mul_le_mul_right S.card (add_le_add h_first_half h_second_half)
       _ ≤
-      MvPolynomial.totalDegree ((MvPolynomial.finSuccEquiv F n).symm p') * Finset.card S ^ Nat.succ n := by
+      MvPolynomial.totalDegree ((MvPolynomial.finSuccEquiv F n).symm p')
+          * Finset.card S ^ Nat.succ n := by
         rw [Nat.pow_succ, ← mul_assoc]
         apply Nat.mul_le_mul_right
         rw [← add_mul]
         exact
           Nat.mul_le_mul_right (S.card ^ n) (le_of_eq (Nat.sub_add_cancel (le_of_add_le_right h0)))
+-/
