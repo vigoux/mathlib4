@@ -6,6 +6,7 @@ import Mathlib.Analysis.SpecialFunctions.PolarCoord
 import Mathlib.MeasureTheory.Integral.Marginal
 import Mathlib.MeasureTheory.Integral.Bochner
 import Mathlib.MeasureTheory.Integral.Pi
+import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
 
 def ContinuousLinearEquiv.piCongrRight {R : Type*} [Semiring R] {ι : Type*} {M : ι → Type*}
     [∀ i, TopologicalSpace (M i)] [∀ i, AddCommMonoid (M i)] [∀ i, Module R (M i)] {N : ι → Type*}
@@ -73,53 +74,42 @@ theorem MeasureTheory.lmarginal_const_smul [∀ (i : δ), SigmaFinite (μ i)]
       simp_rw [lmarginal_insert _ (hf.const_smul _) hi, h_ind]
       rw [lintegral_const_mul _ (hf.lmarginal_update _ _), ← lmarginal_insert _ hf hi]
 
-example (p q : Prop) :
-  p ∨ q ↔ ¬ p → q := by exact Decidable.or_iff_not_imp_left
 theorem toto (f : ℂ → ℝ) (g : ℝ → ℝ) (h_eq : ∀ z, f z = g ‖z‖)
     (hf : 0 ≤ᵐ[volume] f) (hg : 0 ≤ᵐ[volume] g) (hg' : ∀ ⦃x⦄, x ≤ 0 → g x = 0) :
     ∫⁻ z , ENNReal.ofReal (f z) = 2 * NNReal.pi * ∫⁻ x, ENNReal.ofReal (x * g x) := by
   rw [← ofReal_integral_eq_lintegral_ofReal, ← ofReal_integral_eq_lintegral_ofReal]
-  · have : ∫ z , f z = 2 * Real.pi * ∫ x, x * (g x) := by
-      simp_rw [h_eq, ← Complex.integral_comp_polarCoord_symm, Complex.norm_eq_abs,
-        Complex.polardCoord_symm_abs]
-      have : ∫ (p : ℝ × ℝ) in polarCoord.target, p.1 • (g |p.1|) =
-        ∫ (p : ℝ × ℝ) in polarCoord.target, (p.1 • (g |p.1|)) * 1 := by sorry
-      rw [this]
-      simp_rw [Measure.volume_eq_prod, polarCoord_target]
-      rw [setIntegral_prod]
-      · simp_rw [integral_mul_left, integral_const, Measure.restrict_apply MeasurableSet.univ,
-          Set.univ_inter, Real.volume_Ioo, sub_neg_eq_add, ← two_mul, smul_eq_mul, mul_one,
-          ENNReal.toReal_ofReal sorry]
-        rw [integral_mul_right, mul_comm]
-        congr 1
-        simp_rw [show ∀ x, g |x| = g x by sorry]
-        rw [← integral_indicator measurableSet_Ioi]
-        refine integral_congr_ae ?_
-        apply ae_of_all
-        intro x
-        simp only [Set.indicator_apply_eq_self, Set.mem_Ioi, not_lt, mul_eq_zero]
-        intro hx
-        right
-        rw [hg' hx]
-      · sorry
-    rw [this, ENNReal.ofReal_mul, ENNReal.ofReal_mul zero_le_two, ENNReal.ofReal_ofNat]
-    · rw [← NNReal.coe_real_pi, ENNReal.ofReal_coe_nnreal]
-    · refine mul_nonneg zero_le_two Real.pi_nonneg
+  simp_rw [h_eq]
+  rw [integral_fun_norm_addHaar]
+  simp_rw [Complex.finrank_real_complex, show 2 - 1 = 1 by norm_num, pow_one, smul_eq_mul,
+    nsmul_eq_mul, Nat.cast_ofNat, Complex.volume_ball, ENNReal.ofReal_one, one_pow, one_mul,
+    ENNReal.ofReal_mul zero_le_two, ENNReal.ofReal_mul ENNReal.toReal_nonneg, ENNReal.ofReal_ofNat,
+    mul_assoc]
+  congr 3
+  · rw [ENNReal.ofReal_toReal]
+    exact ENNReal.coe_ne_top
+  · rw [← integral_indicator measurableSet_Ioi]
+    refine integral_congr_ae ?_
+    apply ae_of_all
+    intro x
+    rw [Set.indicator_apply_eq_self, Set.mem_Ioi, not_lt, mul_eq_zero]
+    intro hx
+    right
+    exact hg' hx
   · sorry
-  · filter_upwards [hg] with x hg
+  · filter_upwards [hg] with x hx
     rw [Pi.zero_apply, mul_nonneg_iff]
-    obtain hx | hx := le_or_lt x 0
-    · right
-      exact ⟨hx, (hg' hx).le⟩
+    obtain hx' | hx' := lt_or_le 0 x
     · left
-      exact ⟨hx.le, hg⟩
+      refine ⟨hx'.le, hx⟩
+    · right
+      refine ⟨hx', (hg' hx').le⟩
   · sorry
   · exact hf
 
-theorem zap {ι : Type*} [Fintype ι] (f : (ι → ℂ) → ENNReal) (g : (ι → ℝ) → ENNReal)
+theorem zap {ι : Type*} [Fintype ι] (f : (ι → ℂ) → ℝ) (g : (ι → ℝ) → ℝ)
     (hf : Measurable f)
     (h_eq : ∀ z, f z = g (fun i ↦ ‖z i‖)) {a : ι → ℂ} :
-    ∫⁻ z, f z = (2 * NNReal.pi) ^ (Fintype.card ι) * ∫⁻ x, (∏ i, x i).toNNReal * g x := by
+    ∫⁻ z, ENNReal.ofReal (f z) = (2 * NNReal.pi) ^ (Fintype.card ι) * ∫⁻ x, (∏ i, x i).toNNReal * g x := by
   rw [volume_pi, volume_pi, lintegral_eq_lmarginal_univ a, lintegral_eq_lmarginal_univ
     (fun i ↦ ‖a i‖), Fintype.card]
   generalize Finset.univ (α := ι) = s
