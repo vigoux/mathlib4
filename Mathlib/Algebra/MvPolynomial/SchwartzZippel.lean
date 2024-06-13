@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Bolton Bailey
 -/
 import Mathlib.Algebra.MvPolynomial.Equiv
-import Mathlib.Algebra.Polynomial.RingDivision
 import Mathlib.Data.Fin.Tuple.Basic
+import Mathlib.Algebra.Polynomial.Roots
 
 /-!
 # The Schwartz-Zippel lemma
@@ -272,7 +272,6 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
         exact
           Nat.mul_le_mul_right (S.card ^ n) (le_of_eq (Nat.sub_add_cancel (le_of_add_le_right h0)))
 
-/-
 lemma schwartz_zippel_pass_through_equivalence_version (F : Type)
     [CommRing F] [IsDomain F] [DecidableEq F] (n : ℕ)
     (p : MvPolynomial (Fin n) F) (hp : p ≠ 0) (S : Finset F) :
@@ -402,7 +401,7 @@ lemma schwartz_zippel_pass_through_equivalence_version (F : Type)
           rw [Polynomial.IsRoot.def, hxr]
           simp only [← hp_r, and_true]
           intro hpr_zero
-          contrapose! hr2
+          apply hr2
           rw [hp_i', ← this, hpr_zero, Polynomial.natDegree_zero]
           have hp_r0 : p_r.coeff 0 = 0 := by rw [hpr_zero, Polynomial.coeff_zero]
           rw [← hp_r0, Polynomial.coeff_map]
@@ -479,4 +478,3 @@ lemma schwartz_zippel_pass_through_equivalence_version (F : Type)
         rw [← add_mul]
         exact
           Nat.mul_le_mul_right (S.card ^ n) (le_of_eq (Nat.sub_add_cancel (le_of_add_le_right h0)))
--/
