@@ -9,6 +9,7 @@ import Mathlib.Topology.Algebra.Order.Field
 import Mathlib.Topology.Algebra.UniformMulAction
 import Mathlib.Topology.Algebra.Star
 import Mathlib.Topology.Instances.Int
+import Mathlib.Topology.MetricSpace.CompactIccSpace
 import Mathlib.Topology.Order.Bornology
 
 #align_import topology.instances.real from "leanprover-community/mathlib"@"9a59dcb7a2d06bf55da57b9030169219980660cd"

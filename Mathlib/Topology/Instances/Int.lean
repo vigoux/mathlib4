@@ -6,6 +6,7 @@ Authors: Johannes Hölzl, Mario Carneiro
 import Mathlib.Data.Int.Interval
 import Mathlib.Data.Int.SuccPred
 import Mathlib.Data.Int.ConditionallyCompleteOrder
+import Mathlib.Topology.Algebra.Order.Compact
 import Mathlib.Topology.Instances.Discrete
 import Mathlib.Topology.MetricSpace.Bounded
 import Mathlib.Order.Filter.Archimedean
