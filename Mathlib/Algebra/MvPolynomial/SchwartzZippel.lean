@@ -93,14 +93,14 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
     (p : MvPolynomial (Fin n) F) (hp : p ≠ 0) (S : Finset F) :
     (Finset.filter
       (fun f => MvPolynomial.eval f p = 0)
-      (Fintype.piFinset (fun _ => S))).card * S.card
+      (Fintype.piFinset fun _ => S)).card * S.card
       ≤ (p.totalDegree) * S.card ^ n := by
   revert p hp S
   induction n with
   | zero =>
     intros p hp S
     -- Because p is a polynomial over the (empty) type Fin 0 of variables, it is constant
-    rw [MvPolynomial.eq_C_of_isEmpty p] at *
+    rw [p.eq_C_of_isEmpty] at *
     simp only [Nat.zero_eq, MvPolynomial.eval_C, Fin.forall_fin_zero_pi, Finset.filter_const,
       MvPolynomial.totalDegree_C, pow_zero, mul_one, nonpos_iff_eq_zero, mul_eq_zero,
       Finset.card_eq_zero, ite_eq_right_iff]
@@ -132,27 +132,27 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
       Finset.card
         (Finset.filter
           (fun r ↦ MvPolynomial.eval (r ∘ Fin.succ) p_i' = 0)
-          (((Fintype.piFinset (fun _ => S)))))
+          (Fintype.piFinset fun _ => S))
       ≤
-      (MvPolynomial.totalDegree p - i) * (Finset.card S) ^ n := by
+      (MvPolynomial.totalDegree p - i) * S.card ^ n := by
       -- In this case, we bound the size of the set via the inductive hypothesis
       calc
-        _ ≤ (MvPolynomial.totalDegree p_i') * (Finset.card S) ^ n := by
+        _ ≤ (MvPolynomial.totalDegree p_i') * S.card ^ n := by
           convert ih
           rw [mul_comm]
           convert Finset.card_filter_succ_piFinset_eq
-                    ((fun f ↦ (MvPolynomial.eval (f)) p_i' = 0)) (fun _ => S)
+                    (fun f ↦ (MvPolynomial.eval f) p_i' = 0) (fun _ => S)
         _ ≤ _ := by
-          exact Nat.mul_le_mul_right (Finset.card S ^ n) (Nat.le_sub_of_add_le h0)
+          exact Nat.mul_le_mul_right (S.card ^ n) (Nat.le_sub_of_add_le h0)
     save
     -- In the second case p_i' does not evaluate to zero.
     have h_second_half :
       Finset.card
           (Finset.filter
             (fun r ↦ MvPolynomial.eval r p = 0 ∧ MvPolynomial.eval (r ∘ Fin.succ) p_i' ≠ 0)
-            ((Fintype.piFinset (fun _ => S))))
+            ((Fintype.piFinset fun _ => S)))
       ≤
-      (i) * (Finset.card S) ^ n := by
+      i * S.card ^ n := by
       clear h_first_half
       -- In this case, given r on which p_i' does not evaluate to zero, p' mapped over the
       -- evaluation
@@ -160,8 +160,8 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
       -- There can therefore only be at most i zeros per r value.
       rw [← Finset.card_map (Equiv.toEmbedding (Equiv.piFinSucc n F)), Finset.map_filter,
         Finset.card_eq_sum_ones, Finset.sum_finset_product_right _
-            (s := (Finset.filter (fun r ↦ (MvPolynomial.eval (r)) p_i' ≠ 0)
-              (Fintype.piFinset (fun _ => S))))
+            (s := (Finset.filter (fun r ↦ MvPolynomial.eval r p_i' ≠ 0)
+              (Fintype.piFinset fun _ => S)))
             -- Note that ((Equiv.piFinSucc n F).invFun (f, r))
             -- can be more simply written with Fin.cons
             (t := fun r => Finset.filter
@@ -178,8 +178,7 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           simp_rw [Equiv.invFun_as_coe, Equiv.piFinSucc_symm_apply,
             MvPolynomial.eval_eq_eval_mv_eval']
           rw [← hp']
-          simp only [← hp',
-            Fintype.mem_piFinset, Finset.mem_filter] at hr
+          simp only [← hp', Fintype.mem_piFinset, Finset.mem_filter] at hr
           -- hr2 is in wikipedia P_i(r_2, ... , r_n) ≠ 0
           rcases hr with ⟨_, hr2⟩
           -- This proof is wikis P(x_1, r_2, ... r_n) = ∑ x_1^i P_i(r_2, ... r_n)
@@ -194,20 +193,15 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           rw [Finset.subset_iff]
           intro x
           rw [Finset.mem_filter,
-            Multiset.mem_toFinset, Polynomial.mem_roots', ne_eq, and_imp]
+            Multiset.mem_toFinset, Polynomial.mem_roots', and_imp, Polynomial.IsRoot.def]
           intros _ hxr
-          rw [Polynomial.IsRoot.def, hxr]
-          simp only [← hp_r, and_true]
+          simp_rw [ hxr, and_true]
           intro hpr_zero
-          apply hr2
-          rw [hp_i', ← this, hpr_zero, Polynomial.natDegree_zero]
-          have hp_r0 : p_r.coeff 0 = 0 := by rw [hpr_zero, Polynomial.coeff_zero]
-          rw [← hp_r0, Polynomial.coeff_map]
-      · simp only [Polynomial.coeff_natDegree,
-          MvPolynomial.finSuccEquiv_apply, MvPolynomial.coe_eval₂Hom, ne_eq,
-          Equiv.piFinSucc_symm_apply, Finset.mem_map_equiv, Fintype.mem_piFinset,
-          Fin.forall_fin_succ, Fin.cons_zero, Fin.cons_succ, Function.comp_apply, and_imp,
-          Prod.forall, not_and, not_not, Finset.mem_filter, Equiv.invFun_as_coe]
+          rw [hp_i', ← this, hpr_zero, Polynomial.natDegree_zero, <- Polynomial.coeff_map, <-hp_r, hpr_zero, Polynomial.coeff_zero] at hr2
+          exact hr2 rfl
+      · simp only [ne_eq, Equiv.piFinSucc_symm_apply, Finset.mem_filter, Finset.mem_map_equiv,
+        Fintype.mem_piFinset, Fin.forall_fin_succ, Fin.cons_zero, Fin.cons_succ,
+        Function.comp_apply, Equiv.invFun_as_coe, Prod.forall]
         tauto
 
 
@@ -218,21 +212,21 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
       Finset.card
         (Finset.filter
           (fun r ↦ MvPolynomial.eval r p = 0)
-          (Fintype.piFinset (fun _ => S)))
-      * Finset.card S
+          (Fintype.piFinset fun _ => S))
+      * S.card
       =
       -- Pr [A ∩ B] + Pr [A ∩ Bᶜ]
       (Finset.card
         (Finset.filter
           (fun r ↦ MvPolynomial.eval r p = 0 ∧ MvPolynomial.eval (r ∘ Fin.succ) p_i' = 0)
-          (Fintype.piFinset (fun _ => S)))
+          (Fintype.piFinset fun _ => S))
       +
       Finset.card
         (Finset.filter
           (fun r ↦ MvPolynomial.eval r p = 0 ∧ MvPolynomial.eval (r ∘ Fin.succ) p_i' ≠ 0)
-          (Fintype.piFinset (fun _ => S)))
+          (Fintype.piFinset fun _ => S))
       )
-      * Finset.card S := by
+      * S.card := by
         congr
         rw [← Finset.card_union_add_card_inter, Finset.filter_union_right, ← Finset.filter_and]
         simp only [ne_eq, and_or_and_not_iff, and_and_and_not_iff, Finset.filter_False,
@@ -241,14 +235,14 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
       _ ≤ (Finset.card
         (Finset.filter
           (fun r ↦ MvPolynomial.eval (r ∘ Fin.succ) p_i' = 0)
-          (Fintype.piFinset (fun _ => S)))
+          (Fintype.piFinset fun _ => S))
       +
       Finset.card
         (Finset.filter
           (fun r ↦ MvPolynomial.eval r p = 0 ∧ MvPolynomial.eval (r ∘ Fin.succ) p_i' ≠ 0)
-          (Fintype.piFinset (fun _ => S)))
+          (Fintype.piFinset fun _ => S))
       )
-      * Finset.card S := by
+      * S.card := by
         apply Nat.mul_le_mul_right
         rw [add_le_add_iff_right]
         apply Finset.card_le_card
@@ -259,13 +253,13 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
         simp_all only [ne_eq, MvPolynomial.finSuccEquiv_apply, MvPolynomial.coe_eval₂Hom,
           Polynomial.coeff_natDegree, Polynomial.leadingCoeff_eq_zero, ge_iff_le, not_and, not_not,
           le_Prop_eq, and_imp, implies_true]
-      _ ≤ ((MvPolynomial.totalDegree p - i) * (Finset.card S) ^ n
+      _ ≤ ((MvPolynomial.totalDegree p - i) * S.card ^ n
           +
-          (i) * (Finset.card S) ^ n
+          i * S.card ^ n
           )
-      * Finset.card S := Nat.mul_le_mul_right S.card (add_le_add h_first_half h_second_half)
+      * S.card := Nat.mul_le_mul_right S.card (add_le_add h_first_half h_second_half)
       _ ≤
-      MvPolynomial.totalDegree p * Finset.card S ^ Nat.succ n := by
+      MvPolynomial.totalDegree p * S.card ^ Nat.succ n := by
         rw [Nat.pow_succ, ← mul_assoc]
         apply Nat.mul_le_mul_right
         rw [← add_mul]
