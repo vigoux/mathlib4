@@ -271,7 +271,7 @@ theorem normAtPlace_nonneg  (w : InfinitePlace K) (x : E K) :
   rw [normAtPlace, MonoidWithZeroHom.coe_mk, ZeroHom.coe_mk]
   split_ifs <;> exact norm_nonneg _
 
-theorem normAtPlace_neg (w : InfinitePlace K) (x : E K)  :
+theorem normAtPlace_neg (w : InfinitePlace K) (x : E K) :
     normAtPlace w (- x) = normAtPlace w x := by
   rw [normAtPlace, MonoidWithZeroHom.coe_mk, ZeroHom.coe_mk]
   split_ifs <;> simp
