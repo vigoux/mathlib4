@@ -181,12 +181,11 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           -- This proof is wikis P(x_1, r_2, ... r_n) = ∑ x_1^i P_i(r_2, ... r_n)
           set p_r := (Polynomial.map (MvPolynomial.eval r) p') with hp_r
           have : p_r.natDegree = i := by
-            rw [hp_r, hi]
-            exact Polynomial.natDegree_map_of_leadingCoeff_ne_zero (MvPolynomial.eval r) hr2
+            rw [hp_r, hi, Polynomial.natDegree_map_of_leadingCoeff_ne_zero (MvPolynomial.eval r) hr2]
           rw [← this]
-          apply le_trans _ (Polynomial.card_roots' _)
-          apply le_trans _ (Multiset.toFinset_card_le _)
-          apply Finset.card_le_card
+          apply le_trans _ (Polynomial.card_roots' p_r)
+          apply le_trans _ (Multiset.toFinset_card_le p_r.roots)
+          apply Finset.card_le_card _
           rw [Finset.subset_iff]
           intro x
           rw [Finset.mem_filter,
