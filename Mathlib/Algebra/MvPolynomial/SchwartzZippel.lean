@@ -143,7 +143,6 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
                     (fun f ↦ (MvPolynomial.eval f) p_i' = 0) (fun _ => S)
         _ ≤ _ := by
           exact Nat.mul_le_mul_right (S.card ^ n) (Nat.le_sub_of_add_le h0)
-    save
     -- In the second case p_i' does not evaluate to zero.
     have h_second_half :
       Finset.card
@@ -153,9 +152,8 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
       ≤
       i * S.card ^ n := by
       clear h_first_half
-      -- In this case, given r on which p_i' does not evaluate to zero, p' mapped over the
-      -- evaluation
-      -- on r of p_i' is a nonzero univariate polynomial of degree i.
+      -- In this case, given r on which p_i' does not evaluate to zero,
+      -- p' mapped over the evaluation on r of p_i' is a nonzero univariate polynomial of degree i.
       -- There can therefore only be at most i zeros per r value.
       rw [← Finset.card_map (Equiv.toEmbedding (Equiv.piFinSucc n F)), Finset.map_filter,
         Finset.card_eq_sum_ones, Finset.sum_finset_product_right _
@@ -252,15 +250,15 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
         simp_all only [ne_eq, MvPolynomial.finSuccEquiv_apply, MvPolynomial.coe_eval₂Hom,
           Polynomial.coeff_natDegree, Polynomial.leadingCoeff_eq_zero, ge_iff_le, not_and, not_not,
           le_Prop_eq, and_imp, implies_true]
+      -- Bound the two terms by the casework done previously
       _ ≤ ((MvPolynomial.totalDegree p - i) * S.card ^ n
           +
           i * S.card ^ n
           )
       * S.card := Nat.mul_le_mul_right S.card (add_le_add h_first_half h_second_half)
-      _ ≤
+      -- Simplify
+      _ =
       MvPolynomial.totalDegree p * S.card ^ Nat.succ n := by
-        rw [Nat.pow_succ, ← mul_assoc]
-        apply Nat.mul_le_mul_right
-        rw [← add_mul]
-        exact
-          Nat.mul_le_mul_right (S.card ^ n) (le_of_eq (Nat.sub_add_cancel (le_of_add_le_right h0)))
+        rw [Nat.pow_succ, ← mul_assoc, ← add_mul, mul_eq_mul_right_iff,
+          Nat.sub_add_cancel (le_of_add_le_right h0)]
+        tauto
