@@ -41,7 +41,6 @@ open BigOperators
 
 section find_home
 
-
 -- REVIEWERS: Not sure what to do here.
 -- Presumably we don't want these lemmas, but the proof below is more complicated without them
 lemma and_or_and_not_iff (p q : Prop) : ((p ∧ q) ∨ (p ∧ ¬ q)) ↔ p := by
@@ -197,7 +196,8 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
           intros _ hxr
           simp_rw [ hxr, and_true]
           intro hpr_zero
-          rw [hp_i', ← this, hpr_zero, Polynomial.natDegree_zero, <- Polynomial.coeff_map, <-hp_r, hpr_zero, Polynomial.coeff_zero] at hr2
+          rw [hp_i', ← this, hpr_zero, Polynomial.natDegree_zero, ← Polynomial.coeff_map, ← hp_r,
+            hpr_zero, Polynomial.coeff_zero] at hr2
           exact hr2 rfl
       · simp only [ne_eq, Equiv.piFinSucc_symm_apply, Finset.mem_filter, Finset.mem_map_equiv,
         Fintype.mem_piFinset, Fin.forall_fin_succ, Fin.cons_zero, Fin.cons_succ,
@@ -205,8 +205,8 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
         tauto
 
 
-    -- Putting these results together, we take a union bound over these two cases to finish the
-    -- proof
+    -- Putting these results together,
+    -- we take a union bound over these two cases to finish the proof
     calc
       -- Pr[A]
       Finset.card
@@ -249,7 +249,6 @@ lemma schwartz_zippel (F : Type) [CommRing F] [IsDomain F] [DecidableEq F] (n : 
         apply Finset.monotone_filter_right
         rw [Pi.le_def]
         intro i
-        rename_i inst inst_1 inst_2 i_1
         simp_all only [ne_eq, MvPolynomial.finSuccEquiv_apply, MvPolynomial.coe_eval₂Hom,
           Polynomial.coeff_natDegree, Polynomial.leadingCoeff_eq_zero, ge_iff_le, not_and, not_not,
           le_Prop_eq, and_imp, implies_true]
