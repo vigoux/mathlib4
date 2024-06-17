@@ -555,18 +555,50 @@ def normLessThanOne₁ :
       (fun w : {w : InfinitePlace K // IsReal w} ↦ x.1 w,
         fun w : {w : InfinitePlace K // IsComplex w} ↦ (x.2 w : ℂ)) ∈ normLessThanOne K}
 
-def normEqOne₁ :
-    Set (InfinitePlace K → ℝ) :=
-    {x | (∀ w, 0 < x w) ∧ (fun w : {w : InfinitePlace K // IsReal w} ↦ x w,
-        fun w : {w : InfinitePlace K // IsComplex w} ↦ (x w : ℂ)) ∈ normEqOne K}
+def normLessThanOne₁To₀ : (normLessThanOne₁ K) → (normLessThanOne₀ K) :=
+  fun ⟨x, hx⟩ ↦ ⟨⟨x.1, fun w ↦ x.2 w⟩, hx.2.2, fun w hw ↦ hx.1 ⟨w, hw⟩⟩
+
+theorem measurableSet_normLessThanOne₁ :
+    MeasurableSet (normLessThanOne₁ K) := by
+  let f : ({w // IsReal w} → ℝ) × ({w // IsComplex w} → ℝ) → (E K) :=
+    fun (x, y) ↦ (x, fun w ↦ y w)
+  have hf : Measurable f := by
+    refine Measurable.prod_mk ?_ ?_
+    · exact measurable_fst
+    · refine measurable_pi_iff.mpr fun _ ↦ ?_
+      have : Measurable (Complex.ofReal) := by
+        refine Continuous.measurable ?_
+        exact Complex.continuous_ofReal
+      refine Measurable.comp this ?_
+      exact Measurable.comp (measurable_pi_apply _) measurable_snd
+  let A := f ⁻¹' (normLessThanOne K)
+  have mesA : MeasurableSet A := hf (measurableSet_normLessThanOne K)
+  have : normLessThanOne₁ K = {x | (∀ w, 0 < x.1 w)}  ∩ {x | (∀ w, 0 < x.2 w)} ∩ A := by
+    ext
+    simp [normLessThanOne₁]
+    aesop
+  rw [this]
+  refine MeasurableSet.inter (MeasurableSet.inter ?_ ?_) mesA
+  · refine MeasurableSet.congr (s := ⋂ z, {x | 0 < x.1 z}) ?_ ?_
+    · refine  MeasurableSet.iInter fun _ ↦ ?_
+      · exact measurableSet_lt (f := fun _ ↦ (0 : ℝ)) measurable_const <|
+        (measurable_pi_apply _).comp measurable_fst
+    · ext
+      simp_rw [Set.mem_iInter, Subtype.forall, Set.mem_setOf_eq]
+  · refine MeasurableSet.congr (s := ⋂ z, {x | 0 < x.2 z}) ?_ ?_
+    · refine  MeasurableSet.iInter fun _ ↦ ?_
+      · exact measurableSet_lt (f := fun _ ↦ (0 : ℝ)) measurable_const <|
+        (measurable_pi_apply _).comp measurable_snd
+    · ext
+      simp_rw [Set.mem_iInter, Subtype.forall, Set.mem_setOf_eq]
 
 variable {K}
 
 theorem indicator_eq_indicator (x : {w : InfinitePlace K // IsReal w} → ℝ)
     (y : {w : InfinitePlace K // IsComplex w} → ℂ) :
     (normLessThanOne₀ K).indicator (fun _ ↦ (1 : ENNReal)) (x, y) =
-      (normLessThanOne₁ K).indicator (fun _ ↦ (1 : ENNReal)) (x, fun w ↦ ‖y w‖) := by
-  have : ∀ ⦃x y⦄, (x, y) ∈ normLessThanOne₀ K ↔ (x, fun w ↦ ‖y w‖) ∈ (normLessThanOne₁ K) := by
+      (normLessThanOne₁ K).indicator (fun _ ↦ (1 : ENNReal)) (x, fun w ↦ (fun i ↦ ‖y i‖) w) := by
+  have : ∀ ⦃x y⦄, (x, y) ∈ normLessThanOne₀ K ↔ (x, (fun w ↦ ‖y w‖)) ∈ (normLessThanOne₁ K) := by
     intro x y
     refine ⟨fun h ↦ ⟨?_, ?_, ?_⟩, fun h ↦ ⟨?_, ?_⟩⟩
     · exact fun w ↦ h.2 w.val w.prop
@@ -581,79 +613,113 @@ theorem indicator_eq_indicator (x : {w : InfinitePlace K // IsReal w} → ℝ)
   · rw [Set.indicator_of_mem h, Set.indicator_of_mem (this.mp h)]
   · rw [Set.indicator_of_not_mem h, Set.indicator_of_not_mem (this.not.mp h)]
 
-theorem volume_normLessThanOne₀_aux₁ (x : {w // IsReal w} → ℝ) (y : {w // IsComplex w} → ℂ)
-    (i : {w // IsComplex w}) :
-    (∫⁻ yᵢ, (normLessThanOne₀ K).indicator (fun x ↦ 1) (x, Function.update y i yᵢ)) =
-      2 * NNReal.pi *
-        (∫⁻ xᵢ, (normLessThanOne₁ K).indicator (fun x ↦ 1)
-          (x, Function.update (fun i ↦ ‖y i‖) i xᵢ))  := by
-  sorry
-
-#exit
-
-theorem volume_normLessThanOne₀_aux₂ (x : {w // IsReal w} → ℝ) (a : {w // IsComplex w} → ℂ)
-    (s : Finset {w // IsComplex w}) :
-    (∫⋯∫⁻_s, fun y ↦ (normLessThanOne₀ K).indicator (fun x ↦ 1) (x, y) ∂fun x ↦ volume) a =
-      (2 * NNReal.pi) ^ s.card *
-      (∫⋯∫⁻_s, fun r ↦ (∏ i ∈ s, (r i)).toNNReal *
-        ((normLessThanOne₁ K).indicator (fun x ↦ 1) (x, r)) ∂fun x ↦ volume) (fun i ↦ ‖a i‖) := by
-  induction s using Finset.induction generalizing a with
-  | empty =>
-      simp_rw [indicator_eq_indicator]
-      simp
-  | insert hi h_ind =>
-      rw [lmarginal_insert]
-      simp_rw [h_ind]
-      sorry
-
-#exit
-
--- theorem volume_normLessThanOne₀_aux (x : {w // IsReal w} → ℝ) :
---     ∫⁻ y, (normLessThanOne₀ K).indicator (fun x ↦ 1) (x, y) = (2 * NNReal.pi) ^ NrComplexPlaces K *
---       ∫⁻ y, (∏ w, (y w)).toNNReal * (normLessThanOne₁ K).indicator (fun x ↦ 1) (x, y) := by
---   let a : {w : InfinitePlace K // IsComplex w} → ℂ := sorry
---   rw [NrComplexPlaces, volume_pi, lintegral_eq_lmarginal_univ a, Fintype.card]
---   generalize Finset.univ (α := {w : InfinitePlace K // IsComplex w}) = s
---   induction s using Finset.induction generalizing a with
---   | empty =>
---       simp
---       sorry
---   | insert hi h_ind =>
---       rw [lmarginal_insert]
---       simp_rw [h_ind]
---       simp_rw [volume_normLessThanOne₀_aux₁]
---       sorry
-
 theorem volume_normLessOne₀ :
     volume (normLessThanOne₀ K) =
-      (2 * NNReal.pi) ^ NrComplexPlaces K * volume (normLessThanOne₁ K)  := by
-  have h₀ : Measurable ((normLessThanOne₀ K).indicator (fun x ↦ (1 : ENNReal))) :=
+      (2 * NNReal.pi) ^ NrComplexPlaces K *
+        ∫⁻ z in (normLessThanOne₁ K), (∏ w : { w // IsComplex w}, ‖z.2 w‖₊) := by
+  have h₀ : Measurable ((normLessThanOne₀ K).indicator (fun _ ↦ (1 : ENNReal))) :=
     (measurable_indicator_const_iff 1).mpr <| measurableSet_normLessThanOne₀ K
   rw [← set_lintegral_one, Measure.volume_eq_prod, ← lintegral_indicator _
     (measurableSet_normLessThanOne₀ K), lintegral_prod _ h₀.aemeasurable]
-  simp_rw [volume_pi, lintegral_eq_lmarginal_univ (0 : {w // IsComplex w} → ℂ)]
-  simp_rw [volume_normLessThanOne₀_aux₂]
-  simp only [Finset.card_univ, Pi.zero_apply, norm_zero, lmarginal_univ]
-  rw [lintegral_const_mul, lintegral_lintegral, NrComplexPlaces]
-
-
-#exit
-
-  rw [← set_lintegral_one, Measure.volume_eq_prod, ← lintegral_indicator, lintegral_prod]
+  simp_rw [indicator_eq_indicator, volume_pi,
+    lintegral_eq_lmarginal_univ (0 : {w // IsComplex w} → ℂ)]
+  have := fun x ↦ multiple_step (fun y ↦ (normLessThanOne₁ K).indicator (fun _ ↦ 1)
+      (x, fun w ↦ y w)) ?_ ?_ Finset.univ 0
+  dsimp only at this
   conv_lhs =>
     enter [2, x]
-    rw [zap (fun y ↦ (normLessThanOne₀ K).indicator _ (x, y))
-      (fun y ↦ (normLessThanOne₁ K).indicator (fun _ ↦ 1) (x, y))
-      (fun y ↦ indicator_eq_indicator x y)]
-  rw [lintegral_const_mul, ← lintegral_prod, ← Measure.volume_eq_prod, lintegral_indicator,
-    set_lintegral_one, NrComplexPlaces]
-  · sorry
-  · sorry
-  · sorry
-  · sorry
-  · sorry
+    rw [this x]
+  simp only [Finset.card_univ, ENNReal.coe_finset_prod, Pi.zero_apply, norm_zero, lmarginal_univ]
+  rw [lintegral_const_mul, NrComplexPlaces]
+  rw [lintegral_lintegral]
+  rw [← lintegral_indicator]
+  · congr
+    ext z
+    rw [← ENNReal.coe_finset_prod]
+    simp_rw [Set.indicator_apply]
+    simp only [ENNReal.coe_finset_prod, Prod.mk.eta, mul_ite, mul_one, mul_zero]
+  · exact measurableSet_normLessThanOne₁ K
+  · refine Measurable.aemeasurable ?_
+    rw [Function.uncurry_def]
+    refine Measurable.mul ?_ ?_
+    · refine Finset.measurable_prod _ fun _ _ ↦ ?_
+      simp only [measurable_coe_nnreal_ennreal_iff]
+      refine measurable_nnnorm.comp ?_
+      exact Measurable.eval measurable_snd
+    · refine Measurable.indicator ?_ ?_
+      exact measurable_const
+      exact measurableSet_normLessThanOne₁ K
+  · refine Measurable.lintegral_prod_right ?_
+    rw [Function.uncurry_def]
+    -- Duplicate of the above code
+    refine Measurable.mul ?_ ?_
+    · refine Finset.measurable_prod _ fun _ _ ↦ ?_
+      simp only [measurable_coe_nnreal_ennreal_iff]
+      refine measurable_nnnorm.comp ?_
+      exact Measurable.eval measurable_snd
+    · refine Measurable.indicator ?_ ?_
+      exact measurable_const
+      exact measurableSet_normLessThanOne₁ K
+  · refine Measurable.indicator ?_ ?_
+    · exact measurable_const
+    · let f : ({w : InfinitePlace K // IsComplex w} → ℝ) →
+        ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ) := fun y ↦ (x, fun w ↦ y w)
+      let s := f ⁻¹' (normLessThanOne₁ K)
+      refine MeasurableSet.congr (s := s) ?_ ?_
+      · dsimp only [s]
+        refine MeasurableSet.preimage (measurableSet_normLessThanOne₁ K) ?_
+        dsimp only [f]
+        rw [measurable_prod]
+        refine ⟨?_, ?_⟩
+        · simp
+        · exact fun ⦃t⦄ a ↦ a -- ??
+      · ext
+        simp [s, normLessThanOne₁, Set.mem_def]
+        rfl
+  · intro x _ w h
+    rw [Set.indicator_apply_eq_zero]
+    simp only [one_ne_zero, imp_false]
+    intro hx
+    have := hx.2.1 w
+    simp at this
+    linarith
 
 variable (K)
+
+def fusionEquiv₀ :
+  ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // ¬IsReal w} → ℝ) ≃ᵐ
+    ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ) :=
+  (MeasurableEquiv.refl _).prodCongr <|
+    ⟨(Equiv.subtypeEquivRight fun _ ↦ not_isReal_iff_isComplex).piCongrLeft (fun _ ↦ ℝ),
+      by measurability, by measurability⟩
+
+theorem fusionEquiv₀_measure_preserving :
+    MeasurePreserving (fusionEquiv₀ K) :=
+  (MeasurePreserving.id volume).prod (volume_measurePreserving_piCongrLeft _ _)
+
+def fusionEquiv :
+    (InfinitePlace K → ℝ) ≃ᵐ
+    ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ)
+       :=
+  MeasurableEquiv.trans
+    (MeasurableEquiv.piEquivPiSubtypeProd (fun _ : InfinitePlace K ↦ ℝ) (fun w ↦ IsReal w))
+      (fusionEquiv₀ K)
+
+theorem fusionEquiv_measure_preserving :
+    MeasurePreserving (fusionEquiv K) := by
+  unfold fusionEquiv
+  refine MeasurePreserving.trans ?_ (fusionEquiv₀_measure_preserving K)
+  exact volume_preserving_piEquivPiSubtypeProd _ _
+
+theorem fusionEquiv_apply (x : InfinitePlace K → ℝ) :
+    fusionEquiv K x = (fun w ↦ x w.val, fun w ↦ x w.val) := rfl
+
+theorem fusionEquiv_symm_apply
+    (x : ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ)) :
+    (fusionEquiv K).symm x = fun w ↦
+      if hw : IsReal w then x.1 ⟨w, hw⟩ else x.2 ⟨w, not_isReal_iff_isComplex.mp hw⟩ := rfl
+
+def normLessThanOne₂ : Set (InfinitePlace K → ℝ) := (fusionEquiv K)⁻¹' (normLessThanOne₁ K)
 
 def equivFinRank : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) := by
   refine Fintype.equivOfCardEq ?_
@@ -661,25 +727,6 @@ def equivFinRank : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) := by
 
 def normUnits : {w : InfinitePlace K // w ≠ w₀} → ((InfinitePlace K) → ℝ) :=
   fun i w ↦ w (fundSystem K (equivFinRank K i)) ^ mult w
-
-def f : (InfinitePlace K → ℝ) → (InfinitePlace K → ℝ) := fun c ↦ ∏ i, (normUnits K i) ^ (c i)
-
-example : normEqOne₁ K = (f K) '' (Set.univ.pi fun _ ↦ Set.Ico 0 1) := by
-  ext x
-  simp [normEqOne₁, f]
-  refine ⟨?_, ?_⟩
-  · rintro ⟨h₁, h₂, h₃⟩
-    replace h₂ := h₂.1
-    rw [Set.mem_preimage, Zspan.mem_fundamentalDomain] at h₂
-    refine ⟨?_, ?_⟩
-    · intro w
-
-      have := fun w : {w : InfinitePlace K // w ≠ w₀} ↦ logMap_apply_of_norm_one h₃ w.prop
-
-
-    · sorry
-  ·
-    sorry
 
 theorem normUnits_pos (i : {w : InfinitePlace K // w ≠ w₀}) (w : InfinitePlace K) :
     0 < normUnits K i w := by
@@ -745,7 +792,7 @@ theorem jacobian_det (c : InfinitePlace K → ℝ) :
   rw [Matrix.det_mul_column]
   rw [prod_prodNormUnitsEval, one_mul, ← Matrix.det_transpose]
   simp_rw [jacobianCoeff, normUnits, Real.log_pow]
-  rw [regulator_eq_det' K (equivFinRank K)]
+  rw [regulator_eq_det' K (equivFinRank K)] -- FIXME
   have : |c w₀| ^ rank K = |∏ w : InfinitePlace K, if w = w₀ then 1 else c w₀| := by
     rw [Finset.prod_ite, Finset.prod_const_one, Finset.prod_const, one_mul, abs_pow,
       ← Units.finrank_eq_rank]
@@ -762,13 +809,27 @@ theorem jacobian_det (c : InfinitePlace K → ℝ) :
   · ring
   · rfl
 
--- abbrev normLessThanOne₁ : Set ((InfinitePlace K) → ℝ) :=
---  normUnitsEval K '' (Set.univ.pi fun _ ↦ Set.Ico 0 1)
+def S : Set (InfinitePlace K → ℝ) :=
+  Set.univ.pi fun w ↦ if w = w₀ then Set.Ioc 0 1 else Set.Ico 0 1
 
--- theorem volume_normLessOne₀ :
---    volume (normLessThanOne₀ K) =
---      (2 * NNReal.pi) ^ (NrRealPlaces K) * volume (normLessThanOne₁ K) := by
---  sorry
+theorem normLessThanOne₂_eq :
+    (normLessThanOne₂ K) = normUnitsEval K '' (S K) := by
+  ext x
+  refine ⟨fun hx ↦ ?_, fun hx ↦ ?_⟩
+  · sorry
+  · rw [Set.mem_image] at hx
+    obtain ⟨c, hc, rfl⟩ := hx
+    refine ⟨?_, ?_, ⟨?_, ?_⟩, ?_⟩
+    ·
+      sorry
+    ·
+      sorry
+    ·
+      sorry
+    ·
+      sorry
+    ·
+      sorry
 
 theorem hasFDeriv_normUnitsEval (c : InfinitePlace K → ℝ) :
     HasFDerivAt (𝕜 := ℝ) (normUnitsEval K) (jacobian K c) c := by
@@ -804,13 +865,37 @@ theorem hasFDeriv_normUnitsEval (c : InfinitePlace K → ℝ) :
   rw [smul_add]
   congr 3
   · simp_rw [normUnitsEval₀, dif_pos, dite_smul]
-
     sorry
   · sorry
   · sorry
 
 theorem volume_normLessOne₁ :
-    (volume (normLessThanOne₁ K)).toReal = regulator K := by
+    (volume (normLessThanOne K)).toReal = regulator K := by
+  rw [volume_normLessThanOne, volume_normLessOne₀]
+  rw [← (fusionEquiv_measure_preserving K).set_lintegral_comp_preimage]
+  rw [show (fusionEquiv K) ⁻¹' normLessThanOne₁ K = normLessThanOne₂ K by rfl]
+  rw [normLessThanOne₂_eq]
+  rw [lintegral_image_eq_lintegral_abs_det_fderiv_mul volume _
+    (fun c _ ↦ HasFDerivAt.hasFDerivWithinAt (hasFDeriv_normUnitsEval K c))]
+  simp_rw [jacobian_det, fusionEquiv_apply, ENNReal.ofReal_mul sorry]
+#exit
+
+  · exact fun c _ ↦ HasFDerivAt.hasFDerivWithinAt (hasFDeriv_normUnitsEval K c)
+  · simp_rw[jacobian_det, fusionEquiv_apply, normUnitsEval]
+    sorry
+  · sorry
+    -- exact MeasurableSet.univ_pi fun w ↦ if w = w₀ then measurableSet_Ioc else
+  · intro x hx y hy hxy
+    rw [Function.funext_iff] at hxy
+
+    sorry
+  · exact measurableSet_normLessThanOne₁ K
+  · sorry
+
+
+#exit
+
+
   let s : Set (InfinitePlace K → ℝ) := Set.univ.pi fun _ ↦ Set.Ico 0 1
   have hs : MeasurableSet s := sorry
   have hf₁ : Set.InjOn (normUnitsEval K) s := sorry
