@@ -321,10 +321,12 @@ variable [NumberField K]
 
 theorem nnnorm_eq_sup_normAtPlace (x : E K) :
     ‖x‖₊ = univ.sup fun w ↦ ⟨normAtPlace w x, normAtPlace_nonneg w x⟩ := by
-  rw [show (univ : Finset (InfinitePlace K)) = (univ.image
-    (fun w : {w : InfinitePlace K // IsReal w} ↦ w.1)) ∪
-    (univ.image (fun w : {w : InfinitePlace K // IsComplex w} ↦ w.1))
-    by ext; simp [isReal_or_isComplex], sup_union, univ.sup_image, univ.sup_image, sup_eq_max,
+  have :
+      (univ : Finset (InfinitePlace K)) =
+      (univ.image (fun w : {w : InfinitePlace K // IsReal w} ↦ w.1)) ∪
+      (univ.image (fun w : {w : InfinitePlace K // IsComplex w} ↦ w.1)) := by
+    ext; simp [isReal_or_isComplex]
+  rw [this, sup_union, univ.sup_image, univ.sup_image, sup_eq_max,
     Prod.nnnorm_def', Pi.nnnorm_def, Pi.nnnorm_def]
   congr
   · ext w
@@ -336,7 +338,7 @@ theorem norm_eq_sup'_normAtPlace (x : E K) :
     ‖x‖ = univ.sup' univ_nonempty fun w ↦ normAtPlace w x := by
   rw [← coe_nnnorm, nnnorm_eq_sup_normAtPlace, ← sup'_eq_sup univ_nonempty, ← NNReal.val_eq_coe,
     ← OrderHom.Subtype.val_coe, map_finset_sup', OrderHom.Subtype.val_coe]
-  rfl
+  simp only [Function.comp_apply]
 
 theorem continuous_normAtPlace (w : InfinitePlace K) :
     Continuous (normAtPlace w) := by
