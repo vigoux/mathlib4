@@ -555,9 +555,6 @@ def normLessThanOne₁ :
       (fun w : {w : InfinitePlace K // IsReal w} ↦ x.1 w,
         fun w : {w : InfinitePlace K // IsComplex w} ↦ (x.2 w : ℂ)) ∈ normLessThanOne K}
 
-def normLessThanOne₁To₀ : (normLessThanOne₁ K) → (normLessThanOne₀ K) :=
-  fun ⟨x, hx⟩ ↦ ⟨⟨x.1, fun w ↦ x.2 w⟩, hx.2.2, fun w hw ↦ hx.1 ⟨w, hw⟩⟩
-
 theorem measurableSet_normLessThanOne₁ :
     MeasurableSet (normLessThanOne₁ K) := by
   let f : ({w // IsReal w} → ℝ) × ({w // IsComplex w} → ℝ) → (E K) :=
@@ -732,6 +729,86 @@ theorem normUnits_pos (i : {w : InfinitePlace K // w ≠ w₀}) (w : InfinitePla
     0 < normUnits K i w := by
   refine pow_pos ?_ _
   simp_rw [pos_iff, ne_eq, RingOfIntegers.coe_eq_zero_iff, Units.ne_zero, not_false_eq_true]
+
+def normUnitsEvalProd (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) : InfinitePlace K → ℝ :=
+  fun w ↦  ∏ i, (normUnits K i w) ^ (c i)
+
+theorem prod_normUnitsEvalProd (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
+    ∏ w : InfinitePlace K, normUnitsEvalProd K c w = 1 := by
+  simp_rw [normUnitsEvalProd, normUnits]
+  rw [Finset.prod_comm]
+  simp_rw [Real.finset_prod_rpow _ _ (fun _ _ ↦ pow_nonneg (apply_nonneg _ _) _), prod_eq_abs_norm,
+    Units.norm, Rat.cast_one, Real.one_rpow, Finset.prod_const_one]
+
+theorem normReal_eq {x : InfinitePlace K → ℝ} (hx : ∀ w, 0 ≤ x w) :
+    mixedEmbedding.norm ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩ = ∏ w, (x w) ^ mult w := by
+  rw [mixedEmbedding.norm_apply]
+  refine Finset.prod_congr rfl fun w _ ↦ ?_
+  obtain hw | hw := isReal_or_isComplex w
+  · rw [normAtPlace_apply_isReal hw, Real.norm_eq_abs, abs_eq_self.mpr (hx _)]
+  · rw [normAtPlace_apply_isComplex hw, Complex.norm_eq_abs, Complex.abs_ofReal,
+      abs_eq_self.mpr (hx _)]
+
+theorem normUnitsEvalProd_eq {x : InfinitePlace K → ℝ}  {c : {w : InfinitePlace K // w ≠ w₀} → ℝ}
+    (hc : ∀ w, c w ≠ 0)
+    (hx₀ :mixedEmbedding.norm (⟨fun w ↦ x w.val, fun w ↦ x w.val⟩) = 1)
+    (hx₁ : ∀ w : {w // w ≠ w₀}, mult w.val * Real.log (x w.val) =
+      ∑ i, (c i) * (Real.log (normUnits K i w)))
+    (hx₂ : ∀ w, 0 < x w) :
+    normUnitsEvalProd K c = x := by
+  have h_eqw : ∀ w : {w // w ≠ w₀}, normUnitsEvalProd K c w = (x w.val) ^ mult w.val := by
+    intro w
+    rw [normUnitsEvalProd, ← Real.exp_log (hx₂ w), ← Real.exp_nat_mul, hx₁ w, Real.exp_sum]
+    simp_rw [← Real.log_rpow (normUnits_pos _ _ _)]
+    simp_rw [Real.exp_log sorry]
+  have h_eqw₀ : normUnitsEvalProd K c w₀ = (x w₀) ^ mult (w₀ : InfinitePlace K) := by
+    rw [← prod_normUnitsEvalProd K c, normReal_eq] at hx₀
+    rw [← Finset.univ.prod_erase_mul _ (Finset.mem_univ w₀),
+      ← Finset.univ.prod_erase_mul _ (Finset.mem_univ w₀)] at hx₀
+    have : (∏ x ∈ Finset.univ.erase w₀, normUnitsEvalProd K c x) =
+        (∏ x_1 ∈ Finset.univ.erase w₀, x x_1 ^ x_1.mult) := by
+      refine Finset.prod_congr rfl fun w hw ↦ h_eqw ⟨w, (Finset.mem_erase.mp hw).1⟩
+    rw [this] at hx₀
+    refine (mul_left_cancel₀ ?_ hx₀).symm
+    rw [Finset.prod_ne_zero_iff]
+    intro _ _
+    refine pow_ne_zero _ (ne_of_gt ?_)
+    exact hx₂ _
+    exact fun _ ↦ (hx₂ _).le
+
+
+example : {x | x ∈ normLessThanOne₂ K ∧
+    mixedEmbedding.norm (⟨fun w ↦ x w.val, fun w ↦ x w.val⟩) = 1} =
+    (normUnitsEvalProd K) '' (Set.univ.pi fun _ ↦ Set.Ico 0 1) := by
+  let B := (basisUnitLattice K).ofZlatticeBasis ℝ
+  ext x
+  refine ⟨fun hx ↦ ?_, fun hx ↦ ?_⟩
+  · refine ⟨?_, ?_, ?_⟩
+    · exact fun w ↦ B.repr (logMap ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩) (equivFinRank K w)
+    · sorry
+    · ext w
+      simp_rw [normUnitsEvalProd]
+      have : ∀ w, logMap ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩ w = mult w.val * Real.log (x w.val) := by
+       sorry
+      simp only [Finset.prod_apply]
+      simp_rw [this]
+--      logMap x ⟨w, hw⟩ = mult w * Real.log (normAtPlace w x)
+      sorry
+  ·
+    sorry
+
+def normUnitsEval (c : InfinitePlace K → ℝ) : InfinitePlace K → ℝ :=
+  (c w₀) • normUnitsEvalProd K (fun w ↦ c w)
+
+def S : Set (InfinitePlace K → ℝ) :=
+  Set.univ.pi fun w ↦ if w = w₀ then Set.Ioc 0 1 else Set.Ico 0 1
+
+
+
+
+
+
+#exit
 
 def normUnitsEval₀ (i w : InfinitePlace K) : (InfinitePlace K → ℝ) → ℝ :=
   fun x ↦ if hi : i = w₀ then x w₀ else normUnits K ⟨i, hi⟩ w ^ (x i)
