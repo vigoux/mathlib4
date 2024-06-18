@@ -1,5 +1,15 @@
 import Mathlib.Analysis.SpecialFunctions.PolarCoord
 
+
+theorem Basis.total_eq_iff_eq_repr {M R ι : Type*} [Semiring R] [AddCommMonoid M] [Module R M]
+    (B : Basis ι R M) (x : M) (c : ι →₀ R) : Finsupp.total ι M R B c = x ↔ c = B.repr x :=
+  ⟨fun h ↦ by rw [← h, B.repr_total], fun h ↦ by rw [h, B.total_repr]⟩
+
+theorem Basis.sum_eq_iff_eq_equivFun {M R ι : Type*} [Fintype ι] [Semiring R] [AddCommMonoid M]
+    [Module R M] (B : Basis ι R M) (x : M) (c : ι → R) :
+    ∑ i, (c i) • (B i) = x ↔ c = B.equivFun x :=
+  ⟨fun h ↦ by rw [← h, B.equivFun_apply, B.repr_sum_self], fun h ↦ by rw [h, B.sum_equivFun]⟩
+
 open MeasureTheory MeasureTheory.Measure
 
 open Classical in

@@ -776,7 +776,6 @@ theorem normUnitsEvalProd_eq {x : InfinitePlace K → ℝ}  {c : {w : InfinitePl
     exact hx₂ _
     exact fun _ ↦ (hx₂ _).le
 
-
 example : {x | x ∈ normLessThanOne₂ K ∧
     mixedEmbedding.norm (⟨fun w ↦ x w.val, fun w ↦ x w.val⟩) = 1} =
     (normUnitsEvalProd K) '' (Set.univ.pi fun _ ↦ Set.Ico 0 1) := by
