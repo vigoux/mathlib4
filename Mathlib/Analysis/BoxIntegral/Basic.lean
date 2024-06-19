@@ -5,6 +5,7 @@ Authors: Yury Kudryashov
 -/
 import Mathlib.Analysis.BoxIntegral.Partition.Filter
 import Mathlib.Analysis.BoxIntegral.Partition.Measure
+import Mathlib.Analysis.Oscillation
 import Mathlib.Topology.UniformSpace.Compact
 import Mathlib.Init.Data.Bool.Lemmas
 
