@@ -722,63 +722,168 @@ def equivFinRank : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) := by
   refine Fintype.equivOfCardEq ?_
   rw [Fintype.card_subtype_compl, Fintype.card_ofSubsingleton, Fintype.card_fin, rank]
 
+-- That's a terrible name
 def normUnits : {w : InfinitePlace K // w ≠ w₀} → ((InfinitePlace K) → ℝ) :=
-  fun i w ↦ w (fundSystem K (equivFinRank K i)) ^ mult w
+  fun i w ↦ w (fundSystem K (equivFinRank K i))
+
+theorem normUnits_eq (i : {w : InfinitePlace K // w ≠ w₀}) (w : InfinitePlace K) :
+    normUnits K i w = w (fundSystem K (equivFinRank K i)) := rfl
 
 theorem normUnits_pos (i : {w : InfinitePlace K // w ≠ w₀}) (w : InfinitePlace K) :
     0 < normUnits K i w := by
-  refine pow_pos ?_ _
-  simp_rw [pos_iff, ne_eq, RingOfIntegers.coe_eq_zero_iff, Units.ne_zero, not_false_eq_true]
+  simp_rw [normUnits_eq, pos_iff, ne_eq, RingOfIntegers.coe_eq_zero_iff, Units.ne_zero,
+    not_false_eq_true]
 
 def normUnitsEvalProd (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) : InfinitePlace K → ℝ :=
-  fun w ↦  ∏ i, (normUnits K i w) ^ (c i)
+  fun w ↦ ∏ i, (normUnits K i w) ^ (c i)
 
-theorem prod_normUnitsEvalProd (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
-    ∏ w : InfinitePlace K, normUnitsEvalProd K c w = 1 := by
-  simp_rw [normUnitsEvalProd, normUnits]
+theorem normUnitsEvalProd_eq (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) (w : InfinitePlace K) :
+    normUnitsEvalProd K c w = ∏ i, (normUnits K i w) ^ (c i) := rfl
+
+theorem normUnitsEvalProd_pos (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) (w : InfinitePlace K) :
+    0 < normUnitsEvalProd K c w :=
+  Finset.prod_pos fun _ _ ↦ Real.rpow_pos_of_pos (normUnits_pos K _ _) _
+
+theorem prod_normUnitsEvalProd_pow_mult (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
+    ∏ w : InfinitePlace K, normUnitsEvalProd K c w ^ w.mult = 1 := by
+  simp_rw [normUnitsEvalProd_eq, ← Finset.prod_pow, ← Real.rpow_mul_natCast
+    (normUnits_pos _ _ _).le, fun i ↦ mul_comm (c i), Real.rpow_natCast_mul
+    (normUnits_pos _ _ _).le]
   rw [Finset.prod_comm]
-  simp_rw [Real.finset_prod_rpow _ _ (fun _ _ ↦ pow_nonneg (apply_nonneg _ _) _), prod_eq_abs_norm,
-    Units.norm, Rat.cast_one, Real.one_rpow, Finset.prod_const_one]
+  have : ∀ i w, 0 ≤ normUnits K i w ^ w.mult := by
+        intro _ _
+        refine pow_nonneg ?_ _
+        exact (normUnits_pos _ _ _).le
+  simp_rw [Real.finset_prod_rpow _ _ (fun _ _ ↦ this _ _), normUnits, prod_eq_abs_norm, Units.norm,
+    Rat.cast_one, Real.one_rpow, Finset.prod_const_one]
 
-theorem normReal_eq {x : InfinitePlace K → ℝ} (hx : ∀ w, 0 ≤ x w) :
-    mixedEmbedding.norm ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩ = ∏ w, (x w) ^ mult w := by
-  rw [mixedEmbedding.norm_apply]
-  refine Finset.prod_congr rfl fun w _ ↦ ?_
-  obtain hw | hw := isReal_or_isComplex w
-  · rw [normAtPlace_apply_isReal hw, Real.norm_eq_abs, abs_eq_self.mpr (hx _)]
-  · rw [normAtPlace_apply_isComplex hw, Complex.norm_eq_abs, Complex.abs_ofReal,
-      abs_eq_self.mpr (hx _)]
-
-theorem normUnitsEvalProd_eq {x : InfinitePlace K → ℝ}  {c : {w : InfinitePlace K // w ≠ w₀} → ℝ}
-    (hc : ∀ w, c w ≠ 0)
-    (hx₀ :mixedEmbedding.norm (⟨fun w ↦ x w.val, fun w ↦ x w.val⟩) = 1)
-    (hx₁ : ∀ w : {w // w ≠ w₀}, mult w.val * Real.log (x w.val) =
-      ∑ i, (c i) * (Real.log (normUnits K i w)))
-    (hx₂ : ∀ w, 0 < x w) :
-    normUnitsEvalProd K c = x := by
-  have h_eqw : ∀ w : {w // w ≠ w₀}, normUnitsEvalProd K c w = (x w.val) ^ mult w.val := by
-    intro w
-    rw [normUnitsEvalProd, ← Real.exp_log (hx₂ w), ← Real.exp_nat_mul, hx₁ w, Real.exp_sum]
-    simp_rw [← Real.log_rpow (normUnits_pos _ _ _)]
-    simp_rw [Real.exp_log sorry]
-  have h_eqw₀ : normUnitsEvalProd K c w₀ = (x w₀) ^ mult (w₀ : InfinitePlace K) := by
-    rw [← prod_normUnitsEvalProd K c, normReal_eq] at hx₀
-    rw [← Finset.univ.prod_erase_mul _ (Finset.mem_univ w₀),
-      ← Finset.univ.prod_erase_mul _ (Finset.mem_univ w₀)] at hx₀
-    have : (∏ x ∈ Finset.univ.erase w₀, normUnitsEvalProd K c x) =
-        (∏ x_1 ∈ Finset.univ.erase w₀, x x_1 ^ x_1.mult) := by
-      refine Finset.prod_congr rfl fun w hw ↦ h_eqw ⟨w, (Finset.mem_erase.mp hw).1⟩
-    rw [this] at hx₀
-    refine (mul_left_cancel₀ ?_ hx₀).symm
+theorem prod_normUnitsEvalProd (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) (hc : ∀ i, c i ≠ 0) :
+    ∏ w : InfinitePlace K, normUnitsEvalProd K c w =
+      (∏ w : {w : InfinitePlace K // IsComplex w}, normUnitsEvalProd K c w)⁻¹ := by
+  rw [← mul_eq_one_iff_eq_inv₀, ← Fintype.prod_subtype_mul_prod_subtype (fun w ↦ IsReal w)]
+  rw [← (Equiv.subtypeEquivRight (fun _ ↦ not_isReal_iff_isComplex)).prod_comp]
+  simp_rw [Equiv.subtypeEquivRight_apply_coe]
+  · rw [mul_assoc, ← sq, ← Finset.prod_pow]
+    convert_to ∏ w, ((normUnitsEvalProd K c w) ^ w.mult) = 1
+    · rw [← Fintype.prod_subtype_mul_prod_subtype (fun w ↦ IsReal w)]
+      congr
+      · ext w
+        rw [mult, if_pos w.prop, pow_one]
+      · ext w
+        rw [mult, if_neg w.prop]
+    · exact prod_normUnitsEvalProd_pow_mult K c
+  · rw [Finset.prod_ne_zero_iff]
+    intro _ _
+    rw [normUnitsEvalProd_eq]
     rw [Finset.prod_ne_zero_iff]
     intro _ _
-    refine pow_ne_zero _ (ne_of_gt ?_)
-    exact hx₂ _
-    exact fun _ ↦ (hx₂ _).le
+    rw [Real.rpow_ne_zero]
+    exact ne_of_gt (normUnits_pos _ _ _)
+    exact (normUnits_pos _ _ _).le
+    exact hc _
+
+theorem normAtPlace_eq (x : InfinitePlace K → ℝ) (w : InfinitePlace K) :
+    normAtPlace w ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩ = |x w| := by
+  obtain hw | hw := isReal_or_isComplex w
+  · rw [normAtPlace_apply_isReal hw, Real.norm_eq_abs]
+  · rw [normAtPlace_apply_isComplex hw, Complex.norm_eq_abs, Complex.abs_ofReal]
+
+theorem normReal_eq (x : InfinitePlace K → ℝ) (hx : ∀ w, 0 ≤ x w) :
+    mixedEmbedding.norm ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩ = ∏ w, (x w) ^ mult w :=
+  Finset.prod_congr rfl fun w _ ↦ by rw [normAtPlace_eq, abs_eq_self.mpr (hx _)]
+
+theorem normReal_normUnitsEvalProd (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
+    mixedEmbedding.norm ⟨fun w ↦ normUnitsEvalProd K c w.val,
+      fun w ↦ normUnitsEvalProd K c w.val⟩ = 1 := by
+  rw [normReal_eq]
+  exact prod_normUnitsEvalProd_pow_mult K c
+  intro _
+  exact (normUnitsEvalProd_pos _ _ _).le
+
+def logRepr (x : InfinitePlace K → ℝ) : {w : InfinitePlace K // w ≠ w₀} → ℝ :=
+  (((basisUnitLattice K).ofZlatticeBasis ℝ).reindex (equivFinRank K).symm).equivFun
+        (logMap ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩)
+
+theorem normUnitsEvalProd_eq_iff {x : InfinitePlace K → ℝ} {c : {w : InfinitePlace K // w ≠ w₀} → ℝ}
+    (hx₀ : mixedEmbedding.norm (⟨fun w ↦ x w.val, fun w ↦ x w.val⟩) = 1)
+    (hx₁ : ∀ w, 0 < x w) :
+    normUnitsEvalProd K c = x ↔ c = logRepr K x := by
+  suffices (∀ w : {w // w ≠ w₀}, normUnitsEvalProd K c w = x w.val) ↔ c = logRepr K x by
+    rw [← this, Function.funext_iff]
+    refine ⟨fun h w ↦ h w, fun h w ↦ ?_⟩
+    by_cases hw : w = w₀
+    · simp_rw [normUnitsEvalProd_eq, hw] at h ⊢
+      have : ∏ w, ∏ i, (normUnits K i w ^ (c i)) ^ w.mult = ∏ w, (x w) ^ w.mult := sorry
+      rw [← Finset.univ.prod_erase_mul _ (Finset.mem_univ w₀),
+        ← Finset.univ.prod_erase_mul _ (Finset.mem_univ w₀)] at this
+      rw [show (∏ w ∈ Finset.univ.erase w₀, ∏ i : { w // w ≠ w₀ }, (normUnits K i w ^ c i) ^ w.mult)
+        = (∏ w ∈ Finset.univ.erase (w₀ : InfinitePlace K), (x w) ^ w.mult) by sorry] at this
+      rwa [mul_cancel_left_mem_nonZeroDivisors, Finset.prod_pow, pow_left_inj] at this
+      sorry
+      sorry
+      sorry
+      sorry
+    · exact h ⟨w, hw⟩
+  simp_rw [logRepr, ← Basis.sum_eq_iff_eq_equivFun, Basis.coe_reindex, Equiv.symm_symm,
+    Function.comp_apply, Basis.ofZlatticeBasis_apply, ← logEmbedding_fundSystem,
+    Function.funext_iff, logMap_apply_of_norm_one hx₀, Finset.sum_apply, Pi.smul_apply,
+    logEmbedding_component, smul_eq_mul, ← mul_assoc, fun i ↦ mul_comm (c i), mul_assoc,
+    ← Finset.mul_sum, mul_cancel_left_mem_nonZeroDivisors sorry, ← Real.log_rpow sorry,
+    ← Real.log_prod _ _ sorry, normAtPlace_eq, abs_eq_self.mpr sorry,  ← normUnits_eq,
+    normUnitsEvalProd_eq]
+  refine ⟨fun h w ↦ congr_arg Real.log (h w), fun h w ↦ ?_⟩
+  refine Real.log_injOn_pos ?_ ?_ (h w)
+  sorry
+  sorry
 
 example : {x | x ∈ normLessThanOne₂ K ∧
     mixedEmbedding.norm (⟨fun w ↦ x w.val, fun w ↦ x w.val⟩) = 1} =
     (normUnitsEvalProd K) '' (Set.univ.pi fun _ ↦ Set.Ico 0 1) := by
+  ext x
+  refine ⟨fun ⟨⟨hx₀, hx₁, ⟨⟨hx₂, _⟩, _⟩⟩, hx₃⟩ ↦ ⟨logRepr K x, ?_, ?_⟩, ?_⟩
+  · intro w _
+    rw [Set.mem_preimage, fusionEquiv_apply, Zspan.mem_fundamentalDomain] at hx₂
+    exact hx₂ (equivFinRank K w)
+  · refine (normUnitsEvalProd_eq_iff K hx₃ ?_).mpr rfl
+    intro w
+    obtain hw | hw :=  isReal_or_isComplex w
+    · exact hx₀ ⟨w, hw⟩
+    · exact hx₁ ⟨w, hw⟩
+  · rintro ⟨c, hx₀, rfl⟩
+    refine ⟨⟨?_, ?_, ⟨⟨?_, ?_⟩, ?_⟩⟩, ?_⟩
+    · intro w
+      rw [fusionEquiv_apply]
+      exact normUnitsEvalProd_pos K (fun i ↦ c i) w
+    · intro w
+      rw [fusionEquiv_apply]
+      exact normUnitsEvalProd_pos K (fun i ↦ c i) w
+    · rw [Set.mem_preimage, fusionEquiv_apply, Zspan.mem_fundamentalDomain]
+      convert fun i ↦ hx₀ ((equivFinRank K).symm i) (Set.mem_univ _)
+      
+      rw [eq_comm, ← normUnitsEvalProd_eq_iff]
+
+      sorry
+    · simp_rw [fusionEquiv_apply]
+      refine Set.nmem_setOf_iff.mpr ?_
+      rw [normReal_normUnitsEvalProd]
+      linarith
+    · simp_rw [fusionEquiv_apply]
+      rw [normReal_normUnitsEvalProd]
+    · exact normReal_normUnitsEvalProd K c
+
+#exit
+    intro _
+    rw [fusionEquiv_apply]
+
+    sorry
+  · sorry
+  · sorry
+  · sorry
+  · sorry
+
+#exit
+
+
   let B := (basisUnitLattice K).ofZlatticeBasis ℝ
   ext x
   refine ⟨fun hx ↦ ?_, fun hx ↦ ?_⟩
