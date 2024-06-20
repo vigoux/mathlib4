@@ -175,6 +175,14 @@ namespace fundamentalCone
 
 variable {K}
 
+-- Use this to golf some proofs? (or remove it)
+open Classical in
+theorem mem_fundamentalCone {x : E K} :
+    x ∈ fundamentalCone K ↔
+      logMap x ∈ Zspan.fundamentalDomain ((basisUnitLattice K).ofZlatticeBasis ℝ _) ∧
+      mixedEmbedding.norm x ≠ 0 := by
+  rw [fundamentalCone, Set.mem_diff, Set.mem_preimage, Set.mem_setOf_eq]
+
 theorem norm_pos_of_mem {x : E K} (hx : x ∈ fundamentalCone K) :
     0 < mixedEmbedding.norm x :=
   lt_iff_le_and_ne.mpr ⟨mixedEmbedding.norm_nonneg _, Ne.symm hx.2⟩
@@ -308,12 +316,23 @@ theorem exists_mem_smul_normEqOne {x : E K} (hx : x ∈ normLessThanOne K) :
     rw [← Real.rpow_natCast, ← Real.rpow_mul (mixedEmbedding.norm_nonneg _), inv_mul_cancel h₁,
       Real.rpow_one]
 
+-- Replace with Set.Ioc?
+-- This is useless after the next result
 theorem smul_normEqOne_subset {c : ℝ} (hc₁ : 0 < c) (hc₂ : c ≤ 1) :
     c • normEqOne K ⊆ normLessThanOne K := by
   rw [smul_normEqOne K hc₁]
   refine fun x hx ↦ ⟨hx.1, ?_⟩
   rw [hx.2]
   exact pow_le_one _ hc₁.le hc₂
+
+theorem smul_normLessThanOne_subset {c : ℝ} (hc₁ : c ≠ 0) (hc₂ : |c| ≤ 1) :
+    c • normLessThanOne K ⊆ normLessThanOne K := by
+  rintro _ ⟨x, hx, rfl⟩
+  refine ⟨?_, ?_⟩
+  · refine smul_mem_of_mem hx.1 hc₁
+  · rw [norm_smul]
+    refine mul_le_one ?_ (mixedEmbedding.norm_nonneg x) hx.2
+    exact pow_le_one _ (abs_nonneg c) hc₂
 
 theorem isBounded_normEqOne :
     IsBounded (normEqOne K) := by
@@ -868,17 +887,86 @@ theorem normEqOne₂_eq_image : {x | x ∈ normLessThanOne₂ K ∧
 def normUnitsEval (c : InfinitePlace K → ℝ) : InfinitePlace K → ℝ :=
   (c w₀) • normUnitsEvalProd K (fun w ↦ c w)
 
+theorem normUnitsEval_def (c : InfinitePlace K → ℝ) :
+    normUnitsEval K c = (c w₀) • normUnitsEvalProd K (fun w ↦ c w) := rfl
+
 def S : Set (InfinitePlace K → ℝ) :=
   Set.univ.pi fun w ↦ if w = w₀ then Set.Ioc 0 1 else Set.Ico 0 1
 
-example : normLessThanOne₂ K = (normUnitsEval K) '' (S K) := by
+theorem smul_mem_normLessThanOne₂ {x : InfinitePlace K → ℝ} (hx : x ∈ normLessThanOne₂ K) {c : ℝ}
+    (hc : c ∈ Set.Ioc 0 1) :
+    c • x ∈ normLessThanOne₂ K := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro w
+    simp only [fusionEquiv_apply, Pi.smul_apply, smul_eq_mul]
+    exact mul_pos hc.1 (hx.1 w)
+  · intro w
+    simp only [fusionEquiv_apply, Pi.smul_apply, smul_eq_mul]
+    exact mul_pos hc.1 (hx.2.1 w)
+  · have := hx.2.2
+    simp_rw [fusionEquiv_apply, Pi.smul_apply]
+    have : ((fun w ↦ c • x w.val, fun w ↦ (c • x w.val : ℝ)) : E K) =
+        c • ((fun w ↦ x w.val, fun w ↦ x w.val) : E K) := by
+      simp_rw [Prod.smul_mk, Pi.smul_def, smul_eq_mul, Complex.ofReal_mul, Complex.real_smul]
+    rw [this]
+    refine smul_normLessThanOne_subset K (c := c) ?_ ?_ ?_
+    · exact ne_of_gt hc.1
+    · rw [abs_eq_self.mpr hc.1.le]
+      exact hc.2
+    · rwa [Set.smul_mem_smul_set_iff₀ (ne_of_gt hc.1)]
+
+theorem normLessThanOne₂_eq_image : normLessThanOne₂ K = (normUnitsEval K) '' (S K) := by
   ext x
   refine ⟨?_, ?_⟩
-  · sorry
+  · rintro ⟨hx₁, hx₂, hx₃⟩
+    obtain ⟨d, hd₀, hd₁, hx₄⟩ := exists_mem_smul_normEqOne hx₃
+    have : d⁻¹ • x ∈ {x | x ∈ normLessThanOne₂ K ∧
+        mixedEmbedding.norm (⟨fun w ↦ x w.val, fun w ↦ x w.val⟩) = 1} := by
+      rw [Set.mem_smul_set_iff_inv_smul_mem₀ (ne_of_gt hd₀), Set.mem_setOf_eq] at hx₄
+      simp_rw [fusionEquiv_apply, Prod.smul_mk, Pi.smul_def, smul_eq_mul, Complex.real_smul] at hx₄
+      refine ⟨⟨?_, ?_, ⟨?_, ?_⟩⟩, ?_⟩
+      · exact fun w ↦ mul_pos (inv_pos.mpr hd₀) (hx₁ w)
+      · exact fun w ↦ mul_pos (inv_pos.mpr hd₀) (hx₂ w)
+      · simp only [fusionEquiv_apply, Pi.smul_apply, smul_eq_mul, Complex.ofReal_mul]
+        exact hx₄.1
+      · simp only [fusionEquiv_apply, Pi.smul_apply, smul_eq_mul, Complex.ofReal_mul]
+        rw [hx₄.2]
+      · simp only [Pi.smul_apply, smul_eq_mul, Complex.ofReal_mul]
+        exact hx₄.2
+    rw [normEqOne₂_eq_image] at this
+    obtain ⟨c, hc₀, hc₁⟩ := this
+    refine ⟨?_, ?_, ?_⟩
+    · exact fun w ↦ if hw : w = w₀ then d else c ⟨w, hw⟩
+    · rw [S, Set.mem_univ_pi]
+      intro w
+      by_cases hw : w = w₀
+      · rw [dif_pos hw, if_pos hw]
+        exact ⟨hd₀, hd₁⟩
+      · rw [dif_neg hw, if_neg hw]
+        exact hc₀ ⟨w, hw⟩ (Set.mem_univ _)
+    · rw [normUnitsEval_def]
+      simp only [↓reduceDite, ne_eq, Subtype.coe_eta, dite_eq_ite]
+      conv_lhs =>
+        enter [2, _w, 2, w]
+        rw [if_neg w.prop]
+      rw [hc₁, smul_inv_smul₀]
+      exact ne_of_gt hd₀
   · rintro ⟨c, hc, rfl⟩
-    
-    sorry
-
+    rw [normUnitsEval_def]
+    refine smul_mem_normLessThanOne₂ K ?_ ?_
+    · have : normUnitsEvalProd K (fun w ↦ c w) ∈
+          (normUnitsEvalProd K) '' (Set.univ.pi fun _ ↦ Set.Ico 0 1) := by
+        refine ⟨fun w ↦ c w, ?_, rfl⟩
+        rw [Set.mem_univ_pi]
+        intro w
+        specialize hc w (Set.mem_univ _)
+        simp_rw [if_neg w.prop] at hc
+        exact hc
+      rw [← normEqOne₂_eq_image] at this
+      exact this.1
+    · rw [S, Set.mem_univ_pi] at hc
+      specialize hc w₀
+      rwa [if_pos rfl] at hc
 
 
 
