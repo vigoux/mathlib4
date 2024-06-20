@@ -5,6 +5,7 @@ Authors: David Loeffler
 -/
 
 import Mathlib.NumberTheory.LSeries.ZMod
+import Mathlib.NumberTheory.DirichletCharacter.Basic
 
 /-!
 # Analytic continuation of Dirichlet L-functions
