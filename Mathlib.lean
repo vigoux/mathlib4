@@ -984,6 +984,7 @@ import Mathlib.Analysis.Fourier.FourierTransformDeriv
 import Mathlib.Analysis.Fourier.Inversion
 import Mathlib.Analysis.Fourier.PoissonSummation
 import Mathlib.Analysis.Fourier.RiemannLebesgueLemma
+import Mathlib.Analysis.Fourier.ZMod
 import Mathlib.Analysis.Hofer
 import Mathlib.Analysis.InnerProductSpace.Adjoint
 import Mathlib.Analysis.InnerProductSpace.Basic
@@ -4213,6 +4214,7 @@ import Mathlib.Topology.Instances.Real
 import Mathlib.Topology.Instances.RealVectorSpace
 import Mathlib.Topology.Instances.Sign
 import Mathlib.Topology.Instances.TrivSqZeroExt
+import Mathlib.Topology.Instances.ZMod
 import Mathlib.Topology.Irreducible
 import Mathlib.Topology.IsLocalHomeomorph
 import Mathlib.Topology.List
