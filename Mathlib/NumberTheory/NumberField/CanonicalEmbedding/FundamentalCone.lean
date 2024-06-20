@@ -804,10 +804,11 @@ def logRepr (x : InfinitePlace K → ℝ) : {w : InfinitePlace K // w ≠ w₀} 
   (((basisUnitLattice K).ofZlatticeBasis ℝ).reindex (equivFinRank K).symm).equivFun
         (logMap ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩)
 
-theorem logRepr_def (x : InfinitePlace K → ℝ) :
-    logRepr K x =
-      (((basisUnitLattice K).ofZlatticeBasis ℝ).reindex (equivFinRank K).symm).equivFun
-        (logMap ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩) := rfl
+theorem logRepr_apply (x : InfinitePlace K → ℝ) (i : {w : InfinitePlace K // w ≠ w₀}):
+    logRepr K x i =
+      (((basisUnitLattice K).ofZlatticeBasis ℝ (unitLattice K) ).repr
+        (logMap (fun w ↦ x w, fun w ↦ x w))) (equivFinRank K i) := by
+  simp [logRepr]
 
 theorem normUnitsEvalProd_eq_iff {x : InfinitePlace K → ℝ} {c : {w : InfinitePlace K // w ≠ w₀} → ℝ}
     (hx₀ : mixedEmbedding.norm (⟨fun w ↦ x w.val, fun w ↦ x w.val⟩) = 1)
@@ -841,69 +842,28 @@ theorem normUnitsEvalProd_eq_iff {x : InfinitePlace K → ℝ} {c : {w : Infinit
   sorry
   sorry
 
-example : {x | x ∈ normLessThanOne₂ K ∧
+theorem normEqOne₂_eq_image : {x | x ∈ normLessThanOne₂ K ∧
     mixedEmbedding.norm (⟨fun w ↦ x w.val, fun w ↦ x w.val⟩) = 1} =
     (normUnitsEvalProd K) '' (Set.univ.pi fun _ ↦ Set.Ico 0 1) := by
   ext x
-  refine ⟨fun ⟨⟨hx₀, hx₁, ⟨⟨hx₂, _⟩, _⟩⟩, hx₃⟩ ↦ ⟨logRepr K x, ?_, ?_⟩, ?_⟩
-  · intro w _
-    rw [Set.mem_preimage, fusionEquiv_apply, Zspan.mem_fundamentalDomain] at hx₂
-    exact hx₂ (equivFinRank K w)
-  · refine (normUnitsEvalProd_eq_iff K hx₃ ?_).mpr rfl
-    intro w
+  simp_rw [Set.mem_setOf_eq, normLessThanOne₂, Set.mem_image, Set.mem_preimage, fusionEquiv_apply,
+    normLessThanOne₁, Set.mem_setOf_eq, fundamentalCone, Set.mem_diff, Set.mem_preimage,
+    Set.mem_setOf_eq, ← ne_eq, Zspan.mem_fundamentalDomain, Set.mem_pi, Set.mem_univ, true_implies,
+    Equiv.forall_congr_left' (equivFinRank K).symm, Equiv.symm_symm, ← logRepr_apply]
+  refine ⟨?_, ?_⟩
+  · rintro ⟨⟨hx₁, hx₂, ⟨hx₃, _⟩, _⟩, hx₄⟩
+    refine ⟨logRepr K x, hx₃, (normUnitsEvalProd_eq_iff K hx₄ fun w ↦ ?_).mpr rfl⟩
     obtain hw | hw :=  isReal_or_isComplex w
-    · exact hx₀ ⟨w, hw⟩
     · exact hx₁ ⟨w, hw⟩
-  · rintro ⟨c, hx₀, rfl⟩
-    refine ⟨⟨?_, ?_, ⟨⟨?_, ?_⟩, ?_⟩⟩, ?_⟩
-    · intro w
-      rw [fusionEquiv_apply]
-      exact normUnitsEvalProd_pos K (fun i ↦ c i) w
-    · intro w
-      rw [fusionEquiv_apply]
-      exact normUnitsEvalProd_pos K (fun i ↦ c i) w
-    · rw [Set.mem_preimage, fusionEquiv_apply, Zspan.mem_fundamentalDomain]
-      rw [Equiv.forall_congr_left' (equivFinRank K).symm]
-      simp_rw [Equiv.symm_symm, ← Basis.equivFun_apply, ← Set.mem_univ_pi]
-      convert hx₀ using 1
-      sorry
-    · simp_rw [fusionEquiv_apply]
-      refine Set.nmem_setOf_iff.mpr ?_
-      rw [normReal_normUnitsEvalProd]
-      linarith
-    · simp_rw [fusionEquiv_apply]
-      rw [normReal_normUnitsEvalProd]
-    · exact normReal_normUnitsEvalProd K c
-
-#exit
-    intro _
-    rw [fusionEquiv_apply]
-
-    sorry
-  · sorry
-  · sorry
-  · sorry
-  · sorry
-
-#exit
-
-
-  let B := (basisUnitLattice K).ofZlatticeBasis ℝ
-  ext x
-  refine ⟨fun hx ↦ ?_, fun hx ↦ ?_⟩
-  · refine ⟨?_, ?_, ?_⟩
-    · exact fun w ↦ B.repr (logMap ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩) (equivFinRank K w)
-    · sorry
-    · ext w
-      simp_rw [normUnitsEvalProd]
-      have : ∀ w, logMap ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩ w = mult w.val * Real.log (x w.val) := by
-       sorry
-      simp only [Finset.prod_apply]
-      simp_rw [this]
---      logMap x ⟨w, hw⟩ = mult w * Real.log (normAtPlace w x)
-      sorry
-  ·
-    sorry
+    · exact hx₂ ⟨w, hw⟩
+  · rintro ⟨c, hc₁, rfl⟩
+    refine ⟨⟨fun w ↦ normUnitsEvalProd_pos K c w, fun w ↦ normUnitsEvalProd_pos K c w,
+      ⟨?_, by simp [normReal_normUnitsEvalProd]⟩, by simp [normReal_normUnitsEvalProd]⟩, by
+      simp [normReal_normUnitsEvalProd]⟩
+    convert hc₁
+    rw [eq_comm, ← normUnitsEvalProd_eq_iff]
+    · simp [normReal_normUnitsEvalProd]
+    · exact fun w ↦ normUnitsEvalProd_pos K c w
 
 def normUnitsEval (c : InfinitePlace K → ℝ) : InfinitePlace K → ℝ :=
   (c w₀) • normUnitsEvalProd K (fun w ↦ c w)
@@ -911,7 +871,13 @@ def normUnitsEval (c : InfinitePlace K → ℝ) : InfinitePlace K → ℝ :=
 def S : Set (InfinitePlace K → ℝ) :=
   Set.univ.pi fun w ↦ if w = w₀ then Set.Ioc 0 1 else Set.Ico 0 1
 
-
+example : normLessThanOne₂ K = (normUnitsEval K) '' (S K) := by
+  ext x
+  refine ⟨?_, ?_⟩
+  · sorry
+  · rintro ⟨c, hc, rfl⟩
+    
+    sorry
 
 
 
