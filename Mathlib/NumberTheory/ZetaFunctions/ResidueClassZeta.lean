@@ -4,9 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: David Loeffler
 -/
 
-import Mathlib.NumberTheory.LSeries.HurwitzZeta
-import Mathlib.NumberTheory.LSeries.Basic
-import Mathlib.Analysis.Fourier.ZMod
+import Mathlib.NumberTheory.LSeries.DirichletFuncEq
 import Mathlib.Analysis.NormedSpace.Connected
 
 /-!
@@ -44,44 +42,12 @@ analytic continuation.
 open Filter Topology Asymptotics HurwitzZeta Complex ZMod Finset
 open scoped Nat Real
 
-section LemmasToBeRehomed
-
-/-- If `0 < re s`, then the `if .. then .. else` construction in `LSeries.term` isn't needed, since
-`0 ^ s = 0` in this range. -/
-lemma LSeries.term_of_re_pos (n : ℕ) (f : ℕ → ℂ) {s : ℂ} (hs : 0 < re s) :
-    LSeries.term f s n = f n / n ^ s := by
-  rcases eq_or_ne n 0 with rfl | hn
-  · rw [term_zero, Nat.cast_zero, Complex.zero_cpow (lt_irrefl 0 <| zero_re ▸ · ▸ hs), div_zero]
-  · rw [term_of_ne_zero hn]
-
-/-- Equivalence between `ℕ` and `ZMod N × ℕ`, sending `n` to `(n mod N, n / N)`. -/
-def Nat.residueClassesEquiv (N : ℕ+) : ℕ ≃ ZMod N × ℕ where
-  toFun n := (↑n, n / N)
-  invFun p := p.1.val + N * p.2
-  left_inv n := by simpa only [val_natCast] using Nat.mod_add_div n N
-  right_inv p := by
-    ext1
-    · simp only [add_comm p.1.val, Nat.cast_add, Nat.cast_mul, CharP.cast_eq_zero, zero_mul,
-        natCast_val, cast_id', id_eq, zero_add]
-    · simp only [add_comm p.1.val, Nat.mul_add_div N.pos, (Nat.div_eq_zero_iff N.pos).2 p.1.val_lt,
-        add_zero]
-
-/-- If `f` is a summable function on `ℕ`, and `0 < N`, then we may compute `∑' n : ℕ, f n` by
-summing each residue class mod `N` separately. -/
-lemma Nat.sumByResidueClasses {f : ℕ → ℂ} (hf : Summable f) (N : ℕ+) :
-    ∑' n, f n = ∑ j : ZMod N, ∑' m, f (j.val + N * m) := by
-  rw [← (residueClassesEquiv N).symm.tsum_eq f, tsum_prod, tsum_fintype, residueClassesEquiv,
-    Equiv.coe_fn_symm_mk]
-  exact hf.comp_injective (residueClassesEquiv N).symm.injective
-
 /-- The complement of a point is preconnected in `ℂ`.-/
 lemma isPreconnected_compl_singleton (a : ℂ) : IsPreconnected ({a}ᶜ : Set ℂ) := by
   simp only [rank_real_complex, gt_iff_lt, Nat.one_lt_ofNat,
     isConnected_compl_singleton_of_one_lt_rank, IsConnected.isPreconnected]
 
-end LemmasToBeRehomed
-
-/-- If `Φ` is a periodic function, then the L-series of `f` converges for `1 < re s`. -/
+/-- If `Φ` is a periodic function, then the L-series of `Φ` converges for `1 < re s`. -/
 lemma LSeriesSummable_coe_ZMod {N : ℕ+} (Φ : ZMod N → ℂ) {s : ℂ} (hs : 1 < re s) :
     LSeriesSummable (Φ ·) s := by
   let c := max' _ <| univ_nonempty.image (Complex.abs ∘ Φ)
@@ -103,7 +69,7 @@ lemma congruenceLFunction_add {N : ℕ+} (Φ Ψ : ZMod N → ℂ) (s : ℂ) :
 
 lemma congruenceLFunction_mul {N : ℕ+} (a : ℂ) (Φ : ZMod N → ℂ) (s : ℂ) :
     congruenceLFunction (fun j ↦ a * Φ j) s = a * congruenceLFunction Φ s := by
-  simp_rw [congruenceLFunction, mul_sum]
+  simp only [congruenceLFunction, mul_sum]
   congr 1 with j
   ring
 
@@ -135,7 +101,7 @@ lemma congruenceLFunction_eq_LSeries {N : ℕ+} (Φ : ZMod N → ℂ) {s : ℂ} 
   rw [aux0, div_eq_mul_inv _ (N : ℝ), ofReal_mul, mul_cpow_ofReal_nonneg aux1 aux2, ← div_div,
     ofReal_inv, ofReal_natCast, cpow_neg, inv_cpow _ _ aux3, ← mul_div_assoc, mul_assoc,
     mul_div_cancel_left₀ _ aux4, mul_one_div, ← Nat.cast_mul, ← Nat.cast_add, ofReal_natCast,
-    LSeries.term_of_re_pos _ _ (one_pos.trans hs), Nat.cast_add (R := ZMod _), Nat.cast_mul,
+    LSeries.term_of_ne_zero' (ne_zero_of_one_lt_re hs), Nat.cast_add (R := ZMod _), Nat.cast_mul,
     CharP.cast_eq_zero (R := ZMod N) (p := N), zero_mul, add_zero]
   simp only [Nat.cast_add, natCast_val, Nat.cast_mul, cast_id', id_eq]
 
@@ -153,11 +119,19 @@ lemma differentiable_congruenceLFunction_of_sum_zero {N : ℕ+} {Φ : ZMod N →
   -- rewrite as a sum of *differences* of Hurwitz zeta values
   have (s) : ∑ j : ZMod N, Φ j * hurwitzZeta (ZMod.toAddCircle j) s =
       ∑ j : ZMod N, Φ j * (hurwitzZeta (ZMod.toAddCircle j) s - hurwitzZeta 0 s) := by
-    simp_rw [mul_sub, sum_sub_distrib, ← sum_mul, hΦ, zero_mul, sub_zero]
+    simp only [mul_sub, sum_sub_distrib, ← sum_mul, hΦ, zero_mul, sub_zero]
   -- now apply `differentiable_hurwitzZeta_sub_hurwitzZeta`
   rw [funext this]
   exact Differentiable.sum fun i _ ↦ (differentiable_hurwitzZeta_sub_hurwitzZeta _ 0).const_mul _
 
+/-- Compatibility between `expZeta` and a linear combination of Hurwitz zeta values.
+
+This is less straightforward than it looks, since the relation is far from obvious from the
+definition we use (as the Mellin transform of some kernel function). So we check that both sides
+agree on the half-plane `{s : 1 < re s}`, and use uniqueness results for analytic functions.
+
+TODO: investigate whether this can be "moved upstream", i.e. if we can formulate some nice relation
+between the zeta kernels from which this relation would follow by taking Mellin transforms. -/
 lemma expZeta_eq_congruenceLFunction {N : ℕ+} (j : ZMod N) (s : ℂ) (hs : s ≠ 1) :
     congruenceLFunction (fun k ↦ ZMod.toCircle (j * k)) s = expZeta (ZMod.toAddCircle j) s := by
   -- first reduce to equality in convergence range
@@ -166,7 +140,7 @@ lemma expZeta_eq_congruenceLFunction {N : ℕ+} (j : ZMod N) (s : ℂ) (hs : s �
   have hUo : IsOpen U := isOpen_compl_singleton
   let f := congruenceLFunction (fun k ↦ ZMod.toCircle (j * k))
   let g := expZeta (ZMod.toAddCircle j)
-  suffices Set.EqOn f g U from this hs
+  -- hypotheses for analytic-continuation argument
   have hf : AnalyticOn ℂ f U := by
     refine DifferentiableOn.analyticOn ?_ hUo
     exact fun u hu ↦ (differentiableAt_congruenceLFunction _ hu).differentiableWithinAt
@@ -174,36 +148,39 @@ lemma expZeta_eq_congruenceLFunction {N : ℕ+} (j : ZMod N) (s : ℂ) (hs : s �
     refine DifferentiableOn.analyticOn ?_ hUo
     exact fun u hu ↦ (differentiableAt_expZeta _ _ (Or.inl hu)).differentiableWithinAt
   have hUc : IsPreconnected U := isPreconnected_compl_singleton 1
-  have hUmem : 2 ∈ U := by simp [U]
   have hV : V ∈ 𝓝 2 := (continuous_re.isOpen_preimage _ isOpen_Ioi).mem_nhds (by simp)
-  refine AnalyticOn.eqOn_of_preconnected_of_eventuallyEq hf hg hUc hUmem ?_
+  -- apply uniqueness result to reduce to checking equality convergence range
+  refine (hf.eqOn_of_preconnected_of_eventuallyEq hg hUc (show 2 ∈ U by simp [U]) ?_) hs
+  -- now remains to prove equality on `1 < re s`
   filter_upwards [hV] with z hz
-  -- now prove equality for `1 < re z`
   dsimp only [f, g]
   rw [toAddCircle_apply, ← (hasSum_expZeta_of_one_lt_re (j.val / N) hz).tsum_eq,
     congruenceLFunction_eq_LSeries _ hz, LSeries]
   congr 1 with n
-  rw [LSeries.term_of_re_pos _ _ (zero_lt_one.trans hz), ofReal_div, ofReal_natCast,
+  rw [LSeries.term_of_ne_zero' (ne_zero_of_one_lt_re hz), ofReal_div, ofReal_natCast,
     ofReal_natCast, mul_assoc, div_mul_eq_mul_div]
   have := ZMod.toCircle_coe (N := N) (j.val * n)
   conv_rhs at this => rw [Int.cast_mul, Int.cast_natCast, Int.cast_natCast, mul_div_assoc]
   rw [← this, Int.cast_mul, Int.cast_natCast, Int.cast_natCast, natCast_zmod_val]
 
+/-- Explicit formula for the congruence L-function of `𝓕 Φ`, where `𝓕` is the discrete Fourier
+transform. -/
 lemma congruenceLFunction_fourier {N : ℕ+} (Φ : ZMod N → ℂ) (s : ℂ) (hs : s ≠ 1) :
     congruenceLFunction (𝓕 Φ) s =
     ∑ j : ZMod N, Φ j * expZeta (ZMod.toAddCircle (-j)) s := by
-  simp_rw [← expZeta_eq_congruenceLFunction _ _ hs, ← congruenceLFunction_mul,
+  simp only [← expZeta_eq_congruenceLFunction _ _ hs, ← congruenceLFunction_mul,
     ← congruenceLFunction_sum]
   congr 1 with j
-  simp_rw [discreteFourierTransform_def, mul_comm (Φ _), Submonoid.smul_def, smul_eq_mul, neg_mul]
+  simp only [dft_def, mul_comm (Φ _), Submonoid.smul_def, smul_eq_mul, neg_mul]
 
+/-- Functional equation for congruence L-functions, in terms of discrete Fourier transform. -/
 lemma congruenceLFunction_one_sub {N : ℕ+} (Φ : ZMod N → ℂ) {s : ℂ}
     (hs : ∀ (n : ℕ), s ≠ -↑n) (hs' : s ≠ 1) :
     congruenceLFunction Φ (1 - s) = N ^ (s - 1) * (2 * π) ^ (-s) * Gamma s *
       (cexp (π * I * s / 2) * congruenceLFunction (𝓕 Φ) s
        + cexp (-π * I * s / 2) * congruenceLFunction (𝓕 fun x ↦ Φ (-x)) s) := by
   rw [congruenceLFunction]
-  simp_rw [hurwitzZeta_one_sub _ hs (Or.inr hs'), mul_assoc _ _ (Gamma s)]
+  simp only [hurwitzZeta_one_sub _ hs (Or.inr hs'), mul_assoc _ _ (Gamma s)]
   -- get rid of Gamma terms and power of N
   generalize (2 * π) ^ (-s) * Gamma s = C
   simp_rw [← mul_assoc, mul_comm _ C, mul_assoc, ← mul_sum, ← mul_assoc, mul_comm _ C, mul_assoc,
@@ -220,7 +197,8 @@ section parity
 /-!
 ## Completed L-series
 
-Note that the definition of the completed L-series is different for the "even" and "odd" parts.
+We give two different definitions of a completed L-series for a function `Φ : ZMod N → ℂ`: an
+"even" completed L-series and an "odd" one. These differ in the Gamma-factors appearing.
 -/
 
 /-- The even part of the completed congruence zeta function. This is 0 if `Φ` is odd. -/
