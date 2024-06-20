@@ -804,6 +804,11 @@ def logRepr (x : InfinitePlace K → ℝ) : {w : InfinitePlace K // w ≠ w₀} 
   (((basisUnitLattice K).ofZlatticeBasis ℝ).reindex (equivFinRank K).symm).equivFun
         (logMap ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩)
 
+theorem logRepr_def (x : InfinitePlace K → ℝ) :
+    logRepr K x =
+      (((basisUnitLattice K).ofZlatticeBasis ℝ).reindex (equivFinRank K).symm).equivFun
+        (logMap ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩) := rfl
+
 theorem normUnitsEvalProd_eq_iff {x : InfinitePlace K → ℝ} {c : {w : InfinitePlace K // w ≠ w₀} → ℝ}
     (hx₀ : mixedEmbedding.norm (⟨fun w ↦ x w.val, fun w ↦ x w.val⟩) = 1)
     (hx₁ : ∀ w, 0 < x w) :
@@ -858,10 +863,9 @@ example : {x | x ∈ normLessThanOne₂ K ∧
       rw [fusionEquiv_apply]
       exact normUnitsEvalProd_pos K (fun i ↦ c i) w
     · rw [Set.mem_preimage, fusionEquiv_apply, Zspan.mem_fundamentalDomain]
-      convert fun i ↦ hx₀ ((equivFinRank K).symm i) (Set.mem_univ _)
-      
-      rw [eq_comm, ← normUnitsEvalProd_eq_iff]
-
+      rw [Equiv.forall_congr_left' (equivFinRank K).symm]
+      simp_rw [Equiv.symm_symm, ← Basis.equivFun_apply, ← Set.mem_univ_pi]
+      convert hx₀ using 1
       sorry
     · simp_rw [fusionEquiv_apply]
       refine Set.nmem_setOf_iff.mpr ?_

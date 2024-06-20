@@ -5,6 +5,7 @@ theorem Basis.total_eq_iff_eq_repr {M R ι : Type*} [Semiring R] [AddCommMonoid 
     (B : Basis ι R M) (x : M) (c : ι →₀ R) : Finsupp.total ι M R B c = x ↔ c = B.repr x :=
   ⟨fun h ↦ by rw [← h, B.repr_total], fun h ↦ by rw [h, B.total_repr]⟩
 
+-- Is it a good idea to use equivFun?
 theorem Basis.sum_eq_iff_eq_equivFun {M R ι : Type*} [Fintype ι] [Semiring R] [AddCommMonoid M]
     [Module R M] (B : Basis ι R M) (x : M) (c : ι → R) :
     ∑ i, (c i) • (B i) = x ↔ c = B.equivFun x :=
