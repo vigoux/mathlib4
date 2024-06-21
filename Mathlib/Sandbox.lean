@@ -93,14 +93,11 @@ theorem Measurable.lmarginal_update [∀ (i : δ), SigmaFinite (μ i)]
     Measurable fun xᵢ ↦ (∫⋯∫⁻_s, f ∂μ) (Function.update x i xᵢ) := by
   exact (Measurable.lmarginal _ hf).comp (measurable_update x)
 
-theorem MeasureTheory.lmarginal_const_smul [∀ (i : δ), SigmaFinite (μ i)]
-    {f : ((i : δ) → π i) → ENNReal} (hf : Measurable f) (x : (i : δ) → π i) (r : ENNReal) :
-    lmarginal μ s (r • f) x = r * (lmarginal μ s f x) := by
-  induction s using Finset.induction generalizing x with
-  | empty => simp
-  | @insert a s hi h_ind =>
-      simp_rw [lmarginal_insert _ (hf.const_smul _) hi, h_ind]
-      rw [lintegral_const_mul _ (hf.lmarginal_update _ _), ← lmarginal_insert _ hf hi]
+theorem MeasureTheory.lmarginal_const_smul
+    {f : ((i : δ) → π i) → ENNReal} (hf : Measurable f) {x : (i : δ) → π i} (r : ENNReal) :
+    (∫⋯∫⁻_s, r • f ∂μ) x = r * (∫⋯∫⁻_s, f ∂μ) x := by
+  simp_rw [lmarginal, Pi.smul_apply, smul_eq_mul]
+  rw [lintegral_const_mul _ (by convert hf.comp measurable_updateFinset)]
 
 end marginal
 

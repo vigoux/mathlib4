@@ -1002,7 +1002,7 @@ def jacobian : (InfinitePlace K → ℝ) → (InfinitePlace K → ℝ) →L[ℝ]
   exact (normUnitsEvalProd K (fun w ↦ c w) i •
     ∑ w, (jacobianCoeff K i w c) • ContinuousLinearMap.proj w)
 
-theorem jacobian_det (c : InfinitePlace K → ℝ) :
+theorem jacobian_det (c : InfinitePlace K → ℝ) (hc : ∀ i, c i ≠ 0) :
     |(jacobian K c).det| =
       |(∏ w : {w : InfinitePlace K // w.IsComplex }, normUnitsEvalProd K (fun w ↦ c w) w)⁻¹| *
         2⁻¹ ^ NrComplexPlaces K * |c w₀| ^ (rank K) * (finrank ℚ K) * regulator K := by
@@ -1014,43 +1014,29 @@ theorem jacobian_det (c : InfinitePlace K → ℝ) :
   simp_rw [jacobianCoeff, normUnits]
   rw [mul_assoc, regulator_eq_det' K (equivFinRank K)]
   have : |c w₀| ^ rank K = |∏ w : InfinitePlace K, if w = w₀ then 1 else c w₀| := by
-    sorry
+    rw [Finset.prod_ite, Finset.prod_const_one, Finset.prod_const, one_mul, abs_pow]
+    rw [Finset.filter_ne', Finset.card_erase_of_mem (Finset.mem_univ _), Finset.card_univ, rank]
   rw [this, mul_assoc, ← abs_mul, ← Matrix.det_mul_column]
-  have : (2 : ℝ)⁻¹ ^ NrComplexPlaces K = |∏ w : InfinitePlace K, (mult w : ℝ)⁻¹| := by sorry
+  have : (2 : ℝ)⁻¹ ^ NrComplexPlaces K = |∏ w : InfinitePlace K, (mult w : ℝ)⁻¹| := by
+    rw [Finset.abs_prod]
+    simp_rw [mult, Nat.cast_ite, Nat.cast_one, Nat.cast_ofNat, apply_ite, abs_inv, abs_one, inv_one,
+      Nat.abs_ofNat, Finset.prod_ite, Finset.prod_const_one, Finset.prod_const, one_mul]
+    rw [Finset.filter_not, Finset.card_univ_diff, ← @Fintype.card_subtype]
+    rw [card_eq_nrRealPlaces_add_nrComplexPlaces, ← NrRealPlaces, add_tsub_cancel_left]
   rw [this, mul_assoc, ← abs_mul, ← Matrix.det_mul_row, abs_mul]
   congr
   ext
   simp only [Matrix.transpose_apply, Matrix.of_apply, ite_mul, one_mul, mul_ite]
   split_ifs
   · rw [inv_mul_cancel]
-    sorry
+    rw [Nat.cast_ne_zero]
+    exact mult_ne_zero
   · ring_nf
     rw [mul_assoc, mul_inv_cancel, mul_one]
-    sorry
-  · sorry
-
---    Matrix.of fun i w ↦ normUnitsEval K c * jacobianCoeff K w i c := by
---      ext; simp [jacobian]
-  -- rw [ContinuousLinearMap.det, ← LinearMap.det_toMatrix', this]
-  -- rw [Matrix.det_mul_column]
-  -- rw [prod_prodNormUnitsEval, one_mul, ← Matrix.det_transpose]
-  -- simp_rw [jacobianCoeff, normUnits, Real.log_pow]
-  -- rw [regulator_eq_det' K (equivFinRank K)] -- FIXME
-  -- have : |c w₀| ^ rank K = |∏ w : InfinitePlace K, if w = w₀ then 1 else c w₀| := by
-  --   rw [Finset.prod_ite, Finset.prod_const_one, Finset.prod_const, one_mul, abs_pow,
-  --     ← Units.finrank_eq_rank]
-  --   congr
-  --   rw [← Fintype.card_subtype]
-  --   exact finrank_fintype_fun_eq_card ℝ
-  -- rw [this, ← abs_mul]
-  -- rw [← Matrix.det_mul_column]
-  -- simp_rw [Matrix.of_apply, ite_mul, one_mul]
-  -- congr
-  -- ext
-  -- simp only [Matrix.transpose_apply, Matrix.of_apply]
-  -- split_ifs
-  -- · ring
-  -- · rfl
+    rw [Nat.cast_ne_zero]
+    exact mult_ne_zero
+  · intro i
+    exact hc i
 
 theorem hasFDeriv_normUnitsEval (c : InfinitePlace K → ℝ) :
     HasFDerivAt (normUnitsEval K) (jacobian K c) c := by
@@ -1101,15 +1087,92 @@ theorem hasFDeriv_normUnitsEval (c : InfinitePlace K → ℝ) :
       rw [Pi.smul_apply, smul_eq_mul, mul_comm]
       exact Finset.mem_univ _
 
+open scoped Real
+
+open ENNReal in
 theorem volume_normLessOne₁ :
-    (volume (normLessThanOne K)).toReal = regulator K := by
+    (volume (normLessThanOne K)).toReal =
+      2 ^ NrRealPlaces K * π ^ NrComplexPlaces K * regulator K := by
   rw [volume_normLessThanOne, volume_normLessOne₀]
   rw [← (fusionEquiv_measure_preserving K).set_lintegral_comp_preimage]
   rw [show (fusionEquiv K) ⁻¹' normLessThanOne₁ K = normLessThanOne₂ K by rfl]
   rw [normLessThanOne₂_eq_image]
   rw [lintegral_image_eq_lintegral_abs_det_fderiv_mul volume _
     (fun c _ ↦ HasFDerivAt.hasFDerivWithinAt (hasFDeriv_normUnitsEval K c))]
-  simp_rw [jacobian_det, fusionEquiv_apply, ENNReal.ofReal_mul sorry, normUnitsEval]
+  have h₁ : NrComplexPlaces K + rank K = finrank ℚ K - 1 := sorry
+  have h₂ : ∫⁻ x in S K, .ofReal (x w₀ ^ (finrank ℚ K - 1)) = .ofReal (finrank ℚ K : ℝ)⁻¹ := by
+    rw [volume_pi, ← lintegral_indicator _ sorry, lintegral_eq_lmarginal_univ 0,
+      lmarginal_erase' _ sorry (Finset.mem_univ w₀)]
+    have : ∀ x xᵢ,
+      (S K).indicator
+        (fun x ↦ ENNReal.ofReal (x w₀ ^ (finrank ℚ K - 1))) (Function.update x w₀ xᵢ) =
+      (Set.Ico 0 1).indicator (fun x ↦ .ofReal  (x ^ (finrank ℚ K - 1))) xᵢ *
+        (Set.univ.pi fun _ : { x // x ∈ Finset.univ.erase w₀ } ↦ Set.Ioc 0 1).indicator 1
+          (fun w ↦ x w.val) := sorry
+    simp_rw [this, lintegral_mul_const' _ _ sorry, lintegral_indicator _ measurableSet_Ico]
+    have : ∫⁻ (x : ℝ) in Set.Ico 0 1, ENNReal.ofReal (x ^ (finrank ℚ K - 1)) =
+      .ofReal (finrank ℚ K : ℝ)⁻¹ := sorry
+    simp_rw [this, ← smul_eq_mul, ← Pi.smul_def]
+    rw [lmarginal_const_smul]
+    rw [lmarginal]
+    simp_rw [Function.updateFinset_def, dif_pos sorry]
+    rw [lintegral_indicator_one, Measure.pi_pi]
+    simp_rw [Real.volume_Ioc, sub_zero, ofReal_one, Finset.prod_const_one, mul_one]
+    sorry
+    sorry
+  calc
+    _ = 2 ^ NrRealPlaces K * (2 * π) ^ NrComplexPlaces K *
+          (∫⁻ x in S K, .ofReal |(jacobian K x).det| * .ofReal
+            (∏ w : { w : InfinitePlace K // w.IsComplex }, |normUnitsEval K x w|)).toReal := by
+      simp only [toReal_mul, toReal_pow, toReal_ofNat, coe_toReal, NNReal.coe_real_pi,
+        coe_finset_prod, mul_assoc, ← norm_toNNReal, Real.norm_eq_abs, fusionEquiv_apply,
+        ENNReal.ofReal_prod_of_nonneg sorry]
+      rfl
+    _ = 2 ^ NrRealPlaces K * (2 * π) ^ NrComplexPlaces K *
+          (∫⁻ x in S K,
+            .ofReal (2⁻¹ ^ NrComplexPlaces K * regulator K * finrank ℚ K) *
+            (.ofReal ((∏ w : { w : InfinitePlace K // w.IsComplex },
+              normUnitsEvalProd K (fun w ↦ x w) w)⁻¹) *
+            .ofReal (∏ w : { w : InfinitePlace K // w.IsComplex },
+              normUnitsEvalProd K (fun w ↦ x w) w) *
+            .ofReal (x w₀ ^
+              (Fintype.card {w : InfinitePlace K // w.IsComplex} + rank K)))).toReal := by
+      simp_rw [jacobian_det _ _ sorry, normUnitsEval, abs_eq_self.mpr sorry,
+        Pi.smul_apply, smul_eq_mul, Finset.prod_mul_distrib,
+        Finset.prod_const, Finset.card_univ, pow_add, ENNReal.ofReal_mul sorry]
+      congr; ext; ring
+    _ =  2 ^ NrRealPlaces K *  π ^ NrComplexPlaces K * regulator K * 2 ^ NrComplexPlaces K *
+          (2 ^ NrComplexPlaces K)⁻¹ * finrank ℚ K *
+          (∫⁻ x in S K, .ofReal (x w₀ ^ (finrank ℚ K - 1))).toReal := by
+      simp_rw [lintegral_const_mul' _ _ ofReal_ne_top, ENNReal.ofReal_mul sorry, toReal_mul,
+        ENNReal.toReal_ofReal sorry, ENNReal.ofReal_inv_of_pos sorry,
+        ENNReal.inv_mul_cancel sorry sorry, one_mul, mul_pow, inv_pow, ← mul_assoc, h₁]
+      congr 2
+      ring
+    _ = 2 ^ NrRealPlaces K * π ^ NrComplexPlaces K * regulator K := by
+      rw [h₂, toReal_ofReal, mul_assoc, mul_inv_cancel, mul_one, mul_assoc, mul_inv_cancel, mul_one]
+      sorry
+      sorry
+      sorry
+  sorry
+  sorry
+  sorry
+  sorry
+
+
+
+
+#exit
+
+
+  simp_rw [jacobian_det _ _ sorry, fusionEquiv_apply, normUnitsEval, Pi.smul_apply, smul_eq_mul,
+    ← norm_toNNReal, Real.norm_eq_abs, abs_mul, abs_eq_self.mpr sorry]
+  simp_rw [show ∀ r : ℝ, (r.toNNReal : ENNReal) = ENNReal.ofReal r by intro _; rfl]
+  simp_rw [ENNReal.ofReal_mul sorry]
+  simp_rw [Finset.prod_mul_distrib, Finset.prod_const, Finset.card_univ]
+  simp_rw [mul_comm, mul_assoc, lintegral_const_mul' _ _ sorry, ← mul_assoc]
+  simp_rw [mul_comm]
+
 
 
 #exit
