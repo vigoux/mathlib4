@@ -104,9 +104,11 @@ theorem regulator_eq_det (w' : InfinitePlace K) (e : {w // w ≠ w'} ≃ Fin (ra
   simp_rw [regulator_eq_det'' K e', logEmbedding, AddMonoidHom.coe_mk, ZeroHom.coe_mk]
   exact abs_det_eq_abs_det K (fun i ↦ fundSystem K i) e' e
 
+-- FIXME
+open FiniteDimensional in
 theorem regulator_eq_det' (e : {w // w ≠ (w₀ : InfinitePlace K)} ≃ Fin (rank K)) :
-    regulator K =
+    finrank ℚ K * regulator K =
       |(Matrix.of (fun i w : InfinitePlace K ↦
-        if h : i = w₀ then 1
+        if h : i = w₀ then (mult w : ℝ)
         else w.mult * (w (fundSystem K (e ⟨i, h⟩))).log)).det| := by
   sorry

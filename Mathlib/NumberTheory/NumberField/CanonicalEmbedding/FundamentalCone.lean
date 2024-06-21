@@ -756,7 +756,7 @@ theorem normUnits_pos (i : {w : InfinitePlace K // w ≠ w₀}) (w : InfinitePla
 def normUnitsEvalProd (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) : InfinitePlace K → ℝ :=
   fun w ↦ ∏ i, (normUnits K i w) ^ (c i)
 
-theorem normUnitsEvalProd_eq (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) (w : InfinitePlace K) :
+theorem normUnitsEvalProd_def (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) (w : InfinitePlace K) :
     normUnitsEvalProd K c w = ∏ i, (normUnits K i w) ^ (c i) := rfl
 
 theorem normUnitsEvalProd_pos (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) (w : InfinitePlace K) :
@@ -765,7 +765,7 @@ theorem normUnitsEvalProd_pos (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) 
 
 theorem prod_normUnitsEvalProd_pow_mult (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
     ∏ w : InfinitePlace K, normUnitsEvalProd K c w ^ w.mult = 1 := by
-  simp_rw [normUnitsEvalProd_eq, ← Finset.prod_pow, ← Real.rpow_mul_natCast
+  simp_rw [normUnitsEvalProd_def, ← Finset.prod_pow, ← Real.rpow_mul_natCast
     (normUnits_pos _ _ _).le, fun i ↦ mul_comm (c i), Real.rpow_natCast_mul
     (normUnits_pos _ _ _).le]
   rw [Finset.prod_comm]
@@ -793,7 +793,7 @@ theorem prod_normUnitsEvalProd (c : {w : InfinitePlace K // w ≠ w₀} → ℝ)
     · exact prod_normUnitsEvalProd_pow_mult K c
   · rw [Finset.prod_ne_zero_iff]
     intro _ _
-    rw [normUnitsEvalProd_eq]
+    rw [normUnitsEvalProd_def]
     rw [Finset.prod_ne_zero_iff]
     intro _ _
     rw [Real.rpow_ne_zero]
@@ -837,7 +837,7 @@ theorem normUnitsEvalProd_eq_iff {x : InfinitePlace K → ℝ} {c : {w : Infinit
     rw [← this, Function.funext_iff]
     refine ⟨fun h w ↦ h w, fun h w ↦ ?_⟩
     by_cases hw : w = w₀
-    · simp_rw [normUnitsEvalProd_eq, hw] at h ⊢
+    · simp_rw [normUnitsEvalProd_def, hw] at h ⊢
       have : ∏ w, ∏ i, (normUnits K i w ^ (c i)) ^ w.mult = ∏ w, (x w) ^ w.mult := sorry
       rw [← Finset.univ.prod_erase_mul _ (Finset.mem_univ w₀),
         ← Finset.univ.prod_erase_mul _ (Finset.mem_univ w₀)] at this
@@ -855,7 +855,7 @@ theorem normUnitsEvalProd_eq_iff {x : InfinitePlace K → ℝ} {c : {w : Infinit
     logEmbedding_component, smul_eq_mul, ← mul_assoc, fun i ↦ mul_comm (c i), mul_assoc,
     ← Finset.mul_sum, mul_cancel_left_mem_nonZeroDivisors sorry, ← Real.log_rpow sorry,
     ← Real.log_prod _ _ sorry, normAtPlace_eq, abs_eq_self.mpr sorry,  ← normUnits_eq,
-    normUnitsEvalProd_eq]
+    normUnitsEvalProd_def]
   refine ⟨fun h w ↦ congr_arg Real.log (h w), fun h w ↦ ?_⟩
   refine Real.log_injOn_pos ?_ ?_ (h w)
   sorry
@@ -886,9 +886,6 @@ theorem normEqOne₂_eq_image : {x | x ∈ normLessThanOne₂ K ∧
 
 def normUnitsEval (c : InfinitePlace K → ℝ) : InfinitePlace K → ℝ :=
   (c w₀) • normUnitsEvalProd K (fun w ↦ c w)
-
-theorem normUnitsEval_def (c : InfinitePlace K → ℝ) :
-    normUnitsEval K c = (c w₀) • normUnitsEvalProd K (fun w ↦ c w) := rfl
 
 def S : Set (InfinitePlace K → ℝ) :=
   Set.univ.pi fun w ↦ if w = w₀ then Set.Ioc 0 1 else Set.Ico 0 1
@@ -944,7 +941,7 @@ theorem normLessThanOne₂_eq_image : normLessThanOne₂ K = (normUnitsEval K) '
         exact ⟨hd₀, hd₁⟩
       · rw [dif_neg hw, if_neg hw]
         exact hc₀ ⟨w, hw⟩ (Set.mem_univ _)
-    · rw [normUnitsEval_def]
+    · rw [normUnitsEval]
       simp only [↓reduceDite, ne_eq, Subtype.coe_eta, dite_eq_ite]
       conv_lhs =>
         enter [2, _w, 2, w]
@@ -952,7 +949,7 @@ theorem normLessThanOne₂_eq_image : normLessThanOne₂ K = (normUnitsEval K) '
       rw [hc₁, smul_inv_smul₀]
       exact ne_of_gt hd₀
   · rintro ⟨c, hc, rfl⟩
-    rw [normUnitsEval_def]
+    rw [normUnitsEval]
     refine smul_mem_normLessThanOne₂ K ?_ ?_
     · have : normUnitsEvalProd K (fun w ↦ c w) ∈
           (normUnitsEvalProd K) '' (Set.univ.pi fun _ ↦ Set.Ico 0 1) := by
@@ -968,7 +965,180 @@ theorem normLessThanOne₂_eq_image : normLessThanOne₂ K = (normUnitsEval K) '
       specialize hc w₀
       rwa [if_pos rfl] at hc
 
+def normUnitsEvalSingle (i : InfinitePlace K) (c : InfinitePlace K → ℝ) : InfinitePlace K → ℝ :=
+  if hi : i = w₀ then fun _ ↦ c w₀ else normUnits K ⟨i, hi⟩ ^ c i
 
+theorem prod_normUnitsEvalSingle_apply (c : InfinitePlace K → ℝ) (w : InfinitePlace K) :
+    ∏ i, normUnitsEvalSingle K i c w = normUnitsEval K c w := by
+  simp_rw [normUnitsEvalSingle, normUnitsEval]
+  unfold normUnitsEvalProd
+  rw [← Finset.univ.mul_prod_erase _ (Finset.mem_univ w₀), dif_pos rfl]
+  rw [Finset.prod_subtype (Finset.univ.erase w₀) (p := fun w ↦ w ≠ w₀), Pi.smul_apply, smul_eq_mul]
+  congr 2 with i
+  rw [dif_neg i.prop, Pi.pow_apply]
+  intro _
+  simp_rw [Finset.mem_erase, Finset.mem_univ, and_true]
+
+def FDeriv_normUnitsEvalSingle (i w : InfinitePlace K) (c : InfinitePlace K → ℝ) :
+    (InfinitePlace K → ℝ) →L[ℝ] ℝ := by
+  exact if hi : i = w₀ then ContinuousLinearMap.proj w₀ else
+    (normUnits K ⟨i, hi⟩ w ^ (c i) * (normUnits K ⟨i, hi⟩ w).log) • ContinuousLinearMap.proj i
+
+theorem hasFDeriv_normUnitsEvalSingle (i w : InfinitePlace K) (x : InfinitePlace K → ℝ) :
+    HasFDerivAt (fun x ↦ normUnitsEvalSingle K i x w) (FDeriv_normUnitsEvalSingle K i w x) x := by
+  unfold normUnitsEvalSingle
+  unfold FDeriv_normUnitsEvalSingle
+  split_ifs
+  · exact hasFDerivAt_apply w₀ x
+  · exact HasFDerivAt.const_rpow (hasFDerivAt_apply i x) (normUnits_pos K _ w)
+
+def jacobianCoeff (w i : InfinitePlace K) : (InfinitePlace K → ℝ) → ℝ :=
+    fun c ↦ if hi : i = w₀ then 1 else (c w₀) * (normUnits K ⟨i, hi⟩ w).log
+
+def jacobian : (InfinitePlace K → ℝ) → (InfinitePlace K → ℝ) →L[ℝ] InfinitePlace K → ℝ := by
+  intro c
+  refine ContinuousLinearMap.pi ?_
+  intro i
+  exact (normUnitsEvalProd K (fun w ↦ c w) i •
+    ∑ w, (jacobianCoeff K i w c) • ContinuousLinearMap.proj w)
+
+theorem jacobian_det (c : InfinitePlace K → ℝ) :
+    |(jacobian K c).det| =
+      |(∏ w : {w : InfinitePlace K // w.IsComplex }, normUnitsEvalProd K (fun w ↦ c w) w)⁻¹| *
+        2⁻¹ ^ NrComplexPlaces K * |c w₀| ^ (rank K) * (finrank ℚ K) * regulator K := by
+  have : LinearMap.toMatrix' (jacobian K c).toLinearMap =
+      Matrix.of fun w i ↦ normUnitsEvalProd K (fun w ↦ c w) w * jacobianCoeff K w i c := by
+    ext; simp [jacobian]
+  rw [ContinuousLinearMap.det, ← LinearMap.det_toMatrix', this]
+  rw [Matrix.det_mul_column, prod_normUnitsEvalProd, ← Matrix.det_transpose]
+  simp_rw [jacobianCoeff, normUnits]
+  rw [mul_assoc, regulator_eq_det' K (equivFinRank K)]
+  have : |c w₀| ^ rank K = |∏ w : InfinitePlace K, if w = w₀ then 1 else c w₀| := by
+    sorry
+  rw [this, mul_assoc, ← abs_mul, ← Matrix.det_mul_column]
+  have : (2 : ℝ)⁻¹ ^ NrComplexPlaces K = |∏ w : InfinitePlace K, (mult w : ℝ)⁻¹| := by sorry
+  rw [this, mul_assoc, ← abs_mul, ← Matrix.det_mul_row, abs_mul]
+  congr
+  ext
+  simp only [Matrix.transpose_apply, Matrix.of_apply, ite_mul, one_mul, mul_ite]
+  split_ifs
+  · rw [inv_mul_cancel]
+    sorry
+  · ring_nf
+    rw [mul_assoc, mul_inv_cancel, mul_one]
+    sorry
+  · sorry
+
+--    Matrix.of fun i w ↦ normUnitsEval K c * jacobianCoeff K w i c := by
+--      ext; simp [jacobian]
+  -- rw [ContinuousLinearMap.det, ← LinearMap.det_toMatrix', this]
+  -- rw [Matrix.det_mul_column]
+  -- rw [prod_prodNormUnitsEval, one_mul, ← Matrix.det_transpose]
+  -- simp_rw [jacobianCoeff, normUnits, Real.log_pow]
+  -- rw [regulator_eq_det' K (equivFinRank K)] -- FIXME
+  -- have : |c w₀| ^ rank K = |∏ w : InfinitePlace K, if w = w₀ then 1 else c w₀| := by
+  --   rw [Finset.prod_ite, Finset.prod_const_one, Finset.prod_const, one_mul, abs_pow,
+  --     ← Units.finrank_eq_rank]
+  --   congr
+  --   rw [← Fintype.card_subtype]
+  --   exact finrank_fintype_fun_eq_card ℝ
+  -- rw [this, ← abs_mul]
+  -- rw [← Matrix.det_mul_column]
+  -- simp_rw [Matrix.of_apply, ite_mul, one_mul]
+  -- congr
+  -- ext
+  -- simp only [Matrix.transpose_apply, Matrix.of_apply]
+  -- split_ifs
+  -- · ring
+  -- · rfl
+
+theorem hasFDeriv_normUnitsEval (c : InfinitePlace K → ℝ) :
+    HasFDerivAt (normUnitsEval K) (jacobian K c) c := by
+  rw [hasFDerivAt_pi']
+  intro w
+  simp_rw [normUnitsEval]
+  have t₀ := fun i ↦ hasFDeriv_normUnitsEvalSingle K i w c
+  have := HasFDerivAt.finset_prod (u := Finset.univ) (fun i _ ↦ t₀ i)
+  simp at this
+  convert this
+  · rw [← Finset.univ.mul_prod_erase _ (Finset.mem_univ w₀), Pi.smul_apply, smul_eq_mul]
+    congr
+    · rw [normUnitsEvalSingle, dif_pos rfl]
+    · simp_rw [normUnitsEvalProd] --, normUnitsEvalSingle]
+      rw [Finset.prod_subtype (Finset.univ.erase w₀) (p := fun w ↦ w ≠ w₀)]
+      refine Finset.prod_congr rfl ?_
+      intro i _
+      rw [normUnitsEvalSingle, dif_neg i.prop, Subtype.coe_eta, Pi.pow_apply]
+      intro _
+      simp_rw [Finset.mem_erase, Finset.mem_univ, and_true]
+  · unfold jacobian
+    rw [ContinuousLinearMap.proj_pi]
+    unfold jacobianCoeff
+    rw [Finset.smul_sum]
+    refine Fintype.sum_congr _ _ ?_
+    intro i
+    by_cases hi : i = w₀
+    · unfold normUnitsEvalSingle
+      unfold FDeriv_normUnitsEvalSingle
+      simp_rw [hi, dif_pos, one_smul]
+      rw [Finset.prod_subtype (Finset.univ.erase w₀) (p := fun w ↦ w ≠ w₀)]
+      simp_rw [Subtype.coe_eta, dite_eq_ite, ite_apply]
+      rw [Finset.univ.prod_ite_of_false]
+      rfl
+      intro i _
+      exact i.prop
+      intro _
+      simp_rw [Finset.mem_erase, Finset.mem_univ, and_true]
+    · simp_rw [dif_neg hi]
+      unfold FDeriv_normUnitsEvalSingle
+      simp_rw [dif_neg hi]
+      rw [show normUnits K ⟨i, hi⟩ w ^ c i = normUnitsEvalSingle K i c w by
+        rw [normUnitsEvalSingle, dif_neg hi, Pi.pow_apply]]
+      simp_rw [smul_smul, ← mul_assoc]
+      rw [Finset.univ.prod_erase_mul]
+      rw [prod_normUnitsEvalSingle_apply, normUnitsEval]
+      congr 2
+      rw [Pi.smul_apply, smul_eq_mul, mul_comm]
+      exact Finset.mem_univ _
+
+theorem volume_normLessOne₁ :
+    (volume (normLessThanOne K)).toReal = regulator K := by
+  rw [volume_normLessThanOne, volume_normLessOne₀]
+  rw [← (fusionEquiv_measure_preserving K).set_lintegral_comp_preimage]
+  rw [show (fusionEquiv K) ⁻¹' normLessThanOne₁ K = normLessThanOne₂ K by rfl]
+  rw [normLessThanOne₂_eq_image]
+  rw [lintegral_image_eq_lintegral_abs_det_fderiv_mul volume _
+    (fun c _ ↦ HasFDerivAt.hasFDerivWithinAt (hasFDeriv_normUnitsEval K c))]
+  simp_rw [jacobian_det, fusionEquiv_apply, ENNReal.ofReal_mul sorry, normUnitsEval]
+
+
+#exit
+  rw [← Finset.univ.sum_erase_add _ (Finset.mem_univ w₀)]
+  rw [Finset.sum_subtype (p := fun x ↦ x ≠ w₀)]
+  unfold FDeriv_normUnitsEval₀
+  simp_rw [Subtype.coe_eta, dite_eq_ite, smul_ite, dif_pos]
+  rw [Finset.univ.sum_ite_of_false]
+  simp_rw [smul_smul, ← mul_assoc]
+  simp_rw [Finset.univ.prod_erase_mul _ sorry]
+  simp_rw [← smul_smul]
+  rw [← Finset.smul_sum]
+  rw [← Finset.univ.prod_erase_mul _ (Finset.mem_univ w₀)]
+  rw [← smul_smul]
+  rw [Finset.smul_sum]
+  unfold jacobian
+  rw [ContinuousLinearMap.proj_pi]
+  unfold jacobianCoeff
+  unfold prodNormUnitsEval
+  rw [← Finset.univ.sum_erase_add _ (Finset.mem_univ w₀)]
+  rw [dif_pos rfl]
+  ext
+  rw [one_smul]
+  rw [smul_add]
+  congr 3
+  · simp_rw [normUnitsEval₀, dif_pos, dite_smul]
+    sorry
+  · sorry
+  · sorry
 
 #exit
 
