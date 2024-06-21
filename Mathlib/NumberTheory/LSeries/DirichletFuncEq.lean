@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: David Loeffler
 -/
 
-import Mathlib.NumberTheory.LSeries.DirichletContinuation
+import Mathlib.NumberTheory.LSeries.DirichletContinuation2
 
 /-!
 # Functional equations of Dirichlet L-functions
@@ -33,11 +33,13 @@ All definitions and theorems are in the `DirichletCharacter` namespace.
   `completedLFunction χ s = N ^ (s - 1 / 2) * rootNumber χ * completedLFunction χ⁻¹ s`.
 -/
 
-open HurwitzZeta Complex ZMod Finset Classical
+open HurwitzZeta Complex ZMod Finset Classical DirichletCharacter
 
 open scoped Real
 
-namespace DirichletCharacter
+namespace DirichletContinuationOld
+
+open DirichletContinuationOld.DirichletCharacter
 
 variable {N : ℕ} [NeZero N]
 
@@ -55,9 +57,11 @@ lemma gaussSum_mod_one {R : Type*} [CommRing R] (χ : DirichletCharacter R 1)
   change χ 1 * e 0 = 1
   rw [map_one, AddChar.map_zero_eq_one, one_mul]
 
-lemma gammaFactor_inv (χ : DirichletCharacter ℂ N) : χ⁻¹.gammaFactor = χ.gammaFactor := by
+lemma gammaFactor_inv (χ : DirichletCharacter ℂ N) :
+    gammaFactor χ⁻¹ = gammaFactor χ := by
   unfold gammaFactor
-  rw [show χ⁻¹.Even ↔ χ.Even by simp only [Even, χ.inv_apply_eq_inv', inv_eq_one]]
+  rw [show χ⁻¹.Even ↔ χ.Even by
+    simp only [DirichletCharacter.Even, χ.inv_apply_eq_inv', inv_eq_one]]
 
 /-- "Dual" L-function of a Dirichlet character.
 
@@ -254,4 +258,4 @@ theorem completedLFunction_one_sub {χ : DirichletCharacter ℂ N} (hχ : IsPrim
 
 end IsPrimitive
 
-end DirichletCharacter
+end DirichletContinuationOld

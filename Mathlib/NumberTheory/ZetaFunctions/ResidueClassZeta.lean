@@ -42,6 +42,8 @@ analytic continuation.
 open Filter Topology Asymptotics HurwitzZeta Complex ZMod Finset
 open scoped Nat Real
 
+namespace DirichletContinuationOld
+
 /-- The complement of a point is preconnected in `ℂ`.-/
 lemma isPreconnected_compl_singleton (a : ℂ) : IsPreconnected ({a}ᶜ : Set ℂ) := by
   simp only [rank_real_complex, gt_iff_lt, Nat.one_lt_ofNat,
@@ -159,7 +161,7 @@ lemma expZeta_eq_congruenceLFunction {N : ℕ+} (j : ZMod N) (s : ℂ) (hs : s �
   congr 1 with n
   rw [LSeries.term_of_ne_zero' (ne_zero_of_one_lt_re hz), ofReal_div, ofReal_natCast,
     ofReal_natCast, mul_assoc, div_mul_eq_mul_div]
-  have := ZMod.toCircle_coe (N := N) (j.val * n)
+  have := ZMod.toCircle_intCast (N := N) (j.val * n)
   conv_rhs at this => rw [Int.cast_mul, Int.cast_natCast, Int.cast_natCast, mul_div_assoc]
   rw [← this, Int.cast_mul, Int.cast_natCast, Int.cast_natCast, natCast_zmod_val]
 

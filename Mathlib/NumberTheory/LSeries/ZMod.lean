@@ -4,8 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: David Loeffler
 -/
 
-import Mathlib.NumberTheory.LSeries.Dirichlet
-import Mathlib.Analysis.Fourier.ZMod
+import Mathlib.NumberTheory.LSeries.RiemannZeta
 
 /-!
 # L-series of functions on `ZMod N`
