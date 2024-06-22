@@ -1,5 +1,7 @@
 import Mathlib.Analysis.SpecialFunctions.PolarCoord
 
+theorem Real.rpow_ne_zero_of_pos {x : ℝ} (hx : 0 < x) (y : ℝ) : x ^ y ≠ 0 := by
+  rw [rpow_def_of_pos hx]; apply exp_ne_zero _
 
 theorem Basis.total_eq_iff_eq_repr {M R ι : Type*} [Semiring R] [AddCommMonoid M] [Module R M]
     (B : Basis ι R M) (x : M) (c : ι →₀ R) : Finsupp.total ι M R B c = x ↔ c = B.repr x :=

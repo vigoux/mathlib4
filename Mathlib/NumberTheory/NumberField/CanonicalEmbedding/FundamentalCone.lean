@@ -796,8 +796,7 @@ theorem prod_normUnitsEvalProd (c : {w : InfinitePlace K // w ≠ w₀} → ℝ)
     rw [normUnitsEvalProd_def]
     rw [Finset.prod_ne_zero_iff]
     intro _ _
-    refine ne_of_gt ?_
-    refine Real.rpow_pos_of_pos ?_ _
+    refine Real.rpow_ne_zero_of_pos ?_ _
     exact normUnits_pos K _ _
 
 theorem normAtPlace_eq (x : InfinitePlace K → ℝ) (w : InfinitePlace K) :
@@ -1084,7 +1083,7 @@ theorem hasFDeriv_normUnitsEval (c : InfinitePlace K → ℝ) :
   · rw [← Finset.univ.mul_prod_erase _ (Finset.mem_univ w₀), Pi.smul_apply, smul_eq_mul]
     congr
     · rw [normUnitsEvalSingle, dif_pos rfl]
-    · simp_rw [normUnitsEvalProd] 
+    · simp_rw [normUnitsEvalProd]
       rw [Finset.prod_subtype (Finset.univ.erase w₀) (p := fun w ↦ w ≠ w₀)]
       refine Finset.prod_congr rfl ?_
       intro i _
