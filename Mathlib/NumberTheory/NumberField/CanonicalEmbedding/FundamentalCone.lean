@@ -6,6 +6,7 @@ Authors: Xavier Roblot
 import Mathlib.Analysis.Calculus.FDeriv.Pi
 import Mathlib.MeasureTheory.Integral.Marginal
 import Mathlib.NumberTheory.NumberField.Units.Regulator
+import Mathlib.RingTheory.Ideal.IsPrincipal
 
 import Mathlib.Sandbox
 
@@ -395,8 +396,28 @@ theorem frontier_normLessThanOne :
       left
       exact Set.mem_of_mem_inter_left h
   | inr h =>
-      rw [show frontier {x | mixedEmbedding.norm x ≤ 1} = {x | mixedEmbedding.norm x = 1} by sorry]
-        at h
+      have : frontier {x : E K | mixedEmbedding.norm x ≤ 1} = {x | mixedEmbedding.norm x = 1} := by
+        refine frontier_le_eq_eq (mixedEmbedding.continuous_norm K) continuous_const ?_
+        intro x hx
+        refine frequently_iff_seq_forall.mpr ?_
+        refine ⟨?_, ?_, ?_⟩
+        · intro n
+          exact (1 + 1 / (n + 1 : ℝ)) • x
+        · rw [show nhds x = nhds ((1 + 0 : ℝ) • x) by norm_num]
+          refine Tendsto.smul_const ?_ _
+          refine Tendsto.add ?_ ?_
+          · exact tendsto_const_nhds
+          · exact tendsto_one_div_add_atTop_nhds_zero_nat
+        · intro n
+          rw [mixedEmbedding.norm_smul, ← hx, mul_one]
+          refine one_lt_pow ?_ ?_
+          · rw [lt_abs]
+            left
+            rw [lt_add_iff_pos_right]
+            positivity
+          · refine ne_of_gt ?_
+            exact finrank_pos
+      rw [this] at h
       by_cases hx : x ∈ fundamentalCone K
       · right
         refine ⟨hx, h.2⟩
@@ -831,33 +852,59 @@ theorem normUnitsEvalProd_eq_iff {x : InfinitePlace K → ℝ} {c : {w : Infinit
     (hx₀ : mixedEmbedding.norm (⟨fun w ↦ x w.val, fun w ↦ x w.val⟩) = 1)
     (hx₁ : ∀ w, 0 < x w) :
     normUnitsEvalProd K c = x ↔ c = logRepr K x := by
+  have h₀ : ∀ w,  0 < ∏ i : { w // w ≠ w₀ }, normUnits K i w ^ c i := by
+    intro _
+    refine Finset.prod_pos fun _ _ ↦ ?_
+    refine Real.rpow_pos_of_pos ?_ _
+    exact normUnits_pos K _ _
   suffices (∀ w : {w // w ≠ w₀}, normUnitsEvalProd K c w = x w.val) ↔ c = logRepr K x by
     rw [← this, Function.funext_iff]
     refine ⟨fun h w ↦ h w, fun h w ↦ ?_⟩
     by_cases hw : w = w₀
     · simp_rw [normUnitsEvalProd_def, hw] at h ⊢
-      have : ∏ w, ∏ i, (normUnits K i w ^ (c i)) ^ w.mult = ∏ w, (x w) ^ w.mult := sorry
+      have : ∏ w, ∏ i, (normUnits K i w ^ c i) ^ w.mult = ∏ w, x w ^ w.mult := by
+        rw [← normReal_eq, hx₀]
+        simp_rw [Finset.prod_pow]
+        simp_rw [← normUnitsEvalProd_def]
+        rw [prod_normUnitsEvalProd_pow_mult]
+        exact fun _ ↦ (hx₁ _).le
       rw [← Finset.univ.prod_erase_mul _ (Finset.mem_univ w₀),
         ← Finset.univ.prod_erase_mul _ (Finset.mem_univ w₀)] at this
       rw [show (∏ w ∈ Finset.univ.erase w₀, ∏ i : { w // w ≠ w₀ }, (normUnits K i w ^ c i) ^ w.mult)
-        = (∏ w ∈ Finset.univ.erase (w₀ : InfinitePlace K), (x w) ^ w.mult) by sorry] at this
+        = (∏ w ∈ Finset.univ.erase (w₀ : InfinitePlace K), (x w) ^ w.mult) by
+          refine Finset.prod_congr rfl fun z hz ↦ ?_
+          have := h ⟨z, (Finset.mem_erase.mp hz).1⟩
+          rw [← this, Finset.prod_pow]] at this
       rwa [mul_cancel_left_mem_nonZeroDivisors, Finset.prod_pow, pow_left_inj] at this
-      sorry
-      sorry
-      sorry
-      sorry
+      exact (h₀ _).le
+      exact (hx₁ w₀).le
+      exact mult_ne_zero
+      · rw [mem_nonZeroDivisors_iff_ne_zero, Finset.prod_ne_zero_iff]
+        intro _ _
+        refine pow_ne_zero _ ?_
+        exact ne_of_gt (hx₁ _)
     · exact h ⟨w, hw⟩
+  have hl₁ : ∀ w : InfinitePlace K, (w.mult : ℝ) ∈ ℝ⁰ := by
+    intro _
+    rw [mem_nonZeroDivisors_iff_ne_zero, Nat.cast_ne_zero]
+    exact mult_ne_zero
+  have hl₂ : ∀ i (w : InfinitePlace K), 0 < w (fundSystem K (equivFinRank K i)) := by
+    intro _ _
+    exact normUnits_pos K _ _
+  have hl₃ : ∀ i (w : InfinitePlace K), w (fundSystem K (equivFinRank K i)) ^ c i ≠ 0 := by
+    intro _ _
+    exact Real.rpow_ne_zero_of_pos (hl₂ _ _) _
   simp_rw [logRepr, ← Basis.sum_eq_iff_eq_equivFun, Basis.coe_reindex, Equiv.symm_symm,
     Function.comp_apply, Basis.ofZlatticeBasis_apply, ← logEmbedding_fundSystem,
     Function.funext_iff, logMap_apply_of_norm_one hx₀, Finset.sum_apply, Pi.smul_apply,
     logEmbedding_component, smul_eq_mul, ← mul_assoc, fun i ↦ mul_comm (c i), mul_assoc,
-    ← Finset.mul_sum, mul_cancel_left_mem_nonZeroDivisors sorry, ← Real.log_rpow sorry,
-    ← Real.log_prod _ _ sorry, normAtPlace_eq, abs_eq_self.mpr sorry,  ← normUnits_eq,
-    normUnitsEvalProd_def]
+    ← Finset.mul_sum, mul_cancel_left_mem_nonZeroDivisors (hl₁ _), ← Real.log_rpow (hl₂ _ _),
+    ← Real.log_prod _ _ (fun _ _ ↦ (hl₃ _ _)), normAtPlace_eq, abs_eq_self.mpr (hx₁ _).le,
+    ← normUnits_eq, normUnitsEvalProd_def]
   refine ⟨fun h w ↦ congr_arg Real.log (h w), fun h w ↦ ?_⟩
   refine Real.log_injOn_pos ?_ ?_ (h w)
-  sorry
-  sorry
+  · exact h₀ _
+  · exact hx₁ _
 
 theorem logRepr_normUnitsEvalProd_eq {c : {w : InfinitePlace K // w ≠ w₀} → ℝ} :
     logRepr K (normUnitsEvalProd K c) = c := by
@@ -904,9 +951,19 @@ theorem measurable_S :
 theorem normUnitsEval_injOn :
     Set.InjOn (normUnitsEval K) (S K) := by
   intro c hc c' hc' h
+  have h₀ : 0 < c w₀ := by
+    rw [S, Set.mem_univ_pi] at hc
+    specialize hc w₀
+    rw [if_pos rfl] at hc
+    exact hc.1
+  have h₀' : 0 < c' w₀ := by
+    rw [S, Set.mem_univ_pi] at hc'
+    specialize hc' w₀
+    rw [if_pos rfl] at hc'
+    exact hc'.1
   suffices c w₀ = c' w₀ by
     rw [normUnitsEval, normUnitsEval, this] at h
-    rw [IsUnit.smul_left_cancel sorry] at h
+    rw [IsUnit.smul_left_cancel] at h
     rw [normUnitsEvalProd_eq_iff] at h
     rw [logRepr_normUnitsEvalProd_eq] at h
     ext w
@@ -915,13 +972,18 @@ theorem normUnitsEval_injOn :
     · rw [Function.funext_iff] at h
       exact h ⟨w, hw⟩
     exact normReal_normUnitsEvalProd K fun w ↦ c' w
-    sorry
+    intro _
+    exact normUnitsEvalProd_pos K _ _
+    rw [isUnit_iff_ne_zero]
+    exact ne_of_gt h₀'
   have := congr_arg (fun x ↦ mixedEmbedding.norm (⟨fun w ↦ x w.val, fun w ↦ x w.val⟩)) h
   simp_rw [normUnitsEval, Pi.smul_apply, smul_eq_mul, Complex.ofReal_mul, ← Complex.real_smul,
     ← smul_eq_mul, ← Pi.smul_def, ← Prod.smul_mk, mixedEmbedding.norm_smul,
     normReal_normUnitsEvalProd, mul_one] at this
   rwa [pow_left_inj, abs_eq_self.mpr, abs_eq_self.mpr] at this
-  all_goals sorry
+  any_goals positivity
+  refine ne_of_gt ?_
+  exact finrank_pos
 
 theorem smul_mem_normLessThanOne₂ {x : InfinitePlace K → ℝ} (hx : x ∈ normLessThanOne₂ K) {c : ℝ}
     (hc : c ∈ Set.Ioc 0 1) :
@@ -1126,15 +1188,12 @@ open ENNReal in
 theorem volume_normLessOne :
     (volume (normLessThanOne K)).toReal =
       2 ^ NrRealPlaces K * π ^ NrComplexPlaces K * regulator K := by
-
   classical
-
   have hg₁ : 0 ≤ regulator K := le_of_lt (regulator_pos K)
   have hg₃ : 0 ≤ (finrank ℚ K : ℝ) := Nat.cast_nonneg _
   have hg₄ : 0 ≤ (2 : ℝ)⁻¹ ^ NrComplexPlaces K := by
     refine pow_nonneg ?_ _
     exact inv_nonneg.mpr zero_le_two
-
   rw [volume_normLessThanOne, volume_normLessOne₀]
   rw [← (fusionEquiv_measure_preserving K).set_lintegral_comp_preimage]
   rw [show (fusionEquiv K) ⁻¹' normLessThanOne₁ K = normLessThanOne₂ K by rfl]
@@ -1321,489 +1380,6 @@ theorem volume_normLessOne :
     refine Measurable.nnnorm ?_
     exact Measurable.comp (measurable_pi_apply _) measurable_snd
 
-#exit
-
-def normUnitsEval₀ (i w : InfinitePlace K) : (InfinitePlace K → ℝ) → ℝ :=
-  fun x ↦ if hi : i = w₀ then x w₀ else normUnits K ⟨i, hi⟩ w ^ (x i)
-
-theorem prod_normUnitsEval₀ {i : InfinitePlace K} (hi : i ≠ w₀) {c : InfinitePlace K → ℝ} :
-    ∏ w : InfinitePlace K, normUnitsEval₀ K i w c = 1 := by
-  simp_rw [normUnitsEval₀, dif_neg hi, normUnits]
-  rw [Real.finset_prod_rpow]
-  rw [prod_eq_abs_norm]
-  simp_rw [Units.norm, Rat.cast_one, Real.one_rpow]
-  intro w _
-  refine pow_nonneg ?_ _
-  exact apply_nonneg _ _
-
-def FDeriv_normUnitsEval₀ (i w : InfinitePlace K) (x : InfinitePlace K → ℝ) :
-    (InfinitePlace K → ℝ) →L[ℝ] ℝ := by
-  exact if hi : i = w₀ then ContinuousLinearMap.proj w₀ else
-    (normUnitsEval₀ K i w x * (normUnits K ⟨i, hi⟩ w).log) • ContinuousLinearMap.proj i
-
-theorem hasFDeriv_normUnitsEval₀ (i w : InfinitePlace K) (x : InfinitePlace K → ℝ) :
-    HasFDerivAt (normUnitsEval₀ K i w) (FDeriv_normUnitsEval₀ K i w x) x := by
-  unfold normUnitsEval₀
-  unfold FDeriv_normUnitsEval₀
-  split_ifs
-  · exact hasFDerivAt_apply w₀ x
-  · unfold normUnitsEval₀
-    rw [dif_neg]
-    exact HasFDerivAt.const_rpow (hasFDerivAt_apply i x) (normUnits_pos K _ _)
-
-def normUnitsEval : (InfinitePlace K → ℝ) → InfinitePlace K → ℝ :=
-  fun x w ↦ ∏ i, normUnitsEval₀ K i w x
-
-def prodNormUnitsEval (w : InfinitePlace K) (c : InfinitePlace K → ℝ) : ℝ :=
-  ∏ i ∈ Finset.univ.erase w₀, normUnitsEval₀ K i w c
-
-theorem prod_prodNormUnitsEval {c : InfinitePlace K → ℝ} :
-    ∏ i, prodNormUnitsEval K i c = 1 := by
-  simp_rw [prodNormUnitsEval]
-  rw [Finset.prod_comm]
-  rw [Finset.prod_congr rfl fun w hw ↦ prod_normUnitsEval₀ K (Finset.mem_erase.mp hw).1]
-  rw [Finset.prod_const_one]
-
-def jacobianCoeff (w i : InfinitePlace K) : (InfinitePlace K → ℝ) → ℝ :=
-    fun c ↦ if hi : i = w₀ then 1 else (c w₀) * (normUnits K ⟨i, hi⟩ w).log
-
-def jacobian : (InfinitePlace K → ℝ) → (InfinitePlace K → ℝ) →L[ℝ] InfinitePlace K → ℝ := by
-  intro c
-  refine ContinuousLinearMap.pi ?_
-  intro i
-  exact (prodNormUnitsEval K i c • ∑ w, (jacobianCoeff K i w c) • ContinuousLinearMap.proj w)
-
-theorem jacobian_det (c : InfinitePlace K → ℝ) :
-    |(jacobian K c).det| = |c w₀| ^ (rank K) * regulator K := by
-  have : LinearMap.toMatrix' (jacobian K c) =
-      Matrix.of fun i w ↦ prodNormUnitsEval K i c * jacobianCoeff K i w c := by
-    ext; simp [jacobian]
-  rw [ContinuousLinearMap.det, ← LinearMap.det_toMatrix', this]
-  rw [Matrix.det_mul_column]
-  rw [prod_prodNormUnitsEval, one_mul, ← Matrix.det_transpose]
-  simp_rw [jacobianCoeff, normUnits, Real.log_pow]
-  rw [regulator_eq_det' K (equivFinRank K)] -- FIXME
-  have : |c w₀| ^ rank K = |∏ w : InfinitePlace K, if w = w₀ then 1 else c w₀| := by
-    rw [Finset.prod_ite, Finset.prod_const_one, Finset.prod_const, one_mul, abs_pow,
-      ← Units.finrank_eq_rank]
-    congr
-    rw [← Fintype.card_subtype]
-    exact finrank_fintype_fun_eq_card ℝ
-  rw [this, ← abs_mul]
-  rw [← Matrix.det_mul_column]
-  simp_rw [Matrix.of_apply, ite_mul, one_mul]
-  congr
-  ext
-  simp only [Matrix.transpose_apply, Matrix.of_apply]
-  split_ifs
-  · ring
-  · rfl
-
-def S : Set (InfinitePlace K → ℝ) :=
-  Set.univ.pi fun w ↦ if w = w₀ then Set.Ioc 0 1 else Set.Ico 0 1
-
-theorem normLessThanOne₂_eq :
-    (normLessThanOne₂ K) = normUnitsEval K '' (S K) := by
-  ext x
-  refine ⟨fun hx ↦ ?_, fun hx ↦ ?_⟩
-  · sorry
-  · rw [Set.mem_image] at hx
-    obtain ⟨c, hc, rfl⟩ := hx
-    refine ⟨?_, ?_, ⟨?_, ?_⟩, ?_⟩
-    ·
-      sorry
-    ·
-      sorry
-    ·
-      sorry
-    ·
-      sorry
-    ·
-      sorry
-
-theorem hasFDeriv_normUnitsEval (c : InfinitePlace K → ℝ) :
-    HasFDerivAt (𝕜 := ℝ) (normUnitsEval K) (jacobian K c) c := by
-  rw [hasFDerivAt_pi']
-  intro w
-  simp_rw [normUnitsEval]
-  have t₀ := fun i ↦ hasFDeriv_normUnitsEval₀ K i w c
-  have := HasFDerivAt.finset_prod (u := Finset.univ) (fun i _ ↦ t₀ i)
-  simp at this
-  -- unfold FDeriv_normUnitsEval₀ at this
-  -- simp at this
-  convert this
-  rw [← Finset.univ.sum_erase_add _ (Finset.mem_univ w₀)]
-  rw [Finset.sum_subtype (p := fun x ↦ x ≠ w₀)]
-  unfold FDeriv_normUnitsEval₀
-  simp_rw [Subtype.coe_eta, dite_eq_ite, smul_ite, dif_pos]
-  rw [Finset.univ.sum_ite_of_false]
-  simp_rw [smul_smul, ← mul_assoc]
-  simp_rw [Finset.univ.prod_erase_mul _ sorry]
-  simp_rw [← smul_smul]
-  rw [← Finset.smul_sum]
-  rw [← Finset.univ.prod_erase_mul _ (Finset.mem_univ w₀)]
-  rw [← smul_smul]
-  rw [Finset.smul_sum]
-  unfold jacobian
-  rw [ContinuousLinearMap.proj_pi]
-  unfold jacobianCoeff
-  unfold prodNormUnitsEval
-  rw [← Finset.univ.sum_erase_add _ (Finset.mem_univ w₀)]
-  rw [dif_pos rfl]
-  ext
-  rw [one_smul]
-  rw [smul_add]
-  congr 3
-  · simp_rw [normUnitsEval₀, dif_pos, dite_smul]
-    sorry
-  · sorry
-  · sorry
-
-theorem volume_normLessOne₁ :
-    (volume (normLessThanOne K)).toReal = regulator K := by
-  rw [volume_normLessThanOne, volume_normLessOne₀]
-  rw [← (fusionEquiv_measure_preserving K).set_lintegral_comp_preimage]
-  rw [show (fusionEquiv K) ⁻¹' normLessThanOne₁ K = normLessThanOne₂ K by rfl]
-  rw [normLessThanOne₂_eq]
-  rw [lintegral_image_eq_lintegral_abs_det_fderiv_mul volume _
-    (fun c _ ↦ HasFDerivAt.hasFDerivWithinAt (hasFDeriv_normUnitsEval K c))]
-  simp_rw [jacobian_det, fusionEquiv_apply, ENNReal.ofReal_mul sorry]
-#exit
-
-  · exact fun c _ ↦ HasFDerivAt.hasFDerivWithinAt (hasFDeriv_normUnitsEval K c)
-  · simp_rw[jacobian_det, fusionEquiv_apply, normUnitsEval]
-    sorry
-  · sorry
-    -- exact MeasurableSet.univ_pi fun w ↦ if w = w₀ then measurableSet_Ioc else
-  · intro x hx y hy hxy
-    rw [Function.funext_iff] at hxy
-
-    sorry
-  · exact measurableSet_normLessThanOne₁ K
-  · sorry
-
-
-#exit
-
-
-  let s : Set (InfinitePlace K → ℝ) := Set.univ.pi fun _ ↦ Set.Ico 0 1
-  have hs : MeasurableSet s := sorry
-  have hf₁ : Set.InjOn (normUnitsEval K) s := sorry
-  have hf₂ : Measurable (normUnitsEval K) := sorry
-  have hf₃ := fun c ↦ hasFDeriv_normUnitsEval K c
-  have t₀ := lintegral_image_eq_lintegral_abs_det_fderiv_mul volume hs (fun c _ ↦
-    HasFDerivAt.hasFDerivWithinAt (hf₃ c)) hf₁ (fun _ ↦ 1)
-
-  simp only [lintegral_const, MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter, one_mul,
-    mul_one] at t₀
-  simp_rw [t₀, jacobian_det, ENNReal.ofReal_mul sorry]
-  rw [lintegral_mul_const, ENNReal.toReal_mul, ENNReal.toReal_ofReal]
-  simp_rw [@volume_pi, s]
-  sorry
-
-
-
-#exit
-
-  rw [← MeasureTheory.integral_toReal]
-
-
-  sorry
-
-#exit
-  have hf₃ : ∀ x ∈ s, HasFDerivWithinAt (normUnitsEval K) (fDeriv_normUnitsEval K x) s x := sorry
-  have t₀ := lintegral_image_eq_lintegral_abs_det_fderiv_mul volume hs hf₃ hf₁ (fun _ ↦ 1)
-  simp only [lintegral_const, MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter, one_mul,
-    mul_one]
-
-
-#exit
-
-  rw [Finset.sum_subtype (p := fun x ↦ x ≠ w₀)] at this
-  · unfold FDeriv_normUnitsEval₀ at this
-    simp_rw [Subtype.coe_eta, dite_eq_ite, smul_ite] at this
-    simp_rw [dif_pos] at this
-    rw [Finset.univ.sum_ite_of_false] at this
-
-    simp_rw [← mul_smul_comm] at this
---    simp only [ne_eq, smul_ite, ↓reduceDite] at this
---    simp only [ne_eq, Subtype.coe_eta, dite_eq_ite, smul_ite, ↓reduceDite] at this
-
-    sorry
-  · refine fun x ↦ ⟨fun hx ↦ Finset.ne_of_mem_erase hx,
-      fun hx ↦ Finset.mem_erase.mpr ⟨hx, Finset.mem_univ x⟩⟩
-
-
-
-
-#exit
-
-  rw [show ∑ x ∈ Finset.univ.erase w₀, (∏ j ∈ Finset.univ.erase x, normUnitsEval₀ K j w c) •
-    FDeriv_normUnitsEval₀ K x w c = ∑ x ∈ Finset.univ.erase w₀, (∏ j ∈ Finset.univ.erase x,
-    normUnitsEval₀ K j w c) • ((normUnitsEval₀ K x w c * (normUnits K ⟨x, ?_⟩ w).log) •
-    ContinuousLinearMap.proj x) by sorry] at this
-
-#exit
-
-
-  rw [show (∑ x ∈ Finset.univ.erase (w₀ : InfinitePlace K), if h : x = w₀ then
-    (∏ j ∈ Finset.univ.erase x, normUnitsEval₀ K j w c) • ContinuousLinearMap.proj w₀ else
-    (∏ j ∈ Finset.univ.erase x, normUnitsEval₀ K j w c) •
-        (normUnitsEval₀ K x w c * (normUnits K ⟨x, h⟩ w).log) • ContinuousLinearMap.proj x) = 0
-    by sorry] at this
-
-
-  rw [Finset.sum_dite_of_false (fun x hx ↦ Finset.ne_of_mem_erase hx)] at this
-  simp at this
-  rw [Finset.sum_attach] at this
-
-
-#exit
-
-  rw [Finset.sum_congr rfl ?_] at this
-  · sorry
-  · sorry
-  · intro x hx
-    rw [dif_neg (Finset.ne_of_mem_erase hx)]
-
-#exit
-
-  rw [Finset.sum_dite_of_false] at this
-  · simp at this
-    sorry
-  · intro x hx
-    exact Finset.ne_of_mem_erase hx
-  ·
-
-
-
-#exit
-
-  rw [fDeriv_normUnitsEval]
-  rw [hasFDerivAt_pi']
-  intro w
-  simp only [normUnitsEval, Pi.smul_apply, smul_eq_mul]
-  simp only [lin]
-  rw [ContinuousLinearMap.proj_pi]
-  rw [LinearMap.pi_apply_eq_sum_univ]
-  rw [map_sum]
-  simp only [dite_smul]
-  rw [← Finset.univ.add_sum_erase _ (Finset.mem_univ w₀)]
-  rw [dif_pos rfl]
-
---  rw [Finset.sum_apply_dite]
---  simp [Finset.filter_eq]
-
-#exit
-
-  let F := InfinitePlace K → ℝ
-  have := @hasFDerivAt_single ℝ (InfinitePlace K) _ _ _ (fun _ ↦ ℝ) _ _ w₀
-  have : HasFDerivAt (fun x : F ↦ x w₀)
-    (ContinuousLinearMap.pi (Pi.single w (ContinuousLinearMap.id ℝ _))) c := sorry
-
-#exit
-
-
-  refine hasFDerivAt_pi'' ?_
-  intro w
-  simp [fDeriv_normUnitsEval, ContinuousLinearMap.proj_pi]
-  let F := InfinitePlace K → ℝ
-  have : HasFDerivAt (fun x : F ↦ x w₀) _ x := sorry
-
-  simp [fDeriv_normUnitsEval, jacobian_normUnitsEval, Finset.prod_apply, Pi.pow_apply,
-    Real.log_pow, Matrix.toLin'_apply', ContinuousLinearMap.proj_pi]
-  simp [normUnitsEval]
-
-  let F := InfinitePlace K → ℝ
-  have : HasFDerivAt (fun x : F ↦ x w₀)
-    (ContinuousLinearMap.pi (Pi.single i (ContinuousLinearMap.id 𝕜 (E i)))) x := sorry
-
-
-
-
-
-#exit
-  split_ifs
-
-theorem volume_normLessOne₁ :
-    (volume (normLessThanOne₁ K)).toReal = regulator K := by
-  let s : Set (InfinitePlace K → ℝ) := Set.univ.pi fun _ ↦ Set.Ico 0 1
-  have hs : MeasurableSet s := sorry
-  have hf₁ : Set.InjOn (normUnitsEval K) s := sorry
-  have hf₂ : Measurable (normUnitsEval K) := sorry
-  have hf₃ : ∀ x ∈ s, HasFDerivWithinAt (normUnitsEval K) (fDeriv_normUnitsEval K x) s x := sorry
-  have t₀ := lintegral_image_eq_lintegral_abs_det_fderiv_mul volume hs hf₃ hf₁ (fun _ ↦ 1)
-  simp only [lintegral_const, MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter, one_mul,
-    mul_one] at t₀
-  rw [t₀]
-
-
-
-
-#exit
-
-  Set.range (fun v : (InfinitePlace K) → Set.Ico 0 1 ↦ Π i : Fin (rank K), (normUnits K i)
-    )
-theorem normLessThanOne₂
-example {ι : Type*} [Fintype ι] (u : ι → (ι → ℝ)) : sorry := by
-  let s : Set (ι → ℝ) := Set.univ.pi fun _ ↦ Set.Ico 0 1
-  let f : (ι → ℝ) → (ι → ℝ) := by
-    intro a
-    exact ∏ i, (u i) ^ (a i)
-
-
-#exit
-
-example : 0 = 1 := by
-  classical
-  let E₀ := Fin (rank K) → ℝ
-  let u : Fin (rank K) → E₀ := sorry
-  let s : Set (Fin (rank K) → ℝ) := Set.univ.pi fun _ ↦ Set.Ico 0 1
-  let f : E₀ → E₀ := by
-    intro x i
-    exact ∏ j, (u j) i ^ x i
-  have hs : MeasurableSet s := sorry
-  --  Real.hasStrictDerivAt_const_rpow
-  let f' : E₀ → E₀ →L[ℝ] E₀ := by
-    intro x
-    refine ⟨⟨⟨?_, sorry⟩, sorry⟩, sorry⟩
-    intro y i
-    exact ((u i) ^ (x i) * Real.log (u i)) * y i
-  have hf' : ∀ x ∈ s, HasFDerivWithinAt f (f' x) s x := sorry
-  have hf : Set.InjOn f s := sorry
-  have h'f : Measurable f := sorry
-  let g : E₀ → ENNReal := fun _ ↦ 1
-  have t₀ := lintegral_image_eq_lintegral_abs_det_fderiv_mul volume hs hf' hf g
-  simp [g] at t₀
-  let R : ℝ := sorry
-  have t₁ : ∀ x, (f' x).det = R := sorry
-  simp_rw [t₁] at t₀
-  simp at t₀
-
-
-
-#exit
-
-def gen : Fin (rank K) → (E K) := by
-  intro i
-  let ε := mixedEmbedding K (fundSystem K i)
-  refine ⟨?_, ?_⟩
-  · intro w
-    exact normAtPlace w.val ε
-  · intro w
-    exact (normAtPlace w.val ε : ℂ)
-
-theorem normAtPlace_gen (w : InfinitePlace K) (i : Fin (rank K)) :
-    normAtPlace w (gen i) = w (fundSystem K i) := by
-  obtain hw | hw := isReal_or_isComplex w
-  · simp_rw [normAtPlace_apply_isReal hw, gen, normAtPlace_apply, Real.norm_eq_abs,
-      abs_eq_self.mpr (apply_nonneg _ _)]
-  · simp_rw [normAtPlace_apply_isComplex hw, gen, normAtPlace_apply, Complex.norm_eq_abs,
-      Complex.abs_ofReal, abs_eq_self.mpr (apply_nonneg _ _)]
-
-theorem norm_gen (i : Fin (rank K)) :
-    mixedEmbedding.norm (gen i) = 1 := by
-  simp_rw [mixedEmbedding.norm_apply, normAtPlace_gen, prod_eq_abs_norm, show
-    |(Algebra.norm ℚ) (fundSystem K i : K)| = 1 by exact isUnit_iff_norm.mp (fundSystem K i).isUnit,
-    Rat.cast_one]
-
-theorem logMap_gen (i : Fin (rank K)) :
-    logMap (gen i) = logEmbedding K (fundSystem K i) := by
-  ext
-  rw [logMap_apply_of_norm_one (norm_gen i), normAtPlace_gen, logEmbedding_component]
-
-variable (K) in
-def Ξ : Set (E K) := {x : E K | ∀ w, normAtPlace w x = 1}
-
-theorem normAtPlace_of_mem_Xi (w : InfinitePlace K) {x : E K} (hx : x ∈ Ξ K) :
-    normAtPlace w x = 1 := hx w
-
-theorem norm_one_of_mem_Xi {x : E K} (hx : x ∈ Ξ K) :
-    mixedEmbedding.norm x = 1 := by
-  simp_rw [mixedEmbedding.norm_apply, normAtPlace_of_mem_Xi _ hx, one_pow, Finset.prod_const_one]
-
-theorem logMap_of_mem_Xi {x : E K} (hx : x ∈ Ξ K) :
-    logMap x = 0 := by
-  ext
-  simp_rw [logMap_apply_of_norm_one (norm_one_of_mem_Xi hx), normAtPlace_of_mem_Xi _ hx,
-    Real.log_one, mul_zero, Pi.zero_apply]
-
-theorem logMap_eq_logMap_iff {x y : E K} (hx : mixedEmbedding.norm x = 1)
-    (hy : mixedEmbedding.norm y = 1) :
-    logMap x = logMap y ↔ ∃ ξ ∈ Ξ K, x = ξ * y := by
-  refine ⟨?_, ?_⟩
-  · intro h
-    have : ∀ w, w ≠ w₀ → normAtPlace w x = normAtPlace w y := by
-      intro w hw
-      have := congr_fun h ⟨w, hw⟩
-      rw [logMap_apply_of_norm_one hx, logMap_apply_of_norm_one hy] at this
-      have := mul_left_cancel₀ ?_ this
-      · refine Real.log_injOn_pos ?_ ?_ this
-        all_goals
-        · exact lt_iff_le_and_ne.mpr ⟨normAtPlace_nonneg _ _,
-            (mixedEmbedding.norm_ne_zero_iff.mp (by simp [hx, hy]) w).symm⟩
-      · refine ne_of_gt mult_pos
-    refine ⟨x * y⁻¹, ?_, ?_⟩
-    · sorry
-    · ext
-      · simp_rw [Prod.fst_mul, Prod.fst_inv, Pi.mul_apply, Pi.inv_apply]
-        rw [inv_mul_cancel_right₀]
-        sorry
-      · simp_rw [Prod.snd_mul, Prod.snd_inv, Pi.mul_apply, Pi.inv_apply]
-        rw [inv_mul_cancel_right₀]
-        sorry
-  · rintro ⟨ξ, hξ, rfl⟩
-    rw [logMap_mul, logMap_of_mem_Xi hξ, zero_add]
-    · simp [norm_one_of_mem_Xi hξ]
-    · simp [hy]
-
-def gen_pow (e : Fin (rank K) → ℝ) : E K := by
-  sorry
-
-variable (K) in
-theorem normEqOne_eq :
-    normEqOne K = Set.range (fun ξv : (Ξ K) × ((Fin (rank K) → Set.Ico (0 : ℝ) 1)) ↦
-      (ξv.1 : E K) * gen_pow (fun i ↦ ξv.2 i)) := by
-  sorry
-
-
-#exit
-
-
-open Classical in
-example : volume (frontier (normLessThanOne K)) = 0 := by
-  set F := frontier (normLessThanOne K) with F_def
-  let A : ℕ → (Set (E K)) := fun n ↦ (1 - (n + 2 : ℝ)⁻¹) • F
-  have hn₀ : ∀ n : ℕ, 0 < 1 - (n + 2 : ℝ)⁻¹ := by
-    intro n
-    rw [sub_pos, inv_lt_one_iff]
-    exact Or.inr (by linarith)
-  have hn₁ : ∀ n : ℕ, 1 - (n + 2 : ℝ)⁻¹ ≤ 1 := by
-    intro n
-    refine (sub_le_self_iff _).mpr (by positivity)
-  have h : ∀ x ∈ F, mixedEmbedding.norm x = 1 := by
-    rw [F_def]
-    intro x hx
-    unfold normLessThanOne at hx
-
-    have := Continuous.frontier_preimage_subset (X := fundamentalCone K) (f := Subtype.val) sorry
-      (t := {x | mixedEmbedding.norm x ≤ 1})
-    dsimp at this
-    have := Continuous.frontier_preimage_subset (X := {x : E K | mixedEmbedding.norm x ≤ 1})
-      (f := Subtype.val) sorry (t := fundamentalCone K)
-    dsimp at this
-    have := Continuous.frontier_preimage_subset (X := {x : E K | mixedEmbedding.norm x ≤ 1})
-      (f := Subtype.val) sorry (t := fundamentalCone K)
-    dsimp at this
-    have := Continuous.frontier_preimage_subset (X := E K)
-      (f := fun x ↦ mixedEmbedding.norm (x : E K)) sorry
-      (t := Set.Icc 0 1)
-
-    sorry
-  sorry
-
-
--- DON'T DELETE THIS!
 open Classical in
 theorem volume_normEqOne :
     volume (normEqOne K) = 0 := by
@@ -1855,91 +1431,6 @@ theorem volume_normEqOne :
   simp_rw [show ∀ n : ℕ, (n : ENNReal) + 2 = (n + 2 : ℕ) by exact fun _ ↦ by norm_cast]
   rw [Filter.tendsto_add_atTop_iff_nat (f := fun n ↦ (n : ENNReal)⁻¹)]
   exact ENNReal.tendsto_inv_nat_nhds_zero
-
-theorem frontier_normLessThanOne' :
-    frontier (normLessThanOne K) ⊆ frontier X ∪ normEqOne K := by
-
-  have := Continuous.frontier_preimage_subset (X := fundamentalCone K) (f := Subtype.val) sorry
-    (t := {x | mixedEmbedding.norm x ≤ 1})
-  simp at this
-
-  have t₀ := frontier_le_subset_eq (β := fundamentalCone K) (α := ℝ)
-    (f := fun x ↦ mixedEmbedding.norm (x : E K))
-    (g := fun _ ↦ 1) sorry sorry
-  simp at t₀
-
-  have t₁ : frontier {x : fundamentalCone K | mixedEmbedding.norm (x : E K) ≤ 1} =
-    {x : fundamentalCone K | mixedEmbedding.norm (x : E K) = 1} := sorry
-
-
-
-  simp at this
-  rw [t₁] at this
-
-
-
-
-
-
-#exit
-
-theorem frontier_normLessThanOne :
-    frontier (normLessThanOne K) = normEqOne K := by
-  have := frontier_le_eq_eq (β := fundamentalCone K) (α := ℝ)
-    (f := fun x ↦ mixedEmbedding.norm (x : E K))
-    (g := fun _ ↦ 1) ?_ ?_ ?_
-  · rw [normLessThanOne, normEqOne]
-    have := congr_arg (fun s ↦ Subtype.val '' s) this
-    simp at this
-    convert this
-    · ext x
-      simp only [Set.mem_image, Subtype.exists, exists_and_right, exists_eq_right]
-      refine ⟨?_, ?_⟩
-      · intro hx
-        refine ⟨?_, ?_⟩
-        ·
-          sorry
-        ·
-          sorry
-      ·
-        sorry
-    · sorry
-  · refine Continuous.comp' ?_ ?_
-    · exact mixedEmbedding.continuous_norm K
-    · exact continuous_subtype_val
-  · exact continuous_const
-  · rintro ⟨x, hx⟩ hx'
-    simp at hx'
-    simp
-    refine frequently_iff_seq_forall.mpr ?_
-    refine ⟨?_, ?_, ?_⟩
-    · intro n
-      refine ⟨?_, ?_⟩
-      exact (1 + 1 / (n + 1 : ℝ)) • x
-      refine smul_mem_of_mem hx ?_
-      positivity
-    · rw [show nhds (⟨x, hx⟩ : fundamentalCone K)= nhds ⟨(1 + 0 : ℝ) • x, by simp [hx]⟩ by norm_num]
-      refine tendsto_subtype_rng.mpr ?_
-      dsimp only
-      refine Tendsto.smul_const ?_ _
-      refine Tendsto.add ?_ ?_
-      · exact tendsto_const_nhds
-      · exact tendsto_one_div_add_atTop_nhds_zero_nat
-    · intro n
-      rw [mixedEmbedding.norm_smul, ← hx', mul_one]
-      refine one_lt_pow ?_ ?_
-      · rw [lt_abs]
-        left
-        rw [lt_add_iff_pos_right]
-        positivity
-      · refine ne_of_gt ?_
-        exact finrank_pos
-
-
-
-
-
-
 
 end normLessOne
 
@@ -2089,7 +1580,7 @@ def integralPointEquiv :
         simp_rw [integralPoint_torsionSMul_stabilizer]
         exact QuotientGroup.quotientBot.toEquiv)).trans
       (Equiv.prodCongrLeft (fun _ ↦ (integralPointQuotEquivAssociates K).trans
-        (associatesNonZeroDivisorsEquivIsPrincipal (𝓞 K)))))
+        (Ideal.associatesNonZeroDivisorsEquivIsPrincipal (𝓞 K)))))
 
 @[simp]
 theorem integralPointEquiv_apply_fst (a : integralPoint K) :
