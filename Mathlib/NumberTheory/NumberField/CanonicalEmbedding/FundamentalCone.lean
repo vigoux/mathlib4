@@ -150,6 +150,15 @@ theorem logMap_smul {x : E K} (hx : mixedEmbedding.norm x ≠ 0) {c : ℝ} (hc :
   · rw [norm_real]
     exact pow_ne_zero _ (abs_ne_zero.mpr hc)
 
+theorem continuousOn_logMap :
+    ContinuousOn (logMap : (E K) → _) {x | mixedEmbedding.norm x ≠ 0} := by
+  refine continuousOn_pi.mpr fun w ↦ continuousOn_const.mul (ContinuousOn.sub ?_ ?_)
+  · exact Real.continuousOn_log.comp''  (continuous_normAtPlace _).continuousOn
+      fun _ hx ↦ mixedEmbedding.norm_ne_zero_iff.mp hx _
+  · exact ContinuousOn.mul
+      (Real.continuousOn_log.comp''  (mixedEmbedding.continuous_norm K).continuousOn
+        fun _ hx ↦ hx) continuousOn_const
+
 @[simp]
 theorem logMap_apply_of_norm_one {x : E K} (hx : mixedEmbedding.norm x = 1) {w : InfinitePlace K}
     (hw : w ≠ w₀) :
@@ -387,14 +396,17 @@ theorem isBounded_normLessThanOne :
   exact (Set.image_subset _ hr₂) hc₂
 
 theorem frontier_normLessThanOne :
-    frontier (normLessThanOne K) ⊆ frontier (fundamentalCone K) ∪ normEqOne K := by
+    frontier (normLessThanOne K) ⊆ (frontier (fundamentalCone K) ∩ {x | mixedEmbedding.norm x ≤ 1})
+      ∪ normEqOne K := by
   rw [show normLessThanOne K = fundamentalCone K ∩ {x | mixedEmbedding.norm x ≤ 1} by ext; simp]
   refine le_trans (frontier_inter_subset _ _) ?_
   intro x hx
   cases hx with
   | inl h =>
       left
-      exact Set.mem_of_mem_inter_left h
+      have : closure {x : E K | mixedEmbedding.norm x ≤ 1} = {x | mixedEmbedding.norm x ≤ 1} :=
+        closure_le_eq (mixedEmbedding.continuous_norm K) continuous_const
+      rwa [← this]
   | inr h =>
       have : frontier {x : E K | mixedEmbedding.norm x ≤ 1} = {x | mixedEmbedding.norm x = 1} := by
         refine frontier_le_eq_eq (mixedEmbedding.continuous_norm K) continuous_const ?_
@@ -425,7 +437,14 @@ theorem frontier_normLessThanOne :
         have : x ∉ interior (fundamentalCone K) := by
           by_contra h
           exact hx <| interior_subset h
-        refine ⟨h.1, this⟩
+        exact ⟨⟨h.1, this⟩, by rw [Set.mem_setOf_eq, h.2]⟩
+
+open Classical in
+example : volume (frontier (fundamentalCone K) ∩ {x | mixedEmbedding.norm x ≤ 1}) = 0 := by
+
+  unfold fundamentalCone
+  sorry
+
 
 theorem measurableSet_normEqOne :
     MeasurableSet (normEqOne K) :=
@@ -1108,7 +1127,7 @@ theorem jacobian_det (c : InfinitePlace K → ℝ) :
   rw [Matrix.det_mul_column, prod_normUnitsEvalProd, ← Matrix.det_transpose]
   simp_rw [jacobianCoeff]
   simp_rw [normUnits]
-  rw [mul_assoc, regulator_eq_det' K (equivFinRank K)]
+  rw [mul_assoc, finrank_mul_regulator_eq_det K w₀ (equivFinRank K)]
   have : |c w₀| ^ rank K = |∏ w : InfinitePlace K, if w = w₀ then 1 else c w₀| := by
     rw [Finset.prod_ite, Finset.prod_const_one, Finset.prod_const, one_mul, abs_pow]
     rw [Finset.filter_ne', Finset.card_erase_of_mem (Finset.mem_univ _), Finset.card_univ, rank]

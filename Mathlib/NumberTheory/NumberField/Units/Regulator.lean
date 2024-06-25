@@ -97,18 +97,59 @@ theorem _root_.NumberField.Units.abs_det_eq_abs_det (u : Fin (rank K) → (𝓞 
 /-- For any infinite place `w'`, the regulator is equal to the absolute value of the determinant
 of the matrix `(mult w * log w (fundSystem K i)))_i, {w ≠ w'}`. -/
 theorem regulator_eq_det (w' : InfinitePlace K) (e : {w // w ≠ w'} ≃ Fin (rank K)) :
-    regulator K = |(Matrix.of fun i w : {w // w ≠ w'} ↦ (mult w.val : ℝ) *
-      (w.val (fundSystem K (e i) : K)).log).det| := by
+    regulator K = |(Matrix.of fun i w : {w // w ≠ w'} ↦
+      w.val.mult * (w.val (fundSystem K (e i) : K)).log).det| := by
   let e' : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) := Fintype.equivOfCardEq (by
     rw [Fintype.card_subtype_compl, Fintype.card_ofSubsingleton, Fintype.card_fin, rank])
   simp_rw [regulator_eq_det'' K e', logEmbedding, AddMonoidHom.coe_mk, ZeroHom.coe_mk]
   exact abs_det_eq_abs_det K (fun i ↦ fundSystem K i) e' e
 
--- FIXME
 open FiniteDimensional in
-theorem regulator_eq_det' (e : {w // w ≠ (w₀ : InfinitePlace K)} ≃ Fin (rank K)) :
+theorem finrank_mul_regulator_eq_det (w' : InfinitePlace K) (e : {w // w ≠ w'} ≃ Fin (rank K)) :
     finrank ℚ K * regulator K =
       |(Matrix.of (fun i w : InfinitePlace K ↦
-        if h : i = w₀ then (mult w : ℝ)
-        else w.mult * (w (fundSystem K (e ⟨i, h⟩))).log)).det| := by
-  sorry
+        if h : i = w' then (w.mult : ℝ) else w.mult * (w (fundSystem K (e ⟨i, h⟩))).log)).det| := by
+  rw [show |Matrix.det _| = |(1 : ℝ) • Matrix.det _| by rw [one_smul],
+    ← Matrix.det_updateColumn_sum _ w' (fun _ ↦ 1)]
+  let M := Matrix.of fun i w : InfinitePlace K ↦ if w = w' then
+      (if i = w' then (finrank ℚ K : ℝ) else 0) else
+      (if h : i = w' then w.mult else w.mult * (w (fundSystem K (e ⟨i, h⟩))).log)
+  have : |M.det| = finrank ℚ K * regulator K := by
+    simp only [M]
+    let e' : Fin (rank K + 1) ≃ InfinitePlace K :=
+      (finSuccEquiv _).trans ((Equiv.optionSubtype _).symm e.symm).val
+    have h₁ : ∀ j, e' ((e'.symm w').succAbove j) = e.symm j := by
+      intro _
+      have : e'.symm w' = 0 := by
+        rw [Equiv.symm_apply_eq, Equiv.trans_apply, finSuccEquiv_zero,
+          Equiv.optionSubtype_symm_apply_apply_none]
+      rw [this]
+      simp [ne_eq, Fin.zero_succAbove, Equiv.trans_apply, finSuccEquiv_succ,
+        Equiv.optionSubtype_symm_apply_apply_coe, e']
+    have h₂ : ∀ j, e' ((e'.symm w').succAbove j) ≠ w' := by
+      intro _
+      rw [ne_eq, Equiv.apply_eq_iff_eq_symm_apply]
+      exact Fin.succAbove_ne (e'.symm w') _
+    rw [← Matrix.det_reindex_self e'.symm, Matrix.det_succ_column _ (e'.symm w')]
+    simp [(·∘·)]
+    simp_rw [Equiv.apply_eq_iff_eq_symm_apply]
+    rw [Fintype.sum_ite_eq', abs_mul, abs_mul, Nat.abs_cast, abs_pow, abs_neg, abs_one, one_pow,
+      one_mul, regulator_eq_det K w' e, ← Matrix.det_reindex_self e]
+    rw [Matrix.reindex_apply]
+    congr
+    ext
+    simp_rw [Matrix.submatrix_apply, Matrix.of_apply]
+    simp_rw [Equiv.apply_symm_apply]
+    simp_rw [if_neg (h₂ _), dif_neg (h₂ _), h₁]
+    simp only [Subtype.coe_eta, Equiv.apply_symm_apply]
+  rw [← this]
+  congr
+  ext
+  have : ∀ (w : InfinitePlace K) i, w ((algebraMap (𝓞 K) K) (fundSystem K (e i))) ^ w.mult ≠ 0 := by
+    intro _ _
+    refine pow_ne_zero _ ((map_ne_zero _).mpr (coe_ne_zero _))
+  simp_rw [M, Matrix.of_apply, smul_eq_mul, one_mul, Finset.sum_dite_irrel,
+    Matrix.updateColumn_apply, ← Real.log_pow, ← Real.log_prod _ _ (fun _ _ ↦ this _ _),
+    prod_eq_abs_norm,
+    Units.norm, Rat.cast_one, Real.log_one, ← Nat.cast_sum, sum_mult_eq, dite_eq_ite,
+    Matrix.of_apply]
