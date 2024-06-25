@@ -74,6 +74,10 @@ theorem abs_negOnePow (n : ℤ) : |(n.negOnePow : ℤ)| = 1 := by
   rw [abs_eq_natAbs, Int.units_natAbs, Nat.cast_one]
 
 @[simp]
+theorem abs_negOnePow (n : ℤ) : |(n.negOnePow : ℤ)| = 1 := by
+  rw [abs_eq_natAbs, Int.units_natAbs, Nat.cast_one]
+
+@[simp]
 lemma negOnePow_neg (n : ℤ) : (-n).negOnePow = n.negOnePow := by
   dsimp [negOnePow]
   simp only [zpow_neg, ← inv_zpow, inv_neg, inv_one]

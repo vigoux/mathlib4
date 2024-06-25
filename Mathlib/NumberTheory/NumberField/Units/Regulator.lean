@@ -56,16 +56,16 @@ local instance : CommGroup (𝓞 K)ˣ := inferInstance
 -/
 set_option maxSynthPendingDepth 2 -- Note this is active for the remainder of the file.
 
-theorem regulator_eq_det'' (e : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K)) :
+theorem regulator_eq_det' (e : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K)) :
     regulator K = |(Matrix.of fun i ↦ (logEmbedding K) (fundSystem K (e i))).det| := by
   simp_rw [regulator, Zlattice.covolume_eq_det _
     (((basisModTorsion K).map (logEmbeddingEquiv K)).reindex e.symm), Basis.coe_reindex,
     Function.comp, Basis.map_apply, ← fundSystem_mk, logEmbeddingEquiv_apply, Equiv.symm_symm]
 
-/-- Let `u : Fin (rank K) → (𝓞 K)ˣ` be a family of units. Then, for any infinite place `w'`, the
-square matrices with entries `(mult w * log w (u i))_i, {w ≠ w'}` have all the same determinant in
-absolute value. -/
-theorem _root_.NumberField.Units.abs_det_eq_abs_det (u : Fin (rank K) → (𝓞 K)ˣ)
+/-- Let `u : Fin (rank K) → (𝓞 K)ˣ` be a family of units and let `w₁` and `w₂` be two infinite
+places. Then, the two square matrices with entries `(mult w * log w (u i))_i, {w ≠ w_i}`, `i = 1,2`,
+have the same determinant in absolute value. -/
+theorem abs_det_eq_abs_det (u : Fin (rank K) → (𝓞 K)ˣ)
     {w₁ w₂ : InfinitePlace K} (e₁ : {w // w ≠ w₁} ≃ Fin (rank K))
     (e₂ : {w // w ≠ w₂} ≃ Fin (rank K)) :
     |(Matrix.of fun i w : {w // w ≠ w₁} ↦ (mult w.val : ℝ) * (w.val (u (e₁ i) : K)).log).det| =
@@ -86,8 +86,11 @@ theorem _root_.NumberField.Units.abs_det_eq_abs_det (u : Fin (rank K) → (𝓞 
   rw [← Matrix.det_reindex_self e₁, ← Matrix.det_reindex_self g]
   · rw [Units.smul_def, abs_zsmul, Int.abs_negOnePow, one_smul] at h
     convert h
-    · ext; simp [f]
-    · ext; simp; rfl
+    · ext; simp only [ne_eq, Matrix.reindex_apply, Matrix.submatrix_apply, Matrix.of_apply,
+        Equiv.apply_symm_apply, Equiv.trans_apply, Fin.succAbove_zero, id_eq, finSuccEquiv_succ,
+        Equiv.optionSubtype_symm_apply_apply_coe, f]
+    · ext; simp only [ne_eq, Equiv.coe_trans, Matrix.reindex_apply, Matrix.submatrix_apply,
+        Function.comp_apply, Equiv.apply_symm_apply, id_eq, Matrix.of_apply]; rfl
   · intro _
     simp_rw [Matrix.of_apply, ← Real.log_pow]
     rw [← Real.log_prod, Equiv.prod_comp f (fun w ↦ (w (u _) ^ (mult w))), prod_eq_abs_norm,
