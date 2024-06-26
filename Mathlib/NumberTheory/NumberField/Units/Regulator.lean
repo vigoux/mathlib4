@@ -60,7 +60,8 @@ theorem regulator_eq_det' (e : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank
     regulator K = |(Matrix.of fun i ↦ (logEmbedding K) (fundSystem K (e i))).det| := by
   simp_rw [regulator, Zlattice.covolume_eq_det _
     (((basisModTorsion K).map (logEmbeddingEquiv K)).reindex e.symm), Basis.coe_reindex,
-    Function.comp, Basis.map_apply, ← fundSystem_mk, logEmbeddingEquiv_apply, Equiv.symm_symm]
+    Function.comp, Basis.map_apply, ← fundSystem_mk, ← logEmbeddingEquiv_apply, Equiv.symm_symm]
+  rfl
 
 /-- Let `u : Fin (rank K) → (𝓞 K)ˣ` be a family of units and let `w₁` and `w₂` be two infinite
 places. Then, the two square matrices with entries `(mult w * log w (u i))_i, {w ≠ w_i}`, `i = 1,2`,
@@ -104,7 +105,7 @@ theorem regulator_eq_det (w' : InfinitePlace K) (e : {w // w ≠ w'} ≃ Fin (ra
       w.val.mult * (w.val (fundSystem K (e i) : K)).log).det| := by
   let e' : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) := Fintype.equivOfCardEq (by
     rw [Fintype.card_subtype_compl, Fintype.card_ofSubsingleton, Fintype.card_fin, rank])
-  simp_rw [regulator_eq_det'' K e', logEmbedding, AddMonoidHom.coe_mk, ZeroHom.coe_mk]
+  simp_rw [regulator_eq_det' K e', logEmbedding, AddMonoidHom.coe_mk, ZeroHom.coe_mk]
   exact abs_det_eq_abs_det K (fun i ↦ fundSystem K i) e' e
 
 open FiniteDimensional in

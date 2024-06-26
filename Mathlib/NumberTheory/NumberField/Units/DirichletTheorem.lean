@@ -421,7 +421,6 @@ def logEmbeddingEquiv :
     rw [AddMonoidHom.codRestrict_apply, AddMonoidHom.codRestrict_apply, Subtype.mk.injEq]
     apply logEmbeddingQuot_injective K, fun ⟨a, ⟨b, _, ha⟩⟩ ↦ ⟨⟦b⟧, by simp [ha]⟩⟩).toIntLinearEquiv
 
-@[simp]
 theorem logEmbeddingEquiv_apply (x : (𝓞 K)ˣ) :
     logEmbeddingEquiv K ⟦x⟧ = logEmbedding K x := rfl
 
@@ -475,6 +474,11 @@ theorem fundSystem_mk (i : Fin (rank K)) :
   rw [fundSystem, Equiv.apply_eq_iff_eq_symm_apply, @Quotient.mk_eq_iff_out,
     Quotient.out', Quotient.out_equiv_out]
   rfl
+
+theorem logEmbedding_fundSystem (i : Fin (rank K)) :
+     logEmbedding K (fundSystem K i) = basisUnitLattice K i := by
+   rw [basisUnitLattice, Basis.map_apply, ← fundSystem_mk, ← logEmbeddingEquiv_apply]
+   rfl
 
 /-- The exponents that appear in the unique decomposition of a unit as the product of
 a root of unity and powers of the units of the fundamental system `fundSystem` (see

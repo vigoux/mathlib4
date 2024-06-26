@@ -938,7 +938,7 @@ theorem normEqOne₂_eq_image : {x | x ∈ normLessThanOne₂ K ∧
   simp_rw [Set.mem_setOf_eq, normLessThanOne₂, Set.mem_image, Set.mem_preimage, fusionEquiv_apply,
     normLessThanOne₁, Set.mem_setOf_eq, fundamentalCone, Set.mem_diff, Set.mem_preimage,
     Set.mem_setOf_eq, ← ne_eq, Zspan.mem_fundamentalDomain, Set.mem_pi, Set.mem_univ, true_implies,
-    Equiv.forall_congr_left' (equivFinRank K).symm, Equiv.symm_symm, ← logRepr_apply]
+    Equiv.forall_congr_left (equivFinRank K).symm, Equiv.symm_symm, ← logRepr_apply]
   refine ⟨?_, ?_⟩
   · rintro ⟨⟨hx₁, hx₂, ⟨hx₃, _⟩, _⟩, hx₄⟩
     refine ⟨logRepr K x, hx₃, (normUnitsEvalProd_eq_iff K hx₄ fun w ↦ ?_).mpr rfl⟩
