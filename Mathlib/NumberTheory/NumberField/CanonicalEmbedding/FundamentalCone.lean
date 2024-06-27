@@ -466,53 +466,59 @@ theorem measurableSet_positiveAt (T : Finset {w : InfinitePlace K // w.IsReal}) 
   exact measurableSet_lt (f := fun _ ↦ (0 : ℝ)) measurable_const <|
         (measurable_pi_apply _).comp measurable_fst
 
-def signFlip (w : {w : InfinitePlace K // w.IsReal}) : (E K) ≃L[ℝ] (E K) :=
+def signFlipAt (w : {w : InfinitePlace K // w.IsReal}) : (E K) ≃L[ℝ] (E K) :=
   ContinuousLinearEquiv.prod (ContinuousLinearEquiv.piCongrRight
     fun w' ↦ if w' = w then ContinuousLinearEquiv.neg _ else ContinuousLinearEquiv.refl _ _)
       (ContinuousLinearEquiv.refl ℝ _)
 
 @[simp]
-theorem signFlip_apply_of_isReal_eq {w : {w // w.IsReal}} (x : E K) :
-    (signFlip w x).1 w = - x.1 w := by simp [signFlip]
+theorem signFlipAt_apply_of_isReal_eq {w : {w // w.IsReal}} (x : E K) :
+    (signFlipAt w x).1 w = - x.1 w := by simp [signFlipAt]
 
-theorem signFlip_apply_of_isReal_ne (w w' : {w // w.IsReal}) (x : E K) (h : w' ≠ w) :
-    (signFlip w x).1 w' = x.1 w' := by simp [signFlip, h]
+theorem signFlipAt_apply_of_isReal_ne (w w' : {w // w.IsReal}) (x : E K) (h : w' ≠ w) :
+    (signFlipAt w x).1 w' = x.1 w' := by simp [signFlipAt, h]
 
 @[simp]
-theorem signFlip_apply_of_isComplex (w : {w // w.IsReal}) (w' : {w // w.IsComplex}) (x : E K) :
-    (signFlip w x).2 w' = x.2 w' := rfl
+theorem signFlipAt_apply_of_isComplex (w : {w // w.IsReal}) (w' : {w // w.IsComplex}) (x : E K) :
+    (signFlipAt w x).2 w' = x.2 w' := rfl
 
-theorem measurePreserving_signFlip (w : {w : InfinitePlace K // w.IsReal}) :
-    MeasurePreserving (signFlip w) volume volume := by
-  refine MeasurePreserving.prod  ?_ ( MeasurePreserving.id _)
-  · dsimp
-    convert measurePreserving_pi (f := fun w' ↦ if w' = w then MeasurableEquiv.neg ℝ else
-      MeasurableEquiv.refl ℝ) _ _ _
-    · sorry
-    · exact fun i ↦ sigmaFinite_of_locallyFinite
-    · exact fun i ↦ sigmaFinite_of_locallyFinite
-      
-    by_cases hw : z = w
-    · simp_rw [if_pos hw]
-      exact Measure.measurePreserving_neg _
-    · simp_rw [if_neg hw]
-    · exact MeasurePreserving.id _
+theorem volume_preserving_signFlipAt (w : {w : InfinitePlace K // w.IsReal}) :
+    MeasurePreserving (signFlipAt w) := by
+  refine MeasurePreserving.prod (volume_preserving_pi fun w ↦ ?_) ( MeasurePreserving.id _)
+  dsimp only
+  split_ifs
+  exact Measure.measurePreserving_neg _
+  exact MeasurePreserving.id _
+
+theorem volume_eq_zero_at (w : {w : InfinitePlace K // w.IsReal}) :
+    volume {x : E K | x.1 w = 0} = 0 := by
+  let A : AffineSubspace ℝ (E K) := by
+    refine Submodule.toAffineSubspace (Submodule.mk ⟨⟨{x : E K | x.1 w = 0}, ?_⟩, rfl⟩ ?_)
+    · intro x y hx hy
+      rw [Set.mem_setOf_eq] at hx hy ⊢
+      rw [Prod.fst_add, Pi.add_apply, hx, hy, zero_add]
+    · intro c x hx
+      rw [Set.mem_setOf_eq] at hx ⊢
+      rw [Prod.smul_fst, Pi.smul_apply, hx, smul_zero]
+  convert Measure.addHaar_affineSubspace volume A fun h ↦ ?_
+  have : 1 ∈ A := h ▸ Set.mem_univ _
+  simp [A] at this
 
 theorem volume_inter_positiveAt {s : Set (E K)} (hs₁ : MeasurableSet s)
-    (T : Finset {w : InfinitePlace K // w.IsReal}) (hs₂ : ∀ x w, x ∈ s → w ∈ T → x.1 w ≠ 0)
-    (hs₃ : ∀ w ∈ T, signFlip w ⁻¹' s = s) :
+    (T : Finset {w : InfinitePlace K // w.IsReal}) (hs₂ : ∀ w ∈ T, signFlipAt w ⁻¹' s = s) :
     volume s = 2 ^ Finset.card T * volume (s ∩ {x | ∀ w ∈ T, 0 < x.1 w}) := by
   induction T using Finset.induction with
   | empty => simp
   | @insert w T hw h_ind =>
-      have h₁ : s ∩ {x | ∀ z ∈ T, 0 < x.1 z} =
-          s ∩ {x | x.1 w < 0} ∩ {x | ∀ z ∈ T, 0 < x.1 z} ∪
-          s ∩ {x | 0 < x.1 w} ∩ {x | ∀ z ∈ T, 0 < x.1 z} := by
+      have h₁ : (s ∩ {x | ∀ z ∈ T, 0 < x.1 z} : Set (E K)) =ᵐ[volume]
+          (s ∩ {x | x.1 w < 0} ∩ {x | ∀ z ∈ T, 0 < x.1 z} ∪
+            s ∩ {x | 0 < x.1 w} ∩ {x | ∀ z ∈ T, 0 < x.1 z} : Set (E K)) := by
         rw [Set.inter_assoc, Set.inter_assoc, ← Set.inter_union_distrib_left,
           ← Set.union_inter_distrib_right, ← Set.inter_assoc]
-        congr
-        ext x
-        simpa [lt_trichotomy (x.1 w) 0] using fun h ↦ hs₂ x w h (Finset.mem_insert_self w T)
+        refine (ae_eq_set_inter (inter_ae_eq_left_of_ae_eq_univ ?_) (by rfl)).symm
+        rw [show Set.univ = ({x : E K | x.1 w < 0} ∪ {x | 0 < x.1 w}) ∪ {x | x.1 w = 0} by
+          ext x; simpa [lt_trichotomy (x.1 w) 0] using ne_or_eq (x.1 w) 0]
+        exact (union_ae_eq_left_of_ae_eq_empty (ae_eq_empty.mpr (volume_eq_zero_at w))).symm
       have h₂ : Disjoint (s ∩ {x | x.1 w < 0} ∩ {x | ∀ z ∈ T, 0 < x.1 z})
           (s ∩ {x | 0 < x.1 w} ∩ {x | ∀ z ∈ T, 0 < x.1 z} ) := by
         refine (((Disjoint.inter_left' _ ?_).inter_right' _).inter_right _).inter_left _
@@ -520,10 +526,10 @@ theorem volume_inter_positiveAt {s : Set (E K)} (hs₁ : MeasurableSet s)
         intro _ hx hx'
         rw [Set.mem_setOf_eq] at hx hx'
         exact lt_asymm hx hx'
-      have h₃ : volume (s ∩ {x | x.1 w < 0} ∩ {x | ∀ z ∈ T, 0 < x.1 z} ) =
-          volume (s ∩ {x | 0 < x.1 w} ∩ {x | ∀ z ∈ T, 0 < x.1 z} ) := by
-        rw [← (measurePreserving_signFlip w).measure_preimage, Set.preimage_inter,
-          Set.preimage_inter, hs₃ _ (Finset.mem_insert_self w T)]
+      have h₃ : volume (s ∩ {x | x.1 w < 0} ∩ {x | ∀ z ∈ T, 0 < x.1 z}) =
+          volume (s ∩ {x | 0 < x.1 w} ∩ {x | ∀ z ∈ T, 0 < x.1 z}) := by
+        rw [← (volume_preserving_signFlipAt w).measure_preimage, Set.preimage_inter,
+          Set.preimage_inter, hs₂ _ (Finset.mem_insert_self w T)]
         congr
         · ext; simp
         · ext
@@ -531,22 +537,23 @@ theorem volume_inter_positiveAt {s : Set (E K)} (hs₁ : MeasurableSet s)
           congr
           refine ⟨fun h z hz ↦ ?_, fun h z hz ↦ ?_⟩
           · specialize h z hz
-            rwa [signFlip_apply_of_isReal_ne] at h
+            rwa [signFlipAt_apply_of_isReal_ne] at h
             exact ne_of_mem_of_not_mem hz hw
-          · rw [signFlip_apply_of_isReal_ne]
+          · rw [signFlipAt_apply_of_isReal_ne]
             exact h z hz
             exact ne_of_mem_of_not_mem hz hw
         · refine MeasurableSet.inter (MeasurableSet.inter hs₁ ?_) ?_
-          · sorry
+          · refine measurableSet_lt (g := fun _ ↦ (0 : ℝ)) ?_ measurable_const
+            exact (measurable_pi_apply _).comp measurable_fst
           · exact measurableSet_positiveAt T
-      rw [h_ind, h₁, measure_union h₂, h₃, ← two_mul, ← mul_assoc, ← pow_succ,
+      rw [h_ind, measure_congr h₁, measure_union h₂, h₃, ← two_mul, ← mul_assoc, ← pow_succ,
         Finset.card_insert_of_not_mem hw]
       · simp_rw [Finset.mem_insert, forall_eq_or_imp, Set.setOf_and, Set.inter_assoc]
       · refine MeasurableSet.inter (MeasurableSet.inter hs₁ ?_) ?_
-        · sorry
+        · refine measurableSet_lt (f := fun _ ↦ (0 : ℝ)) measurable_const ?_
+          exact (measurable_pi_apply _).comp measurable_fst
         · exact measurableSet_positiveAt T
-      sorry
-      sorry
+      exact fun w hw ↦  hs₂ w (Finset.mem_insert_of_mem hw)
 
 theorem measurableSet_normLessThanOne₀_aux (s : Finset {w : InfinitePlace K // IsReal w}) :
     MeasurableSet ({x | x ∈ normLessThanOne K ∧ ∀ w ∈ s, 0 < x.1 w}) := by

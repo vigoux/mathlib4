@@ -1,23 +1,28 @@
 import Mathlib.Analysis.SpecialFunctions.PolarCoord
 import Mathlib.MeasureTheory.Constructions.Pi
 
-theorem MeasureTheory.measurePreserving_pi {ι : Type*} [Fintype ι] {α : ι → Type*} {β : ι → Type*}
-    {m : ∀ i, MeasurableSpace (α i)} [∀ i, MeasurableSpace (β i)] (μ : (i : ι) → Measure (α i))
-    (ν : (i : ι) → Measure (β i)) [∀ i, SigmaFinite (μ i)] [∀ i, SigmaFinite (ν i)]
-    {f : (i : ι) → (α i) ≃ᵐ (β i)} (hf : ∀ i, MeasurePreserving (f i) (μ i) (ν i)) :
-    MeasurePreserving (fun a i ↦ f i (a i)) (Measure.pi μ) (Measure.pi ν) := by
-  convert ((MeasurableEquiv.piCongrRight f).symm.measurable.measurePreserving (Measure.pi ν)).symm
-  refine Measure.pi_eq fun s hs ↦ ?_
-  rw [MeasurableEquiv.map_symm, Measure.comap_apply]
-  simp_rw [MeasurableEquiv.image_eq_preimage, MeasurableEquiv.piCongrRight, Equiv.piCongrRight,
-    MeasurableEquiv.coe_toEquiv, MeasurableEquiv.coe_toEquiv_symm, MeasurableEquiv.symm_mk,
-    MeasurableEquiv.coe_mk, Equiv.coe_fn_symm_mk, Set.preimage_pi,
-    ← MeasurableEquiv.image_eq_preimage, Measure.pi_pi,
-    ← MeasurePreserving.measure_preimage (hf _)
-    ((MeasurableEquiv.measurableSet_image (f _)).mpr (hs _)), MeasurableEquiv.preimage_image]
-  · exact (MeasurableEquiv.piCongrRight f).injective
-  · exact fun _ hs ↦ ((MeasurableEquiv.piCongrRight f).measurableSet_image ).mpr hs
-  · exact MeasurableSet.univ_pi hs
+open MeasureTheory MeasureTheory.Measure
+
+theorem measurePreserving_pi {ι : Type*} [Fintype ι] {α β : ι → Type*} [∀ i, MeasurableSpace (α i)]
+    [∀ i, MeasurableSpace (β i)]  (μ : (i : ι) → Measure (α i)) [∀ i, SigmaFinite (μ i)]
+    (ν : (i : ι) → Measure (β i)) [∀ i, SigmaFinite (ν i)] {f : (i : ι) → (α i) → (β i)}
+    (hf : ∀ i, MeasurePreserving (f i) (μ i) (ν i)) :
+    MeasurePreserving (fun a i ↦ f i (a i)) (Measure.pi μ) (Measure.pi ν) where
+  measurable :=
+    measurable_pi_iff.mpr <| fun i ↦ (hf i).measurable.comp (measurable_pi_apply i)
+  map_eq := by
+    refine (Measure.pi_eq fun s hs ↦ ?_).symm
+    rw [Measure.map_apply, Set.preimage_pi, Measure.pi_pi]
+    simp_rw [← MeasurePreserving.measure_preimage (hf _) (hs _)]
+    · exact measurable_pi_iff.mpr <| fun i ↦ (hf i).measurable.comp (measurable_pi_apply i)
+    · exact MeasurableSet.univ_pi hs
+
+theorem volume_preserving_pi {ι : Type*} [Fintype ι] {α' β' : ι → Type*} [∀ i, MeasureSpace (α' i)]
+    [∀ i, MeasureSpace (β' i)] [∀ i, SigmaFinite (volume : Measure (α' i))]
+    [∀ i, SigmaFinite (volume : Measure (β' i))] {f : (i : ι) → (α' i) → (β' i)}
+    (hf : ∀ i, MeasurePreserving (f i)) :
+    MeasurePreserving (fun (a : (i : ι) → α' i) (i : ι) ↦ (f i) (a i)) :=
+  measurePreserving_pi _ _ hf
 
 theorem Real.rpow_ne_zero_of_pos {x : ℝ} (hx : 0 < x) (y : ℝ) : x ^ y ≠ 0 := by
   rw [rpow_def_of_pos hx]; apply exp_ne_zero _
@@ -32,7 +37,7 @@ theorem Basis.sum_eq_iff_eq_equivFun {M R ι : Type*} [Fintype ι] [Semiring R] 
     ∑ i, (c i) • (B i) = x ↔ c = B.equivFun x :=
   ⟨fun h ↦ by rw [← h, B.equivFun_apply, B.repr_sum_self], fun h ↦ by rw [h, B.sum_equivFun]⟩
 
-open MeasureTheory MeasureTheory.Measure
+
 
 open Classical in
 theorem MeasureTheory.measurePreserving_subtypeEquivRight
