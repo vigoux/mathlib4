@@ -110,6 +110,10 @@ def logMap (x : E K) : {w : InfinitePlace K // w ≠ w₀} → ℝ := fun w ↦
   mult w.val * (Real.log (normAtPlace w.val x) -
     Real.log (mixedEmbedding.norm x) * (finrank ℚ K : ℝ)⁻¹)
 
+theorem logMap_apply (x : E K) (w : {w : InfinitePlace K // w ≠ w₀}) :
+    logMap x w = mult w.val * (Real.log (normAtPlace w.val x) -
+      Real.log (mixedEmbedding.norm x) * (finrank ℚ K : ℝ)⁻¹) := rfl
+
 @[simp]
 theorem logMap_zero : logMap (0 : E K) = 0 := by
   ext
@@ -453,7 +457,7 @@ theorem measurableSet_normLessThanOne :
 -- MeasureTheory.addHaar_image_eq_zero_of_differentiableOn_of_addHaar_eq_zero
 
 abbrev normLessThanOne₀ : Set (E K) :=
-    {x | x ∈ normLessThanOne K ∧ ∀ w, (hw : IsReal w) → 0 < x.1 ⟨w, hw⟩}
+    {x | x ∈ normLessThanOne K ∧ ∀ w : {w // IsReal w}, 0 < x.1 w}
 
 variable {K}
 
@@ -472,15 +476,32 @@ def signFlipAt (w : {w : InfinitePlace K // w.IsReal}) : (E K) ≃L[ℝ] (E K) :
       (ContinuousLinearEquiv.refl ℝ _)
 
 @[simp]
-theorem signFlipAt_apply_of_isReal_eq {w : {w // w.IsReal}} (x : E K) :
+theorem signFlipAt_apply_of_isReal_eq (w : {w // w.IsReal}) (x : E K) :
     (signFlipAt w x).1 w = - x.1 w := by simp [signFlipAt]
 
 theorem signFlipAt_apply_of_isReal_ne (w w' : {w // w.IsReal}) (x : E K) (h : w' ≠ w) :
     (signFlipAt w x).1 w' = x.1 w' := by simp [signFlipAt, h]
 
-@[simp]
 theorem signFlipAt_apply_of_isComplex (w : {w // w.IsReal}) (w' : {w // w.IsComplex}) (x : E K) :
     (signFlipAt w x).2 w' = x.2 w' := rfl
+
+theorem normAtPlace_signFlipAt (w : {w // w.IsReal}) (w' : InfinitePlace K) (x : E K) :
+    normAtPlace w' (signFlipAt w x)= normAtPlace w' x := by
+  obtain hw'₁ | hw'₁ := isReal_or_isComplex w'
+  · by_cases hw'₂ : w' = w
+    · simp_rw [normAtPlace_apply_isReal hw'₁, hw'₂, signFlipAt_apply_of_isReal_eq, norm_neg]
+    · have : ⟨w', hw'₁⟩ ≠ w := by exact Subtype.coe_ne_coe.mp hw'₂
+      simp_rw [normAtPlace_apply_isReal hw'₁, signFlipAt_apply_of_isReal_ne _ _ _ this]
+  · simp_rw [normAtPlace_apply_isComplex hw'₁, signFlipAt_apply_of_isComplex]
+
+theorem norm_signFlipAt (w : {w // w.IsReal}) (x : E K) :
+    mixedEmbedding.norm (signFlipAt w x) = mixedEmbedding.norm x := by
+  simp_rw [mixedEmbedding.norm_apply, normAtPlace_signFlipAt]
+
+theorem logMap_signFlipAt (w : {w // w.IsReal}) (x : E K) :
+    logMap (signFlipAt w x) = logMap x := by
+  ext
+  simp_rw [logMap_apply, normAtPlace_signFlipAt, norm_signFlipAt]
 
 theorem volume_preserving_signFlipAt (w : {w : InfinitePlace K // w.IsReal}) :
     MeasurePreserving (signFlipAt w) := by
@@ -555,152 +576,25 @@ theorem volume_inter_positiveAt {s : Set (E K)} (hs₁ : MeasurableSet s)
         · exact measurableSet_positiveAt T
       exact fun w hw ↦  hs₂ w (Finset.mem_insert_of_mem hw)
 
-theorem measurableSet_normLessThanOne₀_aux (s : Finset {w : InfinitePlace K // IsReal w}) :
-    MeasurableSet ({x | x ∈ normLessThanOne K ∧ ∀ w ∈ s, 0 < x.1 w}) := by
-  refine MeasurableSet.inter (measurableSet_normLessThanOne K) ?_
-  refine MeasurableSet.congr (s := ⋂ z ∈ s, {x | x.1 z > 0}) ?_ ?_
-  · refine  MeasurableSet.biInter ?_ fun z _ ↦ ?_
-    · exact Set.to_countable _
-    · exact measurableSet_lt (f := fun _ ↦ (0 : ℝ)) measurable_const <|
-        (measurable_pi_apply _).comp measurable_fst
+theorem volume_normLessThanOne :
+    volume (normLessThanOne K) = 2 ^ (NrRealPlaces K) * volume (normLessThanOne₀ K) := by
+  convert volume_inter_positiveAt (measurableSet_normLessThanOne K) Finset.univ ?_
   · ext
-    simp_rw [Set.mem_iInter, Subtype.forall, Set.mem_setOf_eq, gt_iff_lt, Set.mem_def]
-
-open Classical
+    simp [normLessThanOne₀]
+  · intro w _
+    ext
+    simp_rw [Set.preimage_setOf_eq, Set.mem_setOf_eq, mem_fundamentalCone, norm_signFlipAt,
+      logMap_signFlipAt]
 
 theorem measurableSet_normLessThanOne₀ :
     MeasurableSet (normLessThanOne₀ K) := by
-  convert measurableSet_normLessThanOne₀_aux K Finset.univ
-  simp
+  refine MeasurableSet.inter ?_ ?_
+  exact measurableSet_normLessThanOne K
+  convert measurableSet_positiveAt (K := K) Finset.univ
+  simp only [Subtype.forall, Finset.mem_univ, true_implies]
+  rfl
 
--- Use mem_normLessThanOne_of_normAtPlace_eq
-theorem volume_normLessThanOne_aux (s : Finset {w : InfinitePlace K // IsReal w}) :
-    volume (normLessThanOne K) = 2 ^ Finset.card s *
-      volume {x | x ∈ normLessThanOne K ∧ ∀ w ∈ s, 0 < x.1 w} := by
-  induction s using Finset.induction with
-  | empty => simp
-  | @insert w s hs h_ind =>
-      have f₁ : ∀ ⦃x⦄, x ∈ fundamentalCone K → x.1 w ≠ 0 := by
-        intro x hx
-        contrapose! hx
-        have : mixedEmbedding.norm x = 0 := by
-          rw [mixedEmbedding.norm_eq_zero_iff]
-          refine ⟨w, ?_⟩
-          rw [normAtPlace_apply_isReal w.prop]
-          rw [hx, norm_zero]
-        exact Set.not_mem_diff_of_mem this
-      have f₂ : MeasurableSet {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, 0 < x.1 z) ∧ x.1 w < 0} := by
-        simp_rw [← and_assoc]
-        refine MeasurableSet.inter ?_ ?_
-        · exact measurableSet_normLessThanOne₀_aux K _
-        · refine measurableSet_lt (g := fun _ ↦ (0 : ℝ)) ?_ measurable_const
-          exact (measurable_pi_apply w).comp measurable_fst
-      have h₁ : {x | x ∈ normLessThanOne K ∧ ∀ z ∈ s, x.1 z > 0} =
-          {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, 0 < x.1 z) ∧ 0 < x.1 w} ∪
-          {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, 0 < x.1 z) ∧ x.1 w < 0} := by
-        ext x
-        simp_rw [Set.mem_setOf_eq, gt_iff_lt, Subtype.forall, Set.mem_union]
-        simp_rw [Set.mem_setOf_eq]
-        simp_rw [← and_or_left, and_congr_right_iff, iff_self_and, and_imp]
-        simp only [lt_or_lt_iff_ne]
-        intro hx _ _
-        exact (f₁ hx).symm
-      have h₂ : Disjoint {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ 0 < x.1 w}
-          {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w < 0} := by
-        refine Set.disjoint_iff_forall_ne.mpr ?_
-        rintro _ ⟨_, ⟨_, hx⟩⟩ _ ⟨_, ⟨_, hy⟩⟩
-        contrapose! hx
-        rw [hx]
-        exact hy.le
-      have h₃ : volume {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ x.1 w < 0} =
-          volume {x | x ∈ normLessThanOne K ∧ (∀ z ∈ s, x.1 z > 0) ∧ 0 < x.1 w} := by
-        let T : ({w : InfinitePlace K // IsReal w} → ℝ) ≃L[ℝ]
-            {w : InfinitePlace K // IsReal w} → ℝ := by
-          refine ContinuousLinearEquiv.piCongrRight fun z ↦ ?_
-          exact if z = w then ContinuousLinearEquiv.neg _ else ContinuousLinearEquiv.refl _ _
-        have hT : MeasurePreserving T volume volume := by
-          convert (T.toHomeomorph.toMeasurableEquiv.measurable.measurePreserving volume)
-          rw [Homeomorph.toMeasurableEquiv_coe, ContinuousLinearEquiv.coe_toHomeomorph]
-          rw [show Measure.map (⇑T) volume =
-            ((Pi.basisFun ℝ {w : InfinitePlace K // w.IsReal}).map T.toLinearEquiv).addHaar by
-              rw [← addHaarMeasure_eq_volume_pi, ← Basis.parallelepiped_basisFun,
-                ← Basis.addHaar_def, Basis.map_addHaar]]
-          rw [eq_comm, Basis.addHaar_eq_iff]
-          rw [volume_pi]
-          rw [Basis.coe_parallelepiped]
-          rw [parallelepiped_basis_eq]
-          rw [Basis.map_repr]
-          simp_rw [LinearEquiv.trans_apply, Pi.basisFun_repr]
-          have : {x | ∀ (i : { w // w.IsReal }), T.symm x i ∈ Set.Icc 0 1} =
-              Set.univ.pi fun z ↦ if z = w then Set.Icc (-1) 0 else Set.Icc 0 1 := by
-            ext
-            simp_rw [Set.mem_setOf_eq, Set.mem_pi, Set.mem_univ, true_implies]
-            refine forall_congr' fun z ↦ ?_
-            dsimp [T]
-            by_cases hz : z = w
-            · simp_rw [if_pos hz, ContinuousLinearEquiv.symm_neg, ContinuousLinearEquiv.coe_neg]
-              simp only [ContinuousLinearEquiv.symm_neg, ContinuousLinearEquiv.coe_neg,
-                Pi.neg_apply, id_eq, Set.mem_Icc, Left.nonneg_neg_iff]
-              rw [neg_le, and_comm]
-            · simp_rw [if_neg hz, ContinuousLinearEquiv.refl_symm, ContinuousLinearEquiv.coe_refl',
-                id_eq]
-          erw [this, Measure.pi_pi]
-          simp [apply_ite]
-        simp_rw [Measure.volume_eq_prod, ← (hT.prod (MeasurePreserving.id _)).measure_preimage f₂,
-          Set.preimage_setOf_eq, Prod.map]
-        congr! 4 with x
-        · simp_rw [id_eq, Set.mem_setOf_eq]
-          have hx₁ : ∀ x, ∀ z, normAtPlace z (T x.1, x.2) = normAtPlace z x := by
-            intro x z
-            dsimp [T]
-            by_cases hz : IsReal z
-            · simp_rw [normAtPlace_apply_isReal hz, ContinuousLinearEquiv.piCongrRight_apply]
-              by_cases hz' : ⟨z, hz⟩ = w
-              · rw [if_pos hz', ContinuousLinearEquiv.coe_neg, Pi.neg_apply, id_eq, norm_neg]
-              · rw [if_neg hz', ContinuousLinearEquiv.coe_refl', id_eq]
-            · simp_rw [normAtPlace_apply_isComplex (not_isReal_iff_isComplex.mp hz)]
-          have hx₂ : ∀ x, mixedEmbedding.norm (T x.1, x.2) = mixedEmbedding.norm x := by
-            intro x
-            simp_rw [mixedEmbedding.norm_apply, hx₁]
-          rw [hx₂]
-          have : ∀ x, (T x.1, x.2) ∈ fundamentalCone K ↔ x ∈ fundamentalCone K := by
-            intro x
-            simp_rw [fundamentalCone, Set.mem_diff, Set.mem_preimage]
-            have : logMap (T x.1, x.2) = logMap x := by
-              unfold logMap
-              ext
-              simp [hx₁, hx₂]
-            simp_rw [this, Set.mem_setOf_eq, hx₂]
-          rw [this]
-        · simp [T]
-          intro _
-          refine ⟨?_, ?_⟩
-          · intro h z hz hz'
-            specialize h z hz hz'
-            rwa [if_neg, ContinuousLinearEquiv.coe_refl', id_eq] at h
-            exact ne_of_mem_of_not_mem hz' hs
-          · intro h z hz hz'
-            specialize h z hz hz'
-            rwa [if_neg, ContinuousLinearEquiv.coe_refl', id_eq]
-            exact ne_of_mem_of_not_mem hz' hs
-      rw [h_ind, h₁, measure_union h₂, h₃, ← two_mul, ← mul_assoc, ← pow_succ]
-      congr
-      · exact (Finset.card_insert_of_not_mem hs).symm
-      · ext x
-        refine ⟨fun hx ↦ ⟨hx.1, ?_⟩, fun hx ↦ ⟨hx.1, ⟨fun z hz ↦ ?_, ?_⟩⟩⟩
-        · intro z hz
-          cases (Finset.mem_insert.mp hz) with
-          | inr h => exact hx.2.1 z h
-          | inl h => exact h ▸ hx.2.2
-        · exact hx.2 z (Finset.mem_insert_of_mem hz)
-        · exact hx.2 w (Finset.mem_insert_self _ _)
-      exact f₂
-
-theorem volume_normLessThanOne :
-    volume (normLessThanOne K) = 2 ^ (NrRealPlaces K) * volume (normLessThanOne₀ K) := by
-  convert volume_normLessThanOne_aux K Finset.univ
-  simp [normLessThanOne₀]
-
+variable (K) in
 def normLessThanOne₁ :
     Set (({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ)) :=
     {x | (∀ w, 0 < x.1 w) ∧ (∀ w, 0 < x.2 w) ∧
@@ -740,8 +634,6 @@ theorem measurableSet_normLessThanOne₁ :
         (measurable_pi_apply _).comp measurable_snd
     · ext
       simp_rw [Set.mem_iInter, Subtype.forall, Set.mem_setOf_eq]
-
-variable {K}
 
 theorem indicator_eq_indicator (x : {w : InfinitePlace K // IsReal w} → ℝ)
     (y : {w : InfinitePlace K // IsComplex w} → ℂ) :
