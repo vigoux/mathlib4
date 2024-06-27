@@ -1,4 +1,12 @@
 import Mathlib.Analysis.SpecialFunctions.PolarCoord
+import Mathlib.MeasureTheory.Constructions.Pi
+
+theorem MeasureTheory.measurePreserving_pi {ι : Type*} [Fintype ι] {α : ι → Type*} {β : ι → Type*}
+    [∀ i, MeasurableSpace (α i)] [∀ i, MeasurableSpace (β i)] (μ : (i : ι) → Measure (α i))
+    (ν : (i : ι) → Measure (β i)) [∀ i, SFinite (μ i)] [∀ i, SFinite (ν i)]
+    {f : (i : ι) → (α i) → (β i)} (hf : ∀ i, MeasurePreserving (f i) (μ i) (ν i)) :
+    MeasurePreserving (fun a i ↦ f i (a i)) (Measure.pi μ) (Measure.pi ν)  := by
+  sorry
 
 theorem Real.rpow_ne_zero_of_pos {x : ℝ} (hx : 0 < x) (y : ℝ) : x ^ y ≠ 0 := by
   rw [rpow_def_of_pos hx]; apply exp_ne_zero _
@@ -72,6 +80,7 @@ theorem ContinuousLinearEquiv.coe_neg {R : Type*} {M : Type*} [Semiring R] [AddC
     [TopologicalSpace M] [ContinuousNeg M] [Module R M] :
     ⇑(neg R : M ≃L[R] M) = -id := rfl
 
+@[simp]
 theorem ContinuousLinearEquiv.neg_apply {R : Type*} {M : Type*} [Semiring R] [AddCommGroup M]
     [TopologicalSpace M] [ContinuousNeg M] [Module R M] (x : M) : neg R x = -x := by simp
 

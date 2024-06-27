@@ -439,13 +439,6 @@ theorem frontier_normLessThanOne :
           exact hx <| interior_subset h
         exact ⟨⟨h.1, this⟩, by rw [Set.mem_setOf_eq, h.2]⟩
 
-open Classical in
-example : volume (frontier (fundamentalCone K) ∩ {x | mixedEmbedding.norm x ≤ 1}) = 0 := by
-
-  unfold fundamentalCone
-  sorry
-
-
 theorem measurableSet_normEqOne :
     MeasurableSet (normEqOne K) :=
   MeasurableSet.inter (measurableSet K) <|
@@ -461,6 +454,92 @@ theorem measurableSet_normLessThanOne :
 
 abbrev normLessThanOne₀ : Set (E K) :=
     {x | x ∈ normLessThanOne K ∧ ∀ w, (hw : IsReal w) → 0 < x.1 ⟨w, hw⟩}
+
+variable {K}
+
+open Classical
+
+theorem measurableSet_positiveAt (T : Finset {w : InfinitePlace K // w.IsReal}) :
+    MeasurableSet {x : E K | ∀ w ∈ T, 0 < x.1 w} := by
+  refine MeasurableSet.congr (s := ⋂ z ∈ T, {x | x.1 z > 0})
+    (MeasurableSet.biInter (Set.to_countable _) fun z _ ↦ ?_) (by ext; simp)
+  exact measurableSet_lt (f := fun _ ↦ (0 : ℝ)) measurable_const <|
+        (measurable_pi_apply _).comp measurable_fst
+
+def signFlip (w : {w : InfinitePlace K // w.IsReal}) : (E K) ≃L[ℝ] (E K) :=
+  ContinuousLinearEquiv.prod (ContinuousLinearEquiv.piCongrRight
+    fun z ↦ if z = w then ContinuousLinearEquiv.neg _ else ContinuousLinearEquiv.refl _ _)
+      (ContinuousLinearEquiv.refl ℝ _)
+
+@[simp]
+theorem signFlip_apply_of_isReal_eq {w : {w // w.IsReal}} (x : E K) :
+    (signFlip w x).1 w = - x.1 w := by simp [signFlip]
+
+theorem signFlip_apply_of_isReal_ne (w w' : {w // w.IsReal}) (x : E K) (h : w' ≠ w) :
+    (signFlip w x).1 w' = x.1 w' := by simp [signFlip, h]
+
+@[simp]
+theorem signFlip_apply_of_isComplex (w : {w // w.IsReal}) (w' : {w // w.IsComplex}) (x : E K) :
+    (signFlip w x).2 w' = x.2 w' := rfl
+
+theorem measurePreserving_signFlip (w : {w : InfinitePlace K // w.IsReal}) :
+    MeasurePreserving (signFlip w) volume volume := by
+  refine MeasurePreserving.prod (measurePreserving_pi _ _ fun z ↦ ?_) (MeasurePreserving.id _)
+  by_cases hw : z = w
+  · simp_rw [if_pos hw]
+    exact Measure.measurePreserving_neg _
+  · simp_rw [if_neg hw]
+    exact MeasurePreserving.id _
+
+theorem volume_inter_positiveAt {s : Set (E K)} (hs₁ : MeasurableSet s)
+    (T : Finset {w : InfinitePlace K // w.IsReal}) (hs₂ : ∀ x w, x ∈ s → w ∈ T → x.1 w ≠ 0)
+    (hs₃ : ∀ w ∈ T, signFlip w ⁻¹' s = s) :
+    volume s = 2 ^ Finset.card T * volume (s ∩ {x | ∀ w ∈ T, 0 < x.1 w}) := by
+  induction T using Finset.induction with
+  | empty => simp
+  | @insert w T hw h_ind =>
+      have h₁ : s ∩ {x | ∀ z ∈ T, 0 < x.1 z} =
+          s ∩ {x | x.1 w < 0} ∩ {x | ∀ z ∈ T, 0 < x.1 z} ∪
+          s ∩ {x | 0 < x.1 w} ∩ {x | ∀ z ∈ T, 0 < x.1 z} := by
+        rw [Set.inter_assoc, Set.inter_assoc, ← Set.inter_union_distrib_left,
+          ← Set.union_inter_distrib_right, ← Set.inter_assoc]
+        congr
+        ext x
+        simpa [lt_trichotomy (x.1 w) 0] using fun h ↦ hs₂ x w h (Finset.mem_insert_self w T)
+      have h₂ : Disjoint (s ∩ {x | x.1 w < 0} ∩ {x | ∀ z ∈ T, 0 < x.1 z})
+          (s ∩ {x | 0 < x.1 w} ∩ {x | ∀ z ∈ T, 0 < x.1 z} ) := by
+        refine (((Disjoint.inter_left' _ ?_).inter_right' _).inter_right _).inter_left _
+        rw [Set.disjoint_right]
+        intro _ hx hx'
+        rw [Set.mem_setOf_eq] at hx hx'
+        exact lt_asymm hx hx'
+      have h₃ : volume (s ∩ {x | x.1 w < 0} ∩ {x | ∀ z ∈ T, 0 < x.1 z} ) =
+          volume (s ∩ {x | 0 < x.1 w} ∩ {x | ∀ z ∈ T, 0 < x.1 z} ) := by
+        rw [← (measurePreserving_signFlip w).measure_preimage, Set.preimage_inter,
+          Set.preimage_inter, hs₃ _ (Finset.mem_insert_self w T)]
+        congr
+        · ext; simp
+        · ext
+          simp_rw [Set.preimage_setOf_eq, Set.mem_setOf_eq]
+          congr
+          refine ⟨fun h z hz ↦ ?_, fun h z hz ↦ ?_⟩
+          · specialize h z hz
+            rwa [signFlip_apply_of_isReal_ne] at h
+            exact ne_of_mem_of_not_mem hz hw
+          · rw [signFlip_apply_of_isReal_ne]
+            exact h z hz
+            exact ne_of_mem_of_not_mem hz hw
+        · refine MeasurableSet.inter (MeasurableSet.inter hs₁ ?_) ?_
+          · sorry
+          · exact measurableSet_positiveAt T
+      rw [h_ind, h₁, measure_union h₂, h₃, ← two_mul, ← mul_assoc, ← pow_succ,
+        Finset.card_insert_of_not_mem hw]
+      · simp_rw [Finset.mem_insert, forall_eq_or_imp, Set.setOf_and, Set.inter_assoc]
+      · refine MeasurableSet.inter (MeasurableSet.inter hs₁ ?_) ?_
+        · sorry
+        · exact measurableSet_positiveAt T
+      sorry
+      sorry
 
 theorem measurableSet_normLessThanOne₀_aux (s : Finset {w : InfinitePlace K // IsReal w}) :
     MeasurableSet ({x | x ∈ normLessThanOne K ∧ ∀ w ∈ s, 0 < x.1 w}) := by
