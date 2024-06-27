@@ -468,7 +468,7 @@ theorem measurableSet_positiveAt (T : Finset {w : InfinitePlace K // w.IsReal}) 
 
 def signFlip (w : {w : InfinitePlace K // w.IsReal}) : (E K) ≃L[ℝ] (E K) :=
   ContinuousLinearEquiv.prod (ContinuousLinearEquiv.piCongrRight
-    fun z ↦ if z = w then ContinuousLinearEquiv.neg _ else ContinuousLinearEquiv.refl _ _)
+    fun w' ↦ if w' = w then ContinuousLinearEquiv.neg _ else ContinuousLinearEquiv.refl _ _)
       (ContinuousLinearEquiv.refl ℝ _)
 
 @[simp]
@@ -484,12 +484,19 @@ theorem signFlip_apply_of_isComplex (w : {w // w.IsReal}) (w' : {w // w.IsComple
 
 theorem measurePreserving_signFlip (w : {w : InfinitePlace K // w.IsReal}) :
     MeasurePreserving (signFlip w) volume volume := by
-  refine MeasurePreserving.prod (measurePreserving_pi _ _ fun z ↦ ?_) (MeasurePreserving.id _)
-  by_cases hw : z = w
-  · simp_rw [if_pos hw]
-    exact Measure.measurePreserving_neg _
-  · simp_rw [if_neg hw]
-    exact MeasurePreserving.id _
+  refine MeasurePreserving.prod  ?_ ( MeasurePreserving.id _)
+  · dsimp
+    convert measurePreserving_pi (f := fun w' ↦ if w' = w then MeasurableEquiv.neg ℝ else
+      MeasurableEquiv.refl ℝ) _ _ _
+    · sorry
+    · exact fun i ↦ sigmaFinite_of_locallyFinite
+    · exact fun i ↦ sigmaFinite_of_locallyFinite
+      
+    by_cases hw : z = w
+    · simp_rw [if_pos hw]
+      exact Measure.measurePreserving_neg _
+    · simp_rw [if_neg hw]
+    · exact MeasurePreserving.id _
 
 theorem volume_inter_positiveAt {s : Set (E K)} (hs₁ : MeasurableSet s)
     (T : Finset {w : InfinitePlace K // w.IsReal}) (hs₂ : ∀ x w, x ∈ s → w ∈ T → x.1 w ≠ 0)

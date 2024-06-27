@@ -2,7 +2,7 @@ import Mathlib.Analysis.SpecialFunctions.PolarCoord
 import Mathlib.MeasureTheory.Constructions.Pi
 
 theorem MeasureTheory.measurePreserving_pi {ι : Type*} [Fintype ι] {α : ι → Type*} {β : ι → Type*}
-    [∀ i, MeasurableSpace (α i)] [∀ i, MeasurableSpace (β i)] (μ : (i : ι) → Measure (α i))
+    {m : ∀ i, MeasurableSpace (α i)} [∀ i, MeasurableSpace (β i)] (μ : (i : ι) → Measure (α i))
     (ν : (i : ι) → Measure (β i)) [∀ i, SigmaFinite (μ i)] [∀ i, SigmaFinite (ν i)]
     {f : (i : ι) → (α i) ≃ᵐ (β i)} (hf : ∀ i, MeasurePreserving (f i) (μ i) (ν i)) :
     MeasurePreserving (fun a i ↦ f i (a i)) (Measure.pi μ) (Measure.pi ν) := by
