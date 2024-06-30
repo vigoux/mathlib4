@@ -642,19 +642,6 @@ theorem volume_of_indicator_eq_indicator_norm (s : Set (E K)) (hs₀ : Measurabl
       sorry
 
 variable (K) in
-def S : Set (InfinitePlace K → ℝ) :=
-  Set.univ.pi fun w ↦ if w = w₀ then Set.Ioc 0 1 else Set.Ico 0 1
-
-example : closure (S K) = Set.Icc 0 1 := by
-  unfold S
-  simp_rw [closure_pi_set, apply_ite, closure_Ioc zero_ne_one, closure_Ico zero_ne_one, ite_self,
-    Set.pi_univ_Icc, Pi.zero_def, Pi.one_def]
-
-example : interior (S K) = Set.univ.pi fun _ ↦ Set.Ioo 0 1 := by
-  unfold S
-  simp_rw [interior_pi_set Set.finite_univ, apply_ite, interior_Ioc, interior_Ico, ite_self]
-
-variable (K) in
 def equivFinRank : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) := by
   refine Fintype.equivOfCardEq ?_
   rw [Fintype.card_subtype_compl, Fintype.card_ofSubsingleton, Fintype.card_fin, rank]
@@ -787,7 +774,43 @@ def mapToUnitsPow : PartialHomeomorph (InfinitePlace K → ℝ) (InfinitePlace K
     sorry
   continuousOn_invFun := sorry
 
+def S : Set (InfinitePlace K → ℝ) :=
+  Set.univ.pi fun w ↦ if w = w₀ then Set.Ioc 0 1 else Set.Ico 0 1
 
+example : closure (S K) = Set.Icc 0 1 := by
+  unfold S
+  simp_rw [closure_pi_set, apply_ite, closure_Ioc zero_ne_one, closure_Ico zero_ne_one, ite_self,
+    Set.pi_univ_Icc, Pi.zero_def, Pi.one_def]
+
+example : interior (S K) = Set.univ.pi fun _ ↦ Set.Ioo 0 1 := by
+  unfold S
+  simp_rw [interior_pi_set Set.finite_univ, apply_ite, interior_Ioc, interior_Ico, ite_self]
+
+theorem mapToUnitsPow_image :
+  mapToUnitsPow K '' (S K) = myMap⁻¹' (normLessThanOne K ∩ {x | ∀ w, 0 < x.1 w}) := sorry
+
+theorem main_eq :
+  mixedSpaceToRealSpace K '' (normLessThanOne K ∩ {x | ∀ w, 0 < x.1 w}) =
+    mapToUnitsPow K '' (S K) := sorry
+
+
+example :
+    closure (normLessThanOne K ∩ {x | ∀ w, 0 < x.1 w}) ⊆
+      mixedSpaceToRealSpace K ⁻¹' (mapToUnitsPow K '' (closure (S K))) := by
+  rw [← Set.image_subset_iff]
+  refine (image_closure_subset_closure_image sorry).trans ?_
+  rw [main_eq]
+  
+
+
+example :
+    closure (normLessThanOne K) ∩ {x | ∀ w, 0 < x.1 w} ⊆
+      mixedSpaceToRealSpace K ⁻¹' (mapToUnitsPow K '' (closure (S K))) := by
+  rw [← Set.image_subset_iff]
+  refine  (Set.image_inter_subset _ _ _).trans ?_
+  have := image_closure_subset_closure_image (by sorry : Continuous (mixedSpaceToRealSpace K))
+    (s := normLessThanOne K)
+  refine (Set.inter_subset_inter_left _ this).trans ?_
 
 
 
