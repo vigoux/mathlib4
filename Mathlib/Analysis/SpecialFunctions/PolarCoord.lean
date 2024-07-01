@@ -134,38 +134,38 @@ theorem polarCoord_source_ae_eq_univ : polarCoord.source =ᵐ[volume] univ := by
 theorem integral_comp_polarCoord_symm {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
     (f : ℝ × ℝ → E) :
     (∫ p in polarCoord.target, p.1 • f (polarCoord.symm p)) = ∫ p, f p := by
-  set B : ℝ × ℝ → ℝ × ℝ →L[ℝ] ℝ × ℝ := fun p =>
-    LinearMap.toContinuousLinearMap (Matrix.toLin (Basis.finTwoProd ℝ) (Basis.finTwoProd ℝ)
-      !![cos p.2, -p.1 * sin p.2; sin p.2, p.1 * cos p.2])
-  have A : ∀ p ∈ polarCoord.symm.source, HasFDerivAt polarCoord.symm (B p) p := fun p _ =>
-    hasFDerivAt_polarCoord_symm p
   symm
   calc
     ∫ p, f p = ∫ p in polarCoord.source, f p := by
       rw [← integral_univ]
       apply setIntegral_congr_set_ae
       exact polarCoord_source_ae_eq_univ.symm
-    _ = ∫ p in polarCoord.target, abs (B p).det • f (polarCoord.symm p) := by
-      apply integral_target_eq_integral_abs_det_fderiv_smul volume A
+    _ = ∫ p in polarCoord.target, |p.1| • f (polarCoord.symm p) := by
+      rw [← PartialHomeomorph.symm_target, integral_target_eq_integral_abs_det_fderiv_smul volume
+        (fun p _ ↦ hasFDerivAt_polarCoord_symm p), PartialHomeomorph.symm_source]
+      simp_rw [FDerivAt_polarCoord_symm_det]
     _ = ∫ p in polarCoord.target, p.1 • f (polarCoord.symm p) := by
       apply setIntegral_congr polarCoord.open_target.measurableSet fun x hx => ?_
-      rw [FDerivAt_polarCoord_symm_det, abs_of_pos]
+      rw [abs_of_pos]
       exact hx.1
 #align integral_comp_polar_coord_symm integral_comp_polarCoord_symm
 
 theorem lintegral_comp_polarCoord_symm (f : ℝ × ℝ → ENNReal) :
-    ∫⁻ (p : ℝ × ℝ) in polarCoord.target, |p.1|.toNNReal • f (polarCoord.symm p) =
+    ∫⁻ (p : ℝ × ℝ) in polarCoord.target, (p.1).toNNReal • f (polarCoord.symm p) =
       ∫⁻ (p : ℝ × ℝ), f p := by
   symm
   calc
     _ = ∫⁻ p in polarCoord.symm '' polarCoord.target, f p := by
-      rw [← set_lintegral_univ, set_lintegral_congr polarCoord_source_ae_eq_univ.symm,
+      rw [← setLIntegral_univ, setLIntegral_congr polarCoord_source_ae_eq_univ.symm,
         polarCoord.symm_image_target_eq_source ]
     _ = ∫⁻ (p : ℝ × ℝ) in polarCoord.target, |p.1|.toNNReal • f (polarCoord.symm p) := by
       rw [lintegral_image_eq_lintegral_abs_det_fderiv_mul volume _
         (fun p _ ↦ (hasFDerivAt_polarCoord_symm p).hasFDerivWithinAt)]
-      · simp_rw [FDerivAt_polarCoord_symm_det]; rfl
+      simp_rw [FDerivAt_polarCoord_symm_det]; rfl
       exacts [polarCoord.symm.injOn, measurableSet_Ioi.prod measurableSet_Ioo]
+    _ = ∫⁻ (p : ℝ × ℝ) in polarCoord.target, (p.1).toNNReal • f (polarCoord.symm p) := by
+      refine setLIntegral_congr_fun polarCoord.open_target.measurableSet ?_
+      filter_upwards with _ hx using by rw [abs_of_pos (by convert hx.1)]
 
 end Real
 
