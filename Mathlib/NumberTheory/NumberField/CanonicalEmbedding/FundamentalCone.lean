@@ -557,7 +557,6 @@ theorem volume_inter_positiveAt {s : Set (E K)} (hs₁ : MeasurableSet s)
         · ext; simp
         · ext
           simp_rw [Set.preimage_setOf_eq, Set.mem_setOf_eq]
-          congr
           refine ⟨fun h z hz ↦ ?_, fun h z hz ↦ ?_⟩
           · specialize h z hz
             rwa [signFlipAt_apply_of_isReal_ne] at h
@@ -632,25 +631,73 @@ theorem mixedSpaceToRealSpaceToMixedSpace_apply (x : E K) :
   simp_rw [mixedSpaceToRealSpace_apply, realSpaceToMixedSpace_apply, Subtype.coe_eta,
     dif_pos (Subtype.prop _), dif_neg (not_isReal_iff_isComplex.mpr (Subtype.prop _))]
 
-theorem volume_of_eq_image_mixedSpaceToRealSpaceToMixedSpace (s : Set (E K)) (hs₀ : MeasurableSet s)
-    (hs₁ : (realSpaceToMixedSpace K ∘ mixedSpaceToRealSpace K)⁻¹' s = s) :
+variable (K) in
+theorem measure_preserving_split :
+  MeasurePreserving (fun x : InfinitePlace K → ℝ ↦
+    (fun w : {w // w.IsReal} ↦ x w.val, fun w : {w // w.IsComplex} ↦ x w.val)) where
+  measurable := (measurable_pi_lambda _ fun _ ↦ measurable_pi_apply _).prod_mk
+    (measurable_pi_lambda _ fun _ ↦ measurable_pi_apply _)
+  map_eq := sorry
+
+theorem volume_of_eq_preimage (s : Set (E K))
+    (hs₀ : MeasurableSet s) (hs₁ : (realSpaceToMixedSpace K ∘ mixedSpaceToRealSpace K)⁻¹' s = s) :
     volume s = (2 * NNReal.pi) ^ NrComplexPlaces K *
-      ∫⁻ x in realSpaceToMixedSpace K ⁻¹' s, (∏ w : {w // IsComplex w}, ‖x w.val‖₊) := by
-  let f : (InfinitePlace K → ℝ) →
-      ({w : InfinitePlace K // w.IsReal} → ℝ) × ({w : InfinitePlace K // w.IsComplex} → ℝ) :=
-    fun x ↦ ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩
-  have hf : MeasurePreserving f := sorry
+      ∫⁻ x in realSpaceToMixedSpace K ⁻¹' s ∩ {x | ∀ w, IsComplex w → 0 < x w},
+        (∏ w : {w // IsComplex w}, (x w.val).toNNReal) := by
   rw [← setLIntegral_one, ← lintegral_indicator _ hs₀, Measure.volume_eq_prod, lintegral_prod]
   nth_rewrite 1 [← hs₁]
   have := fun (x : {w : InfinitePlace K // w.IsReal} → ℝ)
     (y : {w : InfinitePlace K // w.IsComplex } → ℂ) ↦ Set.indicator_comp_right (s := s)
-    (f := realSpaceToMixedSpace K ∘ mixedSpaceToRealSpace K) (g := fun _ ↦ (1 : ENNReal)) (x := (x, y))
-  have t₁ :
-    (fun x ↦ (1 : ENNReal)) ∘ (realSpaceToMixedSpace K) ∘ (mixedSpaceToRealSpace K) = (fun x ↦ 1) := sorry
+    (f := realSpaceToMixedSpace K ∘ mixedSpaceToRealSpace K) (g := fun _ ↦ (1 : ENNReal))
+    (x := (x, y))
+  have t₁ : (fun x ↦ (1 : ENNReal)) ∘ (realSpaceToMixedSpace K) ∘ (mixedSpaceToRealSpace K) =
+      (fun x ↦ 1) := by rfl
   rw [t₁] at this
   simp_rw [this]
   clear this
   simp_rw [Function.comp_apply, mixedSpaceToRealSpaceToMixedSpace_apply]
+  simp_rw [volume_pi, lintegral_eq_lmarginal_univ (0 : {w // IsComplex w} → ℂ)]
+  have := fun x : {w : InfinitePlace K // w.IsReal} → ℝ ↦ multiple_step₀ (fun y : {w : InfinitePlace K // w.IsComplex} → ℝ  ↦ s.indicator (fun _ ↦ (1 : ENNReal))
+          (fun w ↦ x w, fun w ↦ y w)) ?_ Finset.univ 0
+  simp_rw [this]
+  clear this
+  simp_rw [ Pi.zero_apply, norm_zero, lmarginal_univ]
+  rw [lintegral_const_mul]
+  rw [lintegral_lintegral]
+  · rw [← measure_restrict_pi_pi, Measure.restrict_prod_eq_univ_prod]
+    rw [← lintegral_indicator, ← volume_pi, ← volume_pi, ← Measure.volume_eq_prod]
+    rw [← MeasurePreserving.lintegral_comp (measure_preserving_split K)]
+    rw [← lintegral_indicator]
+    congr
+    · ext x
+      by_cases hx : x ∈ (realSpaceToMixedSpace K) ⁻¹' s ∩ {x | ∀ w, w.IsComplex → 0 < x w}
+      · rw [Set.indicator_of_mem hx]
+        have : ⟨fun w : {w // IsReal w} ↦ x w.val, fun w : {w // IsComplex w} ↦ x w.val⟩
+          ∈ Set.univ ×ˢ Set.univ.pi fun i ↦ Set.Ioi 0 := sorry
+        rw [Set.indicator_of_mem this]
+        have : realSpaceToMixedSpace K x ∈ s := sorry
+        rw [← realSpaceToMixedSpace_apply, Set.indicator_of_mem this, mul_one]
+        simp only [ENNReal.coe_finset_prod]
+      · rw [Set.indicator_of_not_mem hx]
+        rw [Set.mem_inter_iff] at hx
+        rw [not_and'] at hx
+        rw [Set.indicator_apply_eq_zero]
+        intro h
+        have := hx sorry
+        dsimp only
+        have : realSpaceToMixedSpace K x ∉ s := sorry
+        rw [← realSpaceToMixedSpace_apply, Set.indicator_of_not_mem this, mul_zero]
+
+    sorry
+    sorry
+    sorry
+  sorry
+  sorry
+  sorry
+  sorry
+
+#exit
+
   have := fun x : {w : InfinitePlace K // w.IsReal} → ℝ ↦ multiple_step
         (fun y : {w : InfinitePlace K // w.IsComplex} → ℝ  ↦ s.indicator (fun _ ↦ (1 : ENNReal))
           (fun w ↦ x w, fun w ↦ y w))  ?_ ?_ Finset.univ 0
@@ -678,7 +725,7 @@ theorem volume_of_eq_image_mixedSpaceToRealSpaceToMixedSpace (s : Set (E K)) (hs
     dsimp only
     refine Set.indicator_of_not_mem ?_ _
     intro h
-    
+
     sorry
   · sorry
 
