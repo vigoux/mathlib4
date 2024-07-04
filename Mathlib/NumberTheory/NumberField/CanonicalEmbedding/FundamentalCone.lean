@@ -287,7 +287,7 @@ section normLessOne
 
 variable (K)
 
-abbrev normLessThanOne : Set (E K) := {x | x ∈ fundamentalCone K ∧ mixedEmbedding.norm x ≤ 1}
+def normLessThanOne : Set (E K) := {x | x ∈ fundamentalCone K ∧ mixedEmbedding.norm x ≤ 1}
 
 abbrev normEqOne : Set (E K) := {x | x ∈ fundamentalCone K ∧ mixedEmbedding.norm x = 1}
 
@@ -402,7 +402,8 @@ theorem isBounded_normLessThanOne :
 theorem frontier_normLessThanOne :
     frontier (normLessThanOne K) ⊆ (frontier (fundamentalCone K) ∩ {x | mixedEmbedding.norm x ≤ 1})
       ∪ normEqOne K := by
-  rw [show normLessThanOne K = fundamentalCone K ∩ {x | mixedEmbedding.norm x ≤ 1} by ext; simp]
+  rw [show normLessThanOne K = fundamentalCone K ∩ {x | mixedEmbedding.norm x ≤ 1} by
+    rw [normLessThanOne]; ext; simp]
   refine le_trans (frontier_inter_subset _ _) ?_
   intro x hx
   cases hx with
@@ -510,8 +511,8 @@ theorem volume_preserving_signFlipAt (w : {w : InfinitePlace K // w.IsReal}) :
 theorem signFlipAt_preimage_normLessThanOne (w : {w : InfinitePlace K // w.IsReal}) :
     signFlipAt w ⁻¹' (normLessThanOne K) = normLessThanOne K := by
   ext
-  simp_rw [Set.preimage_setOf_eq, Set.mem_setOf_eq, mem_fundamentalCone, norm_signFlipAt,
-    logMap_signFlipAt]
+  simp_rw [normLessThanOne, Set.preimage_setOf_eq, Set.mem_setOf_eq, mem_fundamentalCone,
+    norm_signFlipAt, logMap_signFlipAt]
 
 theorem volume_eq_zero_at (w : {w : InfinitePlace K // w.IsReal}) :
     volume {x : E K | x.1 w = 0} = 0 := by
@@ -603,6 +604,8 @@ theorem volume_interior_normLessThanOne_step1 :
   · intro w _
     rw [ContinuousLinearEquiv.preimage_interior, signFlipAt_preimage_normLessThanOne]
 
+#exit
+
 variable (K) in
 def realSpaceToMixedSpace : (InfinitePlace K → ℝ) →ₐ[ℝ] (E K) where
   toFun := fun x ↦ ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩
@@ -630,6 +633,200 @@ theorem mixedSpaceToRealSpaceToMixedSpace_apply (x : E K) :
     realSpaceToMixedSpace K (mixedSpaceToRealSpace K x) = ⟨fun w ↦ x.1 w, fun w ↦ ‖x.2 w‖⟩ := by
   simp_rw [mixedSpaceToRealSpace_apply, realSpaceToMixedSpace_apply, Subtype.coe_eta,
     dif_pos (Subtype.prop _), dif_neg (not_isReal_iff_isComplex.mpr (Subtype.prop _))]
+
+def equivFinRank : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) := by
+  refine Fintype.equivOfCardEq ?_
+  rw [Fintype.card_subtype_compl, Fintype.card_ofSubsingleton, Fintype.card_fin, rank]
+
+variable (K) in
+def logRepr (x : InfinitePlace K → ℝ) : {w : InfinitePlace K // w ≠ w₀} → ℝ :=
+  (((basisUnitLattice K).ofZlatticeBasis ℝ).reindex equivFinRank.symm).repr
+        (logMap (realSpaceToMixedSpace K x))
+
+theorem logRepr_apply (x : InfinitePlace K → ℝ) (i : {w : InfinitePlace K // w ≠ w₀}):
+    logRepr K x i =
+      (((basisUnitLattice K).ofZlatticeBasis ℝ (unitLattice K)).repr
+        (logMap (realSpaceToMixedSpace K x))) (equivFinRank i) := by
+  simp [logRepr]
+
+theorem logRepr_smul {x : InfinitePlace K → ℝ}
+    (hx : mixedEmbedding.norm (realSpaceToMixedSpace K x) ≠ 0) {c : ℝ} (hc : c ≠ 0) :
+    logRepr K (c • x) = logRepr K x := by
+  simp_rw [logRepr, ← logMap_smul hx hc, realSpaceToMixedSpace_apply, Prod.smul_mk, Pi.smul_def,
+    smul_eq_mul, Complex.ofReal_mul, Complex.real_smul]
+
+variable (K) in
+def mapToUnitsPow₀ (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) : InfinitePlace K → ℝ :=
+  fun w ↦ ∏ i, w (fundSystem K (equivFinRank i)) ^ (c i)
+
+theorem mapToUnitsPow₀_apply (c₀ : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
+    mapToUnitsPow₀ K c₀ =  fun w ↦ ∏ i, w (fundSystem K (equivFinRank i)) ^ (c₀ i) := rfl
+
+theorem continuous_mapToUnitsPow₀ :
+    Continuous (mapToUnitsPow₀ K) := by
+  refine continuous_pi fun w ↦ continuous_finset_prod _ fun i _ ↦ ?_
+  exact continuous_const.rpow (continuous_apply i) fun _ ↦ by left; simp
+
+theorem norm_mapToUnitsPow₀ (c₀ : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
+    mixedEmbedding.norm (realSpaceToMixedSpace K (mapToUnitsPow₀ K c₀)) = 1 := by
+  simp_rw [mapToUnitsPow₀_apply, ← Finset.prod_fn, map_prod, mixedEmbedding.norm_apply]
+  sorry
+
+theorem logRepr_mapToUnitPow₀ (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
+  logRepr K (mapToUnitsPow₀ K c) = c := sorry
+
+variable (K) in
+def mapToUnitsPow : PartialHomeomorph (InfinitePlace K → ℝ) (InfinitePlace K → ℝ) where
+  toFun := fun c ↦ (c w₀) ^ (finrank ℚ K : ℝ)⁻¹ • mapToUnitsPow₀ K (fun w ↦ c w)
+  invFun := fun x w ↦ if hw : w = w₀ then mixedEmbedding.norm (realSpaceToMixedSpace K x)
+    else logRepr K x ⟨w, hw⟩
+  source := Set.univ.pi fun w ↦ if w = w₀ then Set.Ioi 0 else Set.univ
+  target := Set.univ.pi fun _ ↦ Set.Ioi 0
+  map_source' := by
+    intro x hx
+    rw [Set.mem_univ_pi]
+    intro w
+    simp only [Pi.smul_apply, smul_eq_mul, Set.mem_Ioi]
+    refine mul_pos ?_ ?_
+    · sorry
+    · sorry
+  map_target' := by
+    intro x hx
+    rw [Set.mem_univ_pi]
+    intro w
+    rw [Set.mem_ite_univ_right, Set.mem_Ioi]
+    intro hw
+    dsimp only
+    split_ifs
+    sorry
+  left_inv' := by
+    intro c hc
+    ext w
+    refine dite_eq_iff'.mpr ⟨fun h ↦ ?_, fun h ↦ ?_⟩
+    · rw [_root_.map_smul, mixedEmbedding.norm_smul, h, norm_mapToUnitsPow₀, mul_one,
+        abs_eq_self.mpr]
+      sorry
+      sorry
+    · rw [logRepr_smul, logRepr_mapToUnitPow₀]
+      sorry
+      sorry
+  right_inv' := by
+    intro x hx
+    simp only [↓reduceDIte, ne_eq, Subtype.coe_eta, dite_eq_ite]
+    have : x = mixedEmbedding.norm (realSpaceToMixedSpace K x) ^ (finrank ℚ K : ℝ)⁻¹ •
+      ((mixedEmbedding.norm (realSpaceToMixedSpace K x) ^ finrank ℚ K) • x) := sorry
+    nth_rewrite 4 [this]
+    sorry
+  open_source := by
+    dsimp only
+    refine isOpen_set_pi Set.finite_univ fun _ _ ↦ ?_
+    split_ifs
+    exact isOpen_Ioi
+    exact isOpen_univ
+  open_target := by
+    dsimp only
+    refine isOpen_set_pi Set.finite_univ fun _ _ ↦ isOpen_Ioi
+  continuousOn_toFun := by
+    intro x hx
+    dsimp only
+    sorry
+  continuousOn_invFun := sorry
+
+theorem mapToUnitsPow_source :
+    (mapToUnitsPow K).source = Set.univ.pi fun w ↦ if w = w₀ then Set.Ioi 0 else Set.univ := rfl
+
+theorem mapToUnitsPow_target :
+    (mapToUnitsPow K).target = Set.univ.pi fun _ ↦ Set.Ioi 0 := rfl
+
+variable (K) in
+def paramBox : Set (InfinitePlace K → ℝ) :=
+  Set.univ.pi fun w ↦ if w = w₀ then Set.Ioc 0 1 else Set.Ico 0 1
+
+variable (K) in
+abbrev upperSet : Set (E K) :=
+  mixedSpaceToRealSpace K ⁻¹'
+    (closure (realSpaceToMixedSpace K ⁻¹' (normLessThanOne K ∩ {x | ∀ w, 0 < x.1 w})))
+
+variable (K) in
+abbrev lowerSet : Set (E K) :=
+  mixedSpaceToRealSpace K ⁻¹'
+    (interior (realSpaceToMixedSpace K ⁻¹' (normLessThanOne K ∩ {x | ∀ w, 0 < x.1 w})))
+
+variable (K) in
+theorem closure_normLessThanOne_le :
+    closure (normLessThanOne K) ∩ {x | ∀ w, 0 < x.1 w} ⊆ upperSet K := by
+  rw [upperSet]
+  have : Continuous (mixedSpaceToRealSpace K) := sorry
+  refine subset_trans ?_ (this.closure_preimage_subset _)
+
+  sorry
+
+variable (K) in
+theorem image_paramBox :
+    mapToUnitsPow K '' (paramBox K) =
+      realSpaceToMixedSpace K ⁻¹' (normLessThanOne K ∩ {x | ∀ w, 0 < x.1 w}) := sorry
+
+
+#exit
+
+
+example :
+    (realSpaceToMixedSpace K ∘ mixedSpaceToRealSpace K)⁻¹'
+      (normLessThanOne K ∩ {x | ∀ w, 0 < x.1 w}) = normLessThanOne K ∩ {x | ∀ w, 0 < x.1 w} := by
+  ext x
+  simp only [Set.mem_preimage, Function.comp_apply, mixedSpaceToRealSpaceToMixedSpace_apply]
+  have h_norm : ∀ w, normAtPlace w (fun w ↦ x.1 w, fun w ↦ ‖x.2 w‖) = normAtPlace w x := by
+    intro w
+    obtain hw | hw := isReal_or_isComplex w
+    · simp_rw [normAtPlace_apply_isReal hw]
+    · simp_rw [normAtPlace_apply_isComplex hw, Complex.norm_eq_abs, Complex.abs_ofReal,
+        Complex.abs_abs]
+  refine ⟨fun h ↦ ⟨?_, h.2⟩, fun h ↦ ⟨?_, h.2⟩⟩
+  · refine mem_normLessThanOne_of_normAtPlace_eq h.1 ?_
+    exact fun w ↦ (h_norm w).symm
+  · exact mem_normLessThanOne_of_normAtPlace_eq h.1 h_norm
+
+
+
+
+variable (K) in
+theorem closure_normLessThanOne_le :
+    closure (normLessThanOne K) ∩ {x | ∀ w, 0 < x.1 w} ⊆ upperSet K := by
+  rw [upperSet]
+  have : (mapToUnitsPow K).IsImage (paramBox K)
+      (realSpaceToMixedSpace K ⁻¹' (normLessThanOne K ∩ {x | ∀ w, 0 < x.1 w})) := by
+    refine PartialHomeomorph.IsImage.of_image_eq ?_
+    have : paramBox K ⊆ (mapToUnitsPow K).source := sorry
+    rw [Set.inter_eq_right.mpr this]
+    have : realSpaceToMixedSpace K ⁻¹' (normLessThanOne K ∩ {x | ∀ w, 0 < x.1 w}) ⊆
+        (mapToUnitsPow K).target := sorry
+    rw [Set.inter_eq_right.mpr this, image_paramBox]
+  have := PartialHomeomorph.IsImage.closure this
+  have t₀ := PartialHomeomorph.IsImage.image_eq this
+  have t₁ : (mapToUnitsPow K).source ∩ closure (paramBox K) ⊆ closure (paramBox K) :=
+    Set.inter_subset_right
+  have t₂ := Set.image_subset (mapToUnitsPow K) t₁
+  have t₃ := Set.preimage_mono (f := mixedSpaceToRealSpace K) t₂
+  refine subset_trans ?_ t₃
+  rw [t₀]
+  rw [Set.preimage_inter]
+  have : mixedSpaceToRealSpace K ⁻¹' (mapToUnitsPow K).target =
+    {x | ∀ w, 0 < x.1 w ∧ ∀ w, x.2 w ≠ 0} := sorry
+  rw [this]
+  have : Continuous (mixedSpaceToRealSpace K) := sorry
+  have := Continuous.closure_preimage_subset this
+    (realSpaceToMixedSpace K ⁻¹' (normLessThanOne K ∩ {x | ∀ (w : { w // w.IsReal }), 0 < x.1 w}))
+
+  sorry
+
+variable (K) in
+theorem le_interior_normLessThanOne :
+    lowerSet K ⊆ interior (normLessThanOne K) ∩ {x | ∀ w, 0 < x.1 w} := by
+
+  sorry
+
+ ---- ABOVE HERE ----
+
 
 variable (K) in
 theorem measure_preserving_split :
@@ -687,7 +884,6 @@ theorem volume_of_eq_preimage (s : Set (E K))
         dsimp only
         have : realSpaceToMixedSpace K x ∉ s := sorry
         rw [← realSpaceToMixedSpace_apply, Set.indicator_of_not_mem this, mul_zero]
-
     sorry
     sorry
     sorry
@@ -696,78 +892,47 @@ theorem volume_of_eq_preimage (s : Set (E K))
   sorry
   sorry
 
-#exit
+example :
+    (realSpaceToMixedSpace K ∘ mixedSpaceToRealSpace K)⁻¹' (normLessThanOne K) =
+      (normLessThanOne K) := by
+  ext x
+  simp only [Set.mem_preimage, Function.comp_apply, mixedSpaceToRealSpaceToMixedSpace_apply]
+  have h_norm : ∀ w, normAtPlace w (fun w ↦ x.1 w, fun w ↦ ‖x.2 w‖) = normAtPlace w x := by
+    intro w
+    obtain hw | hw := isReal_or_isComplex w
+    · simp_rw [normAtPlace_apply_isReal hw]
+    · simp_rw [normAtPlace_apply_isComplex hw, Complex.norm_eq_abs, Complex.abs_ofReal,
+        Complex.abs_abs]
+  refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
+  · refine mem_normLessThanOne_of_normAtPlace_eq h ?_
+    exact fun w ↦ (h_norm w).symm
+  · exact mem_normLessThanOne_of_normAtPlace_eq h h_norm
 
-  have := fun x : {w : InfinitePlace K // w.IsReal} → ℝ ↦ multiple_step
-        (fun y : {w : InfinitePlace K // w.IsComplex} → ℝ  ↦ s.indicator (fun _ ↦ (1 : ENNReal))
-          (fun w ↦ x w, fun w ↦ y w))  ?_ ?_ Finset.univ 0
-  · simp_rw [volume_pi, lintegral_eq_lmarginal_univ (0 : {w // IsComplex w} → ℂ), this]
-    clear this
-    simp_rw [ Pi.zero_apply, norm_zero, lmarginal_univ]
-    rw [lintegral_const_mul]
-    · rw [lintegral_lintegral]
-      · rw [← lintegral_indicator]
-        · rw [← volume_pi, ← volume_pi, ← Measure.volume_eq_prod, ← MeasurePreserving.lintegral_comp hf]
-          · simp [f]
-            have : ∀ a, ((realSpaceToMixedSpace K) ⁻¹' s).indicator
-              (fun x ↦ ∏ w : {w : InfinitePlace K // w.IsComplex}, (‖x w‖₊ : ENNReal)) a =
-                (∏ w : {w : InfinitePlace K // w.IsComplex}, ‖a w‖₊) *
-                ((realSpaceToMixedSpace K) ⁻¹' s).indicator
-                  ((fun _ ↦ (1 : ENNReal)) ∘ (realSpaceToMixedSpace K)) a := sorry
-            simp_rw [this, Set.indicator_comp_right, ENNReal.coe_finset_prod]
-            rfl
-          · sorry
-        · sorry
-      · sorry
-    sorry
-  · sorry
-  · intro x xᵢ i hxᵢ
-    dsimp only
-    refine Set.indicator_of_not_mem ?_ _
-    intro h
+theorem toto (s : Set (E K)) :
+    (realSpaceToMixedSpace K ∘ mixedSpaceToRealSpace K)⁻¹' s = s ↔
+      ∀ x, (x ∈ s ↔ ⟨fun w ↦ x.1 w, fun w ↦ ‖x.2 w‖⟩ ∈ s) := by
+  refine ⟨?_, ?_⟩
+  · intro hs x
+    refine ⟨fun hx ↦ ?_, fun hx ↦ ?_⟩
+    · rwa [← hs, Set.mem_preimage, Function.comp_apply,
+        mixedSpaceToRealSpaceToMixedSpace_apply] at hx
+    · rwa [← mixedSpaceToRealSpaceToMixedSpace_apply, ← Set.mem_preimage, ← Set.mem_preimage,
+        ← Set.preimage_comp, hs] at hx
+  · intro hx
+    ext
+    rw [Set.mem_preimage, Function.comp_apply, mixedSpaceToRealSpaceToMixedSpace_apply, ← hx]
 
-    sorry
-  · sorry
+example (t : Set (InfinitePlace K → ℝ)) :
+    (realSpaceToMixedSpace K ∘ mixedSpaceToRealSpace K)⁻¹' ((mixedSpaceToRealSpace K)⁻¹' t) =
+      (mixedSpaceToRealSpace K)⁻¹' t := by
+  rw [toto]
+  intro x
+  rw [Set.mem_preimage, Set.mem_preimage]
+  simp only [mixedSpaceToRealSpace, Complex.norm_eq_abs, MonoidHom.coe_mk, OneHom.coe_mk,
+    Complex.abs_ofReal, Complex.abs_abs]
 
 
 
-
-
-#exit
-
-
-    (t : Set (InfinitePlace K → ℝ)) (ht₀ : MeasurableSet t)
-    (h_ind : ∀ x, s.indicator (fun _ ↦ (1 : ENNReal)) x =
-      t.indicator (fun _ ↦ 1) (mixedSpaceToRealSpace K x))
-    (ht₁ : t ⊆ {x : InfinitePlace K → ℝ | ∀ w, w.IsReal → 0 < x w}) :
-    volume s = (2 * NNReal.pi) ^ NrComplexPlaces K *
-      ∫⁻ z in t, (∏ w : {w // IsComplex w}, ‖z w.val‖₊) := by
-  let f : (InfinitePlace K → ℝ) →
-      ({w : InfinitePlace K // w.IsReal} → ℝ) × ({w : InfinitePlace K // w.IsComplex} → ℝ) :=
-    fun x ↦ ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩
-  have hf : MeasurePreserving f := sorry
-  calc
-    _ = ∫⁻ x, ∫⁻ y, s.indicator (fun x ↦ 1) (x, y) := by
-      rw [← setLIntegral_one, ← lintegral_indicator _ hs₀, Measure.volume_eq_prod, lintegral_prod]
-      sorry
-    _ = ∫⁻ x, (∫⋯∫⁻_Finset.univ, fun y ↦ t.indicator (fun x ↦ 1) (mixedSpaceToRealSpace K (x, y))
-          ∂fun x ↦ volume) 0 ∂Measure.pi fun x ↦ volume := by
-      simp_rw [h_ind, volume_pi, lintegral_eq_lmarginal_univ (0 : {w // IsComplex w} → ℂ)]
-    _ = (∫⁻ x : {w // w.IsReal} → ℝ, (2 * NNReal.pi) ^ Finset.univ.card *
-          ∫⁻ (y : { w // w.IsComplex } → ℝ), (∏ i, ‖y i‖₊) *
-            t.indicator (fun x ↦ 1)
-              fun w ↦ if hw : w.IsReal then x ⟨w, hw⟩ else y ⟨w, not_isReal_iff_isComplex.mp hw⟩
-                ∂Measure.pi fun x ↦ volume ∂Measure.pi fun x ↦ volume) := by
-      have := fun x : {w : InfinitePlace K // w.IsReal} → ℝ ↦ multiple_step
-        (fun y : {w : InfinitePlace K // w.IsComplex} → ℝ  ↦ t.indicator (fun _ ↦ 1)
-        (fun (w : InfinitePlace K) ↦ if h : w.IsReal then x ⟨w, sorry⟩ else y ⟨w, sorry⟩)) ?_ ?_ Finset.univ 0
-      simp_rw [mixedSpaceToRealSpace_apply, this]
-      simp_rw [ENNReal.coe_finset_prod, Pi.zero_apply, norm_zero, lmarginal_univ]
-      rfl
-      sorry
-      sorry
-    _ = (2 * NNReal.pi) ^ NrComplexPlaces K * ∫⁻ z in t, ∏ w : {w // w.IsComplex}, ‖z w.val‖₊ := by
-      sorry
 
 
 
@@ -803,7 +968,7 @@ example : volume (normLessThanOne K) =
     refine measure_mono ?_
     exact interior_subset
 
-
+#exit
 
 
 
@@ -1208,25 +1373,6 @@ theorem realSpaceToMixedSpace_apply_mem_normLessThanOne_iff {x : E K} :
       simp [realSpaceToMixedSpace]
   exact ⟨fun h ↦ mem_normLessThanOne_of_normAtPlace_eq h fun w ↦ (this w).symm,
     fun h ↦ mem_normLessThanOne_of_normAtPlace_eq h fun w ↦ this w⟩
-
-example {x : E K} (hx : x ∈ closure (normLessThanOne K)) :
-    ⟨x.1, fun w ↦ ‖x.2 w‖⟩ ∈ closure (normLessThanOne K) := by
-  rw [mem_closure_iff_seq_limit] at hx ⊢
-  obtain ⟨x, hx₁, hx₂⟩ := hx
-  refine ⟨?_, ?_, ?_⟩
-  · intro n
-    exact ⟨(x n).1, fun w ↦ ‖(x n).2 w‖⟩
-  · sorry
-  · refine (Prod.tendsto_iff _ _).mpr ⟨?_, ?_⟩
-    · dsimp
-      exact Tendsto.fst_nhds hx₂
-    · sorry
-
-example {x : E K} (hx : x ∈ interior (normLessThanOne K)) :
-    ⟨x.1, fun w ↦ ‖x.2 w‖⟩ ∈ interior (normLessThanOne K) := by
-  rw [mem_interior] at hx ⊢
-  obtain ⟨t, ht₁, ht₂, ht₃⟩ := hx
-  sorry
 
 example : volume (normLessThanOne K ∩ {x | ∀ w, 0 < x.1 w}) =
     (2 * NNReal.pi) ^ NrComplexPlaces K *

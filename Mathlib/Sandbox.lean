@@ -1,7 +1,61 @@
 import Mathlib.Analysis.SpecialFunctions.PolarCoord
 import Mathlib.MeasureTheory.Constructions.Pi
+import Mathlib.MeasureTheory.Measure.Haar.Unique
+
+section Topo
+
+open Set
+
+theorem closure_lt_eq_le {α β : Type*} [TopologicalSpace α] [PartialOrder α] [OrderClosedTopology α]
+    [TopologicalSpace β] {f : β → α}  {g : β → α} (hf : Continuous f) (hg : Continuous g)
+    (h : ∀ ⦃x⦄, f x = g x → ∃ᶠ y in nhds x, f y < g y) :
+    closure {b | f b < g b} = {b | f b ≤ g b} := by
+  refine le_antisymm (closure_lt_subset_le hf hg) fun x hx ↦ ?_
+  obtain (hx₁| hx₂) := le_iff_eq_or_lt.mp hx
+  · exact mem_closure_iff_frequently.mpr (h hx₁)
+  · exact subset_closure hx₂
+
+theorem frontier_le_eq_eq {α β : Type*} [TopologicalSpace α] [LinearOrder α] [OrderClosedTopology α]
+    {f : β → α} {g : β → α} [TopologicalSpace β] (hf : Continuous f)  (hg : Continuous g)
+    (h : ∀ ⦃x⦄, g x = f x → ∃ᶠ y in nhds x, g y < f y) :
+    frontier {b | f b ≤ g b} = {b | f b = g b} := by
+  rw [frontier_eq_closure_inter_closure, closure_le_eq hf hg]
+  ext x
+  rw [show {x | f x ≤ g x}ᶜ = {x | g x < f x} by ext; simp, closure_lt_eq_le hg hf h]
+  simp only [Set.mem_inter_iff, Set.mem_setOf_eq, le_antisymm_iff]
+
+theorem frontier_lt_eq_eq {α β : Type*} [TopologicalSpace α] [LinearOrder α] [OrderClosedTopology α]
+    {f : β → α} {g : β → α} [TopologicalSpace β] (hf : Continuous f)  (hg : Continuous g)
+    (h : ∀ ⦃x⦄, f x = g x → ∃ᶠ y in nhds x, f y < g y) :
+    frontier {b | f b < g b} = {b | f b = g b} := by
+  simpa only [eq_comm, ← not_lt, ← Set.compl_setOf, frontier_compl] using frontier_le_eq_eq hg hf h
+
+end Topo
+
+theorem Set.indicator_one_eq_indicator_one_iff {ι : Type*} (M₀ : Type*) [MulZeroOneClass M₀]
+    {s : Set ι} {t : Set ι} [Nontrivial M₀] :
+    s.indicator (1 : ι → M₀) = t.indicator 1 ↔ s = t :=
+  ⟨fun h ↦ indicator_one_inj M₀ h, fun h ↦ by rw [h]⟩
 
 open MeasureTheory MeasureTheory.Measure
+
+open Set in
+theorem lintegral_comp_abs {f : ℝ → ENNReal} (hf : Measurable f) :
+    ∫⁻ x, f |x| = 2 * ∫⁻ x in Ioi 0, f x := by
+  calc
+    _ = (∫⁻ x in Iic 0, f |x|) + ∫⁻ x in Ioi 0, f |x| := by
+      rw [← lintegral_union measurableSet_Ioi (Iic_disjoint_Ioi le_rfl), Iic_union_Ioi,
+        setLIntegral_univ]
+    _ = (∫⁻ x in Iio 0, f (-x)) + ∫⁻ x in Ioi 0, f x := by
+      rw [restrict_Iio_eq_restrict_Iic]
+      congr 1
+      · refine setLIntegral_congr_fun measurableSet_Iic ?_
+        exact Filter.eventually_of_forall fun x hx ↦ by rw [abs_of_nonpos (by convert hx)]
+      · refine setLIntegral_congr_fun measurableSet_Ioi ?_
+        exact Filter.eventually_of_forall fun x hx ↦ by rw [abs_of_pos (by convert hx)]
+    _ = 2 * ∫⁻ x in Ioi 0, f x := by
+      rw [two_mul, show Iio (0 : ℝ) = (fun x ↦ -x) ⁻¹' Ioi 0 by simp,
+        ← (setLIntegral_map measurableSet_Ioi hf measurable_neg), Measure.map_neg_eq_self]
 
 theorem MeasureTheory.measure_restrict_pi_pi {ι : Type*} {α : ι → Type*} [Fintype ι]
     [(i : ι) → MeasurableSpace (α i)] (μ : (i : ι) → MeasureTheory.Measure (α i))
@@ -164,7 +218,7 @@ end marginal
 
 open NNReal ENNReal Real
 
-theorem one_step₀ (f : ℝ → ENNReal) (hf : Measurable f) :
+theorem Complex.lintegral_norm {f : ℝ → ENNReal} (hf : Measurable f) :
     ∫⁻ z : ℂ, f ‖z‖ = 2 * NNReal.pi * ∫⁻ x in Set.Ioi 0, x.toNNReal * (f x) := by
   calc ∫⁻ (z : ℂ), f ‖z‖
     = ∫⁻ p in polarCoord.target, p.1.toNNReal * f |p.1| := by
@@ -172,7 +226,7 @@ theorem one_step₀ (f : ℝ → ENNReal) (hf : Measurable f) :
           ← lintegral_comp_polarCoord_symm]
         · simp_rw [polarCoord_symm_apply, Complex.measurableEquivRealProd_symm_apply,
             Complex.norm_eq_abs, Complex.abs_eq_sqrt_sq_add_sq, mul_pow, ← mul_add,
-            cos_sq_add_sin_sq, mul_one, sqrt_sq_eq_abs, ENNReal.smul_def, smul_eq_mul]
+            Real.cos_sq_add_sin_sq, mul_one, sqrt_sq_eq_abs, ENNReal.smul_def, smul_eq_mul]
         · exact hf.comp measurable_norm
     _ = ∫⁻ _x in Set.Ioo (-π) π, ∫⁻ y in Set.Ioi (0 : ℝ), y.toNNReal * f |y| := by
         rw [lintegral_lintegral_symm, polarCoord_target, Measure.prod_restrict, volume_eq_prod]
@@ -180,11 +234,13 @@ theorem one_step₀ (f : ℝ → ENNReal) (hf : Measurable f) :
           measurable_snd.ennreal_ofReal.mul <| hf.comp measurable_snd.norm
     _ = 2 * NNReal.pi * ∫⁻ x in Set.Ioi 0, x.toNNReal * (f x) := by
         rw [lintegral_const, restrict_apply MeasurableSet.univ, Set.univ_inter, volume_Ioo,
-          sub_neg_eq_add, ← two_mul, mul_comm, ofReal_mul zero_le_two, ofReal_ofNat,
-          ← coe_real_pi, ofReal_coe_nnreal]
+          sub_neg_eq_add, ← two_mul, mul_comm, ENNReal.ofReal_mul zero_le_two,
+          ENNReal.ofReal_ofNat, ← coe_real_pi, ofReal_coe_nnreal]
         congr 1
         refine setLIntegral_congr_fun measurableSet_Ioi ?_
         filter_upwards with _ hx using by rw [abs_of_pos (by convert hx)]
+
+#exit
 
 theorem multiple_step₀ {ι : Type*} [Fintype ι] [DecidableEq ι] (f : (ι → ℝ) → ENNReal)
     (hf : Measurable f) (s : Finset ι) (a : ι → ℂ) :
@@ -352,35 +408,7 @@ theorem multiple_step {ι : Type*} [Fintype ι] [DecidableEq ι] (f : (ι → �
         exact h₄ _
         exact hi
 
-section Topo
 
-open Set
-
-theorem closure_lt_eq_le {α β : Type*} [TopologicalSpace α] [PartialOrder α] [OrderClosedTopology α]
-    [TopologicalSpace β] {f : β → α}  {g : β → α} (hf : Continuous f) (hg : Continuous g)
-    (h : ∀ ⦃x⦄, f x = g x → ∃ᶠ y in nhds x, f y < g y) :
-    closure {b | f b < g b} = {b | f b ≤ g b} := by
-  refine le_antisymm (closure_lt_subset_le hf hg) fun x hx ↦ ?_
-  obtain (hx₁| hx₂) := le_iff_eq_or_lt.mp hx
-  · exact mem_closure_iff_frequently.mpr (h hx₁)
-  · exact subset_closure hx₂
-
-theorem frontier_le_eq_eq {α β : Type*} [TopologicalSpace α] [LinearOrder α] [OrderClosedTopology α]
-    {f : β → α} {g : β → α} [TopologicalSpace β] (hf : Continuous f)  (hg : Continuous g)
-    (h : ∀ ⦃x⦄, g x = f x → ∃ᶠ y in nhds x, g y < f y) :
-    frontier {b | f b ≤ g b} = {b | f b = g b} := by
-  rw [frontier_eq_closure_inter_closure, closure_le_eq hf hg]
-  ext x
-  rw [show {x | f x ≤ g x}ᶜ = {x | g x < f x} by ext; simp, closure_lt_eq_le hg hf h]
-  simp only [Set.mem_inter_iff, Set.mem_setOf_eq, le_antisymm_iff]
-
-theorem frontier_lt_eq_eq {α β : Type*} [TopologicalSpace α] [LinearOrder α] [OrderClosedTopology α]
-    {f : β → α} {g : β → α} [TopologicalSpace β] (hf : Continuous f)  (hg : Continuous g)
-    (h : ∀ ⦃x⦄, f x = g x → ∃ᶠ y in nhds x, f y < g y) :
-    frontier {b | f b < g b} = {b | f b = g b} := by
-  simpa only [eq_comm, ← not_lt, ← Set.compl_setOf, frontier_compl] using frontier_le_eq_eq hg hf h
-
-end Topo
 
 #exit
 
