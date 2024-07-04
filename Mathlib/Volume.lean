@@ -126,8 +126,8 @@ private theorem volume_eq_of_isNormStableAtComplexPlaces_aux
     (W : Finset {w : InfinitePlace K // w.IsComplex}) (hf : Measurable f)
     (a : {w : InfinitePlace K // w.IsComplex} → ℂ) (x : {w : InfinitePlace K // w.IsReal} → ℝ) :
     (∫⋯∫⁻_W, fun y ↦ f ⟨x, fun w ↦ ‖y w‖⟩ ∂fun _ ↦ (volume : Measure ℂ)) a =
-      (2 * NNReal.pi) ^ W.card * (∫⋯∫⁻_W, (fun y ↦ (∏ i ∈ W, ‖y i‖₊) * f ⟨x, y⟩)
-        ∂fun _ ↦ (volume.restrict (Set.Ioi (0 : ℝ)))) (fun i ↦ ‖a i‖) := by
+      (2 * NNReal.pi) ^ W.card * (∫⋯∫⁻_W, (fun y ↦ (∏ i ∈ W, (y i).toNNReal) * f ⟨x, y⟩)
+        ∂fun _ ↦ (volume.restrict (Set.Ici (0 : ℝ)))) (fun i ↦ ‖a i‖) := by
   induction W using Finset.induction generalizing a with
   | empty => simp
   | @insert i W hi h_ind =>
@@ -137,45 +137,63 @@ private theorem volume_eq_of_isNormStableAtComplexPlaces_aux
         fun _ _ _ ↦ by rw [Function.update_apply, Function.update_apply, apply_ite norm]
       simp_rw [h_ind, this]
       rw [lintegral_const_mul' _ _ (by convert coe_ne_top)]
-      have : ∀ x, Measurable (fun yᵢ ↦ (∫⋯∫⁻_W, fun y ↦ (∏ i ∈ W, ‖y i‖₊) * f (x, y)
-          ∂fun x ↦ volume.restrict (Set.Ioi 0))
+      have : ∀ x, Measurable (fun yᵢ ↦ (∫⋯∫⁻_W, fun y ↦ (∏ i ∈ W, (y i).toNNReal) * f (x, y)
+          ∂fun x ↦ volume.restrict (Set.Ici 0))
             (fun j ↦ Function.update (fun j ↦ ‖a j‖) i yᵢ j)) :=
         fun _ ↦ (Measurable.lmarginal _ (by fun_prop)).comp (measurable_update _)
       simp_rw [Complex.lintegral_norm (this _)]
-      rw [lmarginal_insert _ (by fun_prop) hi, ← mul_assoc, ← pow_succ, card_insert_of_not_mem hi]
-      congr 1
-      refine setLIntegral_congr_fun measurableSet_Ioi (ae_of_all volume fun x hx ↦ ?_)
-      rw [show x.toNNReal = ‖x‖₊ from Real.toNNReal_eq_nnnorm_of_nonneg (le_of_lt hx),
-        ← lmarginal_const_smul' _ _ coe_ne_top]
-      rw [lmarginal_update_of_not_mem (Measurable.const_smul (by fun_prop) _) hi,
-        lmarginal_update_of_not_mem (by fun_prop) hi]
+      rw [lmarginal_insert _ (by fun_prop) hi, ← mul_assoc, ← pow_succ, card_insert_of_not_mem hi,
+        restrict_Ioi_eq_restrict_Ici]
+      congr!
+      rw [← lmarginal_const_smul' _ _ coe_ne_top, lmarginal_update_of_not_mem
+       (Measurable.const_smul (by fun_prop) _) hi, lmarginal_update_of_not_mem (by fun_prop) hi]
       simp_rw [Finset.prod_insert hi, Function.comp, Pi.smul_apply, smul_eq_mul,
         Function.update_same, ENNReal.coe_mul, mul_assoc]
 
-#exit
+theorem volume_eq_of_isNormStableAtComplexPlaces (s : Set (E K)) (hs₀ : MeasurableSet s)
+    (hs₁ : isNormStableAtComplexPlaces s) :
+    volume s = (2 * NNReal.pi) ^ NrComplexPlaces K *
+      ∫⁻ x in (fun x : (E K) ↦ (x.1, fun w ↦ (‖x.2 w‖ : ℝ))) '' s, ∏ w, (x.2 w).toNNReal := by
+  set s₀ := (fun x : (E K) ↦ (x.1, fun w ↦ (‖x.2 w‖ : ℝ))) '' s with def_s₀
+  have h₄ := volume_eq_of_isNormStableAtComplexPlaces_aux (s₀.indicator (fun _ ↦ (1 : ℝ≥0∞)))
+    Finset.univ ?_ 0
+  simp_rw [lmarginal_univ, ← measure_restrict_pi_pi , ← volume_pi] at h₄
 
---          (∫⋯∫⁻_W, fun y ↦ f (x, y) ∂fun _ ↦ (volume.restrict (Set.Ioi 0))) fun i ↦ ‖a i‖ := by
-  induction W using Finset.induction generalizing a with
-  | empty => simp
-  | @insert i W hi h_ind =>
-      rw [lmarginal_insert _ (by fun_prop) hi]
-      have : ∀ (xᵢ : ℝ) i j,
-          ‖Function.update a j xᵢ i‖ = Function.update (fun j ↦ ‖a j‖) j ‖xᵢ‖ i :=
-        fun _ _ _ ↦ by rw [Function.update_apply, Function.update_apply, apply_ite norm]
-      simp_rw [h_ind, this, Real.norm_eq_abs]
-      rw [lintegral_const_mul' _ _ (ENNReal.pow_ne_top ENNReal.two_ne_top)]
-      have : ∀ y, Measurable (fun xᵢ ↦ (∫⋯∫⁻_W, fun x ↦ f (x, y)
-          ∂fun x ↦ volume.restrict (Set.Ioi 0))
-            (fun j ↦ Function.update (fun j ↦ |a j|) i xᵢ j)) :=
-        fun _ ↦ (Measurable.lmarginal _ (by fun_prop)).comp (measurable_update _)
-      simp_rw [lintegral_comp_abs (this _)]
-      rw [lmarginal_insert _ (by fun_prop) hi, ← mul_assoc, ← pow_succ, card_insert_of_not_mem hi]
+  rw [← setLIntegral_one, ← lintegral_indicator _ hs₀, volume_eq_prod, lintegral_prod]
+
+  have h₃ : ∀ x y, s.indicator (fun _ ↦ (1 : ℝ≥0∞)) (x, y) =
+      s₀.indicator (fun _ ↦ 1) ⟨x, fun w ↦ ‖y w‖⟩ := by
+    intro x y
+    by_cases h : (x, y) ∈ s
+    · rw [Set.indicator_of_mem h, Set.indicator_of_mem]
+      refine ⟨(x, y), h, rfl⟩
+    · rw [Set.indicator_of_not_mem h, Set.indicator_of_not_mem]
+      intro h'
+      sorry
+  simp_rw (config := {singlePass := true}) [h₃, h₄]
+
+  rw [lintegral_const_mul' _ _, NrComplexPlaces, Fintype.card,
+    lintegral_lintegral, restrict_prod_eq_univ_prod, ← lintegral_indicator]
+  rw [Set.indicator_mul, Set.indicator_indicator]
+
+  have : s₀ ⊆ (Set.univ ×ˢ Set.univ.pi fun i ↦ Set.Ici 0) := sorry
+
+  rw [← lintegral_indicator]
+
+  congr! with _ _ x
+  by_cases hx : x ∈ s₀
+  · rw [Set.indicator_of_mem hx, Set.indicator_of_mem, Set.indicator_of_mem, mul_one,
+      ENNReal.coe_finset_prod]
+    exact Set.mem_inter (this hx) hx
+    exact this hx
+  · have : x ∉ (Set.univ ×ˢ Set.univ.pi fun i ↦ Set.Ici 0) ∩ s₀ := fun h ↦ hx h.2
+    rw [Set.indicator_of_not_mem hx, Set.indicator_of_not_mem this, mul_zero]
 
 theorem volume_eq_of_isNormStable (s : Set (E K))
     (hs₀ : MeasurableSet s) (hs₁ : isNormStable s) :
     volume s = 2 ^ NrRealPlaces K * (2 * NNReal.pi) ^ NrComplexPlaces K *
       ∫⁻ x in (normVector K '' s), (∏ w : {w // IsComplex w}, (x w.val).toNNReal) := by
-
+  rw [volume_eq_of_isNormStableAtRealPlaces, volume_eq_of_isNormStableAtComplexPlaces]
   sorry
 
 
