@@ -88,7 +88,6 @@ lemma dualLFunction_def_signed (χ : DirichletCharacter ℂ N) (s : ℂ) :
       if χ.Even then ∑ j : ZMod N, χ j * cosZeta (toAddCircle j) s
         else ∑ j : ZMod N, χ j * I * sinZeta (toAddCircle j) s := by
   simp only [dualLFunction, ← mul_ite, expZeta, mul_add, sum_add_distrib]
-  congr 1
   rcases χ.even_or_odd with h | h
   · simp only [h, ↓reduceIte, add_right_eq_self, ← _root_.neg_eq_self_iff, ← sum_neg_distrib]
     refine Fintype.sum_equiv (.neg _) _ _ fun i ↦ ?_

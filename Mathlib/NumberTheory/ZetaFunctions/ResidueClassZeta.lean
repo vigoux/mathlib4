@@ -258,7 +258,6 @@ lemma completedCongruenceLFunctionOdd_comp_neg {N : ℕ+} (Φ : ZMod N → ℂ) 
     completedCongruenceLFunctionOdd (fun j ↦ Φ (-j)) s =
     -completedCongruenceLFunctionOdd Φ s := by
   unfold completedCongruenceLFunctionOdd
-  congr 1
   rw [← (Equiv.neg (ZMod N)).sum_comp _ _ (by simp), ← mul_neg, ← sum_neg_distrib]
   congr 2 with j
   simp [completedHurwitzZetaOdd_neg]

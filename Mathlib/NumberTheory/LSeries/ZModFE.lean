@@ -34,7 +34,6 @@ lemma dualLFunction_def_signed {Φ : ZMod N → ℂ} (hΦ : Φ.Even ∨ Φ.Odd) 
       if Φ.Even then ∑ j : ZMod N, Φ j * cosZeta (toAddCircle j) s
         else ∑ j : ZMod N, Φ j / I * sinZeta (toAddCircle j) s := by
   simp only [dualLFunction, ← mul_ite, expZeta, mul_add, sum_add_distrib]
-  congr 1
   by_cases h : Φ.Even
   · simp only [map_neg, cosZeta_neg, sinZeta_neg, h, ↓reduceIte, add_right_eq_self, ←
     _root_.neg_eq_self_iff, ← sum_neg_distrib]

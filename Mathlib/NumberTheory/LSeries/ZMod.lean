@@ -254,6 +254,22 @@ lemma LFunction_def_signed (hΦ : Φ.Even ∨ Φ.Odd) (s : ℂ) :
     refine Fintype.sum_equiv (.neg _) _ _ fun i ↦ ?_
     simp only [Equiv.neg_apply, map_neg, hurwitzZetaEven_neg, (show Φ.Odd by tauto) i, neg_mul]
 
+/-- The L-function of an even function vanishes at negative even integers. -/
+lemma LFunction_neg_two_mul_nat_add_one (hΦ : Φ.Even) (n : ℕ) :
+    LFunction Φ (-2 * (n + 1)) = 0 := by
+  simp only [LFunction_def_signed (Or.inl hΦ), hΦ, ↓reduceIte,
+    hurwitzZetaEven_neg_two_mul_nat_add_one, mul_zero, sum_const_zero]
+
+/-- The L-function of an odd function vanishes at negative odd integers. -/
+lemma LFunction_neg_two_mul_nat_sub_one (hΦ : Φ.Odd) (n : ℕ) :
+    LFunction Φ (-2 * n - 1) = 0 := by
+  by_cases hΦ' : Φ.Even
+  · -- silly case: `Φ` is both even and odd, so it's zero
+    have : Φ = 0 := funext fun j ↦ by rw [Pi.zero_apply, ← eq_neg_self_iff, ← hΦ j, hΦ' j]
+    simp [LFunction, this]
+  · simp only [LFunction_def_signed (Or.inr hΦ), hΦ', ↓reduceIte,
+      hurwitzZetaOdd_neg_two_mul_nat_sub_one, mul_zero, sum_const_zero]
+
 variable (Φ) in
 /-- The completed L-function of a function mod `N`.
 
@@ -317,7 +333,8 @@ lemma differentiableAt_completedLFunction (hΦ : Φ.Even ∨ Φ.Odd) (s : ℂ) (
     DifferentiableAt ℂ (completedLFunction Φ) s := by
   simp only [funext fun s ↦ completedLFunction_eq hΦ s, mul_div_assoc]
   refine ((differentiable_completedLFunction₀ _ _).sub ?_).sub ?_
-  · apply (differentiable_Npow s).mul
+  · -- here `apply (differentiable_Npow s).mul` does not work - why?
+    refine (differentiable_Npow s).mul (?_ : DifferentiableAt ℂ (fun t ↦ Φ 0 / t) s)
     rcases hs₀ with h | h
     · exact (differentiableAt_const _).div differentiableAt_id h
     · simp only [h, zero_div, differentiableAt_const]
