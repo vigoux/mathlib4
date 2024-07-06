@@ -259,15 +259,9 @@ noncomputable def toCircle : AddChar (ZMod N) circle :=
   toCircle_addChar.compAddMonoidHom toAddCircle
 
 lemma toCircle_intCast (j : ℤ) :
-<<<<<<< HEAD
-    toCircle (j : ZMod N) = Complex.exp (2 * π * Complex.I * j / N) := by
-  rw [toCircle, AddChar.compAddMonoidHom_apply, toCircle_addChar, AddChar.coe_mk,
-    toAddCircle_coe, toCircle_apply_mk, expMapCircle_apply]
-=======
     toCircle (j : ZMod N) = exp (2 * π * I * j / N) := by
   rw [toCircle, AddChar.coe_mk, AddCircle.toCircle, toAddCircle_intCast,
     Function.Periodic.lift_coe, expMapCircle_apply]
->>>>>>> origin/DL_zmod_fourier
   push_cast
   ring_nf
 
