@@ -9,6 +9,10 @@ import Mathlib.Analysis.Convex.Topology
 import Mathlib.LinearAlgebra.Dimension.DivisionRing
 import Mathlib.Topology.Algebra.Module.Cardinality
 
+/-!
+# Functional equations for L-functions on `ZMod N`
+-/
+
 open HurwitzZeta Complex ZMod Finset Classical
 
 open scoped Real
