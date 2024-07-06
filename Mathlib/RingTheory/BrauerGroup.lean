@@ -2,7 +2,6 @@ import Mathlib.RingTheory.CentralSimple
 import Mathlib.LinearAlgebra.Composition
 import Mathlib.LinearAlgebra.Matrix.ToLin
 
-
 suppress_compilation
 universe u v v₁ v₂ w
 
