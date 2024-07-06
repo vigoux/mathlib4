@@ -108,7 +108,7 @@ of them from the hypotheses, but it's not clear which!
 lemma differentiableAt_completedLFunction (χ : DirichletCharacter ℂ N) (s : ℂ)
     (hs₀ : s ≠ 0 ∨ N ≠ 1) (hs₁ : s ≠ 1 ∨ χ ≠ 1) :
     DifferentiableAt ℂ (completedLFunction χ) s :=
-  ZMod.differentiableAt_completedLFunction _ _
+  ZMod.differentiableAt_completedLFunction (χ.even_or_odd.imp Even.iff_coe.mp Odd.iff_coe.mp) _
     (by have := χ.map_zero'; tauto) (by have := χ.sum_eq_zero_of_ne_one; tauto)
 
 /-- The completed L-function of a non-trivial Dirichlet character is differentiable everywhere. -/
