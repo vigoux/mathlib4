@@ -5,6 +5,7 @@ Authors: David Loeffler
 -/
 
 import Mathlib.NumberTheory.LSeries.DirichletContinuation2
+import Mathlib.NumberTheory.DirichletCharacter.GaussSum
 
 /-!
 # Functional equations of Dirichlet L-functions
