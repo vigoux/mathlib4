@@ -139,7 +139,7 @@ private lemma completedDualLFunction_eq_of_one_lt {Φ : ZMod N → ℂ} (hΦ : �
   · rw [gammaFactor] -- remains to show gammaFactor ≠ 0
     split_ifs <;>
     apply Gammaℝ_ne_zero_of_re_pos <;>
-    [skip ; rw [add_re, one_re]] <;>
+    [skip; rw [add_re, one_re]] <;>
     positivity
   · simpa only [← dft_even, ← dft_odd] using hΦ
   all_goals exact Or.inl (Complex.ne_zero_of_one_lt_re hs)

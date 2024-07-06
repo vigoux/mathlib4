@@ -212,7 +212,7 @@ private lemma completedDualLFunction_eq_of_one_lt {χ : DirichletCharacter ℂ N
     rw [gammaFactor] -- remains to show gammaFactor ≠ 0
     split_ifs <;>
     apply Gammaℝ_ne_zero_of_re_pos <;>
-    [skip ; rw [add_re, one_re]] <;>
+    [skip; rw [add_re, one_re]] <;>
     positivity
   exact dualLFunction_eq_completed_div_gammaFactor _ _ (Or.inl (Complex.ne_zero_of_one_lt_re hs))
 
