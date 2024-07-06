@@ -141,7 +141,7 @@ lemma dim_eq :
   rw [FiniteDimensional.finrank_tensorProduct]
   rw [show FiniteDimensional.finrank K (Module.End K A) =
     FiniteDimensional.finrank K
-      (Matrix (Fin $ FiniteDimensional.finrank K A) (Fin $ FiniteDimensional.finrank K A) K) from
+      (Matrix (Fin FiniteDimensional.finrankKA)(Fin FiniteDimensional.finrank K A) (Fin  FiniteDimensional.finrank K A) K) from
     (algEquivMatrix $ FiniteDimensional.finBasis _ _).toLinearEquiv.finrank_eq]
   rw [FiniteDimensional.finrank_matrix, Fintype.card_fin]
   rw [show FiniteDimensional.finrank K Aᵐᵒᵖ = FiniteDimensional.finrank K A from
@@ -227,10 +227,10 @@ def trans {A B C : CSA K} (hAB : IsBrauerEquivalent A B) (hBC : IsBrauerEquivale
   obtain ⟨n, m, hn, hm, iso1⟩ := hAB
   obtain ⟨p, q, hp, hq, iso2⟩ := hBC
   exact ⟨⟨_, _, Nat.mul_ne_zero hp hn, Nat.mul_ne_zero hm hq,
-    matrix_eqv' _ _ _ |>.symm.trans $ Matrix.comp_algHom _ _ _ _|>.symm.trans $
-      iso1.mapMatrix (m := Fin p)|>.trans $ Matrix.comp_algHom _ _ _ _|>.trans $
-      Matrix.swap_algHom _ _ _ _ |>.trans $ Matrix.comp_algHom _ _ _ _|>.symm.trans $
-      iso2.mapMatrix.trans $ Matrix.comp_algHom _ _ _ _|>.trans $ matrix_eqv' _ _ _⟩⟩
+    matrix_eqv' _ _ _ |>.symm.trans Matrix.comp_algHom _ _ _ _|>.symm.trans Matrix.comp_algHom _ _ _ _|>.symm.trans 
+      iso1.mapMatrix (m := Fin p)|>.trans Matrix.comp_algHom _ _ _ _|>.trans Matrix.comp_algHom _ _ _ _|>.trans 
+      Matrix.swap_algHom _ _ _ _ |>.trans Matrix.comp_algHom _ _ _ _|>.symm.trans Matrix.comp_algHom _ _ _ _|>.symm.trans 
+      iso2.mapMatrix.trans Matrix.comp_algHom _ _ _ _|>.trans Matrix.comp_algHom _ _ _ _|>.trans  matrix_eqv' _ _ _⟩⟩
 
 
 lemma iso_to_eqv (A B : CSA K) (h : A ≃ₐ[K] B) : IsBrauerEquivalent A B := by
@@ -729,7 +729,7 @@ lemma e3Aux5 : Function.Surjective (e3Aux4 (K := K) (E := E) A m) := by
     · rcases h₂ with ⟨m, h₂⟩
       rcases h₁ with ⟨a, h₁⟩
       refine ⟨a + m, ?_⟩
-      convert congr($h₁+ $h₂) using 1
+      convert congr(h₁+h₁+ h₂) using 1
       · exact (e3Aux4 (K := K) (E := E) A _).map_add _ _
       · rw [TensorProduct.tmul_add]
   · rcases he with ⟨e, rfl⟩
@@ -751,7 +751,7 @@ def e3 [csa_A : IsCentralSimple K A] :
         letI r2 : Ring (E ⊗[K] (A ⊗[K] Matrix (Fin m) (Fin m) K)) := inferInstance
         letI : Nontrivial (E ⊗[K] (A ⊗[K] Matrix (Fin m) (Fin m) K)) := by
             have := e3Aux2' (K := K) (E := E) A m hm |>.2
-            exact RingCon.instNontrivialOfIsSimpleOrder_brauerGroup _
+            exact RingCon.instNontrivialOfIsSimpleOrder _
         apply bijective_of_surj_of_isCentralSimple E _ _ _ $ e3Aux5 (K := K) (E := E) A m
 
 def e4 :
@@ -868,18 +868,18 @@ abbrev BaseChange : BrGroup (K := K) →* BrGroup (K := E) where
       ring := inferInstance
       algebra := inferInstance
       is_central_simple := inferInstance
-      fin_dim := inferInstance }) $ fun A B => Nonempty.map $ fun ⟨m, n, hm, hn, e⟩ =>
-          ⟨m, n, hm, hn, (someEquivs.e1 A m).trans $ (someEquivs.e2 A m).trans $
-            (someEquivs.e3 A m).trans $ (someEquivs.e4 A m).trans $ AlgEquiv.symm $
-            (someEquivs.e1 B n).trans $ (someEquivs.e2 B n).trans $
-            (someEquivs.e3 B n).trans $ (someEquivs.e4 B n).trans $ someEquivs.e5 _ _ e.symm⟩
+      fin_dim := inferInstance }) funAB=>Nonempty.map fun A B => Nonempty.map  fun ⟨m, n, hm, hn, e⟩ =>
+          ⟨m, n, hm, hn, (someEquivs.e1 A m).trans (someEquivs.e2Am).trans (someEquivs.e2 A m).trans 
+            (someEquivs.e3 A m).trans (someEquivs.e4Am).trans (someEquivs.e4 A m).trans  AlgEquiv.symm $
+            (someEquivs.e1 B n).trans (someEquivs.e2Bn).trans (someEquivs.e2 B n).trans 
+            (someEquivs.e3 B n).trans (someEquivs.e4Bn).trans (someEquivs.e4 B n).trans  someEquivs.e5 _ _ e.symm⟩
   map_one' := by
     change Quotient.map' _ _ (Quotient.mk'' _) = Quotient.mk'' _
     erw [Quotient.eq'']
     change IsBrauerEquivalent _ _
     simp only
     refine ⟨1, 1, by omega, by omega, ?_⟩
-    refine (dim_one_iso _).trans $ AlgEquiv.symm $ (dim_one_iso _).trans ?_
+    refine (dim_one_iso _).trans AlgEquiv.symm AlgEquiv.symm  (dim_one_iso _).trans ?_
     change E ≃ₐ[E] (E ⊗[K] K)
     exact someEquivs.e7
   map_mul' := by
@@ -891,7 +891,7 @@ abbrev BaseChange : BrGroup (K := K) →* BrGroup (K := E) where
     erw [Quotient.eq'']
     change IsBrauerEquivalent _ _
     refine ⟨1, 1, by omega, by omega, ?_⟩
-    refine (dim_one_iso _).trans $ AlgEquiv.symm $ (dim_one_iso _).trans ?_
+    refine (dim_one_iso _).trans AlgEquiv.symm AlgEquiv.symm  (dim_one_iso _).trans ?_
     change (E ⊗[K] A) ⊗[E] (E ⊗[K] B) ≃ₐ[E] E ⊗[K] (A ⊗[K] B)
     exact someEquivs.e6 A B
 
