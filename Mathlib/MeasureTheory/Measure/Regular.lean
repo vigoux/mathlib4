@@ -723,6 +723,11 @@ theorem _root_.MeasurableSet.exists_isCompact_lt_add [InnerRegularCompactLTTop �
   InnerRegularCompactLTTop.innerRegular.exists_subset_lt_add isCompact_empty ⟨hA, h'A⟩ h'A hε
 #align measurable_set.exists_is_compact_lt_add MeasurableSet.exists_isCompact_lt_add
 
+/-- If `μ` is inner regular for finite measure sets with respect to compact sets,
+then any measurable set of finite measure can be approximated by a compact closed subset.
+Compared to `MeasurableSet.exists_isCompact_lt_add`,
+this version additionally assumes that `α` is an R₁ space with Borel σ-algebra.
+-/
 theorem _root_.MeasurableSet.exists_isCompact_isClosed_lt_add
     [InnerRegularCompactLTTop μ] [R1Space α] [BorelSpace α]
     ⦃A : Set α⦄ (hA : MeasurableSet A) (h'A : μ A ≠ ∞) {ε : ℝ≥0∞} (hε : ε ≠ 0) :
@@ -744,6 +749,10 @@ theorem _root_.MeasurableSet.exists_isCompact_diff_lt [OpensMeasurableSpace α] 
     (ne_top_of_le_ne_top h'A <| measure_mono hKA) hK⟩
 #align measurable_set.exists_is_compact_diff_lt MeasurableSet.exists_isCompact_diff_lt
 
+/-- If `μ` is inner regular for finite measure sets with respect to compact sets,
+then any measurable set of finite measure can be approximated by a compact closed subset.
+Compared to `MeasurableSet.exists_isCompact_diff_lt`,
+this lemma additionally assumes that `α` is an R₁ space with Borel σ-algebra. -/
 theorem _root_.MeasurableSet.exists_isCompact_isClosed_diff_lt [BorelSpace α] [R1Space α]
     [InnerRegularCompactLTTop μ] ⦃A : Set α⦄ (hA : MeasurableSet A) (h'A : μ A ≠ ∞)
     {ε : ℝ≥0∞} (hε : ε ≠ 0) :
@@ -822,6 +831,11 @@ protected theorem _root_.IsCompact.exists_isOpen_lt_add [InnerRegularCompactLTTo
     ∃ U, K ⊆ U ∧ IsOpen U ∧ μ U < μ K + ε :=
   hK.exists_isOpen_lt_of_lt _ (ENNReal.lt_add_right hK.measure_lt_top.ne hε)
 
+/-- Let `μ` be a locally finite measure on an R₁ topological space with Borel σ-algebra.
+If `μ` is inner regular for finite measure sets with respect to compact sets,
+then any finite measurable set can be approximated in measure by an open set.
+See also `Set.exists_isOpen_lt_of_lt` and `MeasurableSet.exists_isOpen_diff_lt`
+for the case of an outer regular measure. -/
 protected theorem _root_.MeasurableSet.exists_isOpen_symmDiff_lt [InnerRegularCompactLTTop μ]
     [IsLocallyFiniteMeasure μ] [R1Space α] [BorelSpace α]
     {s : Set α} (hs : MeasurableSet s) (hμs : μ s ≠ ∞) {ε : ℝ≥0∞} (hε : ε ≠ 0) :
