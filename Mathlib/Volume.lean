@@ -28,53 +28,256 @@ def isNormStableAtComplexPlaces (s : Set (E K)) : Prop :=
 def isNormStable (s : Set (E K)) : Prop :=
     isNormStableAtRealPlaces s ∧ isNormStableAtComplexPlaces s
 
+abbrev normVectorAtRealPlaces : (E K) → E K := fun x ↦ (fun w ↦ ‖x.1 w‖, x.2)
+
+theorem normVectorAtRealPlaces_idem (x : E K) :
+    normVectorAtRealPlaces (normVectorAtRealPlaces x) = normVectorAtRealPlaces x :=
+  Prod.ext (funext fun _ ↦ by simp_rw [norm_norm]) (funext fun _ ↦ rfl)
+
+theorem normVectorAtRealPlaces_eq_normVectorAtRealPlaces_iff {x y : E K} :
+    normVectorAtRealPlaces x = normVectorAtRealPlaces y ↔
+      (∀ w, ‖x.1 w‖ = ‖y.1 w‖) ∧ x.2 = y.2 := by
+  simp_rw [Prod.ext_iff, and_congr_left_iff, ← Function.funext_iff, implies_true]
+
+theorem isNormStableAtRealPlaces_iff {s : Set (E K)} :
+    isNormStableAtRealPlaces s ↔ s = normVectorAtRealPlaces ⁻¹' (normVectorAtRealPlaces '' s) := by
+  refine ⟨fun h ↦ ?_, fun h _ ↦ ?_⟩
+  · ext x
+    refine ⟨fun h ↦ Set.subset_preimage_image _ _ h, fun ⟨y, hy₁, hy₂⟩ ↦ ?_⟩
+    simp_rw [h y, normVectorAtRealPlaces_eq_normVectorAtRealPlaces_iff.mp hy₂] at hy₁
+    rwa [h]
+  · rw [h, Set.mem_preimage, Set.mem_preimage, normVectorAtRealPlaces_idem]
+
+abbrev normVectorAtComplexPlaces : (E K) → (E K ) := fun x : E K ↦ (x.1, fun w ↦ ‖x.2 w‖)
+
+theorem normVectorAtComplexPlaces_idem (x : E K) :
+    normVectorAtComplexPlaces (normVectorAtComplexPlaces x) =
+      normVectorAtComplexPlaces x := Prod.ext (funext fun _ ↦ rfl) (funext fun _ ↦ by simp)
+
+theorem normVectorAtComplexPlaces_eq_normVectorAtComplexPlaces_iff {x y : E K} :
+    normVectorAtComplexPlaces x = normVectorAtComplexPlaces y ↔
+      x.1 = y.1 ∧ (∀ w, ‖x.2 w‖ = ‖y.2 w‖) := by
+  simp_rw [Prod.ext_iff, and_congr_right_iff, ← Complex.ofReal_inj, ← Function.funext_iff,
+    implies_true]
+
+
+theorem isNormStableAtComplexPlaces_iff {s : Set (E K)} :
+    isNormStableAtComplexPlaces s ↔
+      s = normVectorAtComplexPlaces ⁻¹' (normVectorAtComplexPlaces '' s) := by
+  refine ⟨fun h ↦ ?_, fun h _ ↦ ?_⟩
+  · ext x
+    refine ⟨fun h ↦ Set.subset_preimage_image _ _ h, fun ⟨y, hy₁, hy₂⟩ ↦ ?_⟩
+    simp_rw [h y, normVectorAtComplexPlaces_eq_normVectorAtComplexPlaces_iff.mp hy₂] at hy₁
+    rwa [h]
+  · rw [h, Set.mem_preimage, Set.mem_preimage, normVectorAtComplexPlaces_idem]
+
+open scoped ComplexOrder
+
 variable (K) in
-def normVector : (E K) → (InfinitePlace K → ℝ) := fun x w ↦ normAtPlace w x
+def normVector : PartialHomeomorph (E K) (InfinitePlace K → ℝ) where
+  toFun := fun x w ↦ normAtPlace w x
+  invFun := fun x ↦ ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩
+  source := {x | ∀ w, 0 < x w} ×ˢ {x | ∀ w, 0 < x w}
+  target := {x | ∀ w, 0 < x w}
+  map_source' := fun _ h w ↦ by
+    obtain hw | hw := isReal_or_isComplex w
+    · simp_rw [normAtPlace_apply_isReal hw, norm_pos_iff']
+      exact ne_of_gt (h.1 ⟨w, hw⟩)
+    · simp_rw [normAtPlace_apply_isComplex hw, norm_pos_iff']
+      refine ne_of_gt (h.2 ⟨w, hw⟩)
+  map_target' := fun _ h ↦ by
+    exact Set.mk_mem_prod (fun w ↦ h w) (fun w ↦ Complex.zero_lt_real.mpr (h w))
+  left_inv' := by
+    sorry
+  right_inv' := sorry
+  open_source := sorry
+  open_target := sorry
+  continuousOn_toFun := sorry
+  continuousOn_invFun := sorry
+
+#exit
+
+
+    rw [@Set.mem_univ_pi]
+    intro w
+    refine Set.mem_Ioi.mpr ?_
+    obtain hw | hw := isReal_or_isComplex w
+    · simp_rw [normAtPlace_apply_isReal hw]
+      refine norm_pos_iff.mpr <| ne_of_gt (hx.1 ⟨w, hw⟩ (Set.mem_univ _))
+    · simp_rw [normAtPlace_apply_isComplex hw]
+      refine norm_pos_iff.mpr ?_
+      have := hx.2 ⟨w, hw⟩ (Set.mem_univ _)
+      contrapose! this
+      intro h
+      rw [this] at h
+      simp at h
+  map_target' := by
+    intro x hx
+    refine Set.mk_mem_prod (fun i ↦ hx i) ?_
+    refine Set.mem_univ_pi.mpr ?_
+    intro w
+    exact Set.mem_image_of_mem Complex.ofReal' (hx w trivial)
+  left_inv' := by
+    intro x hx
+    ext w
+    · simp_rw [normAtPlace_apply_isReal w.prop]
+      refine Real.norm_of_nonneg ?_
+      exact le_of_lt (hx.1 w (Set.mem_univ _))
+    · simp_rw [normAtPlace_apply_isComplex w.prop]
+      refine (Complex.eq_coe_norm_of_nonneg ?_).symm
+      have := hx.2 w (Set.mem_univ _)
+      sorry
+  right_inv' := by
+    intro x hx
+    ext w
+    sorry
+  open_source := by
+    dsimp
+    refine IsOpen.prod ?_ ?_
+    · refine isOpen_set_pi ?_ ?_
+      exact Set.finite_univ
+      exact fun _ _ ↦ isOpen_Ioi
+    · refine isOpen_set_pi ?_ ?_
+      exact Set.finite_univ
+      intro _ _
+      refine (OpenEmbedding.open_iff_image_open ?_).mp ?_
+      refine
+        { toEmbedding := ?_, isOpen_range := ?_ }
+      apply?
+      sorry
+      sorry
+  open_target := sorry
+  continuousOn_toFun := sorry
+  continuousOn_invFun := sorry
+
+-- variable (K) in
+-- def normVector : (E K) → (InfinitePlace K → ℝ) := fun x w ↦ normAtPlace w x
 
 theorem normVector_normAtRealPlaces_eq_normVector (x : E K) :
-    normVector K ⟨fun w ↦ ‖x.1 w‖, x.2⟩ = normVector K x := by
+    normVector K (normVectorAtRealPlaces x) = normVector K x := by
   ext w
   obtain hw | hw := isReal_or_isComplex w
   · simp_rw [normVector, normAtPlace_apply_isReal hw, norm_norm]
   · simp_rw [normVector, normAtPlace_apply_isComplex hw]
 
 theorem normVector_normAtComplexPlaces_eq_normVector (x : E K) :
-    normVector K ⟨x.1, fun w ↦ ‖x.2 w‖⟩ = normVector K x := by
+    normVector K (normVectorAtComplexPlaces x) = normVector K x := by
   ext w
   obtain hw | hw := isReal_or_isComplex w
   · simp_rw [normVector, normAtPlace_apply_isReal hw]
   · simp_rw [normVector, normAtPlace_apply_isComplex hw, Complex.norm_eq_abs, Complex.abs_ofReal,
       Complex.abs_abs]
 
-theorem normVector_norm_eq_normVector (x : E K) :
-    normVector K ⟨fun w ↦ ‖x.1 w‖, fun w ↦ ‖x.2 w‖⟩ = normVector K x := by
-  rw [← normVector_normAtRealPlaces_eq_normVector x,
-    ← normVector_normAtComplexPlaces_eq_normVector ⟨fun w ↦ ‖x.1 w‖, x.2⟩]
+theorem normVector_eq_normVector_iff {x y : E K} :
+    normVector K x = normVector K y ↔ (∀ w, ‖x.1 w‖ = ‖y.1 w‖) ∧ (∀ w, ‖x.2 w‖ = ‖y.2 w‖) := by
+  simp_rw [Function.funext_iff, normVector]
+  refine ⟨fun h ↦ ⟨?_, ?_⟩, fun ⟨h₁, h₂⟩ ↦ ?_⟩
+  · intro w
+    rw [← normAtPlace_apply_isReal w.prop, ← normAtPlace_apply_isReal w.prop, h w]
+  · intro w
+    rw [← normAtPlace_apply_isComplex w.prop, ← normAtPlace_apply_isComplex w.prop, h w]
+  · intro w
+    obtain hw | hw := isReal_or_isComplex w
+    · rw [normAtPlace_apply_isReal hw, normAtPlace_apply_isReal hw]
+      exact h₁ ⟨w, hw⟩
+    · rw [normAtPlace_apply_isComplex hw, normAtPlace_apply_isComplex hw]
+      exact h₂ ⟨w, hw⟩
 
-theorem isNormStable_iff (s : Set (E K)) :
+theorem isNormStable_iff {s : Set (E K)} :
     isNormStable s ↔ s = normVector K ⁻¹' (normVector K '' s) := by
   refine ⟨fun h ↦ ?_, fun h ↦ ⟨fun _ ↦ ?_, fun _ ↦ ?_⟩⟩
   · ext x
     refine ⟨fun h ↦ Set.subset_preimage_image _ _ h, fun ⟨y, hy₁, hy₂⟩ ↦ ?_⟩
-    rw [h.1, h.2] at hy₁ ⊢
-    simp_rw [show ∀ w, ‖x.1 w‖ = ‖y.1 w‖ by
-      intro w
-      rw [← normAtPlace_apply_isReal w.prop, ← normAtPlace_apply_isReal w.prop]
-      exact (congr_fun hy₂ w.val).symm]
-    simp_rw [show ∀ w, ‖x.2 w‖ = ‖y.2 w‖ by
-      intro w
-      rw [← normAtPlace_apply_isComplex w.prop, ← normAtPlace_apply_isComplex w.prop]
-      exact (congr_fun hy₂ w.val).symm]
-    exact hy₁
+    simp_rw [h.1 y, h.2 (_, y.2), normVector_eq_normVector_iff.mp hy₂] at hy₁
+    rwa [h.1, h.2]
   · rw [h, Set.mem_preimage, ← normVector_normAtRealPlaces_eq_normVector, Set.mem_preimage]
   · rw [h, Set.mem_preimage, ← normVector_normAtComplexPlaces_eq_normVector, Set.mem_preimage]
+
+theorem measurableSet_nonneg_at_real_places :
+    MeasurableSet {x : E K | ∀ w, 0 ≤ x.1 w} := by
+  convert_to MeasurableSet (⋂ w, {x : E K | 0 ≤ x.1 w})
+  · ext; simp
+  · exact MeasurableSet.iInter fun _ ↦
+      measurableSet_le measurable_const (by convert (measurable_pi_apply _).comp measurable_fst)
+
+theorem measurableSet_image_of_isNormStableAtRealPlaces {s : Set (E K)} (hs₀ : MeasurableSet s)
+    (hs₁ : isNormStableAtRealPlaces s) :
+    MeasurableSet ((fun x ↦ (fun w ↦ ‖x.1 w‖, x.2)) '' s) := by
+  convert_to MeasurableSet (s ∩ {x | ∀ w, 0 ≤ x.1 w})
+  · ext x
+    simp_rw [Set.mem_inter_iff, Set.mem_image, Set.mem_setOf_eq]
+    refine ⟨?_, fun ⟨hx₁, hx₂⟩ ↦ ?_⟩
+    · rintro ⟨y, hy₁, rfl⟩
+      exact ⟨by rwa [← hs₁], by simp⟩
+    · exact ⟨x, hx₁, by simp_rw [fun w ↦ Real.norm_of_nonneg (hx₂ w)]⟩
+  · exact hs₀.inter measurableSet_nonneg_at_real_places
+
+theorem measurableSet_nonneg_at_complex_places :
+    MeasurableSet {x : E K | ∀ w, 0 ≤ (x.2 w).re ∧ (x.2 w).im = 0} := by
+  convert_to MeasurableSet (⋂ w, {x : E K | 0 ≤ (x.2 w).re} ∩ {x : E K | (x.2 w).im = 0})
+  · ext
+    simp_rw [Set.mem_setOf_eq, Set.mem_iInter]
+    simp only [Complex.ofReal_eq_coe, Set.mem_image, Set.mem_Ici, Subtype.forall, Set.mem_setOf_eq,
+      Set.mem_iInter, Set.mem_inter_iff]
+  · refine MeasurableSet.iInter ?_
+    intro w
+    refine MeasurableSet.inter ?_ ?_
+    · refine measurableSet_le ?_ ?_
+      exact measurable_const
+      exact Complex.measurable_re.comp' (by fun_prop)
+    · refine measurableSet_eq_fun ?_ ?_
+      exact Complex.measurable_im.comp' (by fun_prop)
+      exact measurable_const
+
+theorem measurableSet_image_of_isNormStableAtComplexPlaces {s : Set (E K)} (hs₀ : MeasurableSet s)
+    (hs₁ : isNormStableAtComplexPlaces s) :
+    MeasurableSet ((fun x ↦ (x.1, fun w ↦ ‖x.2 w‖)) '' s) := by
+  have t₀ : MeasurableSet (s ∩ {x : E K | ∀ w, 0 ≤ (x.2 w).re ∧ (x.2 w).im = 0}) := by
+    refine MeasurableSet.inter hs₀ ?_
+    exact measurableSet_nonneg_at_complex_places
+  let f : ({w : InfinitePlace K // w.IsReal} → ℝ) × ({w : InfinitePlace K // w.IsComplex} → ℝ) → (E K) :=
+    fun x ↦ ⟨x.1, fun w ↦ (x.2 w : ℂ)⟩
+  have hf : Measurable f := by fun_prop
+  have := hf t₀
+  convert this using 1
+  · ext x
+    dsimp only [f]
+    simp_rw [Set.preimage_inter, Set.mem_inter_iff, Set.mem_image, Set.mem_preimage]
+    refine ⟨?_, ?_⟩
+    · rintro ⟨y, hy₁, rfl⟩
+      refine ⟨?_, fun w ↦ ⟨?_, ?_⟩⟩
+      · rwa [← hs₁]
+      · simp
+      · simp
+    · rintro ⟨hx₁, hx₂⟩
+      refine ⟨?_, ?_, ?_⟩
+      · exact (x.1, fun w ↦ x.2 w)
+      · exact hx₁
+      · refine Prod.eq_iff_fst_eq_snd_eq.mpr ⟨rfl, ?_⟩
+        dsimp only
+        ext
+        rw [Complex.norm_eq_abs, Complex.abs_ofReal, abs_of_nonneg]
+        exact Complex.zero_le_real.mp (hx₂ _)
+
+-- Define the partial homeo between the real subset of (E K) and the real space
+-- Prove that the closure and interior of a stable set is stable
+
+
+
+#exit
+
+theorem measurable_image_normVector {s : Set (E K)} (hs₀ : MeasurableSet s)
+    (hs₁ : isNormStable s) :
+    MeasurableSet (normVector K '' s) := by
+
+  sorry
 
 private theorem volume_eq_of_isNormStableAtRealPlaces_aux (f : (E K) → ℝ≥0∞)
     (W : Finset {w : InfinitePlace K // w.IsReal}) (hf : Measurable f)
     (a : {w : InfinitePlace K // w.IsReal} → ℝ) (y : {w : InfinitePlace K // w.IsComplex} → ℂ) :
     (∫⋯∫⁻_W, fun x ↦ f ⟨fun w ↦ ‖x w‖, y⟩ ∂fun _ ↦ (volume : Measure ℝ)) a =
       2 ^ W.card *
-        (∫⋯∫⁻_W, fun x ↦ f (x, y) ∂fun _ ↦ (volume.restrict (Set.Ioi 0))) fun i ↦ ‖a i‖ := by
+        (∫⋯∫⁻_W, fun x ↦ f (x, y) ∂fun _ ↦ (volume.restrict (Set.Ici 0))) fun i ↦ ‖a i‖ := by
   induction W using Finset.induction generalizing a with
   | empty => simp
   | @insert i W hi h_ind =>
@@ -85,22 +288,20 @@ private theorem volume_eq_of_isNormStableAtRealPlaces_aux (f : (E K) → ℝ≥0
       simp_rw [h_ind, this, Real.norm_eq_abs]
       rw [lintegral_const_mul' _ _ (ENNReal.pow_ne_top ENNReal.two_ne_top)]
       have : ∀ y, Measurable (fun xᵢ ↦ (∫⋯∫⁻_W, fun x ↦ f (x, y)
-          ∂fun x ↦ volume.restrict (Set.Ioi 0))
+          ∂fun x ↦ volume.restrict (Set.Ici 0))
             (fun j ↦ Function.update (fun j ↦ |a j|) i xᵢ j)) :=
         fun _ ↦ (Measurable.lmarginal _ (by fun_prop)).comp (measurable_update _)
       simp_rw [lintegral_comp_abs (this _)]
-      rw [lmarginal_insert _ (by fun_prop) hi, ← mul_assoc, ← pow_succ, card_insert_of_not_mem hi]
+      rw [lmarginal_insert _ (by fun_prop) hi, ← mul_assoc, ← pow_succ, card_insert_of_not_mem hi,
+        restrict_Ioi_eq_restrict_Ici]
 
 theorem volume_eq_of_isNormStableAtRealPlaces (s : Set (E K)) (hs₀ : MeasurableSet s)
     (hs₁ : isNormStableAtRealPlaces s) :
-    volume s = 2 ^ NrRealPlaces K * volume (s ∩ {x | ∀ w, 0 < x.1 w}) := by
+    volume s = 2 ^ NrRealPlaces K * volume (s ∩ {x | ∀ w, 0 ≤ x.1 w}) := by
   have h₁ : Measurable (s.indicator fun _ ↦ (1 : ℝ≥0∞)) :=
     (measurable_indicator_const_iff 1).mpr hs₀
-  have h₂ : MeasurableSet (s ∩ {x | ∀ (w : { w // w.IsReal }), 0 < x.1 w}) := by
-    convert_to MeasurableSet (s ∩ (⋂ w : { w // w.IsReal }, {x | 0 < x.1 w}))
-    · ext; simp
-    · exact hs₀.inter (MeasurableSet.iInter fun _ ↦
-        measurableSet_lt measurable_const (by convert (measurable_pi_apply _).comp measurable_fst))
+  have h₂ : MeasurableSet (s ∩ {x | ∀ (w : { w // w.IsReal }), 0 ≤ x.1 w}) :=
+    hs₀.inter measurableSet_nonneg_at_real_places
   have h₃ : ∀ x y, s.indicator (fun _ ↦ (1: ℝ≥0∞)) (x, y) =
       s.indicator (fun _ ↦ 1) (fun w ↦ ‖x w‖, y) := fun x y ↦ by
     by_cases h : (x, y) ∈ s
@@ -115,9 +316,11 @@ theorem volume_eq_of_isNormStableAtRealPlaces (s : Set (E K)) (hs₀ : Measurabl
   rw [lintegral_const_mul' _ _ (ENNReal.pow_ne_top ENNReal.two_ne_top), NrRealPlaces, Fintype.card,
     lintegral_lintegral_symm (measurable_swap_iff.mp (by convert h₁)).aemeasurable,
     restrict_prod_eq_prod_univ, ← lintegral_indicator _ ((MeasurableSet.univ_pi
-    (fun _ ↦ measurableSet_Ioi)).prod MeasurableSet.univ), Set.indicator_indicator,
-    show (Set.univ.pi fun i ↦ Set.Ioi 0) ×ˢ Set.univ ∩ s = s ∩ {x | ∀ w, 0 < x.1 w} by
-    ext; simp [and_comm]]
+    (fun _ ↦ measurableSet_Ici)).prod MeasurableSet.univ), Set.indicator_indicator,
+    show (Set.univ.pi fun i ↦ Set.Ici 0) ×ˢ Set.univ ∩ s = s ∩ {x | ∀ w, 0 ≤ x.1 w} by
+      ext; simp_rw [Set.pi_univ_Ici, Set.inter_comm, Set.mem_inter_iff, and_congr_right_iff,
+        Set.mem_prod, Set.mem_univ, and_true, Set.mem_Ici, Pi.le_def, Set.mem_setOf_eq,
+        implies_true]]
 
 open ENNReal in
 private theorem volume_eq_of_isNormStableAtComplexPlaces_aux
@@ -162,11 +365,10 @@ theorem volume_eq_of_isNormStableAtComplexPlaces (s : Set (E K)) (hs₀ : Measur
   rw [← setLIntegral_one, ← lintegral_indicator _ hs₀, volume_eq_prod, lintegral_prod]
 
   have h₃ : ∀ x y, s.indicator (fun _ ↦ (1 : ℝ≥0∞)) (x, y) =
-      s₀.indicator (fun _ ↦ 1) ⟨x, fun w ↦ ‖y w‖⟩ := by
-    intro x y
+      s₀.indicator (fun _ ↦ 1) ⟨x, fun w ↦ ‖y w‖⟩ := fun x y ↦ by
     by_cases h : (x, y) ∈ s
     · rw [Set.indicator_of_mem h, Set.indicator_of_mem]
-      refine ⟨(x, y), h, rfl⟩
+      exact ⟨(x, y), h, rfl⟩
     · rw [Set.indicator_of_not_mem h, Set.indicator_of_not_mem]
       intro h'
       sorry
@@ -188,13 +390,55 @@ theorem volume_eq_of_isNormStableAtComplexPlaces (s : Set (E K)) (hs₀ : Measur
     exact this hx
   · have : x ∉ (Set.univ ×ˢ Set.univ.pi fun i ↦ Set.Ici 0) ∩ s₀ := fun h ↦ hx h.2
     rw [Set.indicator_of_not_mem hx, Set.indicator_of_not_mem this, mul_zero]
+  · exact measurableSet_image_of_isNormStableAtComplexPlaces hs₀ hs₁
+  · exact MeasurableSet.univ.prod (MeasurableSet.univ_pi (fun _ ↦ measurableSet_Ici))
+  · sorry
+  · exact ENNReal.coe_ne_top
+  · sorry
+  · refine (measurable_indicator_const_iff 1).mpr
+      (measurableSet_image_of_isNormStableAtComplexPlaces hs₀ hs₁)
 
 theorem volume_eq_of_isNormStable (s : Set (E K))
     (hs₀ : MeasurableSet s) (hs₁ : isNormStable s) :
     volume s = 2 ^ NrRealPlaces K * (2 * NNReal.pi) ^ NrComplexPlaces K *
       ∫⁻ x in (normVector K '' s), (∏ w : {w // IsComplex w}, (x w.val).toNNReal) := by
-  rw [volume_eq_of_isNormStableAtRealPlaces, volume_eq_of_isNormStableAtComplexPlaces]
-  sorry
+
+  have h₂ : MeasurableSet (s ∩ {x | ∀ (w : { w // w.IsReal }), 0 ≤ x.1 w}) :=
+    hs₀.inter measurableSet_nonneg_at_real_places
+
+  rw [volume_eq_of_isNormStableAtRealPlaces, volume_eq_of_isNormStableAtComplexPlaces, mul_assoc]
+  let f : (InfinitePlace K → ℝ) →
+      ({w : InfinitePlace K // w.IsReal} → ℝ) × ({w : InfinitePlace K // w.IsComplex} → ℝ) :=
+    fun x ↦ ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩
+  have hf : MeasurePreserving f := sorry
+  rw [← lintegral_indicator, ← lintegral_indicator, ← MeasurePreserving.lintegral_comp hf]
+  simp_rw [← Set.indicator_comp_right, Function.comp, Subtype.forall]
+  · congr with x
+    by_cases hx : x ∈ normVector K '' s
+    · rw [Set.indicator_of_mem hx, Set.indicator_of_mem]
+      obtain ⟨y, hy, rfl⟩ := hx
+      refine ⟨⟨fun w ↦ ‖y.1 w‖, y.2⟩, ⟨?_, ?_⟩, ?_⟩
+      · rwa [hs₁.1] at hy
+      · intro w
+        simp only [Real.norm_eq_abs, abs_nonneg, implies_true]
+      · have : ∀ x, f (normVector K x) = ⟨fun w ↦ ‖x.1 w‖, fun w ↦ ‖x.2 w‖⟩ := sorry
+        rw [this]
+    · rw [Set.indicator_of_not_mem hx, Set.indicator_of_not_mem]
+      rintro ⟨y, ⟨hy₁, hy₂⟩, hy₃⟩
+      rw [hs₁.1, hs₁.2] at hy₁
+      refine hx ?_
+      refine ⟨?_, ?_, ?_⟩
+      sorry
+      sorry
+      sorry
+  · sorry
+  · sorry
+  · sorry
+  · exact h₂
+  · intro x
+    simp [hs₁.2 x]
+  · exact hs₀
+  · exact hs₁.1
 
 
 
