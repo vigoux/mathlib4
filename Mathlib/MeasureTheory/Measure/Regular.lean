@@ -794,8 +794,8 @@ instance (priority := 50) [BorelSpace α] [R1Space α] [InnerRegularCompactLTTop
     [IsFiniteMeasure μ] : WeaklyRegular μ :=
   InnerRegular.innerRegularWRT_isClosed_isOpen.weaklyRegular_of_finite _
 
-instance (priority := 50) instRegular [BorelSpace α] [R1Space α]
-    [h : InnerRegularCompactLTTop μ] [IsFiniteMeasure μ] : Regular μ where
+instance (priority := 50) [BorelSpace α] [R1Space α] [h : InnerRegularCompactLTTop μ]
+    [IsFiniteMeasure μ] : Regular μ where
   innerRegular := InnerRegularWRT.trans h.innerRegular <|
     InnerRegularWRT.of_imp (fun U hU ↦ ⟨hU.measurableSet, measure_ne_top μ U⟩)
 
