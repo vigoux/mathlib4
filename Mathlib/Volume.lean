@@ -60,7 +60,6 @@ theorem normVectorAtComplexPlaces_eq_normVectorAtComplexPlaces_iff {x y : E K} :
   simp_rw [Prod.ext_iff, and_congr_right_iff, ← Complex.ofReal_inj, ← Function.funext_iff,
     implies_true]
 
-
 theorem isNormStableAtComplexPlaces_iff {s : Set (E K)} :
     isNormStableAtComplexPlaces s ↔
       s = normVectorAtComplexPlaces ⁻¹' (normVectorAtComplexPlaces '' s) := by
@@ -74,84 +73,7 @@ theorem isNormStableAtComplexPlaces_iff {s : Set (E K)} :
 open scoped ComplexOrder
 
 variable (K) in
-def normVector : PartialHomeomorph (E K) (InfinitePlace K → ℝ) where
-  toFun := fun x w ↦ normAtPlace w x
-  invFun := fun x ↦ ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩
-  source := {x | ∀ w, 0 < x w} ×ˢ {x | ∀ w, 0 < x w}
-  target := {x | ∀ w, 0 < x w}
-  map_source' := fun _ h w ↦ by
-    obtain hw | hw := isReal_or_isComplex w
-    · simp_rw [normAtPlace_apply_isReal hw, norm_pos_iff']
-      exact ne_of_gt (h.1 ⟨w, hw⟩)
-    · simp_rw [normAtPlace_apply_isComplex hw, norm_pos_iff']
-      refine ne_of_gt (h.2 ⟨w, hw⟩)
-  map_target' := fun _ h ↦ by
-    exact Set.mk_mem_prod (fun w ↦ h w) (fun w ↦ Complex.zero_lt_real.mpr (h w))
-  left_inv' := by
-    sorry
-  right_inv' := sorry
-  open_source := sorry
-  open_target := sorry
-  continuousOn_toFun := sorry
-  continuousOn_invFun := sorry
-
-#exit
-
-
-    rw [@Set.mem_univ_pi]
-    intro w
-    refine Set.mem_Ioi.mpr ?_
-    obtain hw | hw := isReal_or_isComplex w
-    · simp_rw [normAtPlace_apply_isReal hw]
-      refine norm_pos_iff.mpr <| ne_of_gt (hx.1 ⟨w, hw⟩ (Set.mem_univ _))
-    · simp_rw [normAtPlace_apply_isComplex hw]
-      refine norm_pos_iff.mpr ?_
-      have := hx.2 ⟨w, hw⟩ (Set.mem_univ _)
-      contrapose! this
-      intro h
-      rw [this] at h
-      simp at h
-  map_target' := by
-    intro x hx
-    refine Set.mk_mem_prod (fun i ↦ hx i) ?_
-    refine Set.mem_univ_pi.mpr ?_
-    intro w
-    exact Set.mem_image_of_mem Complex.ofReal' (hx w trivial)
-  left_inv' := by
-    intro x hx
-    ext w
-    · simp_rw [normAtPlace_apply_isReal w.prop]
-      refine Real.norm_of_nonneg ?_
-      exact le_of_lt (hx.1 w (Set.mem_univ _))
-    · simp_rw [normAtPlace_apply_isComplex w.prop]
-      refine (Complex.eq_coe_norm_of_nonneg ?_).symm
-      have := hx.2 w (Set.mem_univ _)
-      sorry
-  right_inv' := by
-    intro x hx
-    ext w
-    sorry
-  open_source := by
-    dsimp
-    refine IsOpen.prod ?_ ?_
-    · refine isOpen_set_pi ?_ ?_
-      exact Set.finite_univ
-      exact fun _ _ ↦ isOpen_Ioi
-    · refine isOpen_set_pi ?_ ?_
-      exact Set.finite_univ
-      intro _ _
-      refine (OpenEmbedding.open_iff_image_open ?_).mp ?_
-      refine
-        { toEmbedding := ?_, isOpen_range := ?_ }
-      apply?
-      sorry
-      sorry
-  open_target := sorry
-  continuousOn_toFun := sorry
-  continuousOn_invFun := sorry
-
--- variable (K) in
--- def normVector : (E K) → (InfinitePlace K → ℝ) := fun x w ↦ normAtPlace w x
+def normVector : (E K) → (InfinitePlace K → ℝ) := fun x w ↦ normAtPlace w x
 
 theorem normVector_normAtRealPlaces_eq_normVector (x : E K) :
     normVector K (normVectorAtRealPlaces x) = normVector K x := by
@@ -259,7 +181,36 @@ theorem measurableSet_image_of_isNormStableAtComplexPlaces {s : Set (E K)} (hs�
         rw [Complex.norm_eq_abs, Complex.abs_ofReal, abs_of_nonneg]
         exact Complex.zero_le_real.mp (hx₂ _)
 
--- Define the partial homeo between the real subset of (E K) and the real space
+example {s : Set (E K)} (hs : isNormStable s) :
+    isNormStable (closure s) := by
+  rw [isNormStable_iff]
+  apply subset_antisymm
+  · exact Set.subset_preimage_image (normVector K) (closure s)
+  · intro x hx
+    obtain ⟨y, hy₁, hy₂⟩ := hx
+    refine mem_closure_iff_seq_limit.mpr ?_
+    obtain ⟨u, hu₁, hu₂⟩ := mem_closure_iff_seq_limit.mp hy₁
+    let v : ℕ → E K := by
+      intro n
+      refine ⟨fun w ↦ (x.1 w) * ((u n).1 w) * (y.1 w)⁻¹,
+        fun w ↦ (x.2 w) * ((u n).2 w) * (y.2 w)⁻¹⟩
+    simp_rw [Prod.tendsto_iff, tendsto_pi_nhds] at hu₂
+    refine ⟨v, ?_, ?_⟩
+    · intro n
+      
+
+      sorry
+    · dsimp only [v]
+      refine (Prod.tendsto_iff _ _).mpr ⟨?_, ?_⟩
+      · dsimp only
+        refine tendsto_pi_nhds.mpr ?_
+        intro w
+        have := hu₂.1 w
+
+        sorry
+      ·
+        sorry
+
 -- Prove that the closure and interior of a stable set is stable
 
 
