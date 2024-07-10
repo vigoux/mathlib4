@@ -534,6 +534,20 @@ theorem coe_mul (x y : S') : (↑(x * y) : M) = ↑x * ↑y :=
 #align mul_mem_class.coe_mul MulMemClass.coe_mul
 #align add_mem_class.coe_add AddMemClass.coe_add
 
+open Lean Name Elab Command
+run_cmd liftCoreM <| do
+  let d := `Mathlib.Algebra.Group.Subsemigroup.Operations._auxLemma
+  let d := d.num 7
+  let d2 := `Mathlib.Algebra.Group.Subsemigroup.Operations._auxAddLemma
+  let d2 := d2.num 7
+
+  let c := ToAdditive.findTranslation? (← getEnv) d
+  logInfo m!"{d}"
+  logInfo m!"{c}"
+  logInfo m!"{(← getEnv).find? d |>.isSome}"
+  logInfo m!"{d2}"
+  logInfo m!"{(← getEnv).find? d2 |>.isSome}"
+  return
 -- lower priority so later simp lemmas are used first; to appease simp_nf
 @[to_additive (attr := simp low)]
 theorem mk_mul_mk (x y : M) (hx : x ∈ S') (hy : y ∈ S') :

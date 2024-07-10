@@ -127,6 +127,8 @@ protected theorem expand (r : X) (s : S) (t : R) (hst : t * (s : R) ∈ S) :
   exact ⟨s, s * t, by rw [mul_smul, Submonoid.smul_def], by rw [← mul_assoc]⟩
 #align ore_localization.expand OreLocalization.expand
 
+
+
 /-- A fraction is equal to its expansion by a factor from `S`. -/
 @[to_additive "A difference is equal to its expansion by a summand from `S`."]
 protected theorem expand' (r : X) (s s' : S) : r /ₒ s = s' • r /ₒ (s' * s) :=

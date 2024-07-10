@@ -1173,6 +1173,10 @@ partial def applyAttributes (stx : Syntax) (rawAttrs : Array Syntax) (thisAttr s
       additivizeLemmas allDecls "simp lemmas"
         (Meta.Simp.addSimpAttrFromSyntax · simpExtension attr.kind attr.stx)
       return
+    if attr.name == `norm_cast then
+      additivizeLemmas allDecls "norm_cast lemmas"
+        (Meta.NormCast.addNormCastAttrFromSyntax · attr.kind attr.stx)
+      return
     if attr.name == `simps then
       additivizeLemmas allDecls "simps lemmas" (simpsTacFromSyntax · attr.stx)
       return
