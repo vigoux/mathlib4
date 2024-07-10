@@ -854,7 +854,7 @@ def additivizeLemmas [Monad m] [MonadError m] [MonadLiftT CoreM m]
       throwError "{names[0]!} and {nm} do not generate the same number of {desc}."
   for (srcLemmas, tgtLemmas) in auxLemmas.zip <| auxLemmas.eraseIdx 0 do
     for (srcLemma, tgtLemma) in srcLemmas.zip tgtLemmas do
-      insertTranslation srcLemma tgtLemma
+      insertTranslation srcLemma tgtLemma false
 
 /--
 Find the first argument of `nm` that has a multiplicative type-class on it.
