@@ -157,3 +157,8 @@ theorem finrank_mul_regulator_eq_det (w' : InfinitePlace K) (e : {w // w ≠ w'}
     prod_eq_abs_norm,
     Units.norm, Rat.cast_one, Real.log_one, ← Nat.cast_sum, sum_mult_eq, dite_eq_ite,
     Matrix.of_apply]
+
+end Units
+
+end NumberField
+
