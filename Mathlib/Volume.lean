@@ -5,17 +5,167 @@ variable (K : Type*) [Field K] [NumberField K]
 open NumberField NumberField.InfinitePlace NumberField.mixedEmbedding MeasureTheory Finset
   NumberField.Units NumberField.Units.dirichletUnitTheorem FiniteDimensional MeasureTheory.Measure
 
-open scoped Real ENNReal
+open scoped Real ENNReal ComplexOrder Classical
 
 namespace NumberField.mixedEmbedding.fundamentalCone
-
-open Classical
 
 noncomputable section
 
 /-- The space `ℝ^r₁ × ℂ^r₂` with `(r₁, r₂)` the signature of `K`. -/
 local notation "E" K =>
   ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℂ)
+
+abbrev realEmbedding : (InfinitePlace K → ℝ) → (E K) := fun x ↦ ⟨fun w ↦ x w.val, fun w ↦ x w.val⟩
+
+theorem continuous_realEmbedding :
+    Continuous (realEmbedding K) :=
+  Continuous.prod_mk (continuous_pi fun w ↦ continuous_apply w.val)
+      (continuous_pi fun w ↦ Continuous.comp' Complex.continuous_ofReal (continuous_apply w.val))
+
+theorem injective_realEmbedding :
+    Function.Injective (realEmbedding K) := sorry
+
+def normVector : (E K) → (InfinitePlace K → ℝ) := fun x w ↦ normAtPlace w x
+
+theorem normVector_realEmbedding {x : InfinitePlace K → ℝ} (hx : ∀ w, 0 ≤ x w) :
+    normVector K (realEmbedding K x) = x := by
+  ext
+  simp [realEmbedding, normVector]
+  sorry
+
+variable {K}
+
+def isNormStableAtRealPlaces (s : Set (E K)) : Prop :=
+    ∀ x, x ∈ s ↔ ⟨fun w ↦ ‖x.1 w‖, x.2⟩ ∈ s
+
+def isNormStableAtComplexPlaces (s : Set (E K)) : Prop :=
+    ∀ x, x ∈ s ↔ ⟨x.1, fun w ↦ ‖x.2 w‖⟩ ∈ s
+
+def isNormStable (s : Set (E K)) : Prop :=
+    isNormStableAtRealPlaces s ∧ isNormStableAtComplexPlaces s
+
+theorem realEmbedding_normVector_eq {s : Set (E K)} (hs : isNormStable s) {x : E K} (hx : x ∈ s) :
+    realEmbedding K (normVector K x) ∈ s := by
+  simp_rw [realEmbedding, normVector, normAtPlace_apply_isReal (Subtype.prop _),
+    normAtPlace_apply_isComplex (Subtype.prop _)]
+  rwa [← hs.1 ⟨x.1, fun w ↦ ‖x.2 w‖⟩, ← hs.2]
+
+example (s : Set (E K)) (hs : isNormStable s) :
+    closure (normVector K '' s) = normVector K '' (closure s) := by
+  apply superset_antisymm
+  · refine ContinuousOn.image_closure ?_
+    refine Continuous.continuousOn ?_
+    sorry
+  · intro x hx
+    have h₀ : ∀ w, 0 ≤ x w := by
+      have t₀ : normVector K '' s ⊆ {x | ∀ w, 0 ≤ x w} := sorry
+      have t₁ := closure_mono t₀
+      have t₂ : IsClosed {x : InfinitePlace K → ℝ | ∀ w, 0 ≤ x w} := by
+        convert_to IsClosed (⋂ w, {x : InfinitePlace K → ℝ | 0 ≤ x w})
+        · ext; simp
+        · refine isClosed_iInter fun w ↦ ?_
+          refine isClosed_le ?_ ?_
+          exact continuous_const
+          exact continuous_apply w
+      rw [closure_eq_iff_isClosed.mpr t₂] at t₁
+      intro w
+      exact t₁ hx w
+    rw [mem_closure_iff_seq_limit] at hx
+    obtain ⟨u, hu₁, hu₂⟩ := hx
+    have h₁ : ∀ n, realEmbedding K (u n) ∈ s := by
+      intro n
+      obtain ⟨y, hy₁, hy₂⟩ := hu₁ n
+      rw [← hy₂]
+      refine realEmbedding_normVector_eq hs hy₁
+    have h₂ : Filter.Tendsto (realEmbedding K ∘ u) Filter.atTop (nhds (realEmbedding K x)) := by
+      refine Filter.Tendsto.comp ?_ hu₂
+      refine Continuous.continuousAt ?_
+      sorry
+    refine ⟨realEmbedding K x, ?_, ?_⟩
+    · rw [mem_closure_iff_seq_limit]
+      refine ⟨?_, ?_, ?_⟩
+      · exact realEmbedding K ∘ u
+      · exact h₁
+      · exact h₂
+    · refine normVector_realEmbedding K ?_
+      exact fun w ↦ h₀ w
+
+example (s : Set (E K)) (hs : isNormStable s) :
+    interior (normVector K '' s) = normVector K '' (interior s) := by
+  apply superset_antisymm
+  · -- We don't really care about that direction
+    intro x hx
+    refine mem_interior.mpr ?_
+    obtain ⟨y, hy₁, rfl⟩ := hx
+    rw [mem_interior] at hy₁
+    obtain ⟨t, ht₁, ht₂, ht₃⟩ := hy₁
+    refine ⟨realEmbedding K ⁻¹' t, ?_, ?_, ?_⟩
+    · sorry
+    · refine IsOpen.preimage ?_ ht₂
+      exact continuous_realEmbedding K
+    · -- Not true
+      sorry
+  · 
+    sorry
+
+
+#exit
+
+
+theorem closedEmbedding_realEmbedding : ClosedEmbedding (realEmbedding K) := sorry
+
+abbrev X := normLessThanOne K
+
+variable {K}
+
+def isNormStableAtRealPlaces (s : Set (E K)) : Prop :=
+    ∀ x, x ∈ s ↔ ⟨fun w ↦ ‖x.1 w‖, x.2⟩ ∈ s
+
+def isNormStableAtComplexPlaces (s : Set (E K)) : Prop :=
+    ∀ x, x ∈ s ↔ ⟨x.1, fun w ↦ ‖x.2 w‖⟩ ∈ s
+
+def isNormStable (s : Set (E K)) : Prop :=
+    isNormStableAtRealPlaces s ∧ isNormStableAtComplexPlaces s
+
+theorem volume_eq_of_isNormStable (s : Set (E K))
+    (hs₀ : MeasurableSet s) (hs₁ : isNormStable s) :
+    volume s = 2 ^ NrRealPlaces K * (2 * NNReal.pi) ^ NrComplexPlaces K *
+      ∫⁻ x in (realEmbedding K⁻¹' s ∩ {x | ∀ w, 0 < x w}),
+        (∏ w : {w // IsComplex w}, (x w.val).toNNReal) := by
+  sorry
+
+def equivFinRank : {w : InfinitePlace K // w ≠ w₀} ≃ Fin (rank K) :=
+  Fintype.equivOfCardEq
+    (by rw [Fintype.card_subtype_compl, Fintype.card_ofSubsingleton, Fintype.card_fin, rank])
+
+def mapToUnitsPow₀ (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) : InfinitePlace K → ℝ :=
+  fun w ↦ ∏ i, w (fundSystem K (equivFinRank i)) ^ (c i)
+
+variable (K)
+
+def semiOpenUnitBox : Set (InfinitePlace K → ℝ) :=
+  Set.univ.pi fun w ↦ if w = w₀ then Set.Ioc 0 1 else Set.Ico 0 1
+
+def mapToUnitsPow : PartialHomeomorph (InfinitePlace K → ℝ) (InfinitePlace K → ℝ) where
+  toFun := fun c ↦ |c w₀| ^ (finrank ℚ K : ℝ)⁻¹ • mapToUnitsPow₀ (fun w ↦ c w)
+  invFun := sorry
+  source := Set.univ.pi fun w ↦ if w = w₀ then Set.Ioi 0 else Set.univ
+  target := Set.univ.pi fun _ ↦ Set.Ioi 0
+
+theorem image_semiOpenUnitBox :
+    mapToUnitsPow K '' (semiOpenUnitBox K) = realEmbedding K⁻¹' (X K) := sorry
+
+example : realEmbedding K ⁻¹' (closure (X K)) ⊆
+    mapToUnitsPow K '' (closure (semiOpenUnitBox K)) := by
+  have := ClosedEmbedding.closure_image_eq (closedEmbedding_realEmbedding K)
+    (realEmbedding K ⁻¹' (X K))
+  have := Continuous.closure_preimage_subset (continuous_realEmbedding K) (X K)
+
+  sorry
+
+#exit
+
+-- theorem uniformEmbedding_realEmbedding : UniformEmbedding (realEmbedding K) := sorry
 
 variable {K}
 
@@ -70,7 +220,7 @@ theorem isNormStableAtComplexPlaces_iff {s : Set (E K)} :
     rwa [h]
   · rw [h, Set.mem_preimage, Set.mem_preimage, normVectorAtComplexPlaces_idem]
 
-open scoped ComplexOrder
+
 
 variable (K) in
 def normVector : (E K) → (InfinitePlace K → ℝ) := fun x w ↦ normAtPlace w x
@@ -197,7 +347,7 @@ example {s : Set (E K)} (hs : isNormStable s) :
     simp_rw [Prod.tendsto_iff, tendsto_pi_nhds] at hu₂
     refine ⟨v, ?_, ?_⟩
     · intro n
-      
+
 
       sorry
     · dsimp only [v]

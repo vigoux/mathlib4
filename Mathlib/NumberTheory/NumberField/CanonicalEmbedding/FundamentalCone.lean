@@ -452,6 +452,8 @@ theorem measurableSet_normLessThanOne :
   MeasurableSet.inter (measurableSet K) <|
     measurableSet_le (mixedEmbedding.continuous_norm K).measurable measurable_const
 
+#exit
+
 -- To prove that the frontier of `X` is of measure zero?
 -- MeasureTheory.addHaar_image_eq_zero_of_differentiableOn_of_addHaar_eq_zero
 

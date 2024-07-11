@@ -2,6 +2,14 @@ import Mathlib.Analysis.SpecialFunctions.PolarCoord
 import Mathlib.MeasureTheory.Constructions.Pi
 import Mathlib.MeasureTheory.Measure.Haar.Unique
 
+theorem Complex.dist_induced (x y : ℝ) :
+    dist (x : ℂ) (y : ℂ) = dist x y := by
+  rw [Complex.dist_of_im_eq (by rfl), Complex.ofReal_re, Complex.ofReal_re]
+
+theorem Complex.ofReal_uniformEmbedding : UniformEmbedding (Complex.ofReal) := by
+  simp_rw [Metric.uniformEmbedding_iff', Complex.ofReal_eq_coe, Complex.dist_induced, and_self]
+  exact fun ε hε ↦ ⟨ε, hε, fun h ↦ h⟩
+
 section Topo
 
 open Set
