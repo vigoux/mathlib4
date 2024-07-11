@@ -487,8 +487,9 @@ lemma appLE_eq_away_map {X Y : Scheme.{u}} (f : X ⟶ Y) {U : Opens Y} (hU : IsA
   letI := hV.isLocalization_basicOpen (f.appLE U V e r)
   apply IsLocalization.ringHom_ext (.powers r)
   rw [← CommRingCat.comp_eq_ring_hom_comp, IsLocalization.Away.map, IsLocalization.map_comp,
-    RingHom.algebraMap_toAlgebra, RingHom.algebraMap_toAlgebra, ← CommRingCat.comp_eq_ring_hom_comp,
-    Scheme.Hom.appLE_map, Scheme.Hom.map_appLE]
+    RingHom.algebraMap_toAlgebra, RingHom.algebraMap_toAlgebra]
+  simp only [← CommRingCat.comp_eq_ring_hom_comp, Scheme.Hom.appLE_map,
+    Scheme.Hom.map_appLE]
 
 theorem isLocalization_of_eq_basicOpen {V : Opens X} (i : V ⟶ U) (e : V = X.basicOpen f) :
     @IsLocalization.Away _ _ f Γ(X, V) _ (X.presheaf.map i.op).toAlgebra := by
