@@ -930,6 +930,9 @@ def ofSubsingletonₗ [Subsingleton ι] (i : ι) :
 
 end OfSubsingleton
 
+#adaptation_note
+/-- After https://github.com/leanprover/lean4/pull/4595 this requires more heartbeats. -/
+set_option maxHeartbeats 400000 in
 /-- The dependent version of `MultilinearMap.domDomCongrLinearEquiv`. -/
 @[simps apply symm_apply]
 def domDomCongrLinearEquiv' {ι' : Type*} (σ : ι ≃ ι') :

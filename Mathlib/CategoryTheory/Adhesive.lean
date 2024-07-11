@@ -125,8 +125,7 @@ theorem is_coprod_iff_isPushout {X E Y YE : C} (c : BinaryCofan X E) (hc : IsCol
       · rw [← Category.assoc]; exact h.fac _ ⟨WalkingPair.left⟩
     · intro m e₁ e₂
       apply BinaryCofan.IsColimit.hom_ext h
-      · dsimp only [BinaryCofan.mk, id] -- Porting note: Originally `dsimp`
-        rw [Category.assoc, e₂, eq_comm]; exact h.fac _ ⟨WalkingPair.left⟩
+      · erw [Category.assoc, e₂, eq_comm]; exact h.fac _ ⟨WalkingPair.left⟩
       · refine e₁.trans (Eq.symm ?_); exact h.fac _ _
   · refine fun H => ⟨?_⟩
     fapply Limits.BinaryCofan.isColimitMk

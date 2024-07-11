@@ -99,6 +99,9 @@ def functorExtension₁ : (C ⥤ Karoubi D) ⥤ Karoubi C ⥤ Karoubi D where
     simp only [assoc]
 #align category_theory.idempotents.functor_extension₁ CategoryTheory.Idempotents.functorExtension₁
 
+#adaptation_note
+/-- After https://github.com/leanprover/lean4/pull/4595 this requires more heartbeats. -/
+set_option maxHeartbeats 400000 in
 /-- The natural isomorphism expressing that functors `Karoubi C ⥤ Karoubi D` obtained
 using `functorExtension₁` actually extends the original functors `C ⥤ Karoubi D`. -/
 @[simps!]
@@ -178,6 +181,9 @@ def functorExtension₂ : (C ⥤ D) ⥤ Karoubi C ⥤ Karoubi D :=
   (whiskeringRight C D (Karoubi D)).obj (toKaroubi D) ⋙ functorExtension₁ C D
 #align category_theory.idempotents.functor_extension₂ CategoryTheory.Idempotents.functorExtension₂
 
+#adaptation_note
+/-- After https://github.com/leanprover/lean4/pull/4595 this requires more heartbeats. -/
+set_option maxHeartbeats 800000 in
 /-- The natural isomorphism expressing that functors `Karoubi C ⥤ Karoubi D` obtained
 using `functorExtension₂` actually extends the original functors `C ⥤ D`. -/
 @[simps!]

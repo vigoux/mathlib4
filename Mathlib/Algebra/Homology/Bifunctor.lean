@@ -68,10 +68,12 @@ def mapBifunctorHomologicalComplexObj (K₁ : HomologicalComplex C₁ c₁) :
   map_id K₂ := by dsimp; ext; dsimp; rw [Functor.map_id]
   map_comp f g := by dsimp; ext; dsimp; rw [Functor.map_comp]
 
+#adaptation_note
+/-- After https://github.com/leanprover/lean4/pull/4595 this requires more heartbeats. -/
+set_option maxHeartbeats 3200000 in
 /-- Given a functor `F : C₁ ⥤ C₂ ⥤ D`, this is the bifunctor which sends
 `K₁ : HomologicalComplex C₁ c₁` and `K₂ : HomologicalComplex C₂ c₂` to the bicomplex
 which is degree `(i₁, i₂)` consists of `(F.obj (K₁.X i₁)).obj (K₂.X i₂)`. -/
-@[simps! obj_obj_X_X obj_obj_X_d obj_obj_d_f obj_map_f_f map_app_f_f]
 def mapBifunctorHomologicalComplex :
     HomologicalComplex C₁ c₁ ⥤ HomologicalComplex C₂ c₂ ⥤ HomologicalComplex₂ D c₁ c₂ where
   obj := mapBifunctorHomologicalComplexObj F c₂
@@ -81,6 +83,9 @@ def mapBifunctorHomologicalComplex :
           intros
           dsimp
           simp only [← NatTrans.comp_app, ← F.map_comp, f.comm]) (by simp) }
+
+attribute [simps! obj_obj_X_X obj_obj_X_d obj_obj_d_f obj_map_f_f map_app_f_f]
+  mapBifunctorHomologicalComplex
 
 variable {c₁ c₂}
 

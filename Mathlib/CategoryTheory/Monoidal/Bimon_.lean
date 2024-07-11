@@ -68,6 +68,9 @@ def toComon_ : Bimon_ C ⥤ Comon_ C := (Mon_.forgetMonoidal C).toOplaxMonoidalF
 @[simp]
 theorem toComon_forget : toComon_ C ⋙ Comon_.forget C = forget C := rfl
 
+#adaptation_note
+/-- After https://github.com/leanprover/lean4/pull/4595 this requires more heartbeats. -/
+set_option maxHeartbeats 400000 in
 /-- The object level part of the forward direction of `Comon_ (Mon_ C) ≌ Mon_ (Comon_ C)` -/
 def toMon_Comon_obj (M : Bimon_ C) : Mon_ (Comon_ C) where
   X := (toComon_ C).obj M
@@ -94,6 +97,9 @@ def ofMon_Comon_obj (M : Mon_ (Comon_ C)) : Bimon_ C where
   { hom := M.X.comul,
     mul_hom := by dsimp; simp [tensor_μ] }
 
+#adaptation_note
+/-- After https://github.com/leanprover/lean4/pull/4595 this requires more heartbeats. -/
+set_option maxHeartbeats 400000 in
 /-- The backward direction of `Comon_ (Mon_ C) ≌ Mon_ (Comon_ C)` -/
 @[simps]
 def ofMon_Comon_ : Mon_ (Comon_ C) ⥤ Bimon_ C where

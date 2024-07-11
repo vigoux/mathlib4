@@ -915,6 +915,9 @@ def Cone.unop (c : Cone F.op) : Cocone F where
 
 variable (F)
 
+#adaptation_note
+/-- After https://github.com/leanprover/lean4/pull/4595 this requires more heartbeats. -/
+set_option maxHeartbeats 400000 in
 /-- The category of cocones on `F`
 is equivalent to the opposite category of
 the category of cones on the opposite of `F`.

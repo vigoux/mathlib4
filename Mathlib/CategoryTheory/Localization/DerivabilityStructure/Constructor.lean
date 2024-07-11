@@ -50,6 +50,9 @@ namespace Constructor
 variable {D : Type*} [Category D] (L : C₂ ⥤ D) [L.IsLocalization W₂]
   {X₂ : C₂} {X₃ : D} (y : L.obj X₂ ⟶ X₃)
 
+#adaptation_note
+/-- After https://github.com/leanprover/lean4/pull/4595 this requires more heartbeats. -/
+set_option maxHeartbeats 400000 in
 /-- Given `Φ : LocalizerMorphism W₁ W₂`, `L : C₂ ⥤ D` a localization functor for `W₂` and
 a morphism `y : L.obj X₂ ⟶ X₃`, this is the functor which sends `R : Φ.RightResolution d` to
 `(isoOfHom L W₂ R.w R.hw).inv ≫ y` in the category `w.CostructuredArrowDownwards y`

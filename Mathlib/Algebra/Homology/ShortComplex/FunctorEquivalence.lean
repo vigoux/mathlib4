@@ -45,6 +45,9 @@ def inverse : (J ⥤ ShortComplex C) ⥤ ShortComplex (J ⥤ C) where
   map φ := Hom.mk (whiskerRight φ π₁) (whiskerRight φ π₂) (whiskerRight φ π₃)
     (by aesop_cat) (by aesop_cat)
 
+#adaptation_note
+/-- After https://github.com/leanprover/lean4/pull/4595 this requires more heartbeats. -/
+set_option maxHeartbeats 800000 in
 /-- The unit isomorphism of the equivalence
 `ShortComplex.functorEquivalence : ShortComplex (J ⥤ C) ≌ J ⥤ ShortComplex C`. -/
 @[simps!]
@@ -55,6 +58,9 @@ def unitIso : 𝟭 _ ≅ functor J C ⋙ inverse J C :=
     (NatIso.ofComponents (fun _ => Iso.refl _) (by aesop_cat))
     (by aesop_cat) (by aesop_cat)) (by aesop_cat)
 
+#adaptation_note
+/-- After https://github.com/leanprover/lean4/pull/4595 this requires more heartbeats. -/
+set_option maxHeartbeats 1600000 in
 /-- The counit isomorphism of the equivalence
 `ShortComplex.functorEquivalence : ShortComplex (J ⥤ C) ≌ J ⥤ ShortComplex C`. -/
 @[simps!]

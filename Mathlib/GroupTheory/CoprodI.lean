@@ -554,11 +554,30 @@ theorem mem_smul_iff {i j : ι} {m₁ : M i} {m₂ : M j} {w : Word M} :
         (w.fstIdx ≠ some j ∧ m₁ = hij ▸ m₂)) := by
   rw [of_smul_def, mem_rcons_iff, mem_equivPair_tail_iff, equivPair_head, or_assoc]
   by_cases hij : i = j
+  #adaptation_note
+  /--
+  After https://github.com/leanprover/lean4/pull/4595,
+  for some reason `simp only [ne_eq]` hits the max recursion depth.
+  I've carefully worked around this using `rw`, but we need to understand what is going on.
+  -/
   · subst i
-    simp only [not_true, ne_eq, false_and, exists_prop, true_and, false_or]
+    -- Next three lines were just:
+    -- simp only [not_true, ne_eq, false_and, exists_prop, true_and, false_or]
+    simp_rw [not_true]
+    rw [ne_eq]
+    simp_rw [false_and, exists_prop, true_and, false_or, not_true, false_and, false_or]
     by_cases hw : ⟨j, m₁⟩ ∈ w.toList.tail
-    · simp [hw, show m₁ ≠ 1 from w.ne_one _ (List.mem_of_mem_tail hw)]
-    · simp only [hw, false_or, Option.mem_def, ne_eq, and_congr_right_iff]
+    · -- This branch was just:
+      -- simp [hw, show m₁ ≠ 1 from w.ne_one _ (List.mem_of_mem_tail hw)]
+      simp_rw [hw]
+      rw [ne_eq]
+      simp_rw [show m₁ ≠ 1 from w.ne_one _ (List.mem_of_mem_tail hw),
+        not_false_eq_true, true_and, true_or]
+    · -- Next three lines were just:
+      -- simp only [hw, false_or, Option.mem_def, ne_eq, and_congr_right_iff]
+      simp_rw [hw, false_or, Option.mem_def]
+      rw [ne_eq]
+      simp_rw [and_congr_right_iff]
       intro hm1
       split_ifs with h
       · rcases h with ⟨hnil, rfl⟩

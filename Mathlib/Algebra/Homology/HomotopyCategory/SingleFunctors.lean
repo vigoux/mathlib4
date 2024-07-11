@@ -28,6 +28,9 @@ namespace CochainComplex
 
 open HomologicalComplex
 
+#adaptation_note
+/-- After https://github.com/leanprover/lean4/pull/4595 this requires more heartbeats. -/
+set_option maxHeartbeats 400000 in
 /-- The collection of all single functors `C ⥤ CochainComplex C ℤ` along with
 their compatibilites with shifts. (This definition has purposely no `simps`
 attribute, as the generated lemmas would not be very useful.) -/
