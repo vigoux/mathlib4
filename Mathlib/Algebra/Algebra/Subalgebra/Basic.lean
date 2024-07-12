@@ -202,9 +202,8 @@ protected theorem intCast_mem {R : Type u} {A : Type v} [CommRing R] [Ring A] [A
   intCast_mem S n
 #align subalgebra.coe_int_mem Subalgebra.intCast_mem
 
--- 2024-04-05
-@[deprecated natCast_mem] alias coe_nat_mem := Subalgebra.natCast_mem
-@[deprecated intCast_mem] alias coe_int_mem := Subalgebra.intCast_mem
+@[deprecated natCast_mem (since := "2024-04-05")] alias coe_nat_mem := Subalgebra.natCast_mem
+@[deprecated intCast_mem (since := "2024-04-05")] alias coe_int_mem := Subalgebra.intCast_mem
 
 /-- The projection from a subalgebra of `A` to an additive submonoid of `A`. -/
 def toAddSubmonoid {R : Type u} {A : Type v} [CommSemiring R] [Semiring A] [Algebra R A]
@@ -658,9 +657,9 @@ def equalizer (ϕ ψ : A →ₐ[R] B) : Subalgebra R A where
   zero_mem' := by simp only [Set.mem_setOf_eq, map_zero]
   one_mem' := by simp only [Set.mem_setOf_eq, map_one]
   add_mem' {x y} (hx : ϕ x = ψ x) (hy : ϕ y = ψ y) := by
-    rw [Set.mem_setOf_eq, ϕ.map_add, ψ.map_add, hx, hy]
+    rw [Set.mem_setOf_eq, map_add, map_add, hx, hy]
   mul_mem' {x y} (hx : ϕ x = ψ x) (hy : ϕ y = ψ y) := by
-    rw [Set.mem_setOf_eq, ϕ.map_mul, ψ.map_mul, hx, hy]
+    rw [Set.mem_setOf_eq, map_mul, map_mul, hx, hy]
   algebraMap_mem' x := by rw [Set.mem_setOf_eq, AlgHom.commutes, AlgHom.commutes]
 #align alg_hom.equalizer AlgHom.equalizer
 
@@ -752,7 +751,7 @@ def adjoin (s : Set A) : Subalgebra R A :=
 variable {R}
 
 protected theorem gc : GaloisConnection (adjoin R : Set A → Subalgebra R A) (↑) := fun s S =>
-  ⟨fun H => le_trans (le_trans (Set.subset_union_right _ _) Subsemiring.subset_closure) H,
+  ⟨fun H => le_trans (le_trans Set.subset_union_right Subsemiring.subset_closure) H,
    fun H => show Subsemiring.closure (Set.range (algebraMap R A) ∪ s) ≤ S.toSubsemiring from
       Subsemiring.closure_le.2 <| Set.union_subset S.range_subset H⟩
 #align algebra.gc Algebra.gc

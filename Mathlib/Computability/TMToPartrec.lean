@@ -25,6 +25,7 @@ Turing machine for evaluating these functions. This amounts to a constructive pr
 * `PartrecToTM2.tr`: A TM2 turing machine which can evaluate `code` programs
 -/
 
+open Mathlib (Vector)
 
 open Function (update)
 
@@ -1777,7 +1778,7 @@ def codeSupp' : Code → Cont' → Finset Λ'
 
 @[simp]
 theorem codeSupp'_self (c k) : trStmts₁ (trNormal c k) ⊆ codeSupp' c k := by
-  cases c <;> first |rfl|exact Finset.subset_union_left _ _
+  cases c <;> first | rfl | exact Finset.union_subset_left (fun _ a ↦ a)
 #align turing.partrec_to_TM2.code_supp'_self Turing.PartrecToTM2.codeSupp'_self
 
 /-- The (finite!) set of machine states visited during the course of evaluation of a continuation
@@ -1805,7 +1806,7 @@ def codeSupp (c : Code) (k : Cont') : Finset Λ' :=
 
 @[simp]
 theorem codeSupp_self (c k) : trStmts₁ (trNormal c k) ⊆ codeSupp c k :=
-  Finset.Subset.trans (codeSupp'_self _ _) (Finset.subset_union_left _ _)
+  Finset.Subset.trans (codeSupp'_self _ _) (Finset.union_subset_left fun _ a ↦ a)
 #align turing.partrec_to_TM2.code_supp_self Turing.PartrecToTM2.codeSupp_self
 
 @[simp]

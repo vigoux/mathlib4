@@ -41,10 +41,13 @@ ways to move between tuples of length `n` and of length `n + 1` by adding/removi
 ### Adding at the end
 
 * `Fin.castSucc`: Send `i : Fin n` to `i : Fin (n + 1)`. This is defined in Core.
-* **There is currently no equivalent of `Fin.cases`/`Fin.succAboveCases` for adding at the end.**
+* `Fin.lastCases`: Induction/recursion principle for `Fin`: To prove a property/define a function
+  for all `Fin (n + 1)`, it is enough to prove/define it for `last n` and for `i.castSucc` for all
+  `i : Fin n`. This is defined in Core.
 * `Fin.snoc`: Turn a tuple `f : Fin n → α` and an entry `a : α` into a tuple
   `Fin.snoc f a : Fin (n + 1) → α` by adding `a` at the end. In general, tuples can be dependent
-  functions, in which case `f : ∀ i : Fin n, α i.castSucc` and `a : α (last n)`.
+  functions, in which case `f : ∀ i : Fin n, α i.castSucc` and `a : α (last n)`. This is a
+  special case of `Fin.lastCases`.
 * `Fin.init`: Turn a tuple `f : Fin (n + 1) → α` into a tuple `Fin.init f : Fin n → α` by forgetting
   the start. In general, tuples can be dependent functions,
   in which case `Fin.init f : ∀ i : Fin n, α i.castSucc`.
@@ -62,7 +65,9 @@ For a **pivot** `p : Fin (n + 1)`,
   `Fin.insertNth f a : Fin (n + 1) → α` by adding `a` in position `p`. In general, tuples can be
   dependent functions, in which case `f : ∀ i : Fin n, α (p.succAbove i)` and `a : α p`. This is a
   special case of `Fin.succAboveCases`.
-* **There is currently no equivalent of `Fin.tail`/`Fin.init` for adding in the middle.**
+* `Fin.removeNth`: Turn a tuple `f : Fin (n + 1) → α` into a tuple `Fin.removeNth p f : Fin n → α`
+  by forgetting the `p`-th value. In general, tuples can be dependent functions,
+  in which case `Fin.removeNth f : ∀ i : Fin n, α (succAbove p i)`.
 
 `p = 0` means we add at the start. `p = last n` means we add at the end.
 
@@ -804,8 +809,7 @@ theorem forall_iff_succAbove {p : Fin (n + 1) → Prop} (i : Fin (n + 1)) :
 #align fin.forall_iff_succ_above Fin.forall_iff_succAbove
 
 /-- Remove the `p`-th entry of a tuple. -/
-def removeNth (p : Fin (n + 1)) (f : ∀ i, α i) : ∀ i, α (p.succAbove i) :=
-  fun i ↦ f (p.succAbove i)
+def removeNth (p : Fin (n + 1)) (f : ∀ i, α i) : ∀ i, α (p.succAbove i) := fun i ↦ f (p.succAbove i)
 
 /-- Insert an element into a tuple at a given position. For `i = 0` see `Fin.cons`,
 for `i = Fin.last n` see `Fin.snoc`. See also `Fin.succAboveCases` for a version elaborated
@@ -1024,9 +1028,21 @@ theorem preimage_insertNth_Icc_of_not_mem {i : Fin (n + 1)} {x : α i} {q₁ q�
     simp only [mem_preimage, insertNth_mem_Icc, hx, false_and_iff, mem_empty_iff_false]
 #align fin.preimage_insert_nth_Icc_of_not_mem Fin.preimage_insertNth_Icc_of_not_mem
 
-@[simp]
-theorem insertNth_self_removeNth (p : Fin (n + 1)) (f : ∀ j, α j) :
-    insertNth p (f p) (removeNth p f) = f := by simp [Fin.insertNth_eq_iff]
+@[simp] lemma removeNth_update (p : Fin (n + 1)) (x) (f : ∀ j, α j) :
+    removeNth p (update f p x) = removeNth p f := by ext i; simp [removeNth, succAbove_ne]
+
+@[simp] lemma insertNth_removeNth (p : Fin (n + 1)) (x) (f : ∀ j, α j) :
+    insertNth p x (removeNth p f) = update f p x := by simp [Fin.insertNth_eq_iff]
+
+lemma insertNth_self_removeNth (p : Fin (n + 1)) (f : ∀ j, α j) :
+    insertNth p (f p) (removeNth p f) = f := by simp
+
+/-- Separates an `n+1`-tuple, returning a selected index and then the rest of the tuple.
+Functional form of `Equiv.piFinSuccAbove`. -/
+@[deprecated removeNth (since := "2024-06-19")]
+def extractNth (i : Fin (n + 1)) (f : (∀ j, α j)) :
+    α i × ∀ j, α (i.succAbove j) :=
+  (f i, removeNth i f)
 
 end InsertNth
 

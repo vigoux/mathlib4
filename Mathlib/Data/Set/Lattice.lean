@@ -1285,6 +1285,8 @@ theorem Sigma.univ (X : α → Type*) : (Set.univ : Set (Σa, X a)) = ⋃ a, ran
 alias sUnion_mono := sUnion_subset_sUnion
 #align set.sUnion_mono Set.sUnion_mono
 
+alias sInter_mono := sInter_subset_sInter
+
 theorem iUnion_subset_iUnion_const {s : Set α} (h : ι → ι₂) : ⋃ _ : ι, s ⊆ ⋃ _ : ι₂, s :=
   iSup_const_mono (α := Set α) h
 #align set.Union_subset_Union_const Set.iUnion_subset_iUnion_const
@@ -1555,7 +1557,7 @@ theorem image_iInter {f : α → β} (hf : Bijective f) (s : ι → Set α) :
     (f '' ⋂ i, s i) = ⋂ i, f '' s i := by
   cases isEmpty_or_nonempty ι
   · simp_rw [iInter_of_empty, image_univ_of_surjective hf.surjective]
-  · exact (hf.injective.injOn _).image_iInter_eq
+  · exact hf.injective.injOn.image_iInter_eq
 #align set.image_Inter Set.image_iInter
 
 /- ./././Mathport/Syntax/Translate/Expr.lean:107:6: warning: expanding binder group (i j) -/

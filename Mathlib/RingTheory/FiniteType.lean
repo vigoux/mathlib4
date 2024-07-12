@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Johan Commelin
 -/
 import Mathlib.Algebra.FreeAlgebra
-import Mathlib.Algebra.Polynomial.Module.Basic
 import Mathlib.GroupTheory.Finiteness
 import Mathlib.RingTheory.Adjoin.Tower
 import Mathlib.RingTheory.Finiteness
@@ -23,9 +22,6 @@ In this file we define a notion of finiteness that is common in commutative alge
   all of these express that some object is finitely generated *as algebra* over some base ring.
 
 -/
-
-set_option autoImplicit true
-
 
 open Function (Surjective)
 
@@ -461,17 +457,17 @@ theorem mvPolynomial_aeval_of_surjective_of_closure [AddCommMonoid M] [CommSemir
   · have : m ∈ closure S := hS.symm ▸ mem_top _
     refine AddSubmonoid.closure_induction this (fun m hm => ?_) ?_ ?_
     · exact ⟨MvPolynomial.X ⟨m, hm⟩, MvPolynomial.aeval_X _ _⟩
-    · exact ⟨1, AlgHom.map_one _⟩
+    · exact ⟨1, map_one _⟩
     · rintro m₁ m₂ ⟨P₁, hP₁⟩ ⟨P₂, hP₂⟩
       exact
         ⟨P₁ * P₂, by
-          rw [AlgHom.map_mul, hP₁, hP₂, of_apply, of_apply, of_apply, single_mul_single,
+          rw [map_mul, hP₁, hP₂, of_apply, of_apply, of_apply, single_mul_single,
             one_mul]; rfl⟩
   · rcases ihf with ⟨P, rfl⟩
     rcases ihg with ⟨Q, rfl⟩
-    exact ⟨P + Q, AlgHom.map_add _ _ _⟩
+    exact ⟨P + Q, map_add _ _ _⟩
   · rcases ih with ⟨P, rfl⟩
-    exact ⟨r • P, AlgHom.map_smul _ _ _⟩
+    exact ⟨r • P, map_smul _ _ _⟩
 #align add_monoid_algebra.mv_polynomial_aeval_of_surjective_of_closure AddMonoidAlgebra.mvPolynomial_aeval_of_surjective_of_closure
 
 variable [AddMonoid M]
@@ -487,17 +483,17 @@ theorem freeAlgebra_lift_of_surjective_of_closure [CommSemiring R] {S : Set M}
   · have : m ∈ closure S := hS.symm ▸ mem_top _
     refine AddSubmonoid.closure_induction this (fun m hm => ?_) ?_ ?_
     · exact ⟨FreeAlgebra.ι R ⟨m, hm⟩, FreeAlgebra.lift_ι_apply _ _⟩
-    · exact ⟨1, AlgHom.map_one _⟩
+    · exact ⟨1, map_one _⟩
     · rintro m₁ m₂ ⟨P₁, hP₁⟩ ⟨P₂, hP₂⟩
       exact
         ⟨P₁ * P₂, by
-          rw [AlgHom.map_mul, hP₁, hP₂, of_apply, of_apply, of_apply, single_mul_single,
+          rw [map_mul, hP₁, hP₂, of_apply, of_apply, of_apply, single_mul_single,
             one_mul]; rfl⟩
   · rcases ihf with ⟨P, rfl⟩
     rcases ihg with ⟨Q, rfl⟩
-    exact ⟨P + Q, AlgHom.map_add _ _ _⟩
+    exact ⟨P + Q, map_add _ _ _⟩
   · rcases ih with ⟨P, rfl⟩
-    exact ⟨r • P, AlgHom.map_smul _ _ _⟩
+    exact ⟨r • P, map_smul _ _ _⟩
 
 variable (R M)
 
@@ -640,15 +636,15 @@ theorem mvPolynomial_aeval_of_surjective_of_closure [CommMonoid M] [CommSemiring
   · have : m ∈ closure S := hS.symm ▸ mem_top _
     refine Submonoid.closure_induction this (fun m hm => ?_) ?_ ?_
     · exact ⟨MvPolynomial.X ⟨m, hm⟩, MvPolynomial.aeval_X _ _⟩
-    · exact ⟨1, AlgHom.map_one _⟩
+    · exact ⟨1, map_one _⟩
     · rintro m₁ m₂ ⟨P₁, hP₁⟩ ⟨P₂, hP₂⟩
       exact
         ⟨P₁ * P₂, by
-          rw [AlgHom.map_mul, hP₁, hP₂, of_apply, of_apply, of_apply, single_mul_single, one_mul]⟩
+          rw [map_mul, hP₁, hP₂, of_apply, of_apply, of_apply, single_mul_single, one_mul]⟩
   · rcases ihf with ⟨P, rfl⟩; rcases ihg with ⟨Q, rfl⟩
-    exact ⟨P + Q, AlgHom.map_add _ _ _⟩
+    exact ⟨P + Q, map_add _ _ _⟩
   · rcases ih with ⟨P, rfl⟩
-    exact ⟨r • P, AlgHom.map_smul _ _ _⟩
+    exact ⟨r • P, map_smul _ _ _⟩
 #align monoid_algebra.mv_polynomial_aeval_of_surjective_of_closure MonoidAlgebra.mvPolynomial_aeval_of_surjective_of_closure
 
 
@@ -665,16 +661,16 @@ theorem freeAlgebra_lift_of_surjective_of_closure [CommSemiring R] {S : Set M}
   · have : m ∈ closure S := hS.symm ▸ mem_top _
     refine Submonoid.closure_induction this (fun m hm => ?_) ?_ ?_
     · exact ⟨FreeAlgebra.ι R ⟨m, hm⟩, FreeAlgebra.lift_ι_apply _ _⟩
-    · exact ⟨1, AlgHom.map_one _⟩
+    · exact ⟨1, map_one _⟩
     · rintro m₁ m₂ ⟨P₁, hP₁⟩ ⟨P₂, hP₂⟩
       exact
         ⟨P₁ * P₂, by
-          rw [AlgHom.map_mul, hP₁, hP₂, of_apply, of_apply, of_apply, single_mul_single, one_mul]⟩
+          rw [map_mul, hP₁, hP₂, of_apply, of_apply, of_apply, single_mul_single, one_mul]⟩
   · rcases ihf with ⟨P, rfl⟩
     rcases ihg with ⟨Q, rfl⟩
-    exact ⟨P + Q, AlgHom.map_add _ _ _⟩
+    exact ⟨P + Q, map_add _ _ _⟩
   · rcases ih with ⟨P, rfl⟩
-    exact ⟨r • P, AlgHom.map_smul _ _ _⟩
+    exact ⟨r • P, map_smul _ _ _⟩
 
 /-- If a monoid `M` is finitely generated then `MonoidAlgebra R M` is of finite type. -/
 instance finiteType_of_fg [CommRing R] [Monoid.FG M] : FiniteType R (MonoidAlgebra R M) :=
@@ -798,33 +794,18 @@ end Orzech
 
 section Vasconcelos
 
-/-- A theorem/proof by Vasconcelos, given a finite module `M` over a commutative ring, any
-surjective endomorphism of `M` is also injective. Based on,
-https://math.stackexchange.com/a/239419/31917,
-https://www.ams.org/journals/tran/1969-138-00/S0002-9947-1969-0238839-5/.
+/-- A theorem by Vasconcelos, given a finite module `M` over a commutative ring, any
+surjective endomorphism of `M` is also injective.
+It is a consequence of the fact `CommRing.orzechProperty`
+that any commutative ring `R` satisfies the `OrzechProperty`;
+please use `OrzechProperty.injective_of_surjective_endomorphism` instead.
 This is similar to `IsNoetherian.injective_of_surjective_endomorphism` but only applies in the
 commutative case, but does not use a Noetherian hypothesis. -/
+@[deprecated OrzechProperty.injective_of_surjective_endomorphism (since := "2024-05-30")]
 theorem Module.Finite.injective_of_surjective_endomorphism {R : Type*} [CommRing R] {M : Type*}
     [AddCommGroup M] [Module R M] [Finite R M] (f : M →ₗ[R] M)
-    (f_surj : Function.Surjective f) : Function.Injective f := by
-  have : (⊤ : Submodule R[X] (AEval' f)) ≤ Ideal.span {(X : R[X])} • ⊤ := by
-    intro a _
-    obtain ⟨y, rfl⟩ := f_surj.comp (AEval'.of f).symm.surjective a
-    rw [Function.comp_apply, ← AEval'.of_symm_X_smul]
-    exact Submodule.smul_mem_smul (Ideal.mem_span_singleton.mpr (dvd_refl _)) trivial
-  obtain ⟨F, hFa, hFb⟩ :=
-    Submodule.exists_sub_one_mem_and_smul_eq_zero_of_fg_of_le_smul _ (⊤ : Submodule R[X] (AEval' f))
-      (finite_def.mp inferInstance) this
-  rw [← LinearMap.ker_eq_bot, LinearMap.ker_eq_bot']
-  intro m hm
-  rw [← map_eq_zero_iff (AEval'.of f) (AEval'.of f).injective]
-  set m' := Module.AEval'.of f m
-  rw [Ideal.mem_span_singleton'] at hFa
-  obtain ⟨G, hG⟩ := hFa
-  suffices (F - 1) • m' = 0 by
-    have Fmzero := hFb m' (by simp)
-    rwa [← sub_add_cancel F 1, add_smul, one_smul, this, zero_add] at Fmzero
-  rw [← hG, mul_smul, AEval'.X_smul_of, hm, map_zero, smul_zero]
+    (f_surj : Function.Surjective f) : Function.Injective f :=
+  OrzechProperty.injective_of_surjective_endomorphism f f_surj
 #align module.finite.injective_of_surjective_endomorphism Module.Finite.injective_of_surjective_endomorphism
 
 end Vasconcelos
