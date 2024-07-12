@@ -311,7 +311,8 @@ def Equiv.embeddingFinSucc (n : ℕ) (ι : Type*) :
   ext i
   exact Fin.cases rfl (fun j ↦ rfl) i
 
-/-- Equivalence between tuples of length `n + 1` and pairs of an element and a tuple of length `n` given by separating out the last element of the tuple.
+/-- Equivalence between tuples of length `n + 1` and pairs of an element and a tuple of length `n`
+given by separating out the last element of the tuple.
 
 This is `Fin.snoc` as an `Equiv`. -/
 @[simps! (config := .asFn)]
