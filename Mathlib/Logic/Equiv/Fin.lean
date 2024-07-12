@@ -50,10 +50,10 @@ namespace Fin
 given by separating out the first element of the tuple.
 
 This is `Fin.cons` as an `Equiv`. -/
-@[simps! (config := .asFn)]
-def consEquiv (α : Fin (n + 1) → Type*) : (∀ i, α i) ≃ α 0 × (∀ i, α (succ i)) where
-  toFun f := (f 0, tail f)
-  invFun f := cons f.1 f.2
+@[simps]
+def consEquiv (α : Fin (n + 1) → Type*) : α 0 × (∀ i, α (succ i)) ≃ ∀ i, α i where
+  toFun f := cons f.1 f.2
+  invFun f := (f 0, tail f)
   left_inv f := by simp
   right_inv f := by simp
 
@@ -61,10 +61,10 @@ def consEquiv (α : Fin (n + 1) → Type*) : (∀ i, α i) ≃ α 0 × (∀ i, �
 given by separating out the last element of the tuple.
 
 This is `Fin.snoc` as an `Equiv`. -/
-@[simps! (config := .asFn)]
-def snocEquiv (α : Fin (n + 1) → Type*) : (∀ i, α i) ≃ α (last n) × (∀ i, α (castSucc i)) where
-  toFun f := ⟨f _, Fin.init f⟩
-  invFun f i := Fin.snoc f.2 f.1 _
+@[simps]
+def snocEquiv (α : Fin (n + 1) → Type*) : α (last n) × (∀ i, α (castSucc i)) ≃ ∀ i, α i where
+  toFun f i := Fin.snoc f.2 f.1 _
+  invFun f := ⟨f _, Fin.init f⟩
   left_inv f := by simp
   right_inv f := by simp
 
@@ -72,21 +72,21 @@ def snocEquiv (α : Fin (n + 1) → Type*) : (∀ i, α i) ≃ α (last n) × (�
 given by separating out the `p`-th element of the tuple.
 
 This is `Fin.insertNth` as an `Equiv`. -/
-@[simps (config := .asFn)]
+@[simps]
 def insertNthEquiv (α : Fin (n + 1) → Type u) (p : Fin (n + 1)) :
-    (∀ i, α i) ≃ α p × ∀ i, α (p.succAbove i) where
-  toFun f := (f p, removeNth p f)
-  invFun f := insertNth p f.1 f.2
-  left_inv f := by simp
-  right_inv f := by ext <;> simp
+    α p × (∀ i, α (p.succAbove i)) ≃ ∀ i, α i where
+  toFun f := insertNth p f.1 f.2
+  invFun f := (f p, removeNth p f)
+  left_inv f := by ext <;> simp
+  right_inv f := by simp
 
-@[simp] lemma insertNthEquiv_zero (α : Fin (n + 1) → Type*) : insertNthEquiv α 0 = consEquiv α := by
-  ext <;> rfl
+@[simp] lemma insertNthEquiv_zero (α : Fin (n + 1) → Type*) : insertNthEquiv α 0 = consEquiv α :=
+  Equiv.symm_bijective.injective $ by ext <;> rfl
 
 /-- Note this lemma can only be written about non-dependent tuples as `insertNth (last n) = snoc` is
 not a definitional equality. -/
 @[simp] lemma insertNthEquiv_last (n : ℕ) (α : Type*) :
-    insertNthEquiv (fun _ ↦ α) (last n) = snocEquiv (fun _ ↦ α) := by ext <;> simp [init]
+    insertNthEquiv (fun _ ↦ α) (last n) = snocEquiv (fun _ ↦ α) := by ext; simp
 
 /-- Order isomorphism between tuples of length `n + 1` and pairs of an element and a tuple of length
 `n` given by separating out the first element of the tuple.
@@ -94,9 +94,9 @@ not a definitional equality. -/
 This is `Fin.cons` as an `OrderIso`. -/
 @[simps!, simps toEquiv]
 def consOrderIso (α : Fin (n + 1) → Type*) [∀ i, LE (α i)] :
-    (∀ i, α i) ≃o α 0 × (∀ i, α (succ i)) where
+    α 0 × (∀ i, α (succ i)) ≃o ∀ i, α i where
   toEquiv := consEquiv α
-  map_rel_iff' := .symm forall_iff_succ
+  map_rel_iff' := forall_iff_succ
 
 /-- Order isomorphism between tuples of length `n + 1` and pairs of an element and a tuple of length
 `n` given by separating out the last element of the tuple.
@@ -104,9 +104,9 @@ def consOrderIso (α : Fin (n + 1) → Type*) [∀ i, LE (α i)] :
 This is `Fin.snoc` as an `OrderIso`. -/
 @[simps!, simps toEquiv]
 def snocOrderIso (α : Fin (n + 1) → Type*) [∀ i, LE (α i)] :
-    (∀ i, α i) ≃o α (last n) × (∀ i, α (castSucc i)) where
+    α (last n) × (∀ i, α (castSucc i)) ≃o ∀ i, α i where
   toEquiv := snocEquiv α
-  map_rel_iff' := .symm forall_iff_castSucc
+  map_rel_iff' := by simp [Pi.le_def, Prod.le_def, forall_iff_castSucc]
 
 /-- Order isomorphism between tuples of length `n + 1` and pairs of an element and a tuple of length
 `n` given by separating out the `p`-th element of the tuple.
@@ -114,17 +114,17 @@ def snocOrderIso (α : Fin (n + 1) → Type*) [∀ i, LE (α i)] :
 This is `Fin.insertNth` as an `OrderIso`. -/
 @[simps!, simps toEquiv]
 def insertNthOrderIso (α : Fin (n + 1) → Type u) [∀ i, LE (α i)] (p : Fin (n + 1)) :
-    (∀ i, α i) ≃o α p × ∀ i, α (p.succAbove i) where
+    α p × (∀ i, α (p.succAbove i)) ≃o ∀ i, α i where
   toEquiv := insertNthEquiv α p
-  map_rel_iff' := .symm p.forall_iff_succAbove
+  map_rel_iff' := by simp [Pi.le_def, Prod.le_def, p.forall_iff_succAbove]
 
 @[simp] lemma insertNthOrderIso_zero (α : Fin (n + 1) → Type*) [∀ i, LE (α i)] :
-    insertNthOrderIso α 0 = consOrderIso α := by ext <;> rfl
+    insertNthOrderIso α 0 = consOrderIso α := by ext; simp [insertNthOrderIso]
 
 /-- Note this lemma can only be written about non-dependent tuples as `insertNth (last n) = snoc` is
 not a definitional equality. -/
 @[simp] lemma insertNthOrderIso_last (n : ℕ) (α : Type*) [LE α] :
-    insertNthOrderIso (fun _ ↦ α) (last n) = snocOrderIso (fun _ ↦ α) := by ext <;> simp [init]
+    insertNthOrderIso (fun _ ↦ α) (last n) = snocOrderIso (fun _ ↦ α) := by ext; simp
 
 end Fin
 
@@ -310,7 +310,7 @@ def Equiv.piFinSuccAbove (α : Fin (n + 1) → Type u) (i : Fin (n + 1)) :
 /-- Equivalence between `Fin (n + 1) → β` and `β × (Fin n → β)`. -/
 @[simps! (config := .asFn), deprecated Fin.consEquiv (since := "2024-07-12")]
 def Equiv.piFinSucc (n : ℕ) (β : Type u) : (Fin (n + 1) → β) ≃ β × (Fin n → β) :=
-  Fin.insertNthEquiv (fun _ => β) 0
+  (Fin.insertNthEquiv (fun _ => β) 0).symm
 
 /-- An embedding `e : Fin (n+1) ↪ ι` corresponds to an embedding `f : Fin n ↪ ι` (corresponding
 the last `n` coordinates of `e`) together with a value not taken by `f` (corresponding to `e 0`). -/
@@ -335,7 +335,7 @@ def Equiv.embeddingFinSucc (n : ℕ) (ι : Type*) :
 element of the tuple. -/
 @[simps! (config := .asFn), deprecated Fin.snocEquiv (since := "2024-07-12")]
 def Equiv.piFinCastSucc (n : ℕ) (β : Type u) : (Fin (n + 1) → β) ≃ β × (Fin n → β) :=
-  Fin.insertNthEquiv (fun _ => β) (.last _)
+  (Fin.insertNthEquiv (fun _ => β) (.last _)).symm
 
 /-- Equivalence between `Fin m ⊕ Fin n` and `Fin (m + n)` -/
 def finSumFinEquiv : Fin m ⊕ Fin n ≃ Fin (m + n) where
