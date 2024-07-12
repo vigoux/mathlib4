@@ -114,9 +114,10 @@ def OrderIso.finTwoArrowIso (α : Type*) [Preorder α] : (Fin 2 → α) ≃o α 
 
 /-- Order isomorphism between `Π j : Fin (n + 1), α j` and
 `α i × Π j : Fin n, α (Fin.succAbove i j)`. -/
-def OrderIso.piFinSuccAboveIso (α : Fin (n + 1) → Type*) [∀ i, LE (α i)]
+@[deprecated Fin.insertNthOrderIso (since := "2024-07-12")]
+def OrderIso.piFinSuccAboveIso (α : Fin (n + 1) → Type u) [∀ i, LE (α i)]
     (i : Fin (n + 1)) : (∀ j, α j) ≃o α i × ∀ j, α (i.succAbove j) where
-  toEquiv := Equiv.piFinSuccAbove α i
+  toEquiv :=  Fin.insertNthEquiv α i
   map_rel_iff' := Iff.symm i.forall_iff_succAbove
 
 /-- `Fin.succAbove` as an order isomorphism between `Fin n` and `{x : Fin (n + 1) // x ≠ p}`. -/

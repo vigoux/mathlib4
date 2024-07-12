@@ -37,6 +37,97 @@ def finTwoEquiv : Fin 2 ≃ Bool where
   left_inv := Fin.forall_fin_two.2 <| by simp
   right_inv := Bool.forall_bool.2 <| by simp
 
+/-!
+### Tuples
+
+This section defines a bunch of equivalences between `n + 1`-tuples and products of `n`-tuples with
+an entry.
+-/
+
+namespace Fin
+
+/-- Equivalence between tuples of length `n + 1` and pairs of an element and a tuple of length `n`
+given by separating out the first element of the tuple.
+
+This is `Fin.cons` as an `Equiv`. -/
+@[simps! (config := .asFn)]
+def consEquiv (α : Fin (n + 1) → Type*) : (∀ i, α i) ≃ α 0 × (∀ i, α (succ i)) where
+  toFun f := (f 0, tail f)
+  invFun f := cons f.1 f.2
+  left_inv f := by simp
+  right_inv f := by simp
+
+/-- Equivalence between tuples of length `n + 1` and pairs of an element and a tuple of length `n`
+given by separating out the last element of the tuple.
+
+This is `Fin.snoc` as an `Equiv`. -/
+@[simps! (config := .asFn)]
+def snocEquiv (α : Fin (n + 1) → Type*) : (∀ i, α i) ≃ α (last n) × (∀ i, α (castSucc i)) where
+  toFun f := ⟨f _, Fin.init f⟩
+  invFun f i := Fin.snoc f.2 f.1 _
+  left_inv f := by simp
+  right_inv f := by simp
+
+/-- Equivalence between tuples of length `n + 1` and pairs of an element and a tuple of length `n`
+given by separating out the `p`-th element of the tuple.
+
+This is `Fin.insertNth` as an `Equiv`. -/
+@[simps (config := .asFn)]
+def insertNthEquiv (α : Fin (n + 1) → Type u) (p : Fin (n + 1)) :
+    (∀ i, α i) ≃ α p × ∀ i, α (p.succAbove i) where
+  toFun f := (f p, removeNth p f)
+  invFun f := insertNth p f.1 f.2
+  left_inv f := by simp
+  right_inv f := by ext <;> simp
+
+@[simp] lemma insertNthEquiv_zero (α : Fin (n + 1) → Type*) : insertNthEquiv α 0 = consEquiv α := by
+  ext <;> rfl
+
+/-- Note this lemma can only be written about non-dependent tuples as `insertNth (last n) = snoc` is
+not a definitional equality. -/
+@[simp] lemma insertNthEquiv_last (n : ℕ) (α : Type*) :
+    insertNthEquiv (fun _ ↦ α) (last n) = snocEquiv (fun _ ↦ α) := by ext <;> simp [init]
+
+/-- Order isomorphism between tuples of length `n + 1` and pairs of an element and a tuple of length
+`n` given by separating out the first element of the tuple.
+
+This is `Fin.cons` as an `OrderIso`. -/
+@[simps!, simps toEquiv]
+def consOrderIso (α : Fin (n + 1) → Type*) [∀ i, LE (α i)] :
+    (∀ i, α i) ≃o α 0 × (∀ i, α (succ i)) where
+  toEquiv := consEquiv α
+  map_rel_iff' := .symm forall_iff_succ
+
+/-- Order isomorphism between tuples of length `n + 1` and pairs of an element and a tuple of length
+`n` given by separating out the last element of the tuple.
+
+This is `Fin.snoc` as an `OrderIso`. -/
+@[simps!, simps toEquiv]
+def snocOrderIso (α : Fin (n + 1) → Type*) [∀ i, LE (α i)] :
+    (∀ i, α i) ≃o α (last n) × (∀ i, α (castSucc i)) where
+  toEquiv := snocEquiv α
+  map_rel_iff' := .symm forall_iff_castSucc
+
+/-- Order isomorphism between tuples of length `n + 1` and pairs of an element and a tuple of length
+`n` given by separating out the `p`-th element of the tuple.
+
+This is `Fin.insertNth` as an `OrderIso`. -/
+@[simps!, simps toEquiv]
+def insertNthOrderIso (α : Fin (n + 1) → Type u) [∀ i, LE (α i)] (p : Fin (n + 1)) :
+    (∀ i, α i) ≃o α p × ∀ i, α (p.succAbove i) where
+  toEquiv := insertNthEquiv α p
+  map_rel_iff' := .symm p.forall_iff_succAbove
+
+@[simp] lemma insertNthOrderIso_zero (α : Fin (n + 1) → Type*) [∀ i, LE (α i)] :
+    insertNthOrderIso α 0 = consOrderIso α := by ext <;> rfl
+
+/-- Note this lemma can only be written about non-dependent tuples as `insertNth (last n) = snoc` is
+not a definitional equality. -/
+@[simp] lemma insertNthOrderIso_last (n : ℕ) (α : Type*) [LE α] :
+    insertNthOrderIso (fun _ ↦ α) (last n) = snocOrderIso (fun _ ↦ α) := by ext <;> simp [init]
+
+end Fin
+
 /-- `Π i : Fin 2, α i` is equivalent to `α 0 × α 1`. See also `finTwoArrowEquiv` for a
 non-dependent version and `prodEquivPiFinTwo` for a version with inputs `α β : Type u`. -/
 @[simps (config := .asFn)]
@@ -45,6 +136,12 @@ def piFinTwoEquiv (α : Fin 2 → Type u) : (∀ i, α i) ≃ α 0 × α 1 where
   invFun p := Fin.cons p.1 <| Fin.cons p.2 finZeroElim
   left_inv _ := funext <| Fin.forall_fin_two.2 ⟨rfl, rfl⟩
   right_inv := fun _ => rfl
+
+/-!
+### Miscellaneous
+
+This is currently not very sorted. PRs welcome!
+-/
 
 theorem Fin.preimage_apply_01_prod {α : Fin 2 → Type u} (s : Set (α 0)) (t : Set (α 1)) :
     (fun f : ∀ i, α i => (f 0, f 1)) ⁻¹' s ×ˢ t =
@@ -202,7 +299,7 @@ theorem finSuccEquivLast_symm_some (i : Fin n) :
   finSuccEquiv'_symm_none _
 
 /-- Equivalence between `Π j : Fin (n + 1), α j` and `α i × Π j : Fin n, α (Fin.succAbove i j)`. -/
-@[simps (config := .asFn)]
+@[simps (config := .asFn), deprecated Fin.insertNthEquiv (since := "2024-07-12")]
 def Equiv.piFinSuccAbove (α : Fin (n + 1) → Type u) (i : Fin (n + 1)) :
     (∀ j, α j) ≃ α i × ∀ j, α (i.succAbove j) where
   toFun f := (f i, i.removeNth f)
@@ -211,9 +308,9 @@ def Equiv.piFinSuccAbove (α : Fin (n + 1) → Type u) (i : Fin (n + 1)) :
   right_inv f := by simp
 
 /-- Equivalence between `Fin (n + 1) → β` and `β × (Fin n → β)`. -/
-@[simps! (config := .asFn)]
+@[simps! (config := .asFn), deprecated Fin.consEquiv (since := "2024-07-12")]
 def Equiv.piFinSucc (n : ℕ) (β : Type u) : (Fin (n + 1) → β) ≃ β × (Fin n → β) :=
-  Equiv.piFinSuccAbove (fun _ => β) 0
+  Fin.insertNthEquiv (fun _ => β) 0
 
 /-- An embedding `e : Fin (n+1) ↪ ι` corresponds to an embedding `f : Fin n ↪ ι` (corresponding
 the last `n` coordinates of `e`) together with a value not taken by `f` (corresponding to `e 0`). -/
@@ -236,9 +333,9 @@ def Equiv.embeddingFinSucc (n : ℕ) (ι : Type*) :
 
 /-- Equivalence between `Fin (n + 1) → β` and `β × (Fin n → β)` which separates out the last
 element of the tuple. -/
-@[simps! (config := .asFn)]
+@[simps! (config := .asFn), deprecated Fin.snocEquiv (since := "2024-07-12")]
 def Equiv.piFinCastSucc (n : ℕ) (β : Type u) : (Fin (n + 1) → β) ≃ β × (Fin n → β) :=
-  Equiv.piFinSuccAbove (fun _ => β) (.last _)
+  Fin.insertNthEquiv (fun _ => β) (.last _)
 
 /-- Equivalence between `Fin m ⊕ Fin n` and `Fin (m + n)` -/
 def finSumFinEquiv : Fin m ⊕ Fin n ≃ Fin (m + n) where

@@ -215,7 +215,7 @@ theorem torusIntegral_succAbove {f : ℂⁿ⁺¹ → E} {c : ℂⁿ⁺¹} {R : �
   have hem : MeasurePreserving e :=
     (volume_preserving_piFinSuccAbove (fun _ : Fin (n + 1) => ℝ) i).symm _
   have heπ : (e ⁻¹' Icc 0 fun _ => 2 * π) = Icc 0 (2 * π) ×ˢ Icc (0 : ℝⁿ) fun _ => 2 * π :=
-    ((OrderIso.piFinSuccAboveIso (fun _ => ℝ) i).symm.preimage_Icc _ _).trans (Icc_prod_eq _ _)
+    ((Fin.insertNthOrderIso _).preimage_Icc _ _).trans (Icc_prod_eq _ _)
   rw [torusIntegral, ← hem.map_eq, setIntegral_map_equiv, heπ, Measure.volume_eq_prod,
     setIntegral_prod, circleIntegral_def_Icc]
   · refine setIntegral_congr measurableSet_Icc fun θ _ => ?_
