@@ -248,59 +248,58 @@ theorem Complex.lintegral_norm {f : ℝ → ENNReal} (hf : Measurable f) :
         refine setLIntegral_congr_fun measurableSet_Ioi ?_
         filter_upwards with _ hx using by rw [abs_of_pos (by convert hx)]
 
-#exit
-
 theorem multiple_step₀ {ι : Type*} [Fintype ι] [DecidableEq ι] (f : (ι → ℝ) → ENNReal)
     (hf : Measurable f) (s : Finset ι) (a : ι → ℂ) :
     (∫⋯∫⁻_s, fun z ↦ (f fun i ↦ ‖z i‖) ∂fun _ ↦ (volume : Measure ℂ)) a =
       (2 * NNReal.pi) ^ s.card *
         (∫⋯∫⁻_s, fun x ↦ (∏ i ∈ s, (x i).toNNReal) * f x
           ∂fun _ ↦ (volume.restrict (Set.Ioi (0 : ℝ)))) fun i ↦ ‖a i‖ := by
-   induction s using Finset.induction generalizing a with
-  | empty => simp
-  | @insert i s hi h_ind =>
-      have h₀ : ∀ (xᵢ : ℂ) (i j : ι),
-          ‖Function.update a j xᵢ i‖ = Function.update (fun j ↦ ‖a j‖) j ‖xᵢ‖ i :=
-        fun _ _ _ ↦ by rw [Function.update_apply, Function.update_apply, apply_ite norm]
-      rw [lmarginal_insert _ ?_ hi]
-      swap;
-      · refine hf.comp (measurable_pi_lambda _ fun _ ↦ (measurable_pi_apply _).norm)
-      simp_rw [h_ind, h₀]
-      have h₁ : ∀ t : Finset ι, Measurable fun x ↦ (∏ i ∈ t, (x i).toNNReal) * f x := by
-        refine fun t ↦ ((Finset.measurable_prod t ?_).coe_nnreal_ennreal).mul hf
-        exact fun _ _ ↦ (measurable_pi_apply _).real_toNNReal
-      have := one_step₀ (fun z ↦ (∫⋯∫⁻_s, fun x ↦ (∏ i ∈ s, (x i).toNNReal) * f x
-            ∂fun _ ↦ (volume.restrict (Set.Ioi (0 : ℝ))))
-            fun k ↦ Function.update (fun j ↦ ‖a j‖) i z k) ?_
-      swap
-      · refine ((h₁ s).lmarginal _).comp (measurable_pi_lambda _ fun _ ↦ Measurable.eval ?_)
-        exact (measurable_update _).comp' measurable_id'
-      rw [lintegral_const_mul _ ?_]
-      swap;
-      · exact ((h₁ s).lmarginal _).comp
-          <| measurable_pi_lambda _ fun _ ↦ ((measurable_update _).comp' measurable_norm).eval
-      rw [this]; clear this
-      rw [lmarginal_insert _ ?_ hi]
-      swap;
-      · exact h₁ (insert i s)
-      simp_rw [← lmarginal_const_smul' _  _ coe_ne_top]
-      rw [Finset.card_insert_of_not_mem hi]
-      rw [← mul_assoc, ← pow_succ]
-      simp_rw [Finset.prod_insert hi]
-      have : ∀ y : ℝ, Measurable
-          ((y.toNNReal : ENNReal) • fun x ↦ ↑(∏ i ∈ s, (x i).toNNReal) * f x) := by
-        intro y
-        exact Measurable.const_smul (h₁ s) _
-      simp_rw [lmarginal_update_of_not_mem (this _) hi]
-      have : Measurable fun x ↦ ↑((x i).toNNReal * ∏ i ∈ s, (x i).toNNReal) * f x := by
-        simp_rw [coe_mul, mul_assoc]
-        refine Measurable.mul ?_ ?_
-        · refine Measurable.ennreal_ofReal ?_
-          exact measurable_pi_apply i
-        · exact h₁ s
-      simp_rw [lmarginal_update_of_not_mem this hi]
-      simp only [coe_finset_prod, Function.comp, Pi.smul_apply, smul_eq_mul,
-        coe_mul, Function.update_same, mul_assoc]
+  sorry
+  --  induction s using Finset.induction generalizing a with
+  -- | empty => simp
+  -- | @insert i s hi h_ind =>
+  --     have h₀ : ∀ (xᵢ : ℂ) (i j : ι),
+  --         ‖Function.update a j xᵢ i‖ = Function.update (fun j ↦ ‖a j‖) j ‖xᵢ‖ i :=
+  --       fun _ _ _ ↦ by rw [Function.update_apply, Function.update_apply, apply_ite norm]
+  --     rw [lmarginal_insert _ ?_ hi]
+  --     swap;
+  --     · refine hf.comp (measurable_pi_lambda _ fun _ ↦ (measurable_pi_apply _).norm)
+  --     simp_rw [h_ind, h₀]
+  --     have h₁ : ∀ t : Finset ι, Measurable fun x ↦ (∏ i ∈ t, (x i).toNNReal) * f x := by
+  --       refine fun t ↦ ((Finset.measurable_prod t ?_).coe_nnreal_ennreal).mul hf
+  --       exact fun _ _ ↦ (measurable_pi_apply _).real_toNNReal
+  --     have := one_step₀ (fun z ↦ (∫⋯∫⁻_s, fun x ↦ (∏ i ∈ s, (x i).toNNReal) * f x
+  --           ∂fun _ ↦ (volume.restrict (Set.Ioi (0 : ℝ))))
+  --           fun k ↦ Function.update (fun j ↦ ‖a j‖) i z k) ?_
+  --     swap
+  --     · refine ((h₁ s).lmarginal _).comp (measurable_pi_lambda _ fun _ ↦ Measurable.eval ?_)
+  --       exact (measurable_update _).comp' measurable_id'
+  --     rw [lintegral_const_mul _ ?_]
+  --     swap;
+  --     · exact ((h₁ s).lmarginal _).comp
+  --         <| measurable_pi_lambda _ fun _ ↦ ((measurable_update _).comp' measurable_norm).eval
+  --     rw [this]; clear this
+  --     rw [lmarginal_insert _ ?_ hi]
+  --     swap;
+  --     · exact h₁ (insert i s)
+  --     simp_rw [← lmarginal_const_smul' _  _ coe_ne_top]
+  --     rw [Finset.card_insert_of_not_mem hi]
+  --     rw [← mul_assoc, ← pow_succ]
+  --     simp_rw [Finset.prod_insert hi]
+  --     have : ∀ y : ℝ, Measurable
+  --         ((y.toNNReal : ENNReal) • fun x ↦ ↑(∏ i ∈ s, (x i).toNNReal) * f x) := by
+  --       intro y
+  --       exact Measurable.const_smul (h₁ s) _
+  --     simp_rw [lmarginal_update_of_not_mem (this _) hi]
+  --     have : Measurable fun x ↦ ↑((x i).toNNReal * ∏ i ∈ s, (x i).toNNReal) * f x := by
+  --       simp_rw [coe_mul, mul_assoc]
+  --       refine Measurable.mul ?_ ?_
+  --       · refine Measurable.ennreal_ofReal ?_
+  --         exact measurable_pi_apply i
+  --       · exact h₁ s
+  --     simp_rw [lmarginal_update_of_not_mem this hi]
+  --     simp only [coe_finset_prod, Function.comp, Pi.smul_apply, smul_eq_mul,
+  --       coe_mul, Function.update_same, mul_assoc]
 
 theorem one_step (f : ℝ → ENNReal) (hf₀ : Measurable f) (hf₁ : ∀ ⦃x⦄, x ≤ 0 → f x = 0) :
     ∫⁻ z : ℂ, f ‖z‖ = 2 * NNReal.pi * ∫⁻ x, ‖x‖₊ * (f x) := by

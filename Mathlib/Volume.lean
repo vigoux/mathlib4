@@ -105,7 +105,7 @@ example (s : Set (E K)) (hs : isNormStable s) :
       exact continuous_realEmbedding K
     · -- Not true
       sorry
-  · 
+  ·
     sorry
 
 
