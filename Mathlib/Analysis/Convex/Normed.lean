@@ -141,26 +141,27 @@ end SeminormedAddCommGroup
 section NormedAddCommGroup
 variable [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] {s : Set E} {x : E}
 
-/-- We can intercalate a polyhedron between a point and one of its neighborhoods. -/
-lemma exists_mem_interior_convexHull_finset (hs : s ∈ 𝓝 x) :
-    ∃ t : Finset E, x ∈ interior (convexHull ℝ t : Set E) ∧ convexHull ℝ t ⊆ s := by
+/-- We can intercalate a simplex between a point and one of its neighborhoods. -/
+lemma exists_mem_interior_convexHull_affineBasis (hs : s ∈ 𝓝 x) :
+    ∃ b : AffineBasis (Fin (finrank ℝ E + 1)) ℝ E,
+      x ∈ interior (convexHull ℝ (range b)) ∧ convexHull ℝ (range b) ⊆ s := by
   -- Lean nonsense
   clear P ι
   classical
   -- By translating, WLOG `x` is the origin.
   wlog hx : x = 0
-  · obtain ⟨t, ht⟩ := this (s := -x +ᵥ s) (by simpa using vadd_mem_nhds (-x) hs) rfl
-    use x +ᵥ t
-    simpa [subset_set_vadd_iff, mem_vadd_set_iff_neg_vadd_mem, convexHull_vadd, interior_vadd]
-      using ht
+  · obtain ⟨b, hb⟩ := this (s := -x +ᵥ s) (by simpa using vadd_mem_nhds (-x) hs) rfl
+    use x +ᵥ b
+    simpa [subset_set_vadd_iff, mem_vadd_set_iff_neg_vadd_mem, convexHull_vadd, interior_vadd,
+      Pi.vadd_def, -vadd_eq_add, vadd_eq_add (a := -x), ← Set.vadd_set_range] using hb
   subst hx
   -- The strategy is now to find an arbitrary maximal spanning simplex (aka an affine basis)...
   obtain ⟨b⟩ := exists_affineBasis_of_finiteDimensional
     (ι := Fin (finrank ℝ E + 1)) (k := ℝ) (P := E) (by simp)
   -- ... translate it to contain the origin...
-  set u : Finset E := -Finset.univ.centroid ℝ b +ᵥ Finset.univ.image b
-  have hu₀ : 0 ∈ interior (convexHull ℝ u : Set E) := by
-    simpa [u, convexHull_vadd, interior_vadd, mem_vadd_set_iff_neg_vadd_mem]
+  set c : AffineBasis (Fin (finrank ℝ E + 1)) ℝ E := -Finset.univ.centroid ℝ b +ᵥ b
+  have hc₀ : 0 ∈ interior (convexHull ℝ (range c) : Set E) := by
+    simpa [c, convexHull_vadd, interior_vadd, mem_vadd_set_iff_neg_vadd_mem]
       using b.centroid_mem_interior_convexHull
   have hu : u.Nonempty := Finset.nonempty_iff_ne_empty.2 fun h ↦ by simp [h] at hu₀
   have hunorm : (u : Set E) ⊆ closedBall 0 (u.sup' hu (‖·‖) + 1) := by
