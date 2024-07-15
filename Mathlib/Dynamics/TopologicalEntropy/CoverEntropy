@@ -3,14 +3,9 @@ Copyright (c) 2024 Damien Thomine. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Damien Thomine, Pietro Monticone
 -/
-import BET.TopologicalEntropy.Miscellaneous.Misc
-import BET.TopologicalEntropy.Miscellaneous.ENNRealLog
-import BET.TopologicalEntropy.Miscellaneous.Inv
-import BET.TopologicalEntropy.Miscellaneous.ERealMulCont
-import BET.TopologicalEntropy.InvariantSubset
-import BET.TopologicalEntropy.DynamicalUniformity
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Data.Real.ENatENNReal
+import Mathlib.Dynamics.TopologicalEntropy.DynamicalUniformity
 import Mathlib.Topology.UniformSpace.Basic
 
 /-!
@@ -62,7 +57,34 @@ namespace DynamicalCover
 
 open InvariantSubset DynamicalUniformity UniformSpace
 
-variable {X : Type _}
+variable {X : Type*}
+
+/-- A subset F is T-invariant if, for any x ∈ F, T(x) ∈ F. Written with preimages. -/
+def IsInvariant (T : X → X) (F : Set X) : Prop := F ⊆ T ⁻¹' F
+
+theorem inv_def' {T : X → X} {F : Set X} (F_inv : IsInvariant T F) {x : X} (h : x ∈ F) :
+    T x ∈ F := F_inv h
+
+theorem iter_of_inv_in_inv {T : X → X} {F : Set X} (F_inv : IsInvariant T F) (n : ℕ) :
+    F ⊆ T^[n] ⁻¹' F := by
+  induction' n with n hn
+  . rw [iterate_zero T, Set.preimage_id]
+  . rw [iterate_succ T _, Set.preimage_comp]
+    exact Set.Subset.trans F_inv (Set.preimage_mono hn)
+
+theorem iter_of_inv_in_inv' {T : X → X} {F : Set X} (h : IsInvariant T F) (n : ℕ) {x : X}
+    (h' : x ∈ F) :
+    T^[n] x ∈ F :=
+  (iter_of_inv_in_inv h n) h'
+
+theorem univ_is_inv (T : X → X) : IsInvariant T Set.univ := by
+  unfold IsInvariant
+  rw [Set.preimage_univ]
+
+theorem empty_is_inv (T : X → X) :
+    IsInvariant T ∅ := by
+  unfold IsInvariant
+  rw [Set.preimage_empty]
 
 /-- Given a uniform neighborhood U, an integer n and a subset F, a subset s is a (n, U)-cover
 (i.e. a refined cover) of F if any orbit of length n in F is U-shadowed by an orbit of length n
