@@ -73,6 +73,10 @@ theorem iter_of_inv_in_inv_apply {T : X → X} {F : Set X} (h : IsInvariant T F)
     T^[n] x ∈ F :=
   (iter_of_inv_in_inv h n) h'
 
+open ENNReal EReal
+
+theorem Ereal_natCast_ne_bot (n : ℕ) : (n : EReal) ≠ ⊥ := Ne.symm (ne_of_beq_false rfl)
+
 theorem Ereal_natCast_ne_top (n : ℕ) : (n : EReal) ≠ ⊤ := Ne.symm (ne_of_beq_false rfl)
 
 theorem Ereal_natCast_eq_coe_coe (n : ℕ) :
@@ -82,6 +86,19 @@ theorem Ereal_natCast_mul (m n : ℕ) :
     (m * n : ℕ) = (m : EReal) * (n : EReal) := by
   rw [Ereal_natCast_eq_coe_coe, Ereal_natCast_eq_coe_coe, Ereal_natCast_eq_coe_coe, Nat.cast_mul,
     EReal.coe_mul]
+
+theorem Ereal_natCast_div_le (m n : ℕ) :
+    (m / n : ℕ) ≤ (m : EReal) / n := by
+  rw [Ereal_natCast_eq_coe_coe, Ereal_natCast_eq_coe_coe, Ereal_natCast_eq_coe_coe, ← EReal.coe_div,
+    EReal.coe_le_coe_iff]
+  exact Nat.cast_div_le
+
+theorem Ereal_natCast_le (m n : ℕ) : (m : EReal) ≤ n ↔ m ≤ n := by
+  rw [Ereal_natCast_eq_coe_coe n, Ereal_natCast_eq_coe_coe m, EReal.coe_le_coe_iff, Nat.cast_le]
+
+theorem ENat.toENNReal_pow (x : ℕ∞) (n : ℕ) : (x ^ n : ℕ∞) = (x : ℝ≥0∞) ^ n := by
+  induction n with | zero => simp | succ n hn =>
+  rw [pow_succ x n, pow_succ (x : ℝ≥0∞) n, ENat.toENNReal_mul (x ^n) x, hn]
 
 /-!
 ### Dynamical covers
@@ -206,9 +223,6 @@ theorem exists_dyncover_of_compact_inv [UniformSpace X] {T : X → X} {F : Set X
     (F_inv : IsInvariant T F) (F_comp : IsCompact F) {U : Set (X × X)} (hU : U ∈ 𝓤 X)
     (n : ℕ) :
     ∃ s : Finset X, IsDynamicalCoverOf T F U n s := by
-  -- If `T` is assumed continuous, this statement can be proved quickly by covering `F`
-  -- by dynamical balls, which are in this case open, and extracting a finite subcover.
-  -- We bypass this condition, using the comparatively complex lemma `dyncover_iterate`.
   rcases comp_symm_mem_uniformity_sets hU with ⟨V, V_uni, V_symm, V_U⟩
   let open_cover := fun x : X ↦ ball x V
   have := IsCompact.elim_nhds_subcover F_comp open_cover (fun (x : X) _ ↦ ball_mem_nhds x V_uni)
@@ -270,11 +284,9 @@ theorem finite_mincard_iff (T : X → X) (F : Set X) (U : Set (X × X)) (n : ℕ
   simp only [Set.mem_image, Set.mem_setOf_eq] at this
   exact this
 
-theorem minimal_dyncover_of_compact [UniformSpace X] {T : X → X} {F : Set X}
-    (F_inv : IsInvariant T F) (F_comp : IsCompact F) {U : Set (X × X)} (U_uni : U ∈ 𝓤 X)
-    (n : ℕ) :
-    ∃ s : Finset X, IsDynamicalCoverOf T F U n s ∧ s.card = Mincard T F U n := by
-  rw [← finite_mincard_iff T F U n]
+theorem finite_mincard_of_compact_inv [UniformSpace X] {T : X → X} {F : Set X}
+    (F_inv : IsInvariant T F) (F_comp : IsCompact F) {U : Set (X × X)} (U_uni : U ∈ 𝓤 X) (n : ℕ) :
+    Mincard T F U n < ⊤ := by
   rcases exists_dyncover_of_compact_inv F_inv F_comp U_uni n with ⟨s, s_cover⟩
   exact lt_of_le_of_lt (mincard_le_card s_cover) (WithTop.coe_lt_top s.card)
 
@@ -393,13 +405,13 @@ theorem mincard_by_univ_le (T : X → X) (F : Set X) (n : ℕ) :
   · exact mincard_of_empty ▸ zero_le_one
   · rw [mincard_by_univ_of_nonempty T h n]
 
-theorem mincard_exponential_bound {T : X → X} {F : Set X} (F_inv : IsInvariant T F)
-    {V : Set (X × X)} (V_symm : SymmetricRel V) (m n : ℕ) :
+theorem mincard_iterate {T : X → X} {F : Set X} (F_inv : IsInvariant T F) {V : Set (X × X)}
+    (V_symm : SymmetricRel V) (m n : ℕ) :
     Mincard T F (V ○ V) (m * n) ≤ Mincard T F V m ^ n := by
   rcases F.eq_empty_or_nonempty with (rfl | F_nonempty)
   · rw [mincard_of_empty]; exact zero_le _
   rcases n.eq_zero_or_pos with (rfl | n_pos)
-  · rw [mul_zero, mincard_time_zero_of_nonempty T F_nonempty (compRel V V), pow_zero]
+  · rw [mul_zero, mincard_time_zero_of_nonempty T F_nonempty (V ○ V), pow_zero]
   rcases eq_top_or_lt_top (Mincard T F V m) with (h | h)
   · exact h ▸ le_of_le_of_eq (le_top (α := ℕ∞)) (Eq.symm (ENat.top_pow n_pos))
   · rcases (finite_mincard_iff T F V m).1 h with ⟨s, s_cover, s_mincard⟩
@@ -407,11 +419,11 @@ theorem mincard_exponential_bound {T : X → X} {F : Set X} (F_inv : IsInvariant
     rw [← s_mincard]
     exact le_trans (mincard_le_card t_cover) (WithTop.coe_le_coe.2 t_le_sn)
 
-/-theorem exponential_bound' {T : X → X} {F : Set X} (F_inv : IsInvariant T F) {V : Set (X × X)}
+theorem mincard_upper_bound {T : X → X} {F : Set X} (F_inv : IsInvariant T F) {V : Set (X × X)}
     (V_symm : SymmetricRel V) {m : ℕ} (m_pos : 0 < m) (n : ℕ) :
-    Mincard T F (compRel V V) n ≤ Mincard T F V m ^ (n / m + 1) := by
-  apply le_trans _ (mincard_exponential_bound F_inv V_symm m (n / m + 1))
-  exact mincard_monotone_time T F (compRel V V) (le_of_lt (Nat.lt_mul_div_succ n m_pos))-/
+    Mincard T F (V ○ V) n ≤ Mincard T F V m ^ (n / m + 1) :=
+  le_trans (mincard_monotone_time T F (V ○ V) (le_of_lt (Nat.lt_mul_div_succ n m_pos)))
+    (mincard_iterate F_inv V_symm m (n / m + 1))
 
 open ENNReal EReal
 
@@ -426,53 +438,35 @@ theorem log_mincard_nonneg_of_nonempty (T : X → X) {F : Set X} (h : F.Nonempty
   rw [← ENat.toENNReal_one, ENat.toENNReal_le]
   exact (nonempty_iff_mincard_pos T F U n).1 h
 
-theorem log_mincard_upper_bound {T : X → X} {F : Set X} (F_inv : IsInvariant T F) {V : Set (X × X)}
-    (V_symm : SymmetricRel V) (m : ℕ) {n : ℕ} (npos : 0 < n) :
+theorem log_mincard_iterate {T : X → X} {F : Set X} (F_inv : IsInvariant T F) {V : Set (X × X)}
+    (V_symm : SymmetricRel V) (m : ℕ) {n : ℕ} (n_pos : 0 < n) :
     log (Mincard T F (V ○ V) (m * n)) / n ≤ log (Mincard T F V m) := by
-  apply (EReal.div_le_iff_le_mul (b := n) (Nat.cast_pos'.2 npos) (Ereal_natCast_ne_top n)).2
+  apply (EReal.div_le_iff_le_mul (b := n) (Nat.cast_pos'.2 n_pos) (Ereal_natCast_ne_top n)).2
   rw [← log_pow, StrictMono.le_iff_le log_strictMono]
   nth_rw 2 [← ENat.toENNRealRingHom_apply]
   rw [← RingHom.map_pow ENat.toENNRealRingHom _ n, ENat.toENNRealRingHom_apply, ENat.toENNReal_le]
-  exact mincard_exponential_bound F_inv V_symm m n
+  exact mincard_iterate F_inv V_symm m n
 
-/-theorem log_mincard_upper_bound' {T : X → X} {F : Set X} (F_inv : IsInvariant T F)
-    {V : Set (X × X)} (V_symm : SymmetricRel V) {m : ℕ} (m_pos : 0 < m) (n : ℕ) :
-    log (Mincard T F (compRel V V) n) / n ≤
-    log (Mincard T F V m) / m * (m / n + 1 : ENNReal) := by
-  have m_top : (m : ENNReal) ≠ ⊤ := by simp only [ne_eq, natCast_ne_top, not_false_eq_true]
-  have n_top : (n : ENNReal) ≠ ⊤ := by simp only [ne_eq, natCast_ne_top, not_false_eq_true]
-  rcases F.eq_empty_or_nonempty with (rfl | F_nonempty)
-  · simp only [mincard_of_empty, ENat.toENNReal_zero, log_zero, EReal.bot_div_ntop n_ne_top,
-    EReal.coe_ennreal_add, EReal.coe_ennreal_one, bot_le]
-  rcases n.eq_zero_or_pos with (rfl | n_pos)
-  · rw [mincard_time_zero_of_nonempty T F_nonempty (compRel V V), ENat.toENNReal_one, log_one,
-      EReal.zero_div]
-    apply mul_nonneg
-    · apply EReal.nneg_div
-      rw [log_one_le_iff, ← ENat.toENNReal_one, ENat.toENNReal_le]
-      exact (pos_mincard_of_nonempty T F V m).1 F_nonempty
-    · exact EReal.coe_ennreal_nonneg _
-  have n_ne_zero : (n : ENNReal) ≠ 0 := by exact_mod_cast n_pos.ne.symm
-  have m_ne_zero : (m : ENNReal) ≠ 0 := by exact_mod_cast m_pos.ne.symm
-  rw [EReal.div_le_iff_le_mul n_ne_zero n_ne_top, mul_comm, mul_assoc, EReal.mul_div_right,
-    EReal.le_div_iff_mul_le m_ne_zero m_ne_top, ← EReal.coe_ennreal_mul, add_mul,
-    ENNReal.div_mul_cancel n_ne_zero n_ne_top, one_mul, mul_comm, mul_comm _ (ENNReal.toEReal _)]
-  norm_cast
-  repeat' rw [← log_pow]
-  apply log_monotone
-  rw [← ENat.toENNRealRingHom_apply, ← RingHom.map_pow ENat.toENNRealRingHom _ m, ←
-    RingHom.map_pow ENat.toENNRealRingHom _ (m + n), ENat.toENNRealRingHom_apply, ENat.toENNReal_le]
-  have key := mincard_monotone_time T F (compRel V V)
-    (le_of_lt (Nat.lt_mul_div_succ n m_pos))
-  have lock := mincard_exponential_bound F_inv V_symm m (n / m + 1)
-  replace key := le_trans key lock; clear lock
-  replace key := @pow_le_pow_left ℕ∞ _ _ _ bot_le key m
-  apply le_trans key; clear key
-  rw [← pow_mul]
-  apply pow_le_pow_right _ _
-  · exact (pos_mincard_of_nonempty T F V m).1 F_nonempty
-  · rw [mul_comm, mul_add, mul_one, add_comm m n]
-    exact add_le_add_right (Nat.mul_div_le n m) m-/
+theorem log_mincard_upper_bound {T : X → X} {F : Set X} (F_inv : IsInvariant T F)
+    {V : Set (X × X)} (V_symm : SymmetricRel V) {m n : ℕ} (m_pos : 0 < m) (n_pos : 0 < n) :
+    log (Mincard T F (V ○ V) n) / n ≤ log (Mincard T F V m) / m + log (Mincard T F V m) / n := by
+  rcases F.eq_empty_or_nonempty with (rfl | F_nemp)
+  · rw [mincard_of_empty, ENat.toENNReal_zero, log_zero,
+      bot_div_of_pos_ne_top (Nat.cast_pos'.2 n_pos) (Ereal_natCast_ne_top n)]
+    exact bot_le
+  have h_nm : (0 : EReal) ≤ (n / m : ℕ) := Nat.cast_nonneg' (n / m)
+  have h_log := log_mincard_nonneg_of_nonempty T F_nemp V m
+  have n_div_n := EReal.div_self (Ereal_natCast_ne_bot n) (Ereal_natCast_ne_top n)
+    (ne_of_gt (Nat.cast_pos'.2 n_pos))
+  apply le_trans <| div_le_div_right_of_nonneg (le_of_lt (Nat.cast_pos'.2 n_pos))
+    (log_monotone (ENat.toENNReal_le.2 (mincard_upper_bound F_inv V_symm m_pos n)))
+  rw [ENat.toENNReal_pow, log_pow, Nat.cast_add, Nat.cast_one, right_distrib_of_nonneg h_nm
+    zero_le_one, one_mul, div_right_distrib_of_nonneg (Left.mul_nonneg h_nm h_log) h_log, mul_comm,
+    ← EReal.mul_div, div_eq_mul_inv _ (m : EReal)]
+  apply add_le_add_right (mul_le_mul_of_nonneg_left _ h_log)
+  apply le_of_le_of_eq <| div_le_div_right_of_nonneg (le_of_lt (Nat.cast_pos'.2 n_pos))
+    (Ereal_natCast_div_le n m)
+  rw [EReal.div_div, mul_comm, ← EReal.div_div, n_div_n, one_div (m : EReal)]
 
 /-!
 ### Cover entropy of uniformities
@@ -554,7 +548,7 @@ theorem CoverEntropyInfUni_le_log_mincard_div {T : X → X} {F : Set X} (F_inv :
     · rw [max_eq_right (Nat.one_le_of_lt N_pos)]
       nth_rw 2 [← mul_one N]
       exact Nat.mul_le_mul_left N (Nat.one_le_of_lt n_pos)
-  · have := log_mincard_upper_bound F_inv V_symm n (lt_of_lt_of_le zero_lt_one (le_max_left 1 N))
+  · have := log_mincard_iterate F_inv V_symm n (lt_of_lt_of_le zero_lt_one (le_max_left 1 N))
     rw [mul_comm n (max 1 N)] at this
     apply le_of_eq_of_le _ (div_le_div_right_of_nonneg (Nat.cast_nonneg' n) this)
     rw [EReal.div_div]
@@ -612,21 +606,38 @@ theorem CoverEntropyInfUni_le_card_div {T : X → X} {F : Set X} (F_inv : IsInva
   apply Filter.Tendsto.limsup_eq
   exact intermediate_lemma (log (Mincard T F V n) / (n : ENNReal)) n-/
 
-/-theorem cover_entropy'_le {X : Type _} {T : X → X} {F : Set X} (F_inv : IsInvariant T F)
-    {V : Set (X × X)} (V_symm : SymmetricRel V) :
-    CoverEntropy' T F (compRel V V) ≤ CoverEntropy T F V := by
-  apply Filter.le_liminf_of_le
-  · use ⊤
-    simp only [ge_iff_le, Filter.eventually_map, Filter.eventually_atTop, le_top,
-      forall_exists_index, implies_true, forall_const]
-  · simp only [Filter.eventually_atTop, ge_iff_le]
+theorem CoverEntropySupUni_le_log_mincard_div {T : X → X} {F : Set X} (F_inv : IsInvariant T F)
+    {V : Set (X × X)} (V_symm : SymmetricRel V) {n : ℕ} (n_pos : 0 < n) :
+    CoverEntropySupUni T F (V ○ V) ≤ log (Mincard T F V n) / n := by
+  let u := fun m : ℕ ↦ log (Mincard T F V n) / n
+  let v := fun m : ℕ ↦ log (Mincard T F V n) / m
+  let w := fun m : ℕ ↦ log (Mincard T F (V ○ V) m) / m
+  have key : w ≤ᶠ[Filter.atTop] u + v := by
+    apply Filter.eventually_atTop.2
     use 1
+    simp only [Pi.add_apply, w, u, v]
     intro m m_pos
-    exact cover_entropy'_le_log_mincard_div F_inv V_symm m_pos-/
+    exact log_mincard_upper_bound F_inv V_symm n_pos m_pos
+  apply le_trans (limsup_le_limsup key)
+  suffices h : Filter.atTop.limsup v = 0
+  · have := @limsup_add_le_add_limsup ℕ Filter.atTop u v
+    rw [h, add_zero] at this
+    specialize this (Or.inr EReal.zero_ne_top) (Or.inr EReal.zero_ne_bot)
+    exact le_of_le_of_eq this (Filter.limsup_const (log (Mincard T F V n) / n))
+  apply Filter.Tendsto.limsup_eq
+  simp [v]
+  sorry
 
-theorem finite_CoverEntropyInfUni_of_compact_inv {X : Type _} [UniformSpace X] {T : X → X}
-    {F : Set X} (F_inv : IsInvariant T F) (F_comp : IsCompact F) {U : Set (X × X)}
-    (U_uni : U ∈ 𝓤 X) :
+theorem CoverEntropySupUni_le_CoverEntropyInfUni {T : X → X} {F : Set X} (F_inv : IsInvariant T F)
+    {V : Set (X × X)} (V_symm : SymmetricRel V) :
+    CoverEntropySupUni T F (V ○ V) ≤ CoverEntropyInfUni T F V := by
+  apply (Filter.le_liminf_of_le)
+  apply Filter.eventually_atTop.2
+  use 1
+  exact fun m m_pos ↦ CoverEntropySupUni_le_log_mincard_div F_inv V_symm m_pos
+
+theorem finite_CoverEntropyInfUni_of_compact_inv [UniformSpace X] {T : X → X} {F : Set X}
+    (F_inv : IsInvariant T F) (F_comp : IsCompact F) {U : Set (X × X)} (U_uni : U ∈ 𝓤 X) :
     CoverEntropyInfUni T F U < ⊤ := by
   rcases comp_symm_mem_uniformity_sets U_uni with ⟨V, V_uni, V_symm, V_U⟩
   rcases exists_dyncover_of_compact_inv F_inv F_comp V_uni 1 with ⟨s, s_cover⟩
@@ -636,6 +647,7 @@ theorem finite_CoverEntropyInfUni_of_compact_inv {X : Type _} [UniformSpace X] {
   norm_cast
   exact Ne.lt_top (ENat.coe_ne_top (Finset.card s))
 
+/- Simplify.-/
 /- Same for CoverEntropySupUni?-/
 
 /-!
