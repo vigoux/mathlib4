@@ -206,4 +206,10 @@ protected theorem integral_comp_polarCoord_symm {E : Type*} [NormedAddCommGroup 
     measurableEquivRealProd.symm.measurableEmbedding, ← integral_comp_polarCoord_symm]
   rfl
 
+protected theorem lintegral_comp_polarCoord_symm (f : ℂ → ENNReal) (hf : Measurable f) :
+    (∫⁻ p in polarCoord.target, (p.1).toNNReal • f (Complex.polarCoord.symm p)) = ∫⁻ p, f p := by
+  rw [← (Complex.volume_preserving_equiv_real_prod.symm).lintegral_comp hf,
+    ← lintegral_comp_polarCoord_symm]
+  rfl
+
 end Complex

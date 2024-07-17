@@ -1,6 +1,40 @@
 import Mathlib.Analysis.SpecialFunctions.PolarCoord
 import Mathlib.MeasureTheory.Constructions.Pi
 import Mathlib.MeasureTheory.Measure.Haar.Unique
+import Mathlib.MeasureTheory.MeasurableSpace.Embedding
+
+open MeasureTheory
+
+def MeasurableEquiv.arrowProdEquivProdArrow (α β γ : Type*) [MeasurableSpace α]
+    [MeasurableSpace β] :
+    (γ → α × β) ≃ᵐ (γ → α) × (γ → β) where
+  __ := Equiv.arrowProdEquivProdArrow α β γ
+  measurable_toFun _ hs := by
+    simp_rw [Equiv.arrowProdEquivProdArrow, Equiv.coe_fn_mk]
+    refine MeasurableSet.preimage hs (by fun_prop)
+  measurable_invFun _ hs := by
+    simp_rw [Equiv.arrowProdEquivProdArrow, Equiv.coe_fn_symm_mk]
+    refine MeasurableSet.preimage hs (by fun_prop)
+
+theorem MeasurePreserving.arrowProdEquivProdArrow (α β γ : Type*) [MeasurableSpace α]
+    [MeasurableSpace β] [Fintype γ] (μ : Measure α) (ν : Measure β) [SigmaFinite μ]
+    [SigmaFinite ν] :
+    MeasurePreserving (MeasurableEquiv.arrowProdEquivProdArrow α β γ)
+      (Measure.pi fun _ ↦ μ.prod ν) ((Measure.pi fun _ ↦ μ).prod (Measure.pi fun _ ↦ ν)) where
+  measurable := (MeasurableEquiv.arrowProdEquivProdArrow α β γ).measurable
+  map_eq := by
+    refine (Measure.FiniteSpanningSetsIn.ext ?_ (isPiSystem_pi.prod isPiSystem_pi)
+      ((Measure.FiniteSpanningSetsIn.pi fun _ ↦ μ.toFiniteSpanningSetsIn).prod
+      (Measure.FiniteSpanningSetsIn.pi (fun _ ↦ ν.toFiniteSpanningSetsIn))) ?_).symm
+    · refine (generateFrom_eq_prod generateFrom_pi generateFrom_pi ?_ ?_).symm
+      exact (Measure.FiniteSpanningSetsIn.pi (fun _ ↦ μ.toFiniteSpanningSetsIn)).isCountablySpanning
+      exact (Measure.FiniteSpanningSetsIn.pi (fun _ ↦ ν.toFiniteSpanningSetsIn)).isCountablySpanning
+    · rintro st ⟨s, ⟨s, _, rfl⟩, ⟨_, ⟨t, _, rfl⟩, rfl⟩⟩
+      rw [MeasurableEquiv.map_apply, show
+        (MeasurableEquiv.arrowProdEquivProdArrow α β γ ⁻¹' (Set.univ.pi s ×ˢ Set.univ.pi t))
+        = (Set.univ.pi fun i ↦ s i ×ˢ t i) by
+        ext; simp [MeasurableEquiv.arrowProdEquivProdArrow, Equiv.arrowProdEquivProdArrow, forall_and]]
+      simp_rw [Measure.pi_pi, Measure.prod_prod, Measure.pi_pi, Finset.prod_mul_distrib]
 
 theorem Complex.dist_induced (x y : ℝ) :
     dist (x : ℂ) (y : ℂ) = dist x y := by
@@ -80,27 +114,6 @@ theorem MeasureTheory.Measure.restrict_prod_eq_univ_prod {α β : Type*} [Measur
     μ.prod (ν.restrict t) = (μ.prod ν).restrict (Set.univ ×ˢ t) := by
   have : μ = μ.restrict Set.univ := Measure.restrict_univ.symm
   rw [this, Measure.prod_restrict, ← this]
-
-theorem measurePreserving_pi {ι : Type*} [Fintype ι] {α β : ι → Type*} [∀ i, MeasurableSpace (α i)]
-    [∀ i, MeasurableSpace (β i)]  (μ : (i : ι) → Measure (α i)) [∀ i, SigmaFinite (μ i)]
-    (ν : (i : ι) → Measure (β i)) [∀ i, SigmaFinite (ν i)] {f : (i : ι) → (α i) → (β i)}
-    (hf : ∀ i, MeasurePreserving (f i) (μ i) (ν i)) :
-    MeasurePreserving (fun a i ↦ f i (a i)) (Measure.pi μ) (Measure.pi ν) where
-  measurable :=
-    measurable_pi_iff.mpr <| fun i ↦ (hf i).measurable.comp (measurable_pi_apply i)
-  map_eq := by
-    refine (Measure.pi_eq fun s hs ↦ ?_).symm
-    rw [Measure.map_apply, Set.preimage_pi, Measure.pi_pi]
-    simp_rw [← MeasurePreserving.measure_preimage (hf _) (hs _)]
-    · exact measurable_pi_iff.mpr <| fun i ↦ (hf i).measurable.comp (measurable_pi_apply i)
-    · exact MeasurableSet.univ_pi hs
-
-theorem volume_preserving_pi {ι : Type*} [Fintype ι] {α' β' : ι → Type*} [∀ i, MeasureSpace (α' i)]
-    [∀ i, MeasureSpace (β' i)] [∀ i, SigmaFinite (volume : Measure (α' i))]
-    [∀ i, SigmaFinite (volume : Measure (β' i))] {f : (i : ι) → (α' i) → (β' i)}
-    (hf : ∀ i, MeasurePreserving (f i)) :
-    MeasurePreserving (fun (a : (i : ι) → α' i) (i : ι) ↦ (f i) (a i)) :=
-  measurePreserving_pi _ _ hf
 
 theorem Real.rpow_ne_zero_of_pos {x : ℝ} (hx : 0 < x) (y : ℝ) : x ^ y ≠ 0 := by
   rw [rpow_def_of_pos hx]; apply exp_ne_zero _

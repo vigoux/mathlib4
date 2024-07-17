@@ -78,7 +78,7 @@ theorem marcus₁_image_prod (s : Set (InfinitePlace K → ℝ))
 local notation "G" K => ({w : InfinitePlace K // IsReal w} → ℝ) ×
     ({w : InfinitePlace K // IsComplex w} → ℝ × ℝ)
 
-@[simps apply symm_apply]
+@[simps apply symm_apply] -- Make CLE
 def marcus₂ : Homeomorph (F K) (G K) where
   toFun := fun x ↦ (fun w ↦ x.1 w.val, fun w ↦ ⟨x.1 w.val, x.2 w⟩)
   invFun := fun x ↦ ⟨fun w ↦ if hw : w.IsReal then x.1 ⟨w, hw⟩ else
@@ -100,6 +100,62 @@ def marcus₂ : Homeomorph (F K) (G K) where
         fun_prop
     · fun_prop
 
+def marcus₂'_symm : (G K) ≃ (F K) := by
+  let f : ({w : InfinitePlace K // IsComplex w} → ℝ × ℝ) ≃
+      ({w : InfinitePlace K // IsComplex w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ) :=
+    Equiv.arrowProdEquivProdArrow ℝ ℝ _
+  refine Equiv.trans (Equiv.prodCongr (Equiv.refl _) f) ?_
+  let k : ({w : InfinitePlace K // w.IsReal} → ℝ) × ({w : InfinitePlace K // w.IsComplex} → ℝ) ×
+      ({w : InfinitePlace K // w.IsComplex} → ℝ) ≃ (({w : InfinitePlace K // w.IsReal} → ℝ) ×
+      ({w : InfinitePlace K // w.IsComplex} → ℝ)) × ({w : InfinitePlace K // w.IsComplex} → ℝ) :=
+    (Equiv.prodAssoc _ _ _).symm
+  refine Equiv.trans k ?_
+  let g :
+    ({w : InfinitePlace K // IsComplex w} → ℝ) ≃ ({w : InfinitePlace K // ¬ IsReal w} → ℝ) := by
+    refine Equiv.arrowCongr' ?_ (Equiv.refl _)
+    · refine Equiv.subtypeEquivRight ?_
+      exact fun _ ↦ not_isReal_iff_isComplex.symm
+  
+  refine Equiv.trans (Equiv.prodCongr (Equiv.prodCongr (Equiv.refl _) g) (Equiv.refl _))
+    (Equiv.prodCongr (Equiv.piEquivPiSubtypeProd _ (fun _ ↦ ℝ)).symm (Equiv.refl _))
+
+def marcus₂'_symm_map : (G K) → (F K) := by
+
+
+example (x : G K) : (marcus₂ K).symm x = marcus₂'_symm K x := rfl
+
+theorem volume_preserving_marcus₂'_symm : MeasurePreserving (marcus₂'_symm K) := by
+  unfold marcus₂'_symm
+  dsimp only
+  simp only [Equiv.coe_trans]
+  refine MeasurePreserving.comp ?_ ?_
+
+
+
+#exit
+
+  refine ⟨?_, ?_⟩
+  · exact Homeomorph.measurable (marcus₂ K).symm
+  · symm
+    rw [volume_eq_prod, ← addHaarMeasure_eq_volume_pi, ← addHaarMeasure_eq_volume_pi]
+    rw [← Basis.parallelepiped_basisFun, ← Basis.parallelepiped_basisFun, ← Basis.addHaar_def,
+      ← Basis.addHaar_def, ← Basis.prod_addHaar]
+
+    haveI : IsAddHaarMeasure (Measure.map ((marcus₂' K).symm) volume) := sorry
+    rw [Basis.addHaar_eq_iff]
+    rw [volume_eq_prod]
+    rw [Basis.prod_parallelepiped]
+    simp only [TopologicalSpace.PositiveCompacts.coe_prod, Basis.coe_parallelepiped]
+    rw [Measure.map_apply]
+    simp [marcus₂', marcus₂]
+    dsimp
+    rw?
+
+    sorry
+--  refine ⟨?_, ?_⟩
+--  · exact Homeomorph.measurable (marcus₂ K)
+--  · sorry
+
 def marcus₃ : PartialHomeomorph (F K) (E K) :=
   (marcus₂ K).toPartialHomeomorph.trans <|
     (PartialHomeomorph.refl _).prod <| PartialHomeomorph.pi fun _ ↦ Complex.polarCoord.symm
@@ -112,6 +168,18 @@ theorem marcus₃_apply (x : F K) :
     PartialHomeomorph.refl_apply, Function.comp_apply, id_eq,  Homeomorph.toPartialHomeomorph_apply,
     marcus₂_apply, PartialHomeomorph.pi, PartialHomeomorph.symm_toPartialEquiv,
     PartialHomeomorph.mk_coe, PartialEquiv.pi_apply, PartialHomeomorph.coe_coe_symm]
+
+-- Probably merge with volume_marcus₃_set_prod_set
+theorem lintegral_marcus₃ (f : (E K) → ENNReal) :
+    ∫⁻ x, f x = ∫⁻ x, (∏ w : {w // IsComplex w}, (x.1 w.val).toNNReal) * f (marcus₃ K x) := by
+  rw [← (volume_preserving_marcus₂_symm K).lintegral_comp]
+  simp only [marcus₂_symm_apply, Subtype.coe_eta, ENNReal.coe_finset_prod, marcus₃_apply]
+  simp_rw [dif_pos (Subtype.prop _), dif_neg (not_isReal_iff_isComplex.mpr (Subtype.prop _))]
+  rw [volume_eq_prod, volume_eq_prod, lintegral_prod, lintegral_prod]
+  congr with x
+  dsimp only
+
+  sorry
 
 @[simp]
 theorem marcus₃_symm_apply (x : E K) :
@@ -294,35 +362,39 @@ theorem normLessThanOnePlus_eq_image :
 --         ∂fun _ ↦ (volume.restrict (Set.Ici (0 : ℝ)))) (fun i ↦ ‖a i‖) := by
 --   sorry
 
+-- example (s : Set (InfinitePlace K → ℝ)) (t : {w : InfinitePlace K // IsComplex w} → Set ℝ)
+--     (W : Finset {w : InfinitePlace K // w.IsComplex}) (a : {w : InfinitePlace K // IsComplex w} → ℂ)
+--     (x : {w : InfinitePlace K // IsReal w} → ℝ) :
+--     (∫⋯∫⁻_W, fun y ↦ (s ×ˢ Set.univ.pi fun w ↦ t w).indicator 1 (x, y)
+--       ∂fun _ ↦ (volume : Measure ℂ)) a = ∏ w ∈ W, volume (t w) * ∫⁻ a, s.indicator 1 a := sorry
+
+
+
 -- Prove the full_marcus version below instead?
 theorem volume_marcus₃_set_prod_set (s : Set (InfinitePlace K → ℝ))
     (t : Set ({w : InfinitePlace K // IsComplex w} → ℝ)) :
-    volume (marcus₃ K '' (s ×ˢ t)) = volume t *
-      ∫⁻ x in s, ∏ w : {w : InfinitePlace K // IsComplex w}, (x w).toNNReal:= by
-  rw [← setLIntegral_one, ← lintegral_indicator, Measure.volume_eq_prod, lintegral_prod]
-  let sr : Set ({w : InfinitePlace K // IsReal w} → ℝ) := {x | ∃ a ∈ s, ∀ w, x w = a w}
-  let sc : Set ({w : InfinitePlace K // IsComplex w} → ℝ × ℝ) := sorry
+   -- (t : {w : InfinitePlace K // IsComplex w} → Set ℝ) :
+--    volume (marcus₃ K '' (s ×ˢ (Set.univ.pi fun w ↦ t w))) = ∏ w, volume (t w) *
+    volume (marcus₃ K '' s ×ˢ t) = volume t *
+      ∫⁻ x in s, ∏ w : {w : InfinitePlace K // IsComplex w}, (x w).toNNReal := by
+  rw [← setLIntegral_one, ← lintegral_indicator]
+  rw [lintegral_marcus₃]
+  simp_rw [Set.indicator_image sorry]
+  rw [Measure.volume_eq_prod, lintegral_prod]
+  simp_rw [show (fun _ ↦ (1 : ℝ≥0∞)) ∘ (marcus₃ K) = fun _ ↦ 1 by aesop]
   have : ∀ x y,
-      (marcus₃ K '' s ×ˢ t).indicator (fun _ ↦ (1 : ℝ≥0∞)) (x, y) =
-        sr.indicator 1 x * sc.indicator 1 (fun w ↦ Complex.polarCoord (y w)) := by
-    intro x y
-    by_cases h : (x, y) ∈ marcus₃ K '' (s ×ˢ t)
-    · rw [Set.indicator_of_mem h, Set.indicator_of_mem, Set.indicator_of_mem, Pi.one_apply,
-        Pi.one_apply, one_mul]
-      · simp at h
-
-        sorry
-      · simp at h
-        obtain ⟨a, _, ⟨ha₁, _⟩, rfl, _⟩ := h
-        refine ⟨a, ha₁, ?_⟩
-        intro _
-        rfl
-    · sorry
+    (s ×ˢ t).indicator (fun x ↦ (1 : ℝ≥0∞)) (x, y) = (s.indicator 1 x) * (t.indicator 1 y) := by
+      intro x y
+      exact Set.indicator_prod_one
   simp_rw [this]
   simp_rw [lintegral_const_mul' _ _ sorry]
-  
+  simp_rw [lintegral_indicator _ sorry, Pi.one_apply, setLIntegral_one, ← mul_assoc]
+  rw [lintegral_mul_const', mul_comm]
+  rw [← lintegral_indicator]
+  congr
+  ext
 
-  sorry
+  all_goals sorry
 
 theorem volume_full_marcus_set_prod_set (s : Set (InfinitePlace K → ℝ))
     (t : Set ({w : InfinitePlace K // IsComplex w} → ℝ)) :
@@ -335,6 +407,7 @@ theorem volume_full_marcus_set_prod_set (s : Set (InfinitePlace K → ℝ))
   simp only [PartialHomeomorph.coe_trans, PartialHomeomorph.prod_apply,
     PartialHomeomorph.refl_apply, id_eq, Homeomorph.toPartialHomeomorph_apply, Function.comp_apply,
     marcus₂_apply]
+
 
   sorry
 
@@ -404,13 +477,33 @@ theorem interior_eq_interior :
 theorem volume_frontier :
     volume (frontier (normLessThanOnePlus K)) = 0 := by
   rw [frontier]
-  have := Set.diff_subset_diff_left ( closure_subset_closure K)
+  have := Set.diff_subset_diff_left (closure_subset_closure K)
     (t := interior (normLessThanOnePlus K))
   rw [← nonpos_iff_eq_zero]
   refine le_trans (measure_mono this) ?_
   rw [← interior_eq_interior]
   refine le_trans (measure_mono (Set.subset_image_diff _ _ _)) ?_
-  rw [closure_diff_interior]
+  rw [nonpos_iff_eq_zero, closure_diff_interior]
   rw [box]
-  rw [frontier_prod_eq]
+
+  rw [frontier, closure_prod_eq, interior_prod_eq]
+  have : closure (box₁ K) = Set.univ.pi fun _ ↦ Set.Icc 0 1 := by
+    simp_rw [box₁, closure_pi_set, apply_ite, closure_Ioc zero_ne_one, closure_Ico zero_ne_one,
+      ite_self]
+  rw [this]
+  have : closure (box₂ K) = Set.univ.pi fun _ ↦ Set.Icc (-π) π := by
+    have : -π ≠ π := by
+      norm_num [Real.pi_ne_zero]
+    simp_rw [box₂, closure_pi_set, closure_Ioc this]
+  rw [this]
+  have : interior (box₁ K) = Set.univ.pi fun _ ↦ Set.Ioo 0 1 := by
+    simp_rw [box₁, interior_pi_set Set.finite_univ, apply_ite, interior_Ioc, interior_Ico, ite_self]
+  rw [this]
+  have : interior (box₂ K) = Set.univ.pi fun _ ↦ Set.Ioo (-π) π := by
+    simp_rw [box₂, interior_pi_set Set.finite_univ, interior_Ioc]
+  rw [this]
+  rw [Set.prod_diff_prod]
+  simp_rw [Set.pi_univ_Icc, Set.Icc_prod_Icc]
+  simp only [Set.pi_univ_Icc, Set.Icc_prod_Icc, nonpos_iff_eq_zero]
+
   sorry
