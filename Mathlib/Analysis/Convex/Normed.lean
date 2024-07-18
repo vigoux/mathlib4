@@ -161,30 +161,33 @@ lemma exists_mem_interior_convexHull_affineBasis (hs : s ∈ 𝓝 x) :
   -- ... translate it to contain the origin...
   set c : AffineBasis (Fin (finrank ℝ E + 1)) ℝ E := -Finset.univ.centroid ℝ b +ᵥ b
   have hc₀ : 0 ∈ interior (convexHull ℝ (range c) : Set E) := by
-    simpa [c, convexHull_vadd, interior_vadd, mem_vadd_set_iff_neg_vadd_mem]
+    simpa [c, convexHull_vadd, interior_vadd, range_add, Pi.vadd_def, mem_vadd_set_iff_neg_vadd_mem]
       using b.centroid_mem_interior_convexHull
-  have hu : u.Nonempty := Finset.nonempty_iff_ne_empty.2 fun h ↦ by simp [h] at hu₀
-  have hunorm : (u : Set E) ⊆ closedBall 0 (u.sup' hu (‖·‖) + 1) := by
+  have hcnorm :
+      range c ⊆ closedBall 0 (Finset.univ.sup' Finset.univ_nonempty (fun i ↦ ‖c i‖) + 1) := by
     simp only [subset_def, Finset.mem_coe, mem_closedBall, dist_zero_right, ← sub_le_iff_le_add,
-      Finset.le_sup'_iff]
-    exact fun x hx ↦ ⟨x, hx, by simp⟩
+      Finset.le_sup'_iff, forall_mem_range]
+    exact fun i ↦ ⟨i, by simp⟩
   -- ... and finally scale it to fit inside the neighborhood `s`.
   obtain ⟨ε, hε, hεs⟩ := Metric.mem_nhds_iff.1 hs
-  set ε' : ℝ := ε / 2 / (u.sup' hu (‖·‖) + 1)
-  have hε' : 0 < ε' := by
-    dsimp [ε']
-    obtain ⟨x, hx⟩ := id hu
-    have : 0 ≤ u.sup' hu (‖·‖) := Finset.le_sup'_of_le _ hx (norm_nonneg _)
+  set ε' : ℝ := ε / 2 / (Finset.univ.sup' Finset.univ_nonempty (fun i ↦ ‖c i‖) + 1)
+  have hc' : 0 < Finset.univ.sup' Finset.univ_nonempty (fun i ↦ ‖c i‖) + 1 := by
+    have : 0 ≤ Finset.univ.sup' Finset.univ_nonempty (fun i ↦ ‖c i‖) :=
+      Finset.le_sup'_of_le _ (Finset.mem_univ 0) (norm_nonneg _)
     positivity
-  set t : Finset E := ε' • u
+  have hε' : 0 < ε' := by dsimp [ε']; positivity
+  set d : AffineBasis (Fin (finrank ℝ E + 1)) ℝ E := Units.mk0 ε' hε'.ne' • c
   have hε₀ : 0 < ε / 2 := by positivity
-  have htnorm : (t : Set E) ⊆ closedBall 0 (ε / 2) := by
-    simp [t, Set.set_smul_subset_iff₀ hε'.ne', hε₀.le, _root_.smul_closedBall, abs_of_nonneg hε'.le]
-    simpa [ε',  hε₀.ne'] using hunorm
-  refine ⟨t, ?_, ?_⟩
-  · simpa [t, interior_smul₀, convexHull_smul, zero_mem_smul_set_iff, hε'.ne']
+  have hdnorm : (range d : Set E) ⊆ closedBall 0 (ε / 2) := by
+    simp [d, Set.set_smul_subset_iff₀ hε'.ne', hε₀.le, _root_.smul_closedBall, abs_of_nonneg hε'.le,
+      range_subset_iff, norm_smul]
+    simpa [ε', hε₀.ne', range_subset_iff, ← mul_div_right_comm (ε / 2), div_le_iff hc',
+      mul_le_mul_left hε₀] using hcnorm
+  refine ⟨d, ?_, ?_⟩
+  · simpa [d, Pi.smul_def, range_smul, interior_smul₀, convexHull_smul, zero_mem_smul_set_iff,
+      hε'.ne']
   calc
-    convexHull ℝ t ⊆ closedBall 0 (ε / 2) := convexHull_min htnorm (convex_closedBall ..)
+    convexHull ℝ (range d) ⊆ closedBall 0 (ε / 2) := convexHull_min hdnorm (convex_closedBall ..)
     _ ⊆ ball 0 ε := closedBall_subset_ball (by linarith)
     _ ⊆ s := hεs
 
