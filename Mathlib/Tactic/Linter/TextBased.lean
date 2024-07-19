@@ -6,6 +6,7 @@ Authors: Michael Rothgang
 
 import Batteries.Data.String.Matcher
 import Mathlib.Init.Data.Nat.Notation
+import Lake
 
 /-!
 ## Text-based linters
@@ -30,11 +31,6 @@ inductive BroadImports
   This has caused unexpected regressions in the past. -/
   | Lake
 deriving BEq
-
-/-- Name the `BroadImports` kind, for the purposes of the style exceptions file. -/
-def BroadImports.name : BroadImports → String := fun b ↦  match b with
-  | TacticFolder => "TacticFolder"
-  | Lake => "Lake"
 
 /-- Possible errors that text-based linters can report. -/
 -- We collect these in one inductive type to centralise error reporting.
@@ -85,8 +81,7 @@ def StyleError.errorMessage (err : StyleError) (style : ErrorFormat) : String :=
       "In the past, importing 'Lake' in mathlib has led to dramatic slow-downs of the linter (see \
         e.g. mathlib4#13779). Please consider carefully if this import is useful and make sure to \
         benchmark it. If this is fine, feel free to allow this linter."
-      -- Print an identifier for the import variant to the exceptions file, to ease parsing it.
-      if style == ErrorFormat.exceptionsFile then s!"{b.name} {message}" else message
+      message
   | StyleError.lineLength n => s!"Line has {n} characters, which is more than 100"
   | StyleError.fileTooLong currentSize sizeLimit =>
     match style with
@@ -103,7 +98,8 @@ def StyleError.errorCode (err : StyleError) : String := match err with
   | StyleError.copyright _ => "ERR_COP"
   | StyleError.authors => "ERR_AUT"
   | StyleError.adaptationNote => "ERR_ADN"
-  | StyleError.broadImport _ => "ERR_IMP"
+  | StyleError.broadImport BroadImports.TacticFolder => "ERR_IMP.Tactic"
+  | StyleError.broadImport BroadImports.Lake => "ERR_IMP.Lake"
   | StyleError.lineLength _ => "ERR_LIN"
   | StyleError.fileTooLong _ _ => "ERR_NUM_LIN"
 
@@ -207,12 +203,8 @@ def parse?_errorContext (line : String) : Option ErrorContext := Id.run do
           else none
         | "ERR_AUT" => some (StyleError.authors)
         | "ERR_ADN" => some (StyleError.adaptationNote)
-        | "ERR_IMP" =>
-          -- FIXME: update this for the new error message!
-          if (errorMessage.get! 0).containsSubstr "tactic" then
-            some (StyleError.broadImport BroadImports.TacticFolder)
-          else
-            some (StyleError.broadImport BroadImports.Lake)
+        | "ERR_IMP.Tactic" => some (StyleError.broadImport BroadImports.TacticFolder)
+        | "ERR_IMP.Lake" => some (StyleError.broadImport BroadImports.Lake)
         | "ERR_NUM_LIN" =>
           -- Parse the error message in the script. `none` indicates invalid input.
           match (errorMessage.get? 0, errorMessage.get? 3) with
