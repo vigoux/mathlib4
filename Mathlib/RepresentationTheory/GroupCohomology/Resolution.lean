@@ -103,7 +103,6 @@ def actionDiagonalSucc (G : Type u) [Group G] :
         leftRegularTensorIso _ _ ≪≫
           tensorIso (Iso.refl _)
             (mkIso (Fin.insertNthEquiv (fun _ => G) 0).toIso fun _ => rfl)
-set_option linter.uppercaseLean3 false in
 
 theorem actionDiagonalSucc_hom_apply {G : Type u} [Group G] {n : ℕ} (f : Fin (n + 1) → G) :
     (actionDiagonalSucc G n).hom.hom f = (f 0, fun i => (f (Fin.castSucc i))⁻¹ * f i.succ) := by
