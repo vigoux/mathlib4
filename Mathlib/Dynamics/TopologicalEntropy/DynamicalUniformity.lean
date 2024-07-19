@@ -108,6 +108,11 @@ theorem dynamical_time_one {T : X → X} {U : Set (X × X)} :
     DynamicalUni T U 1 = U := by
   simp [DynamicalUni]
 
+@[simp]
+theorem dynamical_univ {T : X → X} {n : ℕ} :
+    DynamicalUni T univ n = univ := by
+  simp [DynamicalUni]
+
 theorem inter_of_dynamical_balls (T : X → X) (n : ℕ) {U : Set (X × X)} (U_symm : SymmetricRel U)
     (x y : X) (h : (ball x (DynamicalUni T U n) ∩ ball y (DynamicalUni T U n)).Nonempty) :
     x ∈ ball y (DynamicalUni T (U ○ U) n) := by

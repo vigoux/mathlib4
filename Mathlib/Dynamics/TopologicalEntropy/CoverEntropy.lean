@@ -54,41 +54,13 @@ open DynamicalUniformity Set Uniformity UniformSpace
 
 variable {X : Type*}
 
-open ENNReal EReal
-
-theorem Ereal_natCast_ne_bot (n : ℕ) : (n : EReal) ≠ ⊥ := Ne.symm (ne_of_beq_false rfl)
-
-theorem Ereal_natCast_ne_top (n : ℕ) : (n : EReal) ≠ ⊤ := Ne.symm (ne_of_beq_false rfl)
-
-theorem Ereal_natCast_eq_coe_coe (n : ℕ) :
-     (n : ℝ) = (n : EReal) := rfl
-
-theorem Ereal_natCast_mul (m n : ℕ) :
-    (m * n : ℕ) = (m : EReal) * (n : EReal) := by
-  rw [← Ereal_natCast_eq_coe_coe, ← Ereal_natCast_eq_coe_coe, ← Ereal_natCast_eq_coe_coe,
-    Nat.cast_mul, EReal.coe_mul]
-
-theorem Ereal_natCast_div_le (m n : ℕ) :
-    (m / n : ℕ) ≤ (m : EReal) / n := by
-  rw [← Ereal_natCast_eq_coe_coe, ← Ereal_natCast_eq_coe_coe, ← Ereal_natCast_eq_coe_coe,
-    ← EReal.coe_div,  EReal.coe_le_coe_iff]
-  exact Nat.cast_div_le
-
-theorem Ereal_natCast_le (m n : ℕ) : (m : EReal) ≤ n ↔ m ≤ n := by
-  rw [← Ereal_natCast_eq_coe_coe n, ← Ereal_natCast_eq_coe_coe m, EReal.coe_le_coe_iff, Nat.cast_le]
-
-theorem ENat.toENNReal_coe_eq_iff {x y : ENat} : (x : ENNReal) = y ↔ x = y :=
-  OrderEmbedding.eq_iff_eq ENat.toENNRealOrderEmbedding
-
-theorem ENat.toENNReal_pow (x : ℕ∞) (n : ℕ) : (x ^ n : ℕ∞) = (x : ℝ≥0∞) ^ n := by
-  induction n with | zero => simp | succ n hn =>
-  rw [pow_succ x n, pow_succ (x : ℝ≥0∞) n, ENat.toENNReal_mul (x ^n) x, hn]
+open EReal
 
 theorem Ereal_tendsto_const_div_atTop_nhds_zero_nat {x : EReal} (h : x ≠ ⊥) (h' : x ≠ ⊤) :
     Filter.atTop.Tendsto (fun n : ℕ ↦ x / n) (nhds 0) := by
   have : (fun n : ℕ ↦ x / n) = fun n : ℕ ↦ ((x.toReal / n : ℝ) : EReal) := by
     ext n
-    nth_rw 1 [← coe_toReal h' h, ← Ereal_natCast_eq_coe_coe n, ← EReal.coe_div x.toReal n]
+    nth_rw 1 [← coe_toReal h' h, ← coe_coe_eq_natCast n, ← coe_div x.toReal n]
   rw [this, ← EReal.coe_zero, EReal.tendsto_coe]
   exact tendsto_const_div_atTop_nhds_zero_nat x.toReal
 
@@ -426,7 +398,7 @@ theorem log_mincard_nonneg_of_nonempty (T : X → X) {F : Set X} (h : F.Nonempty
 theorem log_mincard_iterate {T : X → X} {F : Set X} (F_inv : MapsTo T F F) {U : Set (X × X)}
     (U_symm : SymmetricRel U) (m : ℕ) {n : ℕ} (n_pos : 0 < n) :
     log (Mincard T F (U ○ U) (m * n)) / n ≤ log (Mincard T F U m) := by
-  apply (EReal.div_le_iff_le_mul (b := n) (Nat.cast_pos'.2 n_pos) (Ereal_natCast_ne_top n)).2
+  apply (EReal.div_le_iff_le_mul (b := n) (Nat.cast_pos'.2 n_pos) (natCast_ne_top n)).2
   rw [← log_pow, StrictMono.le_iff_le log_strictMono]
   nth_rw 2 [← ENat.toENNRealRingHom_apply]
   rw [← RingHom.map_pow ENat.toENNRealRingHom _ n, ENat.toENNRealRingHom_apply, ENat.toENNReal_le]
@@ -437,11 +409,11 @@ theorem log_mincard_upper_bound {T : X → X} {F : Set X} (F_inv : MapsTo T F F)
     log (Mincard T F (U ○ U) n) / n ≤ log (Mincard T F U m) / m + log (Mincard T F U m) / n := by
   rcases F.eq_empty_or_nonempty with (rfl | F_nemp)
   · rw [mincard_of_empty, ENat.toENNReal_zero, log_zero,
-      bot_div_of_pos_ne_top (Nat.cast_pos'.2 n_pos) (Ereal_natCast_ne_top n)]
+      bot_div_of_pos_ne_top (Nat.cast_pos'.2 n_pos) (natCast_ne_top n)]
     exact bot_le
   have h_nm : (0 : EReal) ≤ (n / m : ℕ) := Nat.cast_nonneg' (n / m)
   have h_log := log_mincard_nonneg_of_nonempty T F_nemp U m
-  have n_div_n := EReal.div_self (Ereal_natCast_ne_bot n) (Ereal_natCast_ne_top n)
+  have n_div_n := EReal.div_self (natCast_ne_bot n) (natCast_ne_top n)
     (ne_of_gt (Nat.cast_pos'.2 n_pos))
   apply le_trans <| div_le_div_right_of_nonneg (le_of_lt (Nat.cast_pos'.2 n_pos))
     (log_monotone (ENat.toENNReal_le.2 (mincard_upper_bound F_inv U_symm m_pos n)))
@@ -450,7 +422,7 @@ theorem log_mincard_upper_bound {T : X → X} {F : Set X} (F_inv : MapsTo T F F)
     ← EReal.mul_div, div_eq_mul_inv _ (m : EReal)]
   apply add_le_add_right (mul_le_mul_of_nonneg_left _ h_log)
   apply le_of_le_of_eq <| div_le_div_right_of_nonneg (le_of_lt (Nat.cast_pos'.2 n_pos))
-    (Ereal_natCast_div_le n m)
+    (natCast_div_le n m)
   rw [EReal.div_div, mul_comm, ← EReal.div_div, n_div_n, one_div (m : EReal)]
 
 /-! ### Cover entropy of uniformities -/
@@ -490,7 +462,7 @@ theorem CoverEntropySupUni_of_empty {T : X → X} {U : Set (X × X)} :
     exact Filter.limsup_congr h ▸ Filter.limsup_const ⊥
   · simp only [mincard_of_empty, ENat.toENNReal_zero, log_zero, Filter.eventually_atTop]
     use 1
-    exact fun n n_pos ↦ bot_div_of_pos_ne_top (Nat.cast_pos'.2 n_pos) (Ereal_natCast_ne_top n)
+    exact fun n n_pos ↦ bot_div_of_pos_ne_top (Nat.cast_pos'.2 n_pos) (natCast_ne_top n)
 
 @[simp]
 theorem CoverEntropyInfUni_of_empty {T : X → X} {U : Set (X × X)} :
@@ -535,7 +507,7 @@ theorem CoverEntropyInfUni_le_log_mincard_div {T : X → X} {F : Set X} (F_inv :
     apply le_of_eq_of_le _ (div_le_div_right_of_nonneg (Nat.cast_nonneg' n) this)
     rw [EReal.div_div]
     congr
-    exact Ereal_natCast_mul (max 1 N) n
+    exact natCast_mul (max 1 N) n
 
 theorem CoverEntropyInfUni_le_card_div {T : X → X} {F : Set X} (F_inv : MapsTo T F F)
     {U : Set (X × X)} (U_symm : SymmetricRel U) {n : ℕ} (n_pos : 0 < n) {s : Finset X}
@@ -555,7 +527,7 @@ theorem CoverEntropySupUni_le_log_mincard_div {T : X → X} {F : Set X} (F_inv :
       ← empty_iff_mincard_zero T F U n] at logm_bot
     simp [logm_bot]
   rcases eq_or_ne (log (Mincard T F U n)) ⊤ with (logm_top | logm_fin)
-  · rw [logm_top, top_div_of_pos_ne_top (Nat.cast_pos'.2 n_pos) (Ereal_natCast_ne_top n)]
+  · rw [logm_top, top_div_of_pos_ne_top (Nat.cast_pos'.2 n_pos) (natCast_ne_top n)]
     exact le_top
   let u := fun _ : ℕ ↦ log (Mincard T F U n) / n
   let v := fun m : ℕ ↦ log (Mincard T F U n) / m
