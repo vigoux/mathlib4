@@ -81,6 +81,8 @@ theorem dynnet_by_singleton (T : X → X) {F : Set X} (U : Set (X × X)) (n : �
 
 open DynamicalCover
 
+/- The first of two key resultd to compare the two versions of Bowen-Dinaburg's topological entropy:
+  with cover and with nets.-/
 theorem dynnet_card_le_dyncover_card {T : X → X} {F : Set X} {U : Set (X × X)}
     (U_symm : SymmetricRel U) {n : ℕ} {s t : Finset X} (hs : IsDynamicalNetOf T F U n s)
     (ht : IsDynamicalCoverOf T F U n t) :
@@ -237,6 +239,8 @@ theorem maxcard_le_mincard (T : X → X) (F : Set X) {U : Set (X × X)} (h : Sym
     rw [← t_mincard]
     exact iSup₂_le (fun s s_net ↦ Nat.cast_le.2 (dynnet_card_le_dyncover_card h s_net t_cover))
 
+/- The second of two key resultd to compare the two versions of Bowen-Dinaburg's topological
+  entropy: with cover and with nets.-/
 theorem mincard_comp_le_maxcard (T : X → X) (F : Set X) {U : Set (X × X)}
     (U_rfl : idRel ⊆ U) (U_symm : SymmetricRel U) (n : ℕ) :
     Mincard T F (U ○ U) n ≤ Maxcard T F U n := by
@@ -348,36 +352,26 @@ theorem NetEntropyInfUni_le_CoverEntropyInfUni (T : X → X) (F : Set X) {U : Se
   apply div_le_div_right_of_nonneg (Nat.cast_nonneg' n) (log_monotone _)
   exact ENat.toENNReal_le.2 (maxcard_le_mincard T F h n)
 
-theorem cover_entropy_comp_le_net_entropy (T : X → X) (F : Set X) {U : Set (X × X)}
+theorem CoverEntropyInfUni_comp_le_NetEntropyInfUni (T : X → X) (F : Set X) {U : Set (X × X)}
     (U_rfl : idRel ⊆ U) (U_symm : SymmetricRel U) :
     CoverEntropyInfUni T F (U ○ U) ≤ NetEntropyInfUni T F U := by
   refine liminf_le_liminf (Filter.eventually_of_forall fun n ↦ ?_)
   apply div_le_div_right_of_nonneg (Nat.cast_nonneg' n) (log_monotone _)
   exact ENat.toENNReal_le.2 (mincard_comp_le_maxcard T F U_rfl U_symm n)
 
-
-
-
-
-theorem net_entropy'_le_cover_entropy' (T : X → X) (F : Set X) {U : Set (X × X)}
+theorem NetEntropySupUni_le_CoverEntropySupUni (T : X → X) (F : Set X) {U : Set (X × X)}
     (h : SymmetricRel U) :
     NetEntropySupUni T F U ≤ CoverEntropySupUni T F U := by
-  apply Misc.EReal_limsup_le_limsup <| Filter.eventually_of_forall _
-  intro n
-  apply EReal.div_left_mono _
-  apply log_monotone _
-  rw [ENat.toENNReal_le]
-  exact net_maxcard_le_cover_mincard T F h n
+  refine limsup_le_limsup (Filter.eventually_of_forall fun n ↦ ?_)
+  apply div_le_div_right_of_nonneg (Nat.cast_nonneg' n) (log_monotone _)
+  exact ENat.toENNReal_le.2 (maxcard_le_mincard T F h n)
 
-theorem cover_entropy'_comp_le_net_entropy' (T : X → X) (F : Set X) {U : Set (X × X)}
+theorem CoverEntropySupUni_comp_le_NetEntropySupUni (T : X → X) (F : Set X) {U : Set (X × X)}
     (U_rfl : idRel ⊆ U) (U_symm : SymmetricRel U) :
-  CoverEntropySupUni T F (U ○ U) ≤ NetEntropySupUni T F U := by
-  apply limsup_le_limsup <| Filter.eventually_of_forall _
-  intro n
-  apply EReal.div_left_mono _
-  apply log_monotone _
-  rw [ENat.toENNReal_le]
-  exact cover_mincard_comp_le_net_maxcard T F U_rfl U_symm n
+    CoverEntropySupUni T F (U ○ U) ≤ NetEntropySupUni T F U := by
+  refine limsup_le_limsup (Filter.eventually_of_forall fun n ↦ ?_)
+  apply div_le_div_right_of_nonneg (Nat.cast_nonneg' n) (log_monotone _)
+  exact ENat.toENNReal_le.2 (mincard_comp_le_maxcard T F U_rfl U_symm n)
 
 /-! ### Net entropy -/
 
@@ -458,14 +452,6 @@ theorem nonneg_NetEntropySup_of_nonempty (T : X → X) {F : Set X} (h : F.Nonemp
     0 ≤ NetEntropySup T F :=
   le_trans (nonneg_NetEntropyInf_of_nonempty T h) (NetEntropyInf_le_NetEntropySup T F)
 
-
-
-
-
-
-
-
-
 theorem NetEntropyInf_eq_CoverEntropyInf (T : X → X) (F : Set X) :
     NetEntropyInf T F = CoverEntropyInf T F := by
   apply le_antisymm <;> refine iSup₂_le (fun U U_uni ↦ ?_)
@@ -475,30 +461,32 @@ theorem NetEntropyInf_eq_CoverEntropyInf (T : X → X) (F : Set X) :
   · rcases (comp_symm_mem_uniformity_sets U_uni) with ⟨V, V_uni, V_symm, V_comp_U⟩
     apply le_trans (CoverEntropyInfUni_antitone_uni T F V_comp_U)
     apply le_iSup₂_of_le V V_uni
-    exact cover_entropy_comp_le_net_entropy T F (refl_le_uniformity V_uni) V_symm
+    exact CoverEntropyInfUni_comp_le_NetEntropyInfUni T F (refl_le_uniformity V_uni) V_symm
 
 theorem NetEntropySup_eq_CoverEntropySup (T : X → X) (F : Set X) :
     NetEntropySup T F = CoverEntropySup T F := by
   apply le_antisymm <;> refine iSup₂_le (fun U U_uni ↦ ?_)
-  · apply le_trans (net_entropy'_antitone_uni T F (symmetrizeRel_subset_self U)) _
+  · apply le_trans (NetEntropySupUni_antitone_uni T F (symmetrizeRel_subset_self U))
     apply le_trans _ (le_iSup₂ (symmetrizeRel U) (symmetrize_mem_uniformity U_uni))
-    exact net_entropy'_le_cover_entropy' T F (symmetric_symmetrizeRel U)
+    exact NetEntropySupUni_le_CoverEntropySupUni T F (symmetric_symmetrizeRel U)
   · rcases (comp_symm_mem_uniformity_sets U_uni) with ⟨V, V_uni, V_symm, V_comp_U⟩
-    apply le_trans (DynamicalCover.cover_entropy'_antitone_uni T F V_comp_U)
+    apply le_trans (CoverEntropySupUni_antitone_uni T F V_comp_U)
     apply le_iSup₂_of_le V V_uni
-    exact cover_entropy'_comp_le_net_entropy' T F (refl_le_uniformity V_uni) V_symm
+    exact CoverEntropySupUni_comp_le_NetEntropySupUni T F (refl_le_uniformity V_uni) V_symm
 
-theorem net_entropy_eq_cover_entropy' (T : X → X) {F : Set X} (h : IsInvariant T F) :
-    Entropy T F = DynamicalCover.Entropy' T F :=
-  Eq.trans (net_entropy_eq_cover_entropy T F) (DynamicalCover.entropy_eq_entropy' T h)
+theorem NetEntropyInf_eq_CoverEntropySup_of_inv (T : X → X) {F : Set X} (h : MapsTo T F F) :
+    NetEntropyInf T F = CoverEntropySup T F :=
+  Eq.trans (NetEntropyInf_eq_CoverEntropyInf T F) (CoverEntropyInf_eq_CoverEntropySup_of_inv T h)
 
-theorem net_entropy'_eq_cover_entropy (T : X → X) {F : Set X} (h : IsInvariant T F) :
-    Entropy' T F = DynamicalCover.Entropy T F :=
-  Eq.trans (net_entropy'_eq_cover_entropy' T F) (Eq.symm (DynamicalCover.entropy_eq_entropy' T h))
+theorem NetEntropySup_eq_CoverEntropyInf_of_inv (T : X → X) {F : Set X} (h : MapsTo T F F) :
+    NetEntropySup T F = CoverEntropyInf T F :=
+  Eq.trans (NetEntropySup_eq_CoverEntropySup T F)
+    (Eq.symm (CoverEntropyInf_eq_CoverEntropySup_of_inv T h))
 
-theorem net_entropy_eq_net_entropy' (T : X → X) {F : Set X} (h : IsInvariant T F) :
-    Entropy T F = Entropy' T F :=
-  Eq.trans (net_entropy_eq_cover_entropy' T h) (Eq.symm (net_entropy'_eq_cover_entropy' T F))
+theorem NetEntropyInf_eq_NetEntropySup_of_inv (T : X → X) {F : Set X} (h : MapsTo T F F) :
+    NetEntropyInf T F = NetEntropySup T F :=
+  Eq.trans (NetEntropyInf_eq_CoverEntropySup_of_inv T h)
+    (Eq.symm (NetEntropySup_eq_CoverEntropySup T F))
 
 end DynamicalNet
 
