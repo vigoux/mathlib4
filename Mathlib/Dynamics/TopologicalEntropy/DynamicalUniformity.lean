@@ -30,7 +30,7 @@ these dynamical uniformities
 
 namespace DynamicalUniformity
 
-open Prod Uniformity UniformSpace
+open Prod Set Uniformity UniformSpace
 
 variable {X : Type*}
 
@@ -39,16 +39,16 @@ def DynamicalUni (T : X → X) (U : Set (X × X)) (n : ℕ) : Set (X × X) :=
   ⋂ k < n, (map T T)^[k] ⁻¹' U
 
 theorem dynamical_uni_inter_Ico (T : X → X) (U : Set (X × X)) (n : ℕ) :
-    DynamicalUni T U n = ⋂ k : Set.Ico 0 n, (map T T)^[k] ⁻¹' U := by
-  simp only [DynamicalUni, Set.iInter_coe_set, Set.mem_Ico, zero_le, true_and]
+    DynamicalUni T U n = ⋂ k : Ico 0 n, (map T T)^[k] ⁻¹' U := by
+  simp only [DynamicalUni, iInter_coe_set, mem_Ico, zero_le, true_and]
 
 theorem dynamical_uni_mem {T : X → X} {U : Set (X × X)} {n : ℕ} {x y : X} :
     (x, y) ∈ DynamicalUni T U n ↔ ∀ k < n, (T^[k] x, T^[k] y) ∈ U := by
-  simp only [DynamicalUni, map_iterate, Set.mem_preimage, Set.mem_iInter, map_apply]
+  simp only [DynamicalUni, map_iterate, mem_preimage, mem_iInter, map_apply]
 
 theorem dynamical_balls_mem {T : X → X} {U : Set (X × X)} {n : ℕ} {x y : X} :
     y ∈ ball x (DynamicalUni T U n) ↔ ∀ k < n, T^[k] y ∈ ball (T^[k] x) U := by
-  simp only [ball, Set.mem_preimage]; exact dynamical_uni_mem
+  simp only [ball, mem_preimage]; exact dynamical_uni_mem
 
 theorem dynamical_uni_of_uni [UniformSpace X] {T : X → X} (h : UniformContinuous T)
     {U : Set (X × X)} (U_uni : U ∈ 𝓤 X) (n : ℕ) :
@@ -60,8 +60,7 @@ theorem dynamical_uni_of_uni [UniformSpace X] {T : X → X} (h : UniformContinuo
 
 theorem dynamical_uni_of_rfl_is_rfl (T : X → X) {U : Set (X × X)} (h : idRel ⊆ U) (n : ℕ) :
     idRel ⊆ (DynamicalUni T U n) := by
-  simp only [DynamicalUni, map_iterate, Set.subset_iInter_iff, idRel_subset, Set.mem_preimage,
-    map_apply]
+  simp only [DynamicalUni, map_iterate, subset_iInter_iff, idRel_subset, mem_preimage, map_apply]
   intro _ _ _
   apply h
   rw [mem_idRel]
@@ -69,16 +68,16 @@ theorem dynamical_uni_of_rfl_is_rfl (T : X → X) {U : Set (X × X)} (h : idRel 
 theorem dynamical_uni_of_symm_is_symm (T : X → X) {U : Set (X × X)} (h : SymmetricRel U) (n : ℕ) :
     SymmetricRel (DynamicalUni T U n) := by
   ext xy
-  simp only [DynamicalUni, map_iterate, Set.mem_preimage, Set.mem_iInter]
+  simp only [DynamicalUni, map_iterate, mem_preimage, mem_iInter]
   refine forall₂_congr fun k _ ↦ ?_
   rw [map_apply', map_apply']
   exact SymmetricRel.mk_mem_comm h
 
 theorem dynamical_uni_of_comp_is_comp (T : X → X) (U V : Set (X × X)) (n : ℕ) :
     (DynamicalUni T U n) ○ (DynamicalUni T V n) ⊆ DynamicalUni T (U ○ V) n := by
-  simp only [DynamicalUni, map_iterate, Set.subset_iInter_iff]
+  simp only [DynamicalUni, map_iterate, subset_iInter_iff]
   intro k k_n xy xy_comp
-  simp only [compRel, Set.mem_iInter, Set.mem_preimage, map_apply, Set.mem_setOf_eq] at xy_comp ⊢
+  simp only [compRel, mem_iInter, mem_preimage, map_apply, mem_setOf_eq] at xy_comp ⊢
   rcases xy_comp with ⟨z, hz1, hz2⟩
   exact mem_ball_comp (hz1 k k_n) (hz2 k k_n)
 
@@ -91,18 +90,18 @@ theorem dynamical_uni_of_open_is_open [TopologicalSpace X] {T : X → X} (T_cont
 
 theorem dynamical_uni_monotone_uni (T : X → X) (n : ℕ) :
     Monotone (fun U : Set (X × X) ↦ DynamicalUni T U n) :=
-  fun _ _ h ↦ Set.iInter₂_mono fun _ _ ↦ Set.preimage_mono h
+  fun _ _ h ↦ iInter₂_mono fun _ _ ↦ preimage_mono h
 
 theorem dynamical_uni_antitone_time (T : X → X) (U : Set (X × X)) :
     Antitone (fun n : ℕ ↦ DynamicalUni T U n) := by
   intro m n m_n
-  refine Set.iInter₂_mono' fun k k_m ↦ ?_
+  refine iInter₂_mono' fun k k_m ↦ ?_
   use k, lt_of_lt_of_le k_m m_n
 
 @[simp]
 theorem dynamical_uni_time_zero {T : X → X} {U : Set (X × X)} :
-    DynamicalUni T U 0 = Set.univ := by
-  simp only [DynamicalUni, not_lt_zero', Set.iInter_of_empty, Set.iInter_univ]
+    DynamicalUni T U 0 = univ := by
+  simp only [DynamicalUni, not_lt_zero', iInter_of_empty, iInter_univ]
 
 @[simp]
 theorem dynamical_time_one {T : X → X} {U : Set (X × X)} :
@@ -121,10 +120,10 @@ theorem preimage_of_dynamical_uni {Y : Type*} {S : X → X} {T : Y → Y} {φ : 
     (h : Function.Semiconj φ S T) (U : Set (Y × Y)) (n : ℕ) :
     (map φ φ)⁻¹' (DynamicalUni T U n) = DynamicalUni S ((map φ φ)⁻¹' U) n := by
   unfold DynamicalUni
-  rw [Set.preimage_iInter₂]
-  refine Set.iInter₂_congr fun k _ ↦ ?_
-  rw [← Set.preimage_comp, ← Set.preimage_comp, map_iterate S S k, map_iterate T T k,
-    map_comp_map, map_comp_map, (Function.Semiconj.iterate_right h k).comp_eq]
+  rw [preimage_iInter₂]
+  refine iInter₂_congr fun k _ ↦ ?_
+  rw [← preimage_comp, ← preimage_comp, map_iterate S S k, map_iterate T T k, map_comp_map,
+    map_comp_map, (Function.Semiconj.iterate_right h k).comp_eq]
 
 /--Notation for the product of two uniform neighborhoods.-/
 def UniformityProd {Y : Type*} (U : Set (X × X)) (V : Set (Y × Y)) : Set ((X × Y) × X × Y) :=
@@ -134,7 +133,7 @@ def UniformityProd {Y : Type*} (U : Set (X × X)) (V : Set (Y × Y)) : Set ((X �
 theorem ball_prod {Y : Type*} (U : Set (X × X)) (V : Set (Y × Y)) (xy : X × Y) :
     ball xy (UniformityProd U V) = ball xy.1 U ×ˢ ball xy.2 V := by
   ext p
-  simp only [ball, UniformityProd, Set.mem_setOf_eq, Set.mem_prod, Set.mem_preimage]
+  simp only [ball, UniformityProd, mem_setOf_eq, mem_prod, mem_preimage]
 
 theorem dynamical_uni_prod {Y : Type*} (S : X → X) (T : Y → Y) (U : Set (X × X)) (V : Set (Y × Y))
     (n : ℕ) :
@@ -142,7 +141,7 @@ theorem dynamical_uni_prod {Y : Type*} (S : X → X) (T : Y → Y) (U : Set (X �
     UniformityProd (DynamicalUni S U n) (DynamicalUni T V n) := by
   ext xy
   rw [dynamical_uni_mem]
-  simp only [UniformityProd, Set.mem_setOf_eq]
+  simp only [UniformityProd, mem_setOf_eq]
   rw [dynamical_uni_mem, dynamical_uni_mem, ← forall₂_and]
   refine forall₂_congr fun k _ ↦ ?_
   simp only [map_iterate, map_fst, map_snd]

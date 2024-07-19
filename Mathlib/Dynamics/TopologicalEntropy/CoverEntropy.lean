@@ -15,32 +15,37 @@ All is stated in the vocabulary of uniform spaces. For compact spaces, the unifo
 is canonical, so the topological entropy depends only on the topological structure. This will give
 a clean proof that the topological entropy is a topological invariant of the dynamics.
 
-A notable choice is that we define the topological entropy of a subset of the whole space. Usually,
-one defines the entropy of an invariant subset `F` as the entropy of the restriction of the
-transformation to `F`. However, it is quite painful to work with subtypes and transport
-all the necessary information (e.g. a nice description of the topology) to them. The current
-version gives a meaning to the topological entropy of a subsystem, and a single lemma
-(theorem `subset_restriction_entropy` in `.Systems.Morphism`) will give the equivalence between
+A notable choice is that we define the topological entropy of a subset `F` of the whole space.
+Usually, one defines the entropy of an invariant subset `F` as the entropy of the restriction of the
+transformation to `F`. We avoid the latter definition as it would involve frequent manipulation of
+subtypes. Our version directly gives a meaning to the topological entropy of a subsystem, and a
+single lemma (theorem `subset_restriction_entropy` in `.Morphism`) will give the equivalence between
 both versions.
 
-Another choice is to give a meaning to the entropy of `∅` (it must be `-∞` to stay coherent)
-and to keep the possibility for the entropy to be infinite. Hence, the entropy takes values
-in the extended reals `[-∞, +∞]`. The consequence is that we use many somewhat unusual
-structures : `ENat`, `ENNReal`, `EReal`. The libraries of `ENat` and `EReal` are quite poor,
-which in the case of `EReal` is quite annoying and explain the many additional files. In
-addition, the handling of coercions can be quite bothersome, although never as much as with
-Lean3.
+Another choice is to give a meaning to the entropy of `∅` (it must be `-∞` to stay coherent) and to
+keep the possibility for the entropy to be infinite. Hence, the entropy takes values in the extended
+reals `[-∞, +∞]`. The consequence is that we use `ℕ∞`, `ℝ≥0∞` and `EReal`.
 
-Finally, I decided to work with minimal hypotheses. In particular, I did not implement a
-"topological dynamical system" structure, but tried to keep the hypotheses as sharp as possible
-at each point. I thus needed to handle many special cases, but some results are surprisingly
-general.
+## Main definitions
+- `IsDynamicalCoverOf`: property that dynamical balls centered on a subset `s` cover a subset `F`.
+- `Mincard`: minimal cardinal of a dynamical cover. Takes values in `ℕ∞`.
+- `CoverEntropyInfUni`/`CoverEntropySupUni`: exponential growth of `Mincard`. The former is
+defined with a `liminf`, the later with a `limsup`. Take values in `EReal`.
+- `CoverEntropyInf`/`CoverEntropySup`: supremum of `CoverEntropyInfUni`/`CoverEntropySupUni` over
+all uniformities (or limit as the uniformity goes to the diagonal). These are Bowen-Dinaburg's
+versions of the topological entropy with covers. Take values in `EReal`.
 
-TODO: The most painful part of manipulations involving topological entropy is going from `Mincard`
+## Tags
+cover, entropy
+
+## TODO
+The most painful part of many manipulations involving topological entropy is going from `Mincard`
 to `CoverEntropyInfUni`/`CoverEntropySupUni`. It involves a logarithm, a division, a
 `liminf`/`limsup`, and multiple coercions. The best thing to do would be to write a file on
 "exponential growth" to make a clean pathway from estimates on `Mincard` to estimates on
-`CoverEntropy`/`CoverEntropy'`.
+`CoverEntropy`/`CoverEntropy'`. It would also be useful in other similar contexts.
+
+Get versions of the topological entropy on (pseudo-e)metric spaces.
 -/
 
 namespace DynamicalCover
@@ -87,9 +92,7 @@ theorem Ereal_tendsto_const_div_atTop_nhds_zero_nat {x : EReal} (h : x ≠ ⊥) 
   rw [this, ← EReal.coe_zero, EReal.tendsto_coe]
   exact tendsto_const_div_atTop_nhds_zero_nat x.toReal
 
-/-!
-### Dynamical covers
--/
+/-! ### Dynamical covers -/
 
 /-- Given a subset `F`, a uniform neighborhood `U` and an integer `n`, a subset `s` is a `(U, n)`-
 dynamical cover of `F` if any orbit of length `n` in `F` is `U`-shadowed by an orbit of length `n`
@@ -133,9 +136,13 @@ theorem dyncover_by_univ (T : X → X) (F : Set X) (n : ℕ) {s : Set X} (h : s.
   rcases h with ⟨x, x_s⟩
   exact subset_iUnion₂_of_subset x x_s (subset_univ F)
 
-theorem dyncover_iterate {T : X → X} {F : Set X} (F_inv : MapsTo T F F) {V : Set (X × X)}
-    (V_symm : SymmetricRel V) {m : ℕ} (n : ℕ) {s : Finset X} (h : IsDynamicalCoverOf T F V m s) :
-    ∃ t : Finset X, IsDynamicalCoverOf T F (V ○ V) (m * n) t ∧ t.card ≤ s.card ^ n := by
+/-This lemma is the first step in a submultiplicative-like property of `Mincard`, with far-reaching
+  consequence such as explicit bounds for the topological entropy (`CoverEntropyInfUni_le_card_div`)
+  and an equality between two notions of topological entropy
+  (`CoverEntropyInf_eq_CoverEntropySup_of_inv`).-/
+theorem dyncover_iterate {T : X → X} {F : Set X} (F_inv : MapsTo T F F) {U : Set (X × X)}
+    (U_symm : SymmetricRel U) {m : ℕ} (n : ℕ) {s : Finset X} (h : IsDynamicalCoverOf T F U m s) :
+    ∃ t : Finset X, IsDynamicalCoverOf T F (U ○ U) (m * n) t ∧ t.card ≤ s.card ^ n := by
   classical
   rcases F.eq_empty_or_nonempty with (rfl | F_nemp)
   · use ∅; simp [empty_dyncover_of_empty]
@@ -145,14 +152,14 @@ theorem dyncover_iterate {T : X → X} {F : Set X} (F_inv : MapsTo T F F) {V : S
   rcases m.eq_zero_or_pos with (rfl | m_pos)
   · use {x}
     simp only [zero_mul, Finset.coe_singleton, Finset.card_singleton]
-    exact And.intro (dyncover_time_zero T F (V ○ V) (singleton_nonempty x))
+    exact And.intro (dyncover_time_zero T F (U ○ U) (singleton_nonempty x))
       <| one_le_pow_of_one_le' (Nat.one_le_of_lt (Finset.Nonempty.card_pos s_nemp)) n
   have :
     ∀ β : Fin n → s, ∃ y : X,
-      (⋂ k : Fin n, T^[m * k] ⁻¹' ball (β k) (DynamicalUni T V m)) ⊆
-      ball y (DynamicalUni T (V ○ V) (m * n)) := by
+      (⋂ k : Fin n, T^[m * k] ⁻¹' ball (β k) (DynamicalUni T U m)) ⊆
+      ball y (DynamicalUni T (U ○ U) (m * n)) := by
     intro t
-    rcases (⋂ k : Fin n, T^[m * k] ⁻¹' ball (t k) (DynamicalUni T V m)).eq_empty_or_nonempty
+    rcases (⋂ k : Fin n, T^[m * k] ⁻¹' ball (t k) (DynamicalUni T U m)).eq_empty_or_nonempty
       with (inter_empt | inter_nemp)
     · rw [inter_empt]
       use x
@@ -167,7 +174,7 @@ theorem dyncover_iterate {T : X → X} {F : Set X} (F_inv : MapsTo T F F) {V : S
       specialize z_int ⟨(k / m), k_mn⟩ (k % m) (Nat.mod_lt k m_pos)
       specialize y_int ⟨(k / m), k_mn⟩ (k % m) (Nat.mod_lt k m_pos)
       rw [← Function.iterate_add_apply T (k % m) (m * (k / m)), Nat.mod_add_div k m] at y_int z_int
-      exact mem_comp_of_mem_ball V_symm y_int z_int
+      exact mem_comp_of_mem_ball U_symm y_int z_int
   choose! dyncover h_dyncover using this
   let sn := range dyncover
   have _ := fintypeRange dyncover
@@ -176,7 +183,7 @@ theorem dyncover_iterate {T : X → X} {F : Set X} (F_inv : MapsTo T F F) {V : S
   · rw [Finset.coe_nonempty] at s_nemp
     have _ : Nonempty s := Finset.Nonempty.coe_sort s_nemp
     intro y y_F
-    have key : ∀ k : Fin n, ∃ z : s, y ∈ T^[m * k] ⁻¹' ball z (DynamicalUni T V m) := by
+    have key : ∀ k : Fin n, ∃ z : s, y ∈ T^[m * k] ⁻¹' ball z (DynamicalUni T U m) := by
       intro k
       have := h (MapsTo.iterate F_inv (m * k) y_F)
       simp only [Finset.coe_sort_coe, mem_iUnion, Subtype.exists, exists_prop] at this
@@ -227,9 +234,7 @@ theorem exists_dyncover_of_compact_inv [UniformSpace X] {T : X → X} {F : Set X
   use t
   exact dyncover_antitone_uni V_U t_dyncover
 
-/-!
-### Minimal cardinal of dynamical covers
--/
+/-! ### Minimal cardinal of dynamical covers -/
 
 /-- The smallest cardinal of a `(U, n)`-dynamical cover of `F`. Takes values in `ℕ∞`, and is infinite
 if and only if `F` admits no finite dynamical cover.-/
@@ -322,12 +327,6 @@ theorem mincard_time_zero_of_nonempty (T : X → X) {F : Set X} (h : F.Nonempty)
   apply le_of_le_of_eq (mincard_le_card this)
   rw [Finset.card_singleton, Nat.cast_one]
 
-theorem mincard_time_zero_le (T : X → X) (F : Set X) (U : Set (X × X)) :
-    Mincard T F U 0 ≤ 1 := by
-  rcases F.eq_empty_or_nonempty with (rfl | F_nemp)
-  · exact mincard_of_empty ▸ zero_le_one
-  · rw [mincard_time_zero_of_nonempty T F_nemp U]
-
 theorem mincard_by_univ_of_nonempty (T : X → X) {F : Set X} (h : F.Nonempty) (n : ℕ) :
     Mincard T F univ n = 1 := by
   apply le_antisymm _ ((nonempty_iff_mincard_pos T F univ n).1 h)
@@ -337,31 +336,25 @@ theorem mincard_by_univ_of_nonempty (T : X → X) {F : Set X} (h : F.Nonempty) (
   apply le_of_le_of_eq (mincard_le_card this)
   rw [Finset.card_singleton, Nat.cast_one]
 
-theorem mincard_by_univ_le (T : X → X) (F : Set X) (n : ℕ) :
-    Mincard T F univ n ≤ 1 := by
-  rcases F.eq_empty_or_nonempty with (rfl | h)
-  · exact mincard_of_empty ▸ zero_le_one
-  · rw [mincard_by_univ_of_nonempty T h n]
-
-theorem mincard_iterate {T : X → X} {F : Set X} (F_inv : MapsTo T F F) {V : Set (X × X)}
-    (V_symm : SymmetricRel V) (m n : ℕ) :
-    Mincard T F (V ○ V) (m * n) ≤ Mincard T F V m ^ n := by
+theorem mincard_iterate {T : X → X} {F : Set X} (F_inv : MapsTo T F F) {U : Set (X × X)}
+    (U_symm : SymmetricRel U) (m n : ℕ) :
+    Mincard T F (U ○ U) (m * n) ≤ Mincard T F U m ^ n := by
   rcases F.eq_empty_or_nonempty with (rfl | F_nonempty)
   · rw [mincard_of_empty]; exact zero_le _
   rcases n.eq_zero_or_pos with (rfl | n_pos)
-  · rw [mul_zero, mincard_time_zero_of_nonempty T F_nonempty (V ○ V), pow_zero]
-  rcases eq_top_or_lt_top (Mincard T F V m) with (h | h)
+  · rw [mul_zero, mincard_time_zero_of_nonempty T F_nonempty (U ○ U), pow_zero]
+  rcases eq_top_or_lt_top (Mincard T F U m) with (h | h)
   · exact h ▸ le_of_le_of_eq (le_top (α := ℕ∞)) (Eq.symm (ENat.top_pow n_pos))
-  · rcases (finite_mincard_iff T F V m).1 h with ⟨s, s_cover, s_mincard⟩
-    rcases dyncover_iterate F_inv V_symm n s_cover with ⟨t, t_cover, t_le_sn⟩
+  · rcases (finite_mincard_iff T F U m).1 h with ⟨s, s_cover, s_mincard⟩
+    rcases dyncover_iterate F_inv U_symm n s_cover with ⟨t, t_cover, t_le_sn⟩
     rw [← s_mincard]
     exact le_trans (mincard_le_card t_cover) (WithTop.coe_le_coe.2 t_le_sn)
 
-theorem mincard_upper_bound {T : X → X} {F : Set X} (F_inv : MapsTo T F F) {V : Set (X × X)}
-    (V_symm : SymmetricRel V) {m : ℕ} (m_pos : 0 < m) (n : ℕ) :
-    Mincard T F (V ○ V) n ≤ Mincard T F V m ^ (n / m + 1) :=
-  le_trans (mincard_monotone_time T F (V ○ V) (le_of_lt (Nat.lt_mul_div_succ n m_pos)))
-    (mincard_iterate F_inv V_symm m (n / m + 1))
+theorem mincard_upper_bound {T : X → X} {F : Set X} (F_inv : MapsTo T F F) {U : Set (X × X)}
+    (U_symm : SymmetricRel U) {m : ℕ} (m_pos : 0 < m) (n : ℕ) :
+    Mincard T F (U ○ U) n ≤ Mincard T F U m ^ (n / m + 1) :=
+  le_trans (mincard_monotone_time T F (U ○ U) (le_of_lt (Nat.lt_mul_div_succ n m_pos)))
+    (mincard_iterate F_inv U_symm m (n / m + 1))
 
 theorem finite_mincard_of_compact_continuous [UniformSpace X] {T : X → X} (h : UniformContinuous T)
     {F : Set X} (F_comp : IsCompact F) {U : Set (X × X)} (U_uni : U ∈ 𝓤 X) (n : ℕ) :
@@ -430,28 +423,28 @@ theorem log_mincard_nonneg_of_nonempty (T : X → X) {F : Set X} (h : F.Nonempty
   rw [← ENat.toENNReal_one, ENat.toENNReal_le]
   exact (nonempty_iff_mincard_pos T F U n).1 h
 
-theorem log_mincard_iterate {T : X → X} {F : Set X} (F_inv : MapsTo T F F) {V : Set (X × X)}
-    (V_symm : SymmetricRel V) (m : ℕ) {n : ℕ} (n_pos : 0 < n) :
-    log (Mincard T F (V ○ V) (m * n)) / n ≤ log (Mincard T F V m) := by
+theorem log_mincard_iterate {T : X → X} {F : Set X} (F_inv : MapsTo T F F) {U : Set (X × X)}
+    (U_symm : SymmetricRel U) (m : ℕ) {n : ℕ} (n_pos : 0 < n) :
+    log (Mincard T F (U ○ U) (m * n)) / n ≤ log (Mincard T F U m) := by
   apply (EReal.div_le_iff_le_mul (b := n) (Nat.cast_pos'.2 n_pos) (Ereal_natCast_ne_top n)).2
   rw [← log_pow, StrictMono.le_iff_le log_strictMono]
   nth_rw 2 [← ENat.toENNRealRingHom_apply]
   rw [← RingHom.map_pow ENat.toENNRealRingHom _ n, ENat.toENNRealRingHom_apply, ENat.toENNReal_le]
-  exact mincard_iterate F_inv V_symm m n
+  exact mincard_iterate F_inv U_symm m n
 
 theorem log_mincard_upper_bound {T : X → X} {F : Set X} (F_inv : MapsTo T F F)
-    {V : Set (X × X)} (V_symm : SymmetricRel V) {m n : ℕ} (m_pos : 0 < m) (n_pos : 0 < n) :
-    log (Mincard T F (V ○ V) n) / n ≤ log (Mincard T F V m) / m + log (Mincard T F V m) / n := by
+    {U : Set (X × X)} (U_symm : SymmetricRel U) {m n : ℕ} (m_pos : 0 < m) (n_pos : 0 < n) :
+    log (Mincard T F (U ○ U) n) / n ≤ log (Mincard T F U m) / m + log (Mincard T F U m) / n := by
   rcases F.eq_empty_or_nonempty with (rfl | F_nemp)
   · rw [mincard_of_empty, ENat.toENNReal_zero, log_zero,
       bot_div_of_pos_ne_top (Nat.cast_pos'.2 n_pos) (Ereal_natCast_ne_top n)]
     exact bot_le
   have h_nm : (0 : EReal) ≤ (n / m : ℕ) := Nat.cast_nonneg' (n / m)
-  have h_log := log_mincard_nonneg_of_nonempty T F_nemp V m
+  have h_log := log_mincard_nonneg_of_nonempty T F_nemp U m
   have n_div_n := EReal.div_self (Ereal_natCast_ne_bot n) (Ereal_natCast_ne_top n)
     (ne_of_gt (Nat.cast_pos'.2 n_pos))
   apply le_trans <| div_le_div_right_of_nonneg (le_of_lt (Nat.cast_pos'.2 n_pos))
-    (log_monotone (ENat.toENNReal_le.2 (mincard_upper_bound F_inv V_symm m_pos n)))
+    (log_monotone (ENat.toENNReal_le.2 (mincard_upper_bound F_inv U_symm m_pos n)))
   rw [ENat.toENNReal_pow, log_pow, Nat.cast_add, Nat.cast_one, right_distrib_of_nonneg h_nm
     zero_le_one, one_mul, div_right_distrib_of_nonneg (Left.mul_nonneg h_nm h_log) h_log, mul_comm,
     ← EReal.mul_div, div_eq_mul_inv _ (m : EReal)]
@@ -460,9 +453,7 @@ theorem log_mincard_upper_bound {T : X → X} {F : Set X} (F_inv : MapsTo T F F)
     (Ereal_natCast_div_le n m)
   rw [EReal.div_div, mul_comm, ← EReal.div_div, n_div_n, one_div (m : EReal)]
 
-/-!
-### Cover entropy of uniformities
--/
+/-! ### Cover entropy of uniformities -/
 
 /-- The entropy of a uniformity neighborhood U, defined as the exponential rate of growth of the
 size of the smallest (n, U)-refined cover of F. Takes values in the space fo extended real numbers
@@ -504,8 +495,7 @@ theorem CoverEntropySupUni_of_empty {T : X → X} {U : Set (X × X)} :
 @[simp]
 theorem CoverEntropyInfUni_of_empty {T : X → X} {U : Set (X × X)} :
     CoverEntropyInfUni T ∅ U = ⊥ :=
-  le_bot_iff.1 <| le_of_le_of_eq
-    (CoverEntropyInfUni_le_CoverEntropySupUni T ∅ U) CoverEntropySupUni_of_empty
+  eq_bot_mono (CoverEntropyInfUni_le_CoverEntropySupUni T ∅ U) CoverEntropySupUni_of_empty
 
 theorem nonneg_CoverEntropyInfUni_of_nonempty (T : X → X) {F : Set X} (h : F.Nonempty)
     (U : Set (X × X)) :
@@ -528,8 +518,8 @@ theorem CoverEntropySupUni_by_univ_of_nonempty (T : X → X) {F : Set X} (h : F.
   simp [CoverEntropySupUni, mincard_by_univ_of_nonempty T h]
 
 theorem CoverEntropyInfUni_le_log_mincard_div {T : X → X} {F : Set X} (F_inv : MapsTo T F F)
-    {V : Set (X × X)} (V_symm : SymmetricRel V) {n : ℕ} (n_pos : 0 < n) :
-    CoverEntropyInfUni T F (V ○ V) ≤ log (Mincard T F V n) / n := by
+    {U : Set (X × X)} (U_symm : SymmetricRel U) {n : ℕ} (n_pos : 0 < n) :
+    CoverEntropyInfUni T F (U ○ U) ≤ log (Mincard T F U n) / n := by
   apply Filter.liminf_le_of_frequently_le'
   rw [Filter.frequently_atTop]
   intro N
@@ -540,7 +530,7 @@ theorem CoverEntropyInfUni_le_log_mincard_div {T : X → X} {F : Set X} (F_inv :
     · rw [max_eq_right (Nat.one_le_of_lt N_pos)]
       nth_rw 2 [← mul_one N]
       exact Nat.mul_le_mul_left N (Nat.one_le_of_lt n_pos)
-  · have := log_mincard_iterate F_inv V_symm n (lt_of_lt_of_le zero_lt_one (le_max_left 1 N))
+  · have := log_mincard_iterate F_inv U_symm n (lt_of_lt_of_le zero_lt_one (le_max_left 1 N))
     rw [mul_comm n (max 1 N)] at this
     apply le_of_eq_of_le _ (div_le_div_right_of_nonneg (Nat.cast_nonneg' n) this)
     rw [EReal.div_div]
@@ -548,49 +538,49 @@ theorem CoverEntropyInfUni_le_log_mincard_div {T : X → X} {F : Set X} (F_inv :
     exact Ereal_natCast_mul (max 1 N) n
 
 theorem CoverEntropyInfUni_le_card_div {T : X → X} {F : Set X} (F_inv : MapsTo T F F)
-    {V : Set (X × X)} (V_symm : SymmetricRel V) {n : ℕ} (n_pos : 0 < n) {s : Finset X}
-    (h : IsDynamicalCoverOf T F V n s) :
-    CoverEntropyInfUni T F (V ○ V) ≤ log s.card / n := by
-  apply le_trans (CoverEntropyInfUni_le_log_mincard_div F_inv V_symm n_pos)
+    {U : Set (X × X)} (U_symm : SymmetricRel U) {n : ℕ} (n_pos : 0 < n) {s : Finset X}
+    (h : IsDynamicalCoverOf T F U n s) :
+    CoverEntropyInfUni T F (U ○ U) ≤ log s.card / n := by
+  apply le_trans (CoverEntropyInfUni_le_log_mincard_div F_inv U_symm n_pos)
   apply EReal.monotone_div_right_of_nonneg (Nat.cast_nonneg' n)
   apply log_monotone
   norm_cast
   exact mincard_le_card h
 
 theorem CoverEntropySupUni_le_log_mincard_div {T : X → X} {F : Set X} (F_inv : MapsTo T F F)
-    {V : Set (X × X)} (V_symm : SymmetricRel V) {n : ℕ} (n_pos : 0 < n) :
-    CoverEntropySupUni T F (V ○ V) ≤ log (Mincard T F V n) / n := by
-  rcases eq_or_ne (log (Mincard T F V n)) ⊥ with (logm_bot | logm_nneg)
+    {U : Set (X × X)} (U_symm : SymmetricRel U) {n : ℕ} (n_pos : 0 < n) :
+    CoverEntropySupUni T F (U ○ U) ≤ log (Mincard T F U n) / n := by
+  rcases eq_or_ne (log (Mincard T F U n)) ⊥ with (logm_bot | logm_nneg)
   · rw [log_eq_bot_iff, ← ENat.toENNReal_zero, ENat.toENNReal_coe_eq_iff,
-      ← empty_iff_mincard_zero T F V n] at logm_bot
+      ← empty_iff_mincard_zero T F U n] at logm_bot
     simp [logm_bot]
-  rcases eq_or_ne (log (Mincard T F V n)) ⊤ with (logm_top | logm_fin)
+  rcases eq_or_ne (log (Mincard T F U n)) ⊤ with (logm_top | logm_fin)
   · rw [logm_top, top_div_of_pos_ne_top (Nat.cast_pos'.2 n_pos) (Ereal_natCast_ne_top n)]
     exact le_top
-  let u := fun _ : ℕ ↦ log (Mincard T F V n) / n
-  let v := fun m : ℕ ↦ log (Mincard T F V n) / m
-  let w := fun m : ℕ ↦ log (Mincard T F (V ○ V) m) / m
+  let u := fun _ : ℕ ↦ log (Mincard T F U n) / n
+  let v := fun m : ℕ ↦ log (Mincard T F U n) / m
+  let w := fun m : ℕ ↦ log (Mincard T F (U ○ U) m) / m
   have key : w ≤ᶠ[Filter.atTop] u + v := by
     apply Filter.eventually_atTop.2
     use 1
     simp only [Pi.add_apply, w, u, v]
     intro m m_pos
-    exact log_mincard_upper_bound F_inv V_symm n_pos m_pos
+    exact log_mincard_upper_bound F_inv U_symm n_pos m_pos
   apply le_trans (limsup_le_limsup key)
   suffices h : Filter.atTop.limsup v = 0
   · have := @limsup_add_le_add_limsup ℕ Filter.atTop u v
     rw [h, add_zero] at this
     specialize this (Or.inr EReal.zero_ne_top) (Or.inr EReal.zero_ne_bot)
-    exact le_of_le_of_eq this (Filter.limsup_const (log (Mincard T F V n) / n))
+    exact le_of_le_of_eq this (Filter.limsup_const (log (Mincard T F U n) / n))
   exact Filter.Tendsto.limsup_eq (Ereal_tendsto_const_div_atTop_nhds_zero_nat logm_nneg logm_fin)
 
 theorem CoverEntropySupUni_le_CoverEntropyInfUni {T : X → X} {F : Set X} (F_inv : MapsTo T F F)
-    {V : Set (X × X)} (V_symm : SymmetricRel V) :
-    CoverEntropySupUni T F (V ○ V) ≤ CoverEntropyInfUni T F V := by
+    {U : Set (X × X)} (U_symm : SymmetricRel U) :
+    CoverEntropySupUni T F (U ○ U) ≤ CoverEntropyInfUni T F U := by
   apply (Filter.le_liminf_of_le)
   apply Filter.eventually_atTop.2
   use 1
-  exact fun m m_pos ↦ CoverEntropySupUni_le_log_mincard_div F_inv V_symm m_pos
+  exact fun m m_pos ↦ CoverEntropySupUni_le_log_mincard_div F_inv U_symm m_pos
 
 theorem finite_CoverEntropyInfUni_of_compact_inv [UniformSpace X] {T : X → X} {F : Set X}
     (F_inv : MapsTo T F F) (F_comp : IsCompact F) {U : Set (X × X)} (U_uni : U ∈ 𝓤 X) :
@@ -611,9 +601,7 @@ theorem finite_CoverEntropySupUni_of_compact_inv [UniformSpace X] {T : X → X} 
     <| lt_of_le_of_lt (CoverEntropySupUni_le_CoverEntropyInfUni F_inv V_symm)
     <| finite_CoverEntropyInfUni_of_compact_inv F_inv F_comp V_uni
 
-/-!
-### Cover entropy
--/
+/-! ### Cover entropy -/
 
 /-- The entropy of `T` restricted to `F`, obtained by taking the supremum over uniformities.
 Note that this supremum is approached by taking small uniformities. This version uses a `liminf`.-/
@@ -638,6 +626,16 @@ theorem CoverEntropySup_antitone_filter (T : X → X) (F : Set X) :
   use U, (Filter.le_def.1 h) U U_uni₂
 
 variable [UniformSpace X]
+
+theorem CoverEntropyInfUni_le_CoverEntropyInf [UniformSpace X] (T : X → X) (F : Set X)
+    {U : Set (X × X)} (h : U ∈ 𝓤 X) :
+    CoverEntropyInfUni T F U ≤ CoverEntropyInf T F :=
+  le_iSup₂ (f := fun (U : Set (X × X)) (_ : U ∈ 𝓤 X) ↦ CoverEntropyInfUni T F U) U h
+
+theorem CoverEntropySupUni_le_CoverEntropySup [UniformSpace X] (T : X → X) (F : Set X)
+    {U : Set (X × X)} (h : U ∈ 𝓤 X) :
+    CoverEntropySupUni T F U ≤ CoverEntropySup T F :=
+  le_iSup₂ (f := fun (U : Set (X × X)) (_ : U ∈ 𝓤 X) ↦ CoverEntropySupUni T F U) U h
 
 theorem CoverEntropyInf_of_basis {ι : Sort*} [UniformSpace X] {p : ι → Prop} {s : ι → Set (X × X)}
     (h : (𝓤 X).HasBasis p s) (T : X → X) (F : Set X) :
@@ -666,14 +664,6 @@ theorem CoverEntropyInf_le_CoverEntropySup (T : X → X) (F : Set X) :
   iSup₂_mono (fun (U : Set (X × X)) (_ : U ∈ uniformity X)
     ↦ CoverEntropyInfUni_le_CoverEntropySupUni T F U)
 
-theorem CoverEntropyInfUni_le_CoverEntropyInf (T : X → X) (F : Set X) {U : Set (X × X)}
-    (h : U ∈ 𝓤 X) :
-    CoverEntropyInfUni T F U ≤ CoverEntropyInf T F := by apply le_iSup₂ U h
-
-theorem CoverEntropySupUni_le_CoverEntropySup (T : X → X) (F : Set X) {U : Set (X × X)}
-    (h : U ∈ 𝓤 X) :
-    CoverEntropySupUni T F U ≤ CoverEntropySup T F := by apply le_iSup₂ U h
-
 @[simp]
 theorem CoverEntropyInf_of_empty {T : X → X} : CoverEntropyInf T ∅ = ⊥ := by
   simp only [CoverEntropyInf, CoverEntropyInfUni_of_empty, iSup_bot]
@@ -683,10 +673,9 @@ theorem CoverEntropySup_of_empty {T : X → X} : CoverEntropySup T ∅ = ⊥ := 
   simp only [CoverEntropySup, CoverEntropySupUni_of_empty, iSup_bot]
 
 theorem nonneg_CoverEntropyInf_of_nonempty (T : X → X) {F : Set X} (h : F.Nonempty) :
-    0 ≤ CoverEntropyInf T F := by
-  apply le_iSup_of_le univ
-  simp only [Filter.univ_mem, iSup_pos]
-  exact nonneg_CoverEntropyInfUni_of_nonempty T h univ
+    0 ≤ CoverEntropyInf T F :=
+  le_of_eq_of_le (Eq.symm (CoverEntropyInfUni_by_univ_of_nonempty T h))
+    (CoverEntropyInfUni_le_CoverEntropyInf T F Filter.univ_mem)
 
 theorem nonneg_CoverEntropySup_of_nonempty (T : X → X) {F : Set X} (h : F.Nonempty) :
     0 ≤ CoverEntropySup T F :=
