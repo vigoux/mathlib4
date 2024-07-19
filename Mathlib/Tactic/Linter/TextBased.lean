@@ -335,14 +335,16 @@ def broadImportsLinter : TextbasedLinter := fun lines ↦ Id.run do
           -- Small hack: just split the string on space, "/" and "-":
           -- none of these occur in module names, so this is safe.
           let name := (((toString rest).split (" /-".contains ·)).headD "").toName
-          if name == `Mathlib.Tactic then
-            errors := errors.push (StyleError.broadImport BroadImports.TacticFolder, lineNumber)
-          else if [`Mathlib.Tactic.Have, `Mathlib.Tactic.Replace].contains name then
-            errors := errors.push (StyleError.broadImport BroadImports.DeprecatedHaveReplace, lineNumber)
-          else if Lean.Name.isPrefixOf `Mathlib.Deprecated name then
-            errors := errors.push (StyleError.broadImport BroadImports.DeprecatedDir, lineNumber)
-          else if name.getRoot == `Lake then
-            errors := errors.push (StyleError.broadImport BroadImports.Lake, lineNumber)
+          let err : Option BroadImports := if name == `Mathlib.Tactic then
+              BroadImports.TacticFolder
+            else if [`Mathlib.Tactic.Have, `Mathlib.Tactic.Replace].contains name then
+              BroadImports.DeprecatedHaveReplace
+            else if Lean.Name.isPrefixOf `Mathlib.Deprecated name then
+            BroadImports.DeprecatedDir
+            else if name.getRoot == `Lake then
+              BroadImports.Lake
+            else none
+          if let some err := err then errors := errors.push (StyleError.broadImport err, lineNumber)
       lineNumber := lineNumber + 1
   return errors
 
