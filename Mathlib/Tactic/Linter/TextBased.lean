@@ -31,6 +31,11 @@ inductive BroadImports
   | Lake
 deriving BEq
 
+/-- Name the `BroadImports` kind, for the purposes of the style exceptions file. -/
+def BroadImports.name : BroadImports → String := fun b ↦  match b with
+  | TacticFolder => "TacticFolder"
+  | Lake => "Lake"
+
 /-- Possible errors that text-based linters can report. -/
 -- We collect these in one inductive type to centralise error reporting.
 inductive StyleError where
@@ -73,12 +78,15 @@ def StyleError.errorMessage (err : StyleError) (style : ErrorFormat) : String :=
     "Authors line should look like: 'Authors: Jean Dupont, Иван Иванович Иванов'"
   | StyleError.adaptationNote =>
     "Found the string \"Adaptation note:\", please use the #adaptation_note command instead"
-  | StyleError.broadImport BroadImports.TacticFolder =>
-    "Files in mathlib cannot import the whole tactic folder"
-  | StyleError.broadImport BroadImports.Lake =>
+  | StyleError.broadImport b =>
+      let message := match b with
+      | BroadImports.TacticFolder => "Files in mathlib cannot import the whole tactic folder"
+      | BroadImports.Lake =>
       "In the past, importing 'Lake' in mathlib has led to dramatic slow-downs of the linter (see \
-      e.g. mathlib4#13779). Please consider carefully if this import is useful and make sure to \
-      benchmark it. If this is fine, feel free to allow this linter."
+        e.g. mathlib4#13779). Please consider carefully if this import is useful and make sure to \
+        benchmark it. If this is fine, feel free to allow this linter."
+      -- Print an identifier for the import variant to the exceptions file, to ease parsing it.
+      if style == ErrorFormat.exceptionsFile then s!"{b.name} {message}" else message
   | StyleError.lineLength n => s!"Line has {n} characters, which is more than 100"
   | StyleError.fileTooLong currentSize sizeLimit =>
     match style with
@@ -200,7 +208,7 @@ def parse?_errorContext (line : String) : Option ErrorContext := Id.run do
         | "ERR_AUT" => some (StyleError.authors)
         | "ERR_ADN" => some (StyleError.adaptationNote)
         | "ERR_IMP" =>
-          -- XXX tweak exceptions messages to ease parsing?
+          -- FIXME: update this for the new error message!
           if (errorMessage.get! 0).containsSubstr "tactic" then
             some (StyleError.broadImport BroadImports.TacticFolder)
           else
