@@ -78,7 +78,7 @@ theorem marcus₁_image_prod (s : Set (InfinitePlace K → ℝ))
 local notation "G" K => ({w : InfinitePlace K // IsReal w} → ℝ) ×
     ({w : InfinitePlace K // IsComplex w} → ℝ × ℝ)
 
-@[simps apply symm_apply] -- Make CLE
+@[simps apply symm_apply]
 def marcus₂ : Homeomorph (F K) (G K) where
   toFun := fun x ↦ (fun w ↦ x.1 w.val, fun w ↦ ⟨x.1 w.val, x.2 w⟩)
   invFun := fun x ↦ ⟨fun w ↦ if hw : w.IsReal then x.1 ⟨w, hw⟩ else
@@ -100,61 +100,28 @@ def marcus₂ : Homeomorph (F K) (G K) where
         fun_prop
     · fun_prop
 
-def marcus₂'_symm : (G K) ≃ (F K) := by
-  let f : ({w : InfinitePlace K // IsComplex w} → ℝ × ℝ) ≃
-      ({w : InfinitePlace K // IsComplex w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ) :=
-    Equiv.arrowProdEquivProdArrow ℝ ℝ _
-  refine Equiv.trans (Equiv.prodCongr (Equiv.refl _) f) ?_
-  let k : ({w : InfinitePlace K // w.IsReal} → ℝ) × ({w : InfinitePlace K // w.IsComplex} → ℝ) ×
-      ({w : InfinitePlace K // w.IsComplex} → ℝ) ≃ (({w : InfinitePlace K // w.IsReal} → ℝ) ×
-      ({w : InfinitePlace K // w.IsComplex} → ℝ)) × ({w : InfinitePlace K // w.IsComplex} → ℝ) :=
-    (Equiv.prodAssoc _ _ _).symm
-  refine Equiv.trans k ?_
-  let g :
-    ({w : InfinitePlace K // IsComplex w} → ℝ) ≃ ({w : InfinitePlace K // ¬ IsReal w} → ℝ) := by
-    refine Equiv.arrowCongr' ?_ (Equiv.refl _)
-    · refine Equiv.subtypeEquivRight ?_
-      exact fun _ ↦ not_isReal_iff_isComplex.symm
-  
-  refine Equiv.trans (Equiv.prodCongr (Equiv.prodCongr (Equiv.refl _) g) (Equiv.refl _))
-    (Equiv.prodCongr (Equiv.piEquivPiSubtypeProd _ (fun _ ↦ ℝ)).symm (Equiv.refl _))
+def marcus₂'_symm : (G K) ≃ᵐ (F K) := by
+  refine MeasurableEquiv.trans (MeasurableEquiv.prodCongr (MeasurableEquiv.refl _)
+    (MeasurableEquiv.arrowProdEquivProdArrow ℝ ℝ _)) ?_
+  refine MeasurableEquiv.trans MeasurableEquiv.prodAssoc.symm ?_
+  refine MeasurableEquiv.trans
+    (MeasurableEquiv.prodCongr (MeasurableEquiv.prodCongr (MeasurableEquiv.refl _)
+    (MeasurableEquiv.arrowCongr' (Equiv.subtypeEquivRight (fun _ ↦ not_isReal_iff_isComplex.symm))
+    (MeasurableEquiv.refl _)))
+    (MeasurableEquiv.refl _))
+    (MeasurableEquiv.prodCongr (MeasurableEquiv.piEquivPiSubtypeProd (fun _ ↦ ℝ) _).symm
+    (MeasurableEquiv.refl _))
 
-def marcus₂'_symm_map : (G K) → (F K) := by
-
-
-example (x : G K) : (marcus₂ K).symm x = marcus₂'_symm K x := rfl
-
-theorem volume_preserving_marcus₂'_symm : MeasurePreserving (marcus₂'_symm K) := by
-  unfold marcus₂'_symm
-  dsimp only
-  simp only [Equiv.coe_trans]
-  refine MeasurePreserving.comp ?_ ?_
-
-
-
-#exit
-
-  refine ⟨?_, ?_⟩
-  · exact Homeomorph.measurable (marcus₂ K).symm
-  · symm
-    rw [volume_eq_prod, ← addHaarMeasure_eq_volume_pi, ← addHaarMeasure_eq_volume_pi]
-    rw [← Basis.parallelepiped_basisFun, ← Basis.parallelepiped_basisFun, ← Basis.addHaar_def,
-      ← Basis.addHaar_def, ← Basis.prod_addHaar]
-
-    haveI : IsAddHaarMeasure (Measure.map ((marcus₂' K).symm) volume) := sorry
-    rw [Basis.addHaar_eq_iff]
-    rw [volume_eq_prod]
-    rw [Basis.prod_parallelepiped]
-    simp only [TopologicalSpace.PositiveCompacts.coe_prod, Basis.coe_parallelepiped]
-    rw [Measure.map_apply]
-    simp [marcus₂', marcus₂]
-    dsimp
-    rw?
-
-    sorry
---  refine ⟨?_, ?_⟩
---  · exact Homeomorph.measurable (marcus₂ K)
---  · sorry
+theorem volume_preserving_marcus₂_symm : MeasurePreserving (marcus₂ K).symm := by
+  change MeasurePreserving (marcus₂'_symm K) volume volume
+  exact MeasurePreserving.trans ((MeasurePreserving.id volume).prod
+      (volume_preserving.arrowProdEquivProdArrow ℝ ℝ {w : InfinitePlace K // IsComplex w})) <|
+    MeasurePreserving.trans (volume_preserving.prodAssoc.symm) <|
+      MeasurePreserving.trans
+        (((MeasurePreserving.id volume).prod (volume_preserving.arrowCongr' _ (MeasurableEquiv.refl ℝ)
+          (MeasurePreserving.id volume))).prod (MeasurePreserving.id volume))
+      <| ((volume_preserving_piEquivPiSubtypeProd (fun _ : InfinitePlace K ↦ ℝ)
+        (fun w : InfinitePlace K ↦ IsReal w)).symm).prod (MeasurePreserving.id volume)
 
 def marcus₃ : PartialHomeomorph (F K) (E K) :=
   (marcus₂ K).toPartialHomeomorph.trans <|
@@ -178,8 +145,7 @@ theorem lintegral_marcus₃ (f : (E K) → ENNReal) :
   rw [volume_eq_prod, volume_eq_prod, lintegral_prod, lintegral_prod]
   congr with x
   dsimp only
-
-  sorry
+  all_goals sorry
 
 @[simp]
 theorem marcus₃_symm_apply (x : E K) :
@@ -407,9 +373,7 @@ theorem volume_full_marcus_set_prod_set (s : Set (InfinitePlace K → ℝ))
   simp only [PartialHomeomorph.coe_trans, PartialHomeomorph.prod_apply,
     PartialHomeomorph.refl_apply, id_eq, Homeomorph.toPartialHomeomorph_apply, Function.comp_apply,
     marcus₂_apply]
-
-
-  sorry
+  all_goals sorry
 
 def jacobianCoeff (w i : InfinitePlace K) : (InfinitePlace K → ℝ) → ℝ :=
     fun c ↦ if hi : i = w₀ then 1 else (c w₀) * (w (fundSystem K (equivFinRank ⟨i, hi⟩))).log
@@ -473,6 +437,70 @@ theorem interior_eq_interior :
     exact interior_subset
   · refine subset_trans ?_ (box_subset_source K)
     exact interior_subset
+
+example : volume (full_marcus K '' (interior (box K))) =
+    volume (full_marcus K '' (closure (box K))) := by
+  have : interior (box K) =
+    (Set.univ.pi fun _ ↦ Set.Ioo 0 1) ×ˢ (Set.univ.pi fun _ ↦ Set.Ioo (-π) π) := sorry
+  rw [this]
+  clear this
+  have : closure (box K) =
+    (Set.univ.pi fun _ ↦ Set.Icc 0 1) ×ˢ (Set.univ.pi fun _ ↦ Set.Icc (-π) π) := sorry
+  rw [this]
+  clear this
+  rw [volume_full_marcus_set_prod_set, volume_full_marcus_set_prod_set]
+  congr 1
+  · simp_rw [volume_pi_pi, Real.volume_Ioo, Real.volume_Icc]
+  · 
+    -- Can do things more directly from the suffices
+    rw [← lintegral_indicator, volume_pi, ← lintegral_indicator, lintegral_eq_lmarginal_univ (-1),
+      lintegral_eq_lmarginal_univ (-1)]
+    · suffices ∀ a, ∀ W : Finset (InfinitePlace K),
+        (∫⋯∫⁻_W,
+          ((mapToUnitsPow K) '' Set.univ.pi fun _ ↦ Set.Ioo 0 1).indicator fun x ↦
+            ∏ w : { w : InfinitePlace K // w.IsComplex }, (x w).toNNReal ∂fun x ↦ volume) a =
+        (∫⋯∫⁻_W,
+          ((mapToUnitsPow K) '' Set.univ.pi fun _ ↦ Set.Icc 0 1).indicator fun x ↦
+            ∏ w : { w : InfinitePlace K // w.IsComplex }, (x w).toNNReal ∂fun x ↦ volume) a by
+        exact this (-1) univ
+      intro a W
+      induction W using Finset.induction generalizing a with
+      | empty =>
+          rw [lmarginal_empty, lmarginal_empty]
+          rw [Set.indicator_of_not_mem, Set.indicator_of_not_mem]
+          sorry
+          sorry
+        -- any_goals
+        -- · simp_rw [Set.mem_image, not_exists, not_and, Pi.neg_def, Function.funext_iff, not_forall]
+        --  exact
+        --    fun _ _ ↦ ⟨w₀, ne_of_gt <| lt_of_lt_of_le neg_one_lt_zero (mapToUnitsPow_nonneg K _ _)⟩
+      | insert hi h_ind =>
+        rw [lmarginal_insert, lmarginal_insert]
+        simp_rw [lmarginal_update_of_not_mem sorry sorry]
+        · simp_rw [h_ind]
+        · sorry
+        · sorry
+        · sorry
+        · sorry
+    · sorry
+    · sorry
+
+#exit
+
+          have := mapToUnitsPow_nonneg K ?_ ?_
+          refine ne_of_gt ?_
+          exact lt_of_lt_of_le (-1 < 0 : by sorry) (mapToUnitsPow_nonneg K _ _)
+
+
+        sorry
+    | insert =>
+
+        sorry
+
+    all_goals sorry
+
+
+
 
 theorem volume_frontier :
     volume (frontier (normLessThanOnePlus K)) = 0 := by

@@ -3,38 +3,148 @@ import Mathlib.MeasureTheory.Constructions.Pi
 import Mathlib.MeasureTheory.Measure.Haar.Unique
 import Mathlib.MeasureTheory.MeasurableSpace.Embedding
 
-open MeasureTheory
+section Measure
+
+open MeasureTheory MeasureTheory.Measure MeasurableSpace
+
+theorem Equiv.arrowProdEquivProdArrow_preimage {α β γ : Type*} {s : γ → Set α} {t : γ → Set β} :
+    Equiv.arrowProdEquivProdArrow α β γ ⁻¹' (_root_.Set.univ.pi s ×ˢ _root_.Set.univ.pi t) =
+      (_root_.Set.univ.pi fun i ↦ s i ×ˢ t i) := by
+  ext
+  simp only [arrowProdEquivProdArrow, coe_fn_mk, Set.mem_preimage, Set.mem_prod, Set.mem_pi,
+    Set.mem_univ, true_implies, forall_and]
 
 def MeasurableEquiv.arrowProdEquivProdArrow (α β γ : Type*) [MeasurableSpace α]
     [MeasurableSpace β] :
     (γ → α × β) ≃ᵐ (γ → α) × (γ → β) where
   __ := Equiv.arrowProdEquivProdArrow α β γ
-  measurable_toFun _ hs := by
+  measurable_toFun _ h := by
     simp_rw [Equiv.arrowProdEquivProdArrow, Equiv.coe_fn_mk]
-    refine MeasurableSet.preimage hs (by fun_prop)
-  measurable_invFun _ hs := by
+    exact MeasurableSet.preimage h (by fun_prop)
+  measurable_invFun _ h := by
     simp_rw [Equiv.arrowProdEquivProdArrow, Equiv.coe_fn_symm_mk]
-    refine MeasurableSet.preimage hs (by fun_prop)
+    exact MeasurableSet.preimage h (by fun_prop)
 
 theorem MeasurePreserving.arrowProdEquivProdArrow (α β γ : Type*) [MeasurableSpace α]
-    [MeasurableSpace β] [Fintype γ] (μ : Measure α) (ν : Measure β) [SigmaFinite μ]
-    [SigmaFinite ν] :
+    [MeasurableSpace β] [Fintype γ] (μ : γ → Measure α) (ν : γ → Measure β) [∀ i, SigmaFinite (μ i)]
+    [∀ i, SigmaFinite (ν i)] :
     MeasurePreserving (MeasurableEquiv.arrowProdEquivProdArrow α β γ)
-      (Measure.pi fun _ ↦ μ.prod ν) ((Measure.pi fun _ ↦ μ).prod (Measure.pi fun _ ↦ ν)) where
+      (.pi fun i ↦ (μ i).prod (ν i))
+        ((Measure.pi fun i ↦ μ i).prod (Measure.pi fun i ↦ ν i)) where
   measurable := (MeasurableEquiv.arrowProdEquivProdArrow α β γ).measurable
   map_eq := by
-    refine (Measure.FiniteSpanningSetsIn.ext ?_ (isPiSystem_pi.prod isPiSystem_pi)
-      ((Measure.FiniteSpanningSetsIn.pi fun _ ↦ μ.toFiniteSpanningSetsIn).prod
-      (Measure.FiniteSpanningSetsIn.pi (fun _ ↦ ν.toFiniteSpanningSetsIn))) ?_).symm
+    refine (FiniteSpanningSetsIn.ext ?_ (isPiSystem_pi.prod isPiSystem_pi)
+      ((FiniteSpanningSetsIn.pi fun i ↦ (μ i).toFiniteSpanningSetsIn).prod
+      (FiniteSpanningSetsIn.pi (fun i ↦ (ν i).toFiniteSpanningSetsIn))) ?_).symm
     · refine (generateFrom_eq_prod generateFrom_pi generateFrom_pi ?_ ?_).symm
-      exact (Measure.FiniteSpanningSetsIn.pi (fun _ ↦ μ.toFiniteSpanningSetsIn)).isCountablySpanning
-      exact (Measure.FiniteSpanningSetsIn.pi (fun _ ↦ ν.toFiniteSpanningSetsIn)).isCountablySpanning
-    · rintro st ⟨s, ⟨s, _, rfl⟩, ⟨_, ⟨t, _, rfl⟩, rfl⟩⟩
-      rw [MeasurableEquiv.map_apply, show
-        (MeasurableEquiv.arrowProdEquivProdArrow α β γ ⁻¹' (Set.univ.pi s ×ˢ Set.univ.pi t))
-        = (Set.univ.pi fun i ↦ s i ×ˢ t i) by
-        ext; simp [MeasurableEquiv.arrowProdEquivProdArrow, Equiv.arrowProdEquivProdArrow, forall_and]]
-      simp_rw [Measure.pi_pi, Measure.prod_prod, Measure.pi_pi, Finset.prod_mul_distrib]
+      exact (FiniteSpanningSetsIn.pi (fun i ↦ (μ i).toFiniteSpanningSetsIn)).isCountablySpanning
+      exact (FiniteSpanningSetsIn.pi (fun i ↦ (ν i).toFiniteSpanningSetsIn)).isCountablySpanning
+    · rintro _ ⟨s, ⟨s, _, rfl⟩, ⟨_, ⟨t, _, rfl⟩, rfl⟩⟩
+      rw [MeasurableEquiv.map_apply, MeasurableEquiv.arrowProdEquivProdArrow,
+        MeasurableEquiv.coe_mk, Equiv.arrowProdEquivProdArrow_preimage]
+      simp_rw [pi_pi, prod_prod, pi_pi, Finset.prod_mul_distrib]
+
+theorem MeasureTheory.volume_preserving.arrowProdEquivProdArrow (α β γ : Type*) [MeasureSpace α]
+    [MeasureSpace β] [Fintype γ] [SigmaFinite (volume : Measure α)]
+    [SigmaFinite (volume : Measure β)] :
+    MeasurePreserving (MeasurableEquiv.arrowProdEquivProdArrow α β γ) :=
+  MeasurePreserving.arrowProdEquivProdArrow α β γ (fun _ ↦ volume) (fun _ ↦ volume)
+
+theorem MeasurablePreserving.prodAssoc {α β γ : Type*} [MeasurableSpace α] [MeasurableSpace β]
+    [MeasurableSpace γ] (μ : Measure α) (ν : Measure β) (π : Measure γ) [SigmaFinite μ]
+    [SigmaFinite ν] [SigmaFinite π] :
+    MeasurePreserving (MeasurableEquiv.prodAssoc : (α × β) × γ ≃ᵐ α × β × γ)
+      ((μ.prod ν).prod π) (μ.prod (ν.prod π)) where
+  measurable := MeasurableEquiv.prodAssoc.measurable
+  map_eq := by
+    refine (FiniteSpanningSetsIn.ext ?_
+      (isPiSystem_measurableSet.prod (isPiSystem_measurableSet.prod isPiSystem_measurableSet))
+      (μ.toFiniteSpanningSetsIn.prod (ν.toFiniteSpanningSetsIn.prod π.toFiniteSpanningSetsIn))
+      ?_).symm
+    · refine (generateFrom_eq_prod generateFrom_measurableSet
+        (generateFrom_eq_prod ?_ ?_ ?_ ?_) ?_ (IsCountablySpanning.prod ?_ ?_)).symm
+      any_goals exact generateFrom_measurableSet
+      all_goals exact isCountablySpanning_measurableSet
+    · rintro _ ⟨s, _, _, ⟨t, _, ⟨u, _, rfl⟩⟩, rfl⟩
+      rw [MeasurableEquiv.map_apply, MeasurableEquiv.prodAssoc, MeasurableEquiv.coe_mk,
+        Equiv.prod_assoc_preimage, prod_prod, prod_prod, prod_prod, prod_prod, mul_assoc]
+
+theorem MeasureTheory.volume_preserving.prodAssoc {α β γ : Type*} [MeasureSpace α] [MeasureSpace β]
+    [MeasureSpace γ] [SigmaFinite (volume : Measure α)] [SigmaFinite (volume : Measure β)]
+    [SigmaFinite (volume : Measure γ)] :
+    MeasurePreserving (MeasurableEquiv.prodAssoc : (α × β) × γ ≃ᵐ α × β × γ) :=
+  MeasurablePreserving.prodAssoc volume volume volume
+
+def MeasurableEquiv.arrowCongr' {α₁ β₁ α₂ β₂ : Type*} [MeasurableSpace β₁] [MeasurableSpace β₂]
+    (hα : α₁ ≃ α₂) (hβ : β₁ ≃ᵐ β₂) :
+    (α₁ → β₁) ≃ᵐ (α₂ → β₂) where
+  __ := Equiv.arrowCongr' hα hβ
+  measurable_toFun _ h := by
+    exact MeasurableSet.preimage h <|
+      measurable_pi_iff.mpr fun _ ↦ hβ.measurable.comp' (measurable_pi_apply _)
+  measurable_invFun _ h := by
+    exact MeasurableSet.preimage h <|
+      measurable_pi_iff.mpr fun _ ↦ hβ.symm.measurable.comp' (measurable_pi_apply _)
+
+theorem MeasurePreserving.arrowCongr' {α₁ β₁ α₂ β₂ : Type*} [Fintype α₁] [Fintype α₂]
+    [MeasurableSpace β₁] [MeasurableSpace β₂] (μ : α₁ → Measure β₁) (ν : α₂ → Measure β₂)
+    [∀ i, SigmaFinite (ν i)] (hα : α₁ ≃ α₂) (hβ : β₁ ≃ᵐ β₂)
+    (hm : ∀ i, MeasurePreserving hβ (μ i) (ν (hα i))) :
+    MeasurePreserving (MeasurableEquiv.arrowCongr' hα hβ) (Measure.pi fun i ↦ μ i)
+      (Measure.pi fun i ↦ ν i) := by
+  haveI : ∀ i, SigmaFinite (μ i) := fun i ↦ (hm i).sigmaFinite
+  convert (measurePreserving_piCongrLeft (fun i : α₂ ↦ ν i) hα).comp
+    (measurePreserving_pi (fun i : α₁ ↦ μ i) (fun i : α₁ ↦ ν (hα i)) (fun i ↦ hm i))
+  simp only [MeasurableEquiv.arrowCongr', Equiv.arrowCongr', Equiv.arrowCongr, EquivLike.coe_coe,
+    MeasurableEquiv.coe_mk, Equiv.coe_fn_mk, MeasurableEquiv.piCongrLeft, Equiv.piCongrLeft,
+    Equiv.symm_symm_apply, Equiv.piCongrLeft'_symm, Equiv.symm_symm]
+  rfl
+
+theorem MeasureTheory.volume_preserving.arrowCongr' {α₁ β₁ α₂ β₂ : Type*} [Fintype α₁] [Fintype α₂]
+    [MeasureSpace β₁] [MeasureSpace β₂] [SigmaFinite (volume : Measure β₂)]
+    (hα : α₁ ≃ α₂) (hβ : β₁ ≃ᵐ β₂) (hm : MeasurePreserving hβ) :
+    MeasurePreserving (MeasurableEquiv.arrowCongr' hα hβ) :=
+  MeasurePreserving.arrowCongr' (fun _ ↦ volume) (fun _ ↦ volume) hα hβ (fun _ ↦ hm)
+
+def MeasurableEquiv.subtypeEquiv {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
+    {p : α → Prop} {q : β → Prop} (e : α ≃ᵐ β) (h : ∀ x, p x ↔ q (e x)) :
+    {a : α // p a} ≃ᵐ {b : β // q b} where
+  __ := Equiv.subtypeEquiv e h
+  measurable_toFun _ h := by
+    exact MeasurableSet.preimage h (e.measurable.comp' measurable_subtype_coe).subtype_mk
+  measurable_invFun _ h := by
+    exact MeasurableSet.preimage h (e.symm.measurable.comp' measurable_subtype_coe).subtype_mk
+
+theorem MeasurablePreserving.subtypeEquiv {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
+    (μ : Measure α) (ν : Measure β) {p : α → Prop} {q : β → Prop} (hq : MeasurableSet {x | q x})
+    (e : α ≃ᵐ β) (he : MeasurePreserving e μ ν) (h : ∀ x, p x ↔ q (e x)) :
+    MeasurePreserving (MeasurableEquiv.subtypeEquiv e h)
+      (μ.comap Subtype.val) (ν.comap Subtype.val) where
+  measurable := (e.subtypeEquiv h).measurable
+  map_eq := by
+    have heq : MeasurableEmbedding Subtype.val := MeasurableEmbedding.subtype_coe hq
+    ext _ hs
+    erw [MeasurableEmbedding.map_apply (e.subtypeEquiv h).measurableEmbedding,
+      MeasurableEmbedding.comap_apply heq, MeasurableEmbedding.comap_apply, ← he.measure_preimage]
+    · congr; aesop
+    · exact heq.measurableSet_image.mpr hs
+    · convert (e.symm.measurableEmbedding.comp heq).comp (e.subtypeEquiv h).measurableEmbedding
+      ext
+      simp only [Set.mem_setOf_eq, MeasurableEquiv.subtypeEquiv, MeasurableEquiv.coe_mk,
+        Function.comp_apply, Equiv.subtypeEquiv_apply, EquivLike.coe_coe,
+        MeasurableEquiv.symm_apply_apply]
+
+def MeasurableEquiv.subtypeEquivRight {α : Type*} [MeasurableSpace α] {p : α → Prop} {q : α → Prop}
+    (e : ∀ x, p x ↔ q x) :
+    { x : α // p x } ≃ᵐ { x : α // q x } := subtypeEquiv (MeasurableEquiv.refl _) e
+
+theorem MeasurablePreserving.subtypeEquivRight {α : Type*} [MeasurableSpace α] (μ : Measure α)
+    {p : α → Prop} {q : α → Prop} (hq : MeasurableSet {x | q x}) (e : ∀ x, p x ↔ q x) :
+    MeasurePreserving (MeasurableEquiv.subtypeEquivRight e) (μ.comap Subtype.val)
+      (μ.comap Subtype.val) :=
+  MeasurablePreserving.subtypeEquiv μ μ hq (MeasurableEquiv.refl _) (MeasurePreserving.id _) _
+
+end Measure
 
 theorem Complex.dist_induced (x y : ℝ) :
     dist (x : ℂ) (y : ℂ) = dist x y := by
