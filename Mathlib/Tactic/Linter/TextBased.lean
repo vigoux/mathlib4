@@ -6,6 +6,7 @@ Authors: Michael Rothgang
 
 import Batteries.Data.String.Matcher
 import Mathlib.Init.Data.Nat.Notation
+import Lean.Data.Name
 
 /-!
 ## Text-based linters
@@ -82,7 +83,7 @@ def StyleError.errorMessage (err : StyleError) (style : ErrorFormat) : String :=
   | StyleError.broadImport BroadImports.TacticFolder =>
     "Files in mathlib cannot import the whole tactic folder"
   | StyleError.broadImport BroadImports.DeprecatedHaveReplace =>
-    "Mathlib.Tactic.Have and Replace define deprecated forms of the 'have' and 'replace' tactics;
+    "Mathlib.Tactic.Have and Replace define deprecated forms of the 'have' and 'replace' tactics; \
     please do not use them in mathlib."
   | StyleError.broadImport BroadImports.DeprecatedDir =>
     "Files in the `Deprecated` directory are not supposed to be imported."
@@ -336,6 +337,10 @@ def broadImportsLinter : TextbasedLinter := fun lines ↦ Id.run do
           let name := (((toString rest).split (" /-".contains ·)).headD "").toName
           if name == `Mathlib.Tactic then
             errors := errors.push (StyleError.broadImport BroadImports.TacticFolder, lineNumber)
+          else if [`Mathlib.Tactic.Have, `Mathlib.Tactic.Replace].contains name then
+            errors := errors.push (StyleError.broadImport BroadImports.DeprecatedHaveReplace, lineNumber)
+          else if Lean.Name.isPrefixOf `Mathlib.Deprecated name then
+            errors := errors.push (StyleError.broadImport BroadImports.DeprecatedDir, lineNumber)
           else if name.getRoot == `Lake then
             errors := errors.push (StyleError.broadImport BroadImports.Lake, lineNumber)
       lineNumber := lineNumber + 1

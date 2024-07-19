@@ -29,3 +29,17 @@ Mathlib/Tactic/Linter/TextBased.lean : line 60 : ERR_ADN : Found the string "Ada
 Mathlib/Tactic/Linter/TextBased.lean : line 222 : ERR_ADN : Found the string "Adaptation note:", please use the #adaptation_note command instead
 Mathlib/Tactic/Linter/TextBased.lean : line 227 : ERR_ADN : Found the string "Adaptation note:", please use the #adaptation_note command instead
 Mathlib/Tactic/Linter/TextBased.lean : line 228 : ERR_ADN : Found the string "Adaptation note:", please use the #adaptation_note command instead
+
+-- Files in the `Deprecated` directory do import each other; this is to be expected.
+Mathlib/Deprecated/Ring.lean : line 2 : ERR_IMP.DeprecatedDir : Files in the `Deprecated` directory are not supposed to be imported.
+Mathlib/Deprecated/Subfield.lean : line 3 : ERR_IMP.DeprecatedDir : Files in the `Deprecated` directory are not supposed to be imported.
+Mathlib/Deprecated/Subgroup.lean : line 3 : ERR_IMP.DeprecatedDir : Files in the `Deprecated` directory are not supposed to be imported.
+Mathlib/Deprecated/Submonoid.lean : line 4 : ERR_IMP.DeprecatedDir : Files in the `Deprecated` directory are not supposed to be imported.
+Mathlib/Deprecated/Subring.lean : line 2 : ERR_IMP.DeprecatedDir : Files in the `Deprecated` directory are not supposed to be imported.
+Mathlib/Deprecated/Subring.lean : line 3 : ERR_IMP.DeprecatedDir : Files in the `Deprecated` directory are not supposed to be imported.
+
+-- The deprecated `replace` tactic imports the deprecated `have` tactic.
+Mathlib/Tactic/Replace.lean : line 2 : ERR_IMP.DeprecatedHaveReplace : Mathlib.Tactic.Have and Replace define deprecated forms of the 'have' and 'replace' tactics; please do not use them in mathlib.
+
+-- As long as mathport handles these, these are also fine.
+Mathlib/Mathport/Syntax.lean : line 70 : ERR_IMP.DeprecatedHaveReplace : Mathlib.Tactic.Have and Replace define deprecated forms of the 'have' and 'replace' tactics; please do not use them in mathlib.
