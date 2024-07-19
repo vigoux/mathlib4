@@ -88,44 +88,6 @@ not a definitional equality. -/
 @[simp] lemma insertNthEquiv_last (n : ℕ) (α : Type*) :
     insertNthEquiv (fun _ ↦ α) (last n) = snocEquiv (fun _ ↦ α) := by ext; simp
 
-/-- Order isomorphism between tuples of length `n + 1` and pairs of an element and a tuple of length
-`n` given by separating out the first element of the tuple.
-
-This is `Fin.cons` as an `OrderIso`. -/
-@[simps!, simps toEquiv]
-def consOrderIso (α : Fin (n + 1) → Type*) [∀ i, LE (α i)] :
-    α 0 × (∀ i, α (succ i)) ≃o ∀ i, α i where
-  toEquiv := consEquiv α
-  map_rel_iff' := forall_iff_succ
-
-/-- Order isomorphism between tuples of length `n + 1` and pairs of an element and a tuple of length
-`n` given by separating out the last element of the tuple.
-
-This is `Fin.snoc` as an `OrderIso`. -/
-@[simps!, simps toEquiv]
-def snocOrderIso (α : Fin (n + 1) → Type*) [∀ i, LE (α i)] :
-    α (last n) × (∀ i, α (castSucc i)) ≃o ∀ i, α i where
-  toEquiv := snocEquiv α
-  map_rel_iff' := by simp [Pi.le_def, Prod.le_def, forall_iff_castSucc]
-
-/-- Order isomorphism between tuples of length `n + 1` and pairs of an element and a tuple of length
-`n` given by separating out the `p`-th element of the tuple.
-
-This is `Fin.insertNth` as an `OrderIso`. -/
-@[simps!, simps toEquiv]
-def insertNthOrderIso (α : Fin (n + 1) → Type u) [∀ i, LE (α i)] (p : Fin (n + 1)) :
-    α p × (∀ i, α (p.succAbove i)) ≃o ∀ i, α i where
-  toEquiv := insertNthEquiv α p
-  map_rel_iff' := by simp [Pi.le_def, Prod.le_def, p.forall_iff_succAbove]
-
-@[simp] lemma insertNthOrderIso_zero (α : Fin (n + 1) → Type*) [∀ i, LE (α i)] :
-    insertNthOrderIso α 0 = consOrderIso α := by ext; simp [insertNthOrderIso]
-
-/-- Note this lemma can only be written about non-dependent tuples as `insertNth (last n) = snoc` is
-not a definitional equality. -/
-@[simp] lemma insertNthOrderIso_last (n : ℕ) (α : Type*) [LE α] :
-    insertNthOrderIso (fun _ ↦ α) (last n) = snocOrderIso (fun _ ↦ α) := by ext; simp
-
 end Fin
 
 /-- `Π i : Fin 2, α i` is equivalent to `α 0 × α 1`. See also `finTwoArrowEquiv` for a
