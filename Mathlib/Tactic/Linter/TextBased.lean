@@ -33,6 +33,8 @@ inductive BroadImports
   "stream-of"-conciousness" versions of the `have` and `replace` tactics, which have since been
   deprecated and removed from mathlib. -/
   | DeprecatedHaveReplace
+  /-- Files in the `Deprecated` directory are not supposed to be imported. -/
+  | DeprecatedDir
 deriving BEq
 
 /-- Possible errors that text-based linters can report. -/
@@ -82,6 +84,8 @@ def StyleError.errorMessage (err : StyleError) (style : ErrorFormat) : String :=
   | StyleError.broadImport BroadImports.DeprecatedHaveReplace =>
     "Mathlib.Tactic.Have and Replace define deprecated forms of the 'have' and 'replace' tactics;
     please do not use them in mathlib."
+  | StyleError.broadImport BroadImports.DeprecatedDir =>
+    "Files in the `Deprecated` directory are not supposed to be imported."
   | StyleError.broadImport BroadImports.Lake =>
     "In the past, importing 'Lake' in mathlib has led to dramatic slow-downs of the linter (see \
     e.g. mathlib4#13779). Please consider carefully if this import is useful and make sure to \
@@ -104,6 +108,7 @@ def StyleError.errorCode (err : StyleError) : String := match err with
   | StyleError.adaptationNote => "ERR_ADN"
   | StyleError.broadImport BroadImports.TacticFolder => "ERR_IMP.TacticFolder"
   | StyleError.broadImport BroadImports.DeprecatedHaveReplace => "ERR_IMP.DeprecatedHaveReplace"
+  | StyleError.broadImport BroadImports.DeprecatedDir => "ERR_IMP.DeprecatedDir"
   | StyleError.broadImport BroadImports.Lake => "ERR_IMP.Lake"
   | StyleError.lineLength _ => "ERR_LIN"
   | StyleError.fileTooLong _ _ => "ERR_NUM_LIN"
@@ -211,6 +216,7 @@ def parse?_errorContext (line : String) : Option ErrorContext := Id.run do
         | "ERR_IMP.TacticFolder" => some (StyleError.broadImport BroadImports.TacticFolder)
         | "ERR_IMP.DeprecatedHaveReplace" =>
           some (StyleError.broadImport BroadImports.DeprecatedHaveReplace)
+        | "ERR_IMP.DeprecatedDir" => some (StyleError.broadImport BroadImports.DeprecatedDir)
         | "ERR_IMP.Lake" => some (StyleError.broadImport BroadImports.Lake)
         | "ERR_NUM_LIN" =>
           -- Parse the error message in the script. `none` indicates invalid input.
