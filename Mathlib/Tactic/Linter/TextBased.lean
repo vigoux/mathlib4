@@ -6,7 +6,6 @@ Authors: Michael Rothgang
 
 import Batteries.Data.String.Matcher
 import Mathlib.Init.Data.Nat.Notation
-import Lake
 
 /-!
 ## Text-based linters
@@ -74,14 +73,12 @@ def StyleError.errorMessage (err : StyleError) (style : ErrorFormat) : String :=
     "Authors line should look like: 'Authors: Jean Dupont, Иван Иванович Иванов'"
   | StyleError.adaptationNote =>
     "Found the string \"Adaptation note:\", please use the #adaptation_note command instead"
-  | StyleError.broadImport b =>
-      let message := match b with
-      | BroadImports.TacticFolder => "Files in mathlib cannot import the whole tactic folder"
-      | BroadImports.Lake =>
-      "In the past, importing 'Lake' in mathlib has led to dramatic slow-downs of the linter (see \
-        e.g. mathlib4#13779). Please consider carefully if this import is useful and make sure to \
-        benchmark it. If this is fine, feel free to allow this linter."
-      message
+  | StyleError.broadImport BroadImports.TacticFolder =>
+    "Files in mathlib cannot import the whole tactic folder"
+  | StyleError.broadImport BroadImports.Lake =>
+    "In the past, importing 'Lake' in mathlib has led to dramatic slow-downs of the linter (see \
+    e.g. mathlib4#13779). Please consider carefully if this import is useful and make sure to \
+    benchmark it. If this is fine, feel free to allow this linter."
   | StyleError.lineLength n => s!"Line has {n} characters, which is more than 100"
   | StyleError.fileTooLong currentSize sizeLimit =>
     match style with
