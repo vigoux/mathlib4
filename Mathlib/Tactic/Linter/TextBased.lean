@@ -333,11 +333,11 @@ def broadImportsLinter : TextbasedLinter := fun lines ↦ Id.run do
           -- If there is any in-line or beginning doc comment on that line, trim that.
           -- Small hack: just split the string on space, "/" and "-":
           -- none of these occur in module names, so this is safe.
-          if let some name := ((toString rest).split (" /-".contains ·)).head? then
-            if name == "Mathlib.Tactic" then
-              errors := errors.push (StyleError.broadImport BroadImports.TacticFolder, lineNumber)
-            else if name == "Lake" || name.startsWith "Lake." then
-              errors := errors.push (StyleError.broadImport BroadImports.Lake, lineNumber)
+          let name := (((toString rest).split (" /-".contains ·)).headD "").toName
+          if name == `Mathlib.Tactic then
+            errors := errors.push (StyleError.broadImport BroadImports.TacticFolder, lineNumber)
+          else if name.getRoot == `Lake then
+            errors := errors.push (StyleError.broadImport BroadImports.Lake, lineNumber)
       lineNumber := lineNumber + 1
   return errors
 
