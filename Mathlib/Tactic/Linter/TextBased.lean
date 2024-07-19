@@ -29,6 +29,10 @@ inductive BroadImports
   /-- Importing any module in `Lake`, unless carefully measured
   This has caused unexpected regressions in the past. -/
   | Lake
+  /-- The `Mathlib.Tactic.Have` or `Mathlib.Tactic.Replace` files: these define
+  "stream-of"-conciousness" versions of the `have` and `replace` tactics, which have since been
+  deprecated and removed from mathlib. -/
+  | DeprecatedHaveReplace
 deriving BEq
 
 /-- Possible errors that text-based linters can report. -/
@@ -75,6 +79,9 @@ def StyleError.errorMessage (err : StyleError) (style : ErrorFormat) : String :=
     "Found the string \"Adaptation note:\", please use the #adaptation_note command instead"
   | StyleError.broadImport BroadImports.TacticFolder =>
     "Files in mathlib cannot import the whole tactic folder"
+  | StyleError.broadImport BroadImports.DeprecatedHaveReplace =>
+    "Mathlib.Tactic.Have and Replace define deprecated forms of the 'have' and 'replace' tactics;
+    please do not use them in mathlib."
   | StyleError.broadImport BroadImports.Lake =>
     "In the past, importing 'Lake' in mathlib has led to dramatic slow-downs of the linter (see \
     e.g. mathlib4#13779). Please consider carefully if this import is useful and make sure to \
@@ -95,7 +102,8 @@ def StyleError.errorCode (err : StyleError) : String := match err with
   | StyleError.copyright _ => "ERR_COP"
   | StyleError.authors => "ERR_AUT"
   | StyleError.adaptationNote => "ERR_ADN"
-  | StyleError.broadImport BroadImports.TacticFolder => "ERR_IMP.Tactic"
+  | StyleError.broadImport BroadImports.TacticFolder => "ERR_IMP.TacticFolder"
+  | StyleError.broadImport BroadImports.DeprecatedHaveReplace => "ERR_IMP.DeprecatedHaveReplace"
   | StyleError.broadImport BroadImports.Lake => "ERR_IMP.Lake"
   | StyleError.lineLength _ => "ERR_LIN"
   | StyleError.fileTooLong _ _ => "ERR_NUM_LIN"
@@ -200,7 +208,9 @@ def parse?_errorContext (line : String) : Option ErrorContext := Id.run do
           else none
         | "ERR_AUT" => some (StyleError.authors)
         | "ERR_ADN" => some (StyleError.adaptationNote)
-        | "ERR_IMP.Tactic" => some (StyleError.broadImport BroadImports.TacticFolder)
+        | "ERR_IMP.TacticFolder" => some (StyleError.broadImport BroadImports.TacticFolder)
+        | "ERR_IMP.DeprecatedHaveReplace" =>
+          some (StyleError.broadImport BroadImports.DeprecatedHaveReplace)
         | "ERR_IMP.Lake" => some (StyleError.broadImport BroadImports.Lake)
         | "ERR_NUM_LIN" =>
           -- Parse the error message in the script. `none` indicates invalid input.
