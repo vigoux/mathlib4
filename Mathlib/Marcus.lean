@@ -388,6 +388,7 @@ def jacobian : (InfinitePlace K → ℝ) → (InfinitePlace K → ℝ) →L[ℝ]
 theorem hasFDeriv_mapToUnitsPow (c : InfinitePlace K → ℝ) :
     HasFDerivAt (mapToUnitsPow K) (jacobian K c) c := sorry
 
+-- Generalize!
 theorem injOn_mapToUnitsPow :
     Set.InjOn (mapToUnitsPow K) (box₁ K) := by
   refine Set.InjOn.mono (Set.pi_mono fun _ _ ↦ ?_) (mapToUnitsPow K).injOn
@@ -401,14 +402,34 @@ theorem jacobian_det (c : InfinitePlace K → ℝ) :
         2⁻¹ ^ NrComplexPlaces K * |c w₀| ^ (rank K) * (finrank ℚ K) * regulator K := by
   sorry
 
-theorem volume_normLessThanOnePlus :
-    (volume (normLessThanOnePlus K)).toReal = π ^ NrComplexPlaces K * regulator K := by
-  rw [normLessThanOnePlus_eq_image, box, volume_full_marcus_set_prod_set]
+-- theorem volume_normLessThanOnePlus :
+--     (volume (normLessThanOnePlus K)).toReal = π ^ NrComplexPlaces K * regulator K := by
+--   rw [normLessThanOnePlus_eq_image, box, volume_full_marcus_set_prod_set]
+--   rw [lintegral_image_eq_lintegral_abs_det_fderiv_mul volume sorry
+--      (fun c _ ↦ HasFDerivAt.hasFDerivWithinAt (hasFDeriv_mapToUnitsPow K c))
+--      (injOn_mapToUnitsPow K)]
+--   simp_rw [jacobian_det]
+--   sorry
+
+theorem lintegral_mapToUnitsPow (s : Set (InfinitePlace K → ℝ)) (f : (InfinitePlace K → ℝ) → ℝ≥0∞) :
+    ∫⁻ x in (mapToUnitsPow K) '' s, f x =
+      (2 : ℝ≥0∞)⁻¹ ^ NrComplexPlaces K * ENNReal.ofReal (regulator K) * (finrank ℚ K) *
+      ∫⁻ x in s,
+          (∏ i : {w : InfinitePlace K // IsComplex w}, ENNReal.ofReal (mapToUnitsPow K x i))⁻¹ *
+        ENNReal.ofReal |x w₀| ^ rank K * f (mapToUnitsPow K x) := by
   rw [lintegral_image_eq_lintegral_abs_det_fderiv_mul volume sorry
      (fun c _ ↦ HasFDerivAt.hasFDerivWithinAt (hasFDeriv_mapToUnitsPow K c))
-     (injOn_mapToUnitsPow K)]
+     sorry]
   simp_rw [jacobian_det]
-  sorry
+  rw [← lintegral_const_mul']
+  congr with x
+  rw [ENNReal.ofReal_mul, ENNReal.ofReal_mul, ENNReal.ofReal_mul, ENNReal.ofReal_mul,
+    ENNReal.ofReal_natCast, ENNReal.ofReal_pow, ENNReal.ofReal_pow]
+  rw [ENNReal.ofReal_inv_of_pos, ENNReal.ofReal_inv_of_pos, ENNReal.ofReal_ofNat]
+  rw [ENNReal.ofReal_prod_of_nonneg]
+  ring_nf
+  
+  all_goals sorry
 
 theorem closure_subset_closure :
     closure (normLessThanOnePlus K) ⊆ full_marcus K '' (closure (box K)) := by
@@ -444,94 +465,16 @@ example : volume (full_marcus K '' (interior (box K))) =
     (Set.univ.pi fun _ ↦ Set.Ioo 0 1) ×ˢ (Set.univ.pi fun _ ↦ Set.Ioo (-π) π) := sorry
   rw [this]
   clear this
-  have : closure (box K) =
-    (Set.univ.pi fun _ ↦ Set.Icc 0 1) ×ˢ (Set.univ.pi fun _ ↦ Set.Icc (-π) π) := sorry
+  have : closure (box K) = (Set.Icc 0 1) ×ˢ (Set.univ.pi fun _ ↦ Set.Icc (-π) π) := sorry
   rw [this]
   clear this
   rw [volume_full_marcus_set_prod_set, volume_full_marcus_set_prod_set]
   congr 1
   · simp_rw [volume_pi_pi, Real.volume_Ioo, Real.volume_Icc]
-  · 
-    -- Can do things more directly from the suffices
-    rw [← lintegral_indicator, volume_pi, ← lintegral_indicator, lintegral_eq_lmarginal_univ (-1),
-      lintegral_eq_lmarginal_univ (-1)]
-    · suffices ∀ a, ∀ W : Finset (InfinitePlace K),
-        (∫⋯∫⁻_W,
-          ((mapToUnitsPow K) '' Set.univ.pi fun _ ↦ Set.Ioo 0 1).indicator fun x ↦
-            ∏ w : { w : InfinitePlace K // w.IsComplex }, (x w).toNNReal ∂fun x ↦ volume) a =
-        (∫⋯∫⁻_W,
-          ((mapToUnitsPow K) '' Set.univ.pi fun _ ↦ Set.Icc 0 1).indicator fun x ↦
-            ∏ w : { w : InfinitePlace K // w.IsComplex }, (x w).toNNReal ∂fun x ↦ volume) a by
-        exact this (-1) univ
-      intro a W
-      induction W using Finset.induction generalizing a with
-      | empty =>
-          rw [lmarginal_empty, lmarginal_empty]
-          rw [Set.indicator_of_not_mem, Set.indicator_of_not_mem]
-          sorry
-          sorry
-        -- any_goals
-        -- · simp_rw [Set.mem_image, not_exists, not_and, Pi.neg_def, Function.funext_iff, not_forall]
-        --  exact
-        --    fun _ _ ↦ ⟨w₀, ne_of_gt <| lt_of_lt_of_le neg_one_lt_zero (mapToUnitsPow_nonneg K _ _)⟩
-      | insert hi h_ind =>
-        rw [lmarginal_insert, lmarginal_insert]
-        simp_rw [lmarginal_update_of_not_mem sorry sorry]
-        · simp_rw [h_ind]
-        · sorry
-        · sorry
-        · sorry
-        · sorry
-    · sorry
-    · sorry
-
-#exit
-
-          have := mapToUnitsPow_nonneg K ?_ ?_
-          refine ne_of_gt ?_
-          exact lt_of_lt_of_le (-1 < 0 : by sorry) (mapToUnitsPow_nonneg K _ _)
-
-
-        sorry
-    | insert =>
-
-        sorry
-
-    all_goals sorry
-
-
-
-
-theorem volume_frontier :
-    volume (frontier (normLessThanOnePlus K)) = 0 := by
-  rw [frontier]
-  have := Set.diff_subset_diff_left (closure_subset_closure K)
-    (t := interior (normLessThanOnePlus K))
-  rw [← nonpos_iff_eq_zero]
-  refine le_trans (measure_mono this) ?_
-  rw [← interior_eq_interior]
-  refine le_trans (measure_mono (Set.subset_image_diff _ _ _)) ?_
-  rw [nonpos_iff_eq_zero, closure_diff_interior]
-  rw [box]
-
-  rw [frontier, closure_prod_eq, interior_prod_eq]
-  have : closure (box₁ K) = Set.univ.pi fun _ ↦ Set.Icc 0 1 := by
-    simp_rw [box₁, closure_pi_set, apply_ite, closure_Ioc zero_ne_one, closure_Ico zero_ne_one,
-      ite_self]
-  rw [this]
-  have : closure (box₂ K) = Set.univ.pi fun _ ↦ Set.Icc (-π) π := by
-    have : -π ≠ π := by
-      norm_num [Real.pi_ne_zero]
-    simp_rw [box₂, closure_pi_set, closure_Ioc this]
-  rw [this]
-  have : interior (box₁ K) = Set.univ.pi fun _ ↦ Set.Ioo 0 1 := by
-    simp_rw [box₁, interior_pi_set Set.finite_univ, apply_ite, interior_Ioc, interior_Ico, ite_self]
-  rw [this]
-  have : interior (box₂ K) = Set.univ.pi fun _ ↦ Set.Ioo (-π) π := by
-    simp_rw [box₂, interior_pi_set Set.finite_univ, interior_Ioc]
-  rw [this]
-  rw [Set.prod_diff_prod]
-  simp_rw [Set.pi_univ_Icc, Set.Icc_prod_Icc]
-  simp only [Set.pi_univ_Icc, Set.Icc_prod_Icc, nonpos_iff_eq_zero]
-
-  sorry
+  · rw [lintegral_mapToUnitsPow, lintegral_mapToUnitsPow]
+    congr 1
+    refine setLIntegral_congr ?_
+    rw [show (Set.univ.pi fun _ ↦ Set.Ioo (0 : ℝ) 1) = interior (Set.Icc 0 1) by
+      simp_rw [← Set.pi_univ_Icc, interior_pi_set Set.finite_univ, Pi.zero_apply, Pi.one_apply,
+        interior_Icc]]
+    exact interior_ae_eq_of_null_frontier ((convex_Icc _ _).addHaar_frontier volume)
