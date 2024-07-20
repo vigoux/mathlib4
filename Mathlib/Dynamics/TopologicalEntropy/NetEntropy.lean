@@ -91,7 +91,7 @@ theorem dynnet_card_le_dyncover_card {T : X → X} {F : Set X} {U : Set (X × X)
     simp only [Finset.coe_sort_coe, mem_iUnion, Subtype.exists, exists_prop] at ht
     exact ht
   choose! F s_to_t using this
-  simp only [mem_ball_symmetry (dynamical_uni_of_symm_is_symm T U_symm n)] at s_to_t
+  simp only [mem_ball_symmetry (dynamical_uni_of_symm T U_symm n)] at s_to_t
   apply Finset.card_le_card_of_injOn F (fun x x_s ↦ (s_to_t x x_s).1)
   intro x x_s y y_s Fx_Fy
   exact PairwiseDisjoint.elim_set hs.2 x_s y_s (F x) (s_to_t x x_s).2 (Fx_Fy ▸ (s_to_t y y_s).2)
@@ -262,7 +262,7 @@ theorem mincard_comp_le_maxcard (T : X → X) (F : Set X) {U : Set (X × X)} (U_
     refine lt_of_lt_of_eq (lt_add_one s.card) (Eq.symm (Finset.card_insert_of_not_mem fun x_s ↦ ?_))
     apply x_uncov x x_s
     apply ball_mono (dynamical_uni_monotone_uni T n (subset_comp_self U_rfl)) x
-    apply ball_mono (dynamical_uni_of_rfl_is_rfl T U_rfl n) x
+    apply ball_mono (dynamical_uni_of_rfl T U_rfl n) x
     simp only [ball, mem_preimage, mem_idRel]
 
 open ENNReal EReal
