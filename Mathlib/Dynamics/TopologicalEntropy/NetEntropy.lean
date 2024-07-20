@@ -241,8 +241,8 @@ theorem maxcard_le_mincard (T : X → X) (F : Set X) {U : Set (X × X)} (h : Sym
 
 /- The second of two key resultd to compare the two versions of Bowen-Dinaburg's topological
   entropy: with cover and with nets.-/
-theorem mincard_comp_le_maxcard (T : X → X) (F : Set X) {U : Set (X × X)}
-    (U_rfl : idRel ⊆ U) (U_symm : SymmetricRel U) (n : ℕ) :
+theorem mincard_comp_le_maxcard (T : X → X) (F : Set X) {U : Set (X × X)} (U_rfl : idRel ⊆ U)
+    (U_symm : SymmetricRel U) (n : ℕ) :
     Mincard T F (U ○ U) n ≤ Maxcard T F U n := by
   classical
   rcases (eq_top_or_lt_top (Maxcard T F U n)) with (h | h)
@@ -251,17 +251,13 @@ theorem mincard_comp_le_maxcard (T : X → X) (F : Set X) {U : Set (X × X)}
     rw [← s_maxcard]
     apply mincard_le_card
     by_contra h
-    unfold DynamicalCover.IsDynamicalCoverOf at h
     rcases not_subset.1 h with ⟨x, x_F, x_uncov⟩
     simp only [Finset.mem_coe, mem_iUnion, exists_prop, not_exists, not_and] at x_uncov
     have larger_net : IsDynamicalNetOf T F U n (insert x s) := by
       apply And.intro (insert_subset x_F s_net.1)
       refine pairwiseDisjoint_insert.2 (And.intro s_net.2 (fun y y_s _ ↦ ?_))
-      refine disjoint_left.2 (fun z z_x z_y ↦ ?_)
-      apply x_uncov y y_s
-      apply ball_mono (dynamical_uni_of_comp_is_comp T U U n)
-      rw [mem_ball_symmetry (dynamical_uni_of_symm_is_symm T U_symm n)] at z_x z_y
-      exact mem_comp_of_mem_ball (dynamical_uni_of_symm_is_symm T U_symm n) z_y z_x
+      refine disjoint_left.2 (fun z z_x z_y ↦ x_uncov y y_s ?_)
+      exact inter_of_dynamical_balls T n U_symm x y (nonempty_of_mem ⟨z_x, z_y⟩)
     rw [← Finset.coe_insert x s] at larger_net
     apply not_le_of_lt _ (card_le_maxcard larger_net)
     rw [← s_maxcard, Nat.cast_lt]

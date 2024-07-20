@@ -54,16 +54,6 @@ open DynamicalUniformity Set Uniformity UniformSpace
 
 variable {X : Type*}
 
-open EReal
-
-theorem Ereal_tendsto_const_div_atTop_nhds_zero_nat {x : EReal} (h : x ≠ ⊥) (h' : x ≠ ⊤) :
-    Filter.atTop.Tendsto (fun n : ℕ ↦ x / n) (nhds 0) := by
-  have : (fun n : ℕ ↦ x / n) = fun n : ℕ ↦ ((x.toReal / n : ℝ) : EReal) := by
-    ext n
-    nth_rw 1 [← coe_toReal h' h, ← coe_coe_eq_natCast n, ← coe_div x.toReal n]
-  rw [this, ← EReal.coe_zero, EReal.tendsto_coe]
-  exact tendsto_const_div_atTop_nhds_zero_nat x.toReal
-
 /-! ### Dynamical covers -/
 
 /-- Given a subset `F`, a uniform neighborhood `U` and an integer `n`, a subset `s` is a `(U, n)`-
@@ -544,7 +534,7 @@ theorem CoverEntropySupUni_le_log_mincard_div {T : X → X} {F : Set X} (F_inv :
     rw [h, add_zero] at this
     specialize this (Or.inr EReal.zero_ne_top) (Or.inr EReal.zero_ne_bot)
     exact le_of_le_of_eq this (Filter.limsup_const (log (Mincard T F U n) / n))
-  exact Filter.Tendsto.limsup_eq (Ereal_tendsto_const_div_atTop_nhds_zero_nat logm_nneg logm_fin)
+  exact Filter.Tendsto.limsup_eq (EReal.tendsto_const_div_atTop_nhds_zero_nat logm_nneg logm_fin)
 
 theorem CoverEntropySupUni_le_CoverEntropyInfUni {T : X → X} {F : Set X} (F_inv : MapsTo T F F)
     {U : Set (X × X)} (U_symm : SymmetricRel U) :
