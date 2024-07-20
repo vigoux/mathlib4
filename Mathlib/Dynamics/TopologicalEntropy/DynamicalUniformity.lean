@@ -58,14 +58,14 @@ theorem dynamical_uni_of_uni [UniformSpace X] {T : X → X} (h : UniformContinuo
   rw [map_iterate T T k]
   exact uniformContinuous_def.1 (UniformContinuous.iterate T k h) U U_uni
 
-theorem dynamical_uni_of_rfl_is_rfl (T : X → X) {U : Set (X × X)} (h : idRel ⊆ U) (n : ℕ) :
+theorem dynamical_uni_rfl_of_rfl (T : X → X) {U : Set (X × X)} (h : idRel ⊆ U) (n : ℕ) :
     idRel ⊆ (DynamicalUni T U n) := by
   simp only [DynamicalUni, map_iterate, subset_iInter_iff, idRel_subset, mem_preimage, map_apply]
   intro _ _ _
   apply h
   rw [mem_idRel]
 
-theorem dynamical_uni_of_symm_is_symm (T : X → X) {U : Set (X × X)} (h : SymmetricRel U) (n : ℕ) :
+theorem dynamical_uni_symm_of_symm (T : X → X) {U : Set (X × X)} (h : SymmetricRel U) (n : ℕ) :
     SymmetricRel (DynamicalUni T U n) := by
   ext xy
   simp only [DynamicalUni, map_iterate, mem_preimage, mem_iInter]
@@ -73,7 +73,7 @@ theorem dynamical_uni_of_symm_is_symm (T : X → X) {U : Set (X × X)} (h : Symm
   rw [map_apply', map_apply']
   exact SymmetricRel.mk_mem_comm h
 
-theorem dynamical_uni_of_comp_is_comp (T : X → X) (U V : Set (X × X)) (n : ℕ) :
+theorem dynamical_uni_comp_of_comp (T : X → X) (U V : Set (X × X)) (n : ℕ) :
     (DynamicalUni T U n) ○ (DynamicalUni T V n) ⊆ DynamicalUni T (U ○ V) n := by
   simp only [DynamicalUni, map_iterate, subset_iInter_iff]
   intro k k_n xy xy_comp
@@ -81,7 +81,7 @@ theorem dynamical_uni_of_comp_is_comp (T : X → X) (U V : Set (X × X)) (n : �
   rcases xy_comp with ⟨z, hz1, hz2⟩
   exact mem_ball_comp (hz1 k k_n) (hz2 k k_n)
 
-theorem dynamical_uni_of_open_is_open [TopologicalSpace X] {T : X → X} (T_cont : Continuous T)
+theorem dynamical_uni_open_of_open [TopologicalSpace X] {T : X → X} (T_cont : Continuous T)
     {U : Set (X × X)} (U_open : IsOpen U) (n : ℕ) :
     IsOpen (DynamicalUni T U n) := by
   rw [dynamical_uni_inter_Ico T U n]
@@ -117,8 +117,8 @@ theorem inter_of_dynamical_balls (T : X → X) (n : ℕ) {U : Set (X × X)} (U_s
     (x y : X) (h : (ball x (DynamicalUni T U n) ∩ ball y (DynamicalUni T U n)).Nonempty) :
     x ∈ ball y (DynamicalUni T (U ○ U) n) := by
   rcases h with ⟨z, z_Bx, z_By⟩
-  rw [mem_ball_symmetry (dynamical_uni_of_symm_is_symm T U_symm n)] at z_Bx
-  exact dynamical_uni_of_comp_is_comp T U U n (mem_ball_comp z_By z_Bx)
+  rw [mem_ball_symmetry (dynamical_uni_symm_of_symm T U_symm n)] at z_Bx
+  exact dynamical_uni_comp_of_comp T U U n (mem_ball_comp z_By z_Bx)
 
 /--Preimages of dynamical uniformities under semiconjugacies.-/
 theorem preimage_of_dynamical_uni {Y : Type*} {S : X → X} {T : Y → Y} {φ : X → Y}

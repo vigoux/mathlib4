@@ -44,9 +44,9 @@ net, entropy
 Get versions of the topological entropy on (pseudo-e)metric spaces.
 -/
 
-namespace DynamicalNet
+namespace NetEntropy
 
-open DynamicalUniformity Set Uniformity UniformSpace
+open CoverEntropy DynamicalUniformity Set Uniformity UniformSpace
 
 variable {X : Type*}
 
@@ -78,8 +78,6 @@ theorem dynnet_by_empty (T : X → X) (F : Set X) (U : Set (X × X)) (n : ℕ) :
 theorem dynnet_by_singleton (T : X → X) {F : Set X} (U : Set (X × X)) (n : ℕ) {x : X} (h : x ∈ F) :
     IsDynamicalNetOf T F U n {x} :=
   ⟨singleton_subset_iff.2 h, pairwise_singleton x _⟩
-
-open DynamicalCover
 
 /- The first of two key resultd to compare the two versions of Bowen-Dinaburg's topological entropy:
   with cover and with nets.-/
@@ -484,6 +482,6 @@ theorem NetEntropyInf_eq_NetEntropySup_of_inv (T : X → X) {F : Set X} (h : Map
   Eq.trans (NetEntropyInf_eq_CoverEntropySup_of_inv T h)
     (Eq.symm (NetEntropySup_eq_CoverEntropySup T F))
 
-end DynamicalNet
+end NetEntropy
 
 #lint

@@ -48,7 +48,7 @@ to `CoverEntropyInfUni`/`CoverEntropySupUni`. It involves a logarithm, a divisio
 Get versions of the topological entropy on (pseudo-e)metric spaces.
 -/
 
-namespace DynamicalCover
+namespace CoverEntropy
 
 open DynamicalUniformity Set Uniformity UniformSpace
 
@@ -650,6 +650,6 @@ theorem CoverEntropyInf_eq_CoverEntropySup_of_inv (T : X → X) {F : Set X} (h :
   exact le_trans (CoverEntropySupUni_antitone_uni T F V_U)
     <| le_iSup₂_of_le V V_uni (CoverEntropySupUni_le_CoverEntropyInfUni h V_symm)
 
-end DynamicalCover
+end CoverEntropy
 
 #lint
