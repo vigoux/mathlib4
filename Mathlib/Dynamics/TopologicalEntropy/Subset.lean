@@ -236,14 +236,22 @@ theorem CoverEntropyInf_union_of_inv [UniformSpace X] (T : X → X) {F G : Set X
 
 /-! ### Topological entropy of finite unions -/
 
-/-theorem dyncover_of_iUnion {ι : Type*} {T : X → X} {F : ι → Set X} {U : Set (X × X)} {n : ℕ}
-    {s : ι → Set X} (h : ∀ i, IsDynamicalCoverOf T (F i) U n (s i)) :
-    IsDynamicalCoverOf T (⋃ i, F i) U n (⋃ i, s i) := by
-  intro x x_F
-  rcases (mem_iUnion.1 x_F) with ⟨i, x_Fi⟩
-  rcases (mem_iUnion₂.1 (h i x_Fi)) with ⟨y, y_si, x_y⟩
-  apply mem_iUnion₂.2
-  use y, mem_iUnion_of_mem i y_si-/
+theorem CoverEntropySup_iUnion {ι : Type*} [UniformSpace X] [Fintype ι] (T : X → X)
+    (F : ι → Set X) :
+    CoverEntropySup T (⋃ i, F i) = ⨆ i, CoverEntropySup T (F i) := by
+  apply Fintype.induction_empty_option (P := fun ι _ ↦ ∀ F : ι → Set X,
+    CoverEntropySup T (⋃ i, F i) = ⨆ i, CoverEntropySup T (F i))
+  · intro α β hβ α_β h F
+    specialize h (F ∘ α_β.toFun)
+    simp at h
+    sorry
+  · intro _
+    simp only [iUnion_of_empty, CoverEntropySup_of_empty, ciSup_of_empty]
+  · intro α _ h F
+    rw [iSup_option, iUnion_option, CoverEntropySup_union T (F none) (⋃ i, F (some i)),
+      _root_.sup_eq_max]
+    congr
+    exact h (fun i ↦ F (some i))
 
 theorem dyncover_of_biUnion {ι : Type*} (s: Set ι) {T : X → X} {F : ι → Set X} {U : Set (X × X)}
     {n : ℕ} {t : ι → Set X} (h : ∀ i ∈ s, IsDynamicalCoverOf T (F i) U n (t i)) :
