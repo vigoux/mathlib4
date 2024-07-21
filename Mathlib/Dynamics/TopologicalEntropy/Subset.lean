@@ -236,163 +236,62 @@ theorem CoverEntropyInf_union_of_inv [UniformSpace X] (T : X → X) {F G : Set X
 
 /-! ### Topological entropy of finite unions -/
 
-theorem CoverEntropySup_iUnion {ι : Type*} [UniformSpace X] [Fintype ι] (T : X → X)
+theorem CoverEntropySup_iUnion_le {ι : Type*} [UniformSpace X] (T : X → X) (F : ι → Set X) :
+    ⨆ i, CoverEntropySup T (F i) ≤ CoverEntropySup T (⋃ i, F i) :=
+  iSup_le (fun i ↦ (CoverEntropySup_monotone_space T (subset_iUnion F i)))
+
+theorem CoverEntropySup_biUnion_le {ι : Type*} [UniformSpace X] (s : Set ι) (T : X → X)
+   (F : ι → Set X) :
+    ⨆ i ∈ s, CoverEntropySup T (F i) ≤ CoverEntropySup T (⋃ i ∈ s, F i) :=
+  iSup₂_le (fun _ i_s ↦ (CoverEntropySup_monotone_space T (subset_biUnion_of_mem i_s)))
+
+theorem CoverEntropyInf_iUnion_le {ι : Type*} [UniformSpace X] (T : X → X) (F : ι → Set X) :
+    ⨆ i, CoverEntropyInf T (F i) ≤ CoverEntropyInf T (⋃ i, F i) :=
+  iSup_le (fun i ↦ (CoverEntropyInf_monotone_space T (subset_iUnion F i)))
+
+theorem CoverEntropyInf_biUnion_le {ι : Type*} [UniformSpace X] (s : Set ι) (T : X → X)
+   (F : ι → Set X) :
+    ⨆ i ∈ s, CoverEntropyInf T (F i) ≤ CoverEntropyInf T (⋃ i ∈ s, F i) :=
+  iSup₂_le (fun _ i_s ↦ (CoverEntropyInf_monotone_space T (subset_biUnion_of_mem i_s)))
+
+theorem CoverEntropySup_finite_iUnion {ι : Type*} [UniformSpace X] [Fintype ι] (T : X → X)
     (F : ι → Set X) :
     CoverEntropySup T (⋃ i, F i) = ⨆ i, CoverEntropySup T (F i) := by
   apply Fintype.induction_empty_option (P := fun ι _ ↦ ∀ F : ι → Set X,
     CoverEntropySup T (⋃ i, F i) = ⨆ i, CoverEntropySup T (F i))
-  · intro α β hβ α_β h F
-    specialize h (F ∘ α_β.toFun)
-    simp at h
-    sorry
+  · intro α β _ α_β h F
+    specialize h (F ∘ α_β)
+    simp only [comp_apply] at h
+    rw [← iUnion_congr_of_surjective (g := F) α_β (Equiv.surjective α_β) (fun _ ↦ comp_apply), h]
+    exact Equiv.iSup_comp (g := fun i : β ↦ CoverEntropySup T (F i)) α_β
   · intro _
     simp only [iUnion_of_empty, CoverEntropySup_of_empty, ciSup_of_empty]
   · intro α _ h F
     rw [iSup_option, iUnion_option, CoverEntropySup_union T (F none) (⋃ i, F (some i)),
       _root_.sup_eq_max]
     congr
-    exact h (fun i ↦ F (some i))
+    exact h (fun i : α ↦ F (some i))
 
-theorem dyncover_of_biUnion {ι : Type*} (s: Set ι) {T : X → X} {F : ι → Set X} {U : Set (X × X)}
-    {n : ℕ} {t : ι → Set X} (h : ∀ i ∈ s, IsDynamicalCoverOf T (F i) U n (t i)) :
-    IsDynamicalCoverOf T (⋃ i ∈ s, F i) U n (⋃ i ∈ s, t i) := by
-  intro x x_F
-  rcases (mem_iUnion₂.1 x_F) with ⟨i, i_s, x_Fi⟩
-  rcases (mem_iUnion₂.1 (h i i_s x_Fi)) with ⟨y, y_si, x_y⟩
-  apply mem_iUnion₂.2
-  use y, mem_biUnion i_s y_si
+theorem CoverEntropySup_finite_biUnion {ι : Type*} [UniformSpace X] (s : Finset ι) (T : X → X)
+    (F : ι → Set X) :
+    CoverEntropySup T (⋃ i ∈ s, F i) = ⨆ i ∈ s, CoverEntropySup T (F i) := by
+  have fin_coe : Fintype { i // i ∈ s } := FinsetCoe.fintype s
+  have := @CoverEntropySup_finite_iUnion X {i // i ∈ s} _ fin_coe T (fun i ↦ F i)
+  rw [iSup_subtype', ← this, iUnion_subtype]
 
-/-theorem mincard_iUnion_le {ι : Type*} [Fintype ι] (T : X → X) (F : ι → Set X) (U : Set (X × X))
-    (n : ℕ) :
-    Mincard T (⋃ i, F i) U n ≤ ∑ i, Mincard T (F i) U n := by
-  classical
-  rcases isEmpty_or_nonempty ι
-  · simp
-  by_cases h : ∃ i, (Mincard T (F i) U n) = ⊤
-  · apply le_of_le_of_eq le_top (Eq.symm _)
-    apply WithTop.sum_eq_top_iff.2
-    simp only [Finset.mem_univ, true_and]
-    exact h
-  push_neg at h
-  choose ! s hs using (fun i ↦ (finite_mincard_iff T (F i) U n).1 (Ne.lt_top (h i)))
-  rw [forall_and] at hs
-  rcases hs with ⟨si_cover, si_card⟩
-  rw [← Fintype.sum_congr _ _ si_card]
-  norm_cast
-  apply le_trans (mincard_le_card _) (WithTop.coe_le_coe.2 Finset.card_biUnion_le)
-  simp only [Finset.coe_biUnion, Finset.coe_univ, mem_univ, iUnion_true]
-  exact dyncover_of_iUnion si_cover-/
+theorem CoverEntropyInf_finite_iUnion_of_inv {ι : Type*} [UniformSpace X] [Fintype ι] {T : X → X}
+    {F : ι → Set X} (h : ∀ i, MapsTo T (F i) (F i)) :
+    CoverEntropyInf T (⋃ i, F i) = ⨆ i, CoverEntropyInf T (F i) := by
+  rw [CoverEntropyInf_eq_CoverEntropySup_of_inv T (mapsTo_iUnion_iUnion h),
+    CoverEntropySup_finite_iUnion T F]
+  exact iSup_congr (fun i ↦ Eq.symm (CoverEntropyInf_eq_CoverEntropySup_of_inv T (h i)))
 
-theorem mincard_biUnion_le {ι : Type*} (s : Finset ι) (T : X → X) (F : ι → Set X) (U : Set (X × X))
-    (n : ℕ) :
-    Mincard T (⋃ i ∈ s, F i) U n ≤ ∑ i ∈ s, Mincard T (F i) U n := by
-  classical
-  by_cases h : ∃ i ∈ s, (Mincard T (F i) U n) = ⊤
-  · exact le_of_le_of_eq le_top (Eq.symm (WithTop.sum_eq_top_iff.2 h))
-  push_neg at h
-  choose ! t ht using (fun i i_s ↦ (finite_mincard_iff T (F i) U n).1 (Ne.lt_top (h i i_s)))
-  rw [forall₂_and] at ht
-  rcases ht with ⟨ti_cover, ti_card⟩
-  rw [← Finset.sum_congr (Eq.refl s) ti_card]
-  norm_cast
-  apply le_trans (mincard_le_card _) (WithTop.coe_le_coe.2 Finset.card_biUnion_le)
-  simp only [Finset.coe_biUnion, Finset.mem_coe]
-  exact dyncover_of_biUnion s (t := fun i ↦ Finset.toSet (t i)) ti_cover
-
-theorem CoverEntropySupUni_biUnion {ι : Type*} (s : Finset ι) (T : X → X) (F : ι → Set X)
-    (U : Set (X × X)) :
-    CoverEntropySupUni T (⋃ i ∈ s, F i) U = ⨆ i ∈ s, CoverEntropySupUni T (F i) U := by
-  classical
-  rcases s.eq_empty_or_nonempty with (rfl | hs)
-  · simp
-  by_cases h : ∀ i ∈ s, F i = ∅
-  · apply Eq.symm
-    rw [iUnion₂_congr h]
-    simp only [iUnion_empty, CoverEntropySupUni_of_empty, iSup_eq_bot]
-    exact fun i i_s ↦ h i i_s ▸ CoverEntropySupUni_of_empty
-  push_neg at h
-  rcases h with ⟨i0, i0_s, hi0⟩
-  apply le_antisymm; swap
-  · apply le_of_le_of_eq (Monotone.le_map_iSup₂ (CoverEntropySupUni_monotone_space T U) _)
-    simp only [iSup_eq_iUnion]
-  have key : ∀ n : ℕ, log (Mincard T (⋃ i ∈ s, F i) U n) / n
-      ≤ log (⨆ i ∈ s, Mincard T (F i) U n) / n + log (s.card : ENNReal) / n := by
-    intro n
-    have h_logs : 0 ≤ log (⨆ i ∈ s, Mincard T (F i) U n) := by
-      apply le_trans _ (Monotone.le_map_iSup₂ log_monotone _)
-      exact le_trans (log_mincard_nonneg_of_nonempty T hi0 U n)
-        (le_iSup₂ (f := fun i i_s ↦ log (Mincard T (F i) U n)) i0 i0_s)
-    have h_scar : 0 ≤ log s.card := by
-      apply zero_le_log_iff.2
-      rw [Nat.one_le_cast]
-      exact Finset.one_le_card.2 hs
-    rw [← div_right_distrib_of_nonneg (c := n) h_logs h_scar]
-    apply div_le_div_right_of_nonneg (Nat.cast_nonneg' n)
-    rw [← log_mul_add]
-    apply log_monotone
-    sorry
-  apply le_trans (limsup_le_limsup (Filter.eventually_of_forall fun n ↦ key n))
-  have : Filter.atTop.limsup (fun n : ℕ ↦ log (s.card : ENNReal) / n) = 0 :=
-    Filter.Tendsto.limsup_eq <| EReal.tendsto_const_div_atTop_nhds_zero_nat
-      (ne_of_gt (bot_lt_log_iff.2 (Nat.cast_pos.2 (Finset.Nonempty.card_pos hs))))
-      (ne_of_lt (log_lt_top_iff.2 (Ne.lt_top (WithTop.natCast_ne_top s.card))))
-  apply le_trans (limsup_add_le_add_limsup (Or.inr (this ▸ EReal.zero_ne_top))
-    (Or.inr (this ▸ EReal.zero_ne_bot)))
-  apply le_of_eq
-  unfold CoverEntropySupUni
-  rw [this, add_zero]
-  sorry
-
-  /--/
-
-
-
-
-
-
-theorem CoverEntropySupUni_iUnion {ι : Type*} [Fintype ι] (T : X → X) (F : ι → Set X)
-    (U : Set (X × X)) :
-    CoverEntropySupUni T (⋃ i, F i) U = ⨆ i, CoverEntropySupUni T (F i) U := by
-  rcases isEmpty_or_nonempty ι
-  · simp
-  by_cases h : ∀ i, F i = ∅
-  · simp [h]
-  push_neg at h
-  rcases h with ⟨i0, hi0⟩
-  apply le_antisymm; swap
-  · apply le_trans (Monotone.le_map_iSup (CoverEntropySupUni_monotone_space T U))
-    rw [iSup_eq_iUnion]
-  classical
-  have key : ∀ n : ℕ, log (Mincard T (⋃ i, F i) U n) / n
-      ≤ log (⨆ i, Mincard T (F i) U n) / n + log (Fintype.card ι : ENNReal) / n := by
-    intro n
-    have h_logs : 0 ≤ log (⨆ i, Mincard T (F i) U n) := by
-      apply le_trans _ (Monotone.le_map_iSup log_monotone)
-      exact le_trans (log_mincard_nonneg_of_nonempty T hi0 U n)
-        (le_iSup (fun i ↦ log (Mincard T (F i) U n)) i0)
-    sorry
-    /-rw [← div_right_distrib_of_nonneg (c := n) h_logm (zero_le_log_iff.2 one_le_two)]
-    apply div_le_div_right_of_nonneg (Nat.cast_nonneg' n)
-    rw [← log_mul_add]
-    apply log_monotone
-    norm_cast
-    rw [mul_two]
-    exact le_trans (mincard_union_l-/
-  apply le_trans (limsup_le_limsup (Filter.eventually_of_forall fun n ↦ key n))
-  have : Filter.atTop.limsup (fun n : ℕ ↦ log (Fintype.card ι : ENNReal) / n) = 0 :=
-    Filter.Tendsto.limsup_eq <| EReal.tendsto_const_div_atTop_nhds_zero_nat
-      (ne_of_gt (bot_lt_log_iff.2 (Nat.cast_pos.2 Fintype.card_pos)))
-      (ne_of_lt (log_lt_top_iff.2 (Ne.lt_top (WithTop.natCast_ne_top (Fintype.card ι)))))
-  apply le_trans (limsup_add_le_add_limsup (Or.inr (this ▸ EReal.zero_ne_top))
-    (Or.inr (this ▸ EReal.zero_ne_bot)))
-  apply le_of_eq
-  unfold CoverEntropySupUni
-  rw [this, add_zero]
-  have next_goal := limsup_finset_sup (α := EReal)
-  sorry
-
-
-
+theorem CoverEntropyInf_finite_biUnion_of_inv {ι : Type*} [UniformSpace X] (s : Finset ι)
+    (T : X → X) {F : ι → Set X} (h : ∀ i ∈ s, MapsTo T (F i) (F i)) :
+    CoverEntropyInf T (⋃ i ∈ s, F i) = ⨆ i ∈ s, CoverEntropyInf T (F i) := by
+  rw [CoverEntropyInf_eq_CoverEntropySup_of_inv T (mapsTo_iUnion₂_iUnion₂ h),
+    CoverEntropySup_finite_biUnion s T F]
+  exact biSup_congr' (fun i i_s ↦ Eq.symm (CoverEntropyInf_eq_CoverEntropySup_of_inv T (h i i_s)))
 
 end Entropy
 
