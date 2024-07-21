@@ -28,7 +28,7 @@ In the context of (pseudo-e)metric spaces, relate the usual definition of dynami
 these dynamical uniformities
 -/
 
-namespace DynamicalUniformity
+namespace Dynamics
 
 open Prod Set Uniformity UniformSpace
 
@@ -151,6 +151,6 @@ theorem dynamical_uni_prod {Y : Type*} (S : X → X) (T : Y → Y) (U : Set (X �
   refine forall₂_congr fun k _ ↦ ?_
   simp only [map_iterate, map_fst, map_snd]
 
-end DynamicalUniformity
+end Dynamics
 
 #lint
