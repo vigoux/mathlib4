@@ -380,8 +380,7 @@ lemma log_coverMincard_bot {T : X → X} {U : Set (X × X)} {n : ℕ} :
     log (coverMincard T ∅ U n) = ⊥ := by
   rw [coverMincard_of_empty, ENat.toENNReal_zero, log_zero]
 
-lemma log_coverMincard_nonneg (T : X → X) {F : Set X} (h : F.Nonempty) (U : Set (X × X))
-    (n : ℕ) :
+lemma log_coverMincard_nonneg (T : X → X) {F : Set X} (h : F.Nonempty) (U : Set (X × X)) (n : ℕ) :
     0 ≤ log (coverMincard T F U n) := by
   apply zero_le_log_iff.2
   rw [← ENat.toENNReal_one, ENat.toENNReal_le]
@@ -464,14 +463,12 @@ lemma coverEntropyInfUni_bot {T : X → X} {U : Set (X × X)} :
     coverEntropyInfUni T ∅ U = ⊥ :=
   eq_bot_mono (coverEntropyInfUni_le_coverEntropySupUni T ∅ U) coverEntropySupUni_bot
 
-lemma coverEntropyInfUni_nonneg (T : X → X) {F : Set X} (h : F.Nonempty)
-    (U : Set (X × X)) :
+lemma coverEntropyInfUni_nonneg (T : X → X) {F : Set X} (h : F.Nonempty) (U : Set (X × X)) :
     0 ≤ coverEntropyInfUni T F U :=
   le_trans (le_iInf fun n ↦ EReal.div_nonneg (log_coverMincard_nonneg T h U n)
     (Nat.cast_nonneg' n)) iInf_le_liminf
 
-lemma coverEntropySupUni_nonneg (T : X → X) {F : Set X} (h : F.Nonempty)
-    (U : Set (X × X)) :
+lemma coverEntropySupUni_nonneg (T : X → X) {F : Set X} (h : F.Nonempty) (U : Set (X × X)) :
     0 ≤ coverEntropySupUni T F U :=
   le_trans (coverEntropyInfUni_nonneg T h U)
     (coverEntropyInfUni_le_coverEntropySupUni T F U)

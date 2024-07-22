@@ -130,27 +130,6 @@ theorem preimage_of_dynamical_uni {Y : Type*} {S : X → X} {T : Y → Y} {φ : 
   rw [← preimage_comp, ← preimage_comp, map_iterate S S k, map_iterate T T k, map_comp_map,
     map_comp_map, (Function.Semiconj.iterate_right h k).comp_eq]
 
-/--Notation for the product of two uniform neighborhoods.-/
-def UniformityProd {Y : Type*} (U : Set (X × X)) (V : Set (Y × Y)) : Set ((X × Y) × X × Y) :=
-  {W : (X × Y) × X × Y | (W.1.1, W.2.1) ∈ U ∧ (W.1.2, W.2.2) ∈ V}
-/-Should be expanded and put into the library on uniform spaces.-/
-
-theorem ball_prod {Y : Type*} (U : Set (X × X)) (V : Set (Y × Y)) (xy : X × Y) :
-    ball xy (UniformityProd U V) = ball xy.1 U ×ˢ ball xy.2 V := by
-  ext p
-  simp only [ball, UniformityProd, mem_setOf_eq, mem_prod, mem_preimage]
-
-theorem dynamical_uni_prod {Y : Type*} (S : X → X) (T : Y → Y) (U : Set (X × X)) (V : Set (Y × Y))
-    (n : ℕ) :
-    DynamicalUni (map S T) (UniformityProd U V) n =
-    UniformityProd (DynamicalUni S U n) (DynamicalUni T V n) := by
-  ext xy
-  rw [dynamical_uni_mem]
-  simp only [UniformityProd, mem_setOf_eq]
-  rw [dynamical_uni_mem, dynamical_uni_mem, ← forall₂_and]
-  refine forall₂_congr fun k _ ↦ ?_
-  simp only [map_iterate, map_fst, map_snd]
-
 end Dynamics
 
 #lint

@@ -35,7 +35,7 @@ open Function Set Uniformity UniformSpace
 
 variable {X Y : Type*} {S : X → X} {T : Y → Y} {φ : X → Y} (h : Semiconj φ S T)
 
-theorem dynNet_preimage {F : Set X} {V : Set (Y × Y)} {n : ℕ} {t : Finset Y}
+lemma dynNet_preimage {F : Set X} {V : Set (Y × Y)} {n : ℕ} {t : Finset Y}
     (h' : IsDynNetOf T (φ '' F) V n t) :
     ∃ s : Finset X, IsDynNetOf S F ((Prod.map φ φ) ⁻¹' V) n s ∧ t.card ≤ s.card := by
   classical
@@ -73,7 +73,7 @@ theorem dynNet_preimage {F : Set X} {V : Set (Y × Y)} {n : ℕ} {t : Finset Y}
     · rw [← Finset.image_image]
       exact Finset.card_image_le
 
-theorem dynCover_preimage {F : Set X} {V : Set (Y × Y)} (V_symm : SymmetricRel V) {n : ℕ}
+lemma dynCover_preimage {F : Set X} {V : Set (Y × Y)} (V_symm : SymmetricRel V) {n : ℕ}
     {t : Finset Y} (h' : IsDynCoverOf T (φ '' F) V n t) :
     ∃ s : Finset X, IsDynCoverOf S F ((Prod.map φ φ) ⁻¹' (V ○ V)) n s ∧ s.card ≤ t.card := by
   classical
@@ -100,7 +100,7 @@ theorem dynCover_preimage {F : Set X} {V : Set (Y × Y)} (V_symm : SymmetricRel 
   exact (dynamical_uni_of_comp T V V n)
     (mem_comp_of_mem_ball (dynamical_uni_of_symm T V_symm n) gs_cover.1 hy)
 
-theorem netMaxcard_image_le (F : Set X) (V : Set (Y × Y)) (n : ℕ) :
+lemma netMaxcard_image_le (F : Set X) (V : Set (Y × Y)) (n : ℕ) :
     netMaxcard T (φ '' F) V n ≤ netMaxcard S F ((Prod.map φ φ) ⁻¹' V) n := by
   rcases lt_or_eq_of_le (le_top (a := netMaxcard T (φ '' F) V n)) with (h' | h')
   . rcases (netMaxcard_finite_iff T (φ '' F) V n).1 h' with ⟨t, t_net, t_card⟩
@@ -115,7 +115,7 @@ theorem netMaxcard_image_le (F : Set X) (V : Set (Y × Y)) (n : ℕ) :
     use s
     exact ⟨s_net, le_trans t_card s_card⟩
 
-theorem le_coverMincard_image (F : Set X) {V : Set (Y × Y)} (V_symm : SymmetricRel V) (n : ℕ) :
+lemma le_coverMincard_image (F : Set X) {V : Set (Y × Y)} (V_symm : SymmetricRel V) (n : ℕ) :
     coverMincard S F ((Prod.map φ φ) ⁻¹' (V ○ V)) n ≤ coverMincard T (φ '' F) V n := by
   rcases eq_top_or_lt_top (coverMincard T (φ '' F) V n) with (h' | h')
   . exact h' ▸ le_top
@@ -126,25 +126,25 @@ theorem le_coverMincard_image (F : Set X) {V : Set (Y × Y)} (V_symm : Symmetric
 
 open ENNReal Filter
 
-theorem netEntropyInfUni_image_le (F : Set X) (V : Set (Y × Y)) :
+lemma netEntropyInfUni_image_le (F : Set X) (V : Set (Y × Y)) :
     netEntropyInfUni T (φ '' F) V ≤ netEntropyInfUni S F ((Prod.map φ φ) ⁻¹' V) :=
   liminf_le_liminf <| eventually_of_forall
     fun n ↦ EReal.monotone_div_right_of_nonneg (Nat.cast_nonneg' n)
     <| log_monotone (ENat.toENNReal_mono (netMaxcard_image_le h F V n))
 
-theorem netEntropySupUni_image_le (F : Set X) (V : Set (Y × Y)) :
+lemma netEntropySupUni_image_le (F : Set X) (V : Set (Y × Y)) :
     netEntropySupUni T (φ '' F) V ≤ netEntropySupUni S F ((Prod.map φ φ) ⁻¹' V) :=
   limsup_le_limsup <| eventually_of_forall
     fun n ↦ EReal.monotone_div_right_of_nonneg (Nat.cast_nonneg' n)
     <| log_monotone (ENat.toENNReal_mono (netMaxcard_image_le h F V n))
 
-theorem le_coverEntropyInfUni_image (F : Set X) {V : Set (Y × Y)} (V_symm : SymmetricRel V) :
+lemma le_coverEntropyInfUni_image (F : Set X) {V : Set (Y × Y)} (V_symm : SymmetricRel V) :
     coverEntropyInfUni S F ((Prod.map φ φ) ⁻¹' (V ○ V)) ≤ coverEntropyInfUni T (φ '' F) V :=
   liminf_le_liminf <| eventually_of_forall
     fun n ↦ EReal.monotone_div_right_of_nonneg (Nat.cast_nonneg' n)
     <| log_monotone (ENat.toENNReal_mono (le_coverMincard_image h F V_symm n))
 
-theorem le_coverEntropySupUni_image (F : Set X) {V : Set (Y × Y)} (V_symm : SymmetricRel V) :
+lemma le_coverEntropySupUni_image (F : Set X) {V : Set (Y × Y)} (V_symm : SymmetricRel V) :
     coverEntropySupUni S F ((Prod.map φ φ) ⁻¹' (V ○ V)) ≤ coverEntropySupUni T (φ '' F) V :=
   limsup_le_limsup <| eventually_of_forall
     fun n ↦ EReal.monotone_div_right_of_nonneg (Nat.cast_nonneg' n)
@@ -188,14 +188,14 @@ theorem coverEntropySup_image {X Y : Type*} (u : UniformSpace Y) {S : X → X} {
     apply le_trans _ (le_coverEntropySupUni_image h F W_symm)
     exact (coverEntropySupUni_antitone S F) (le_trans (preimage_mono W_V) V_sub)
 
-theorem coverEntropyInf_image_le_of_uniformContinuous {X Y : Type*} [UniformSpace X]
+lemma coverEntropyInf_image_le_of_uniformContinuous {X Y : Type*} [UniformSpace X]
     [UniformSpace Y] {S : X → X} {T : Y → Y} {φ : X → Y} (h : Semiconj φ S T)
     (h' : UniformContinuous φ) (F : Set X) :
     coverEntropyInf T (φ '' F) ≤ coverEntropyInf S F := by
   rw [coverEntropyInf_image _ h F]
   exact coverEntropyInf_antitone_filter S F (uniformContinuous_iff.1 h')
 
-theorem coverEntropySup_image_le_of_uniformContinuous {X Y : Type*} [UniformSpace X]
+lemma coverEntropySup_image_le_of_uniformContinuous {X Y : Type*} [UniformSpace X]
     [UniformSpace Y] {S : X → X} {T : Y → Y} {φ : X → Y} (h : Semiconj φ S T)
     (h' : UniformContinuous φ) (F : Set X) :
     coverEntropySup T (φ '' F) ≤ coverEntropySup S F := by
