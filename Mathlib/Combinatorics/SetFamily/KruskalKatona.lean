@@ -196,7 +196,7 @@ lemma compression_improved (𝒜 : Finset (Finset α)) (h₁ : UsefulCompression
       rw [← Finset.card_eq_zero, card_erase_of_mem (min'_mem _ _), ← same_size]
     rw [‹erase U x = ∅›, ‹erase V (min' V hV) = ∅›]
     exact isCompressed_self _ _
-  refine h₂ ⟨UVd.mono (erase_subset _ _) (erase_subset _ _), ?_, ?_, ?_, ?_⟩ (card_erase_lt_of_mem Hx)
+  refine h₂ ⟨UVd.mono (erase_subset ..) (erase_subset ..), ?_, ?_, ?_, ?_⟩ (card_erase_lt_of_mem Hx)
   · rw [card_erase_of_mem (min'_mem _ _), card_erase_of_mem Hx, same_size]
   · rwa [← card_pos, card_erase_of_mem Hx, tsub_pos_iff_lt]
   · rwa [← Finset.card_pos, card_erase_of_mem (min'_mem _ _), ← same_size, tsub_pos_iff_lt]
