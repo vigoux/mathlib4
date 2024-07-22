@@ -74,6 +74,7 @@ lemma dynCover_monotone {T : X → X} {F : Set X} {U V : Set (X × X)} (U_V : U 
   exact Subset.trans (c := ⋃ x ∈ s, ball x (DynamicalUni T V n)) h
     (iUnion₂_mono fun x _ ↦ ball_mono (dynamical_uni_monotone_uni T n U_V) x)
 
+@[simp]
 lemma empty_dynCover {T : X → X} {U : Set (X × X)} {n : ℕ} :
     IsDynCoverOf T ∅ U n ∅ := by
   simp only [IsDynCoverOf, empty_subset]
