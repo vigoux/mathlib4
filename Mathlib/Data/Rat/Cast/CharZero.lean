@@ -62,6 +62,7 @@ def castHom : ℚ →+* α where
 @[simp, norm_cast]
 lemma cast_zpow (p : ℚ) (n : ℤ) : ↑(p ^ n) = (p ^ n : α) := map_zpow₀ (castHom α) ..
 
+@[norm_cast]
 theorem cast_mk (a b : ℤ) : (a /. b : α) = a / b := by
   simp only [divInt_eq_div, cast_div, cast_intCast]
 
