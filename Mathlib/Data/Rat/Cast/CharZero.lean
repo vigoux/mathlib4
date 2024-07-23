@@ -56,7 +56,6 @@ def castHom : ℚ →+* α where
 
 @[deprecated (since := "2024-07-22")] alias coe_cast_hom := coe_castHom
 
-@[simp, norm_cast] lemma cast_pow (p : ℚ) (n : ℕ) : ↑(p ^ n) = (p ^ n : α) := map_pow (castHom α) ..
 @[simp, norm_cast] lemma cast_inv (p : ℚ) : ↑(p⁻¹) = (p⁻¹ : α) := map_inv₀ (castHom α) _
 @[simp, norm_cast] lemma cast_div (p q : ℚ) : ↑(p / q) = (p / q : α) := map_div₀ (castHom α) ..
 
@@ -102,9 +101,6 @@ def castHom : ℚ≥0 →+* α where
   map_add' := cast_add
 
 @[simp, norm_cast] lemma coe_castHom : ⇑(castHom α) = (↑) := rfl
-
-@[simp, norm_cast]
-lemma cast_pow (p : ℚ≥0) (n : ℕ) : ↑(p ^ n) = (p ^ n : α) := map_pow (castHom α) ..
 
 @[simp, norm_cast] lemma cast_inv (p) : (p⁻¹ : ℚ≥0) = (p : α)⁻¹ := map_inv₀ (castHom α) _
 @[simp, norm_cast] lemma cast_div (p q) : (p / q : ℚ≥0) = (p / q : α) := map_div₀ (castHom α) ..
