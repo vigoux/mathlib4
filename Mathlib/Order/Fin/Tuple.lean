@@ -143,7 +143,6 @@ def insertNthOrderIso (α : Fin (n + 1) → Type*) [∀ i, LE (α i)] (p : Fin (
     α p × (∀ i, α (p.succAbove i)) ≃o ∀ i, α i where
   toEquiv := insertNthEquiv α p
   map_rel_iff' := by simp [Pi.le_def, Prod.le_def, p.forall_iff_succAbove]
-#align order_iso.pi_fin_succ_above_iso Fin.insertNthOrderIso
 
 @[simp] lemma insertNthOrderIso_zero (α : Fin (n + 1) → Type*) [∀ i, LE (α i)] :
     insertNthOrderIso α 0 = consOrderIso α := by ext; simp [insertNthOrderIso]
