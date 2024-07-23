@@ -56,7 +56,8 @@ theorem ext : (p : ℚ) = (q : ℚ) → p = q :=
 protected theorem coe_injective : Injective ((↑) : ℚ≥0 → ℚ) :=
   Subtype.coe_injective
 
-@[simp, norm_cast]
+-- We want to use this lemma earlier than the lemma simp can prove it with
+@[simp, norm_cast, nolint simpNF]
 theorem coe_inj : (p : ℚ) = q ↔ p = q :=
   Subtype.coe_inj
 
@@ -112,7 +113,8 @@ theorem coe_mul (p q : ℚ≥0) : ((p * q : ℚ≥0) : ℚ) = p * q :=
 theorem coe_sub (h : q ≤ p) : ((p - q : ℚ≥0) : ℚ) = p - q :=
   max_eq_left <| le_sub_comm.2 <| by rwa [sub_zero]
 
-@[simp]
+-- We want to use this lemma earlier than the lemma simp can prove it with
+@[simp, nolint simpNF]
 theorem coe_eq_zero : (q : ℚ) = 0 ↔ q = 0 := by norm_cast
 
 theorem coe_ne_zero : (q : ℚ) ≠ 0 ↔ q ≠ 0 :=
