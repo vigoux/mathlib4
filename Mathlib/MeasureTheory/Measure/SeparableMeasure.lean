@@ -64,7 +64,7 @@ written `≠ ∞` rather than `< ∞`. See `Ne.lt_top` and `ne_of_lt` to switch 
 separable measure, measure-dense, Lp space, second-countable
 -/
 
-open MeasurableSpace Set ENNReal TopologicalSpace BigOperators symmDiff Filter Real
+open MeasurableSpace Set ENNReal NNReal TopologicalSpace BigOperators symmDiff Filter Real
 
 namespace MeasureTheory
 
@@ -88,8 +88,8 @@ structure Measure.MeasureDense (μ : Measure X) (𝒜 : Set (Set X)) : Prop :=
   /-- Each set has to be measurable. -/
   measurable : ∀ s ∈ 𝒜, MeasurableSet s
   /-- Any measurable set can be approximated by sets in the family. -/
-  approx : ∀ s, MeasurableSet s → μ s ≠ ∞ → ∀ (ε : ℝ),
-    0 < ε → ∃ t ∈ 𝒜, μ (s ∆ t) < ENNReal.ofReal ε
+  approx : ∀ s, MeasurableSet s → μ s ≠ ∞ → ∀ (ε : ℝ≥0),
+    0 < ε → ∃ t ∈ 𝒜, μ (s ∆ t) < ε
 
 /-- The set of measurable sets is measure-dense. -/
 theorem measureDense_measurableSet : μ.MeasureDense {s | MeasurableSet s} where
@@ -99,8 +99,8 @@ theorem measureDense_measurableSet : μ.MeasureDense {s | MeasurableSet s} where
 /-- If a family of sets `𝒜` is measure-dense in `X`, then any measurable set with finite measure
 can be approximated by sets in `𝒜` with finite measure. -/
 lemma fin_meas_approx_of_measureDense (h𝒜 : μ.MeasureDense 𝒜) {s : Set X}
-    (ms : MeasurableSet s) (hμs : μ s ≠ ∞) (ε : ℝ) (ε_pos : 0 < ε) :
-    ∃ t ∈ 𝒜, μ t ≠ ∞ ∧ μ (s ∆ t) < ENNReal.ofReal ε := by
+    (ms : MeasurableSet s) (hμs : μ s ≠ ∞) (ε : ℝ≥0) (ε_pos : 0 < ε) :
+    ∃ t ∈ 𝒜, μ t ≠ ∞ ∧ μ (s ∆ t) < ε := by
   rcases h𝒜.approx s ms hμs ε ε_pos with ⟨t, t_mem, ht⟩
   exact ⟨t, t_mem, (measure_ne_top_iff_of_symmDiff <| ne_top_of_lt ht).1 hμs, ht⟩
 
@@ -124,9 +124,9 @@ theorem measureDense_of_generateFrom_setAglebra_of_finite [IsFiniteMeasure μ] (
     -- enough to show that such sets constitute a `σ`-algebra containing `𝒜`. This is contained in
     -- the theorem `generateFrom_induction`.
     intro s ms
-    have : MeasurableSet s ∧ ∀ (ε : ℝ), 0 < ε → ∃ t ∈ 𝒜, (μ (s ∆ t)).toReal < ε := by
+    have : MeasurableSet s ∧ ∀ (ε : ℝ≥0), 0 < ε → ∃ t ∈ 𝒜, (μ (s ∆ t)) < ε := by
       apply generateFrom_induction
-        (p := fun s ↦ MeasurableSet s ∧ ∀ (ε : ℝ), 0 < ε → ∃ t ∈ 𝒜, (μ (s ∆ t)).toReal < ε)
+        (p := fun s ↦ MeasurableSet s ∧ ∀ (ε : ℝ≥0), 0 < ε → ∃ t ∈ 𝒜, (μ (s ∆ t)) < ε)
         (C := 𝒜) (hs := hgen ▸ ms)
       · -- If `t ∈ 𝒜`, then `μ (t ∆ t) = 0` which is less than any `ε > 0`.
         exact fun t t_mem ↦ ⟨hgen ▸ measurableSet_generateFrom t_mem,
@@ -142,11 +142,15 @@ theorem measureDense_of_generateFrom_setAglebra_of_finite [IsFiniteMeasure μ] (
         refine fun f hf ↦ ⟨MeasurableSet.iUnion (fun n ↦ (hf n).1), fun ε ε_pos ↦ ?_⟩
         -- We have  `μ (⋃ n ≤ N, fₙ) ⟶ μ (⋃ n, fₙ)`.
         have := tendsto_measure_iUnion' (μ := μ) (f := f)
-        rw [← tendsto_toReal_iff (fun _ ↦ measure_ne_top _ _) (measure_ne_top _ _)] at this
+        lift (fun n ↦ μ (Accumulate f n)) to (ℕ → ℝ≥0) using (fun _ ↦ measure_ne_top _ _)
+          with μf hμf
+        lift (μ (⋃ n, f n)) to ℝ≥0 using measure_ne_top _ _ with μf' hμf'
+        rw [ENNReal.tendsto_coe] at this
         -- So there exists `N` such that `μ (⋃ n, fₙ) - μ (⋃ n ≤ N, fₙ) < ε/2`.
-        rcases Metric.tendsto_atTop.1 this (ε / 2) (by linarith [ε_pos]) with ⟨N, hN⟩
+        rcases Metric.tendsto_atTop.1 this (ε / 2) (by simp [ε_pos]) with ⟨N, hN⟩
+        have hN : ∀ n ≥ N, μf' - (μf n) < ε / 2 := sorry
         -- For any `n ≤ N` there exists `gₙ ∈ 𝒜` such that `μ (fₙ ∆ gₙ) < ε/(2*(N+1))`.
-        choose g g_mem hg using fun n ↦ (hf n).2 (ε / (2 * (N + 1))) (div_pos ε_pos (by linarith))
+        choose g g_mem hg using fun n ↦ (hf n).2 (ε / (2 * (N + 1))) (div_pos ε_pos (by norm_num))
         -- Therefore we have
         -- `μ ((⋃ n, fₙ) ∆ (⋃ n ≤ N, gₙ))`
         --   `≤ μ ((⋃ n, fₙ) ∆ (⋃ n ≤ N, fₙ)) + μ ((⋃ n ≤ N, fₙ) ∆ (⋃ n ≤ N, gₙ))`
@@ -154,54 +158,56 @@ theorem measureDense_of_generateFrom_setAglebra_of_finite [IsFiniteMeasure μ] (
         --   `< ε/2 + (N+1)*ε/(2*(N+1)) = ε/2`.
         refine ⟨⋃ n ∈ Finset.range (N + 1), g n, h𝒜.biUnion_mem _ (fun i _ ↦ g_mem i), ?_⟩
         calc
-          (μ ((⋃ n, f n) ∆ (⋃ n ∈ (Finset.range (N + 1)), g n))).toReal
-            ≤ (μ ((⋃ n, f n) \ ((⋃ n ∈ (Finset.range (N + 1)), f n)) ∪
-              ((⋃ n ∈ (Finset.range (N + 1)), f n) ∆
-              (⋃ n ∈ (Finset.range (N + 1)), g ↑n)))).toReal :=
-                toReal_mono (measure_ne_top _ _)
-                  (measure_mono <| symmDiff_of_ge (iUnion_subset <|
-                  fun i ↦ iUnion_subset (fun _ ↦ subset_iUnion f i)) ▸ symmDiff_triangle ..)
-          _ ≤ (μ ((⋃ n, f n) \
-              ((⋃ n ∈ (Finset.range (N + 1)), f n)))).toReal +
-              (μ ((⋃ n ∈ (Finset.range (N + 1)), f n) ∆
-              (⋃ n ∈ (Finset.range (N + 1)), g ↑n))).toReal := by
-                rw [← toReal_add (measure_ne_top _ _) (measure_ne_top _ _)]
-                exact toReal_mono (add_ne_top.2 ⟨measure_ne_top _ _, measure_ne_top _ _⟩) <|
-                  measure_union_le _ _
+          μ ((⋃ n, f n) ∆ (⋃ n ∈ Finset.range (N + 1), g n))
+            ≤ μ ((⋃ n, f n) \ ((⋃ n ∈ Finset.range (N + 1), f n)) ∪
+                ((⋃ n ∈ Finset.range (N + 1), f n) ∆ (⋃ n ∈ Finset.range (N + 1), g ↑n))) := by
+                apply measure_mono
+                rw [← symmDiff_of_ge]
+                · exact symmDiff_triangle ..
+                · exact iUnion_subset fun i ↦ iUnion_subset (fun _ ↦ subset_iUnion f i)
+                -- toReal_mono (measure_ne_top _ _)
+                --   (measure_mono <| symmDiff_of_ge (iUnion_subset <|
+                --   fun i ↦ iUnion_subset (fun _ ↦ subset_iUnion f i)) ▸ symmDiff_triangle ..)
+          _ ≤ μ ((⋃ n, f n) \ ((⋃ n ∈ Finset.range (N + 1), f n))) +
+                μ ((⋃ n ∈ Finset.range (N + 1), f n) ∆ (⋃ n ∈ Finset.range (N + 1), g ↑n)) := by
+                apply measure_union_le
+                -- rw [← toReal_add (measure_ne_top _ _) (measure_ne_top _ _)]
+                -- exact toReal_mono (add_ne_top.2 ⟨measure_ne_top _ _, measure_ne_top _ _⟩) <|
+                --   measure_union_le _ _
           _ < ε := by
-                rw [← add_halves ε]
-                apply _root_.add_lt_add
-                · rw [measure_diff (h_fin := measure_ne_top _ _),
-                    toReal_sub_of_le (ha := measure_ne_top _ _)]
-                  apply lt_of_le_of_lt (sub_le_dist ..)
-                  simp only [Finset.mem_range, Nat.lt_add_one_iff]
-                  exact (dist_comm (α := ℝ) .. ▸ hN N (le_refl N))
-                  exact (measure_mono <| iUnion_subset <|
-                    fun i ↦ iUnion_subset (fun _ ↦ subset_iUnion f i))
-                  exact iUnion_subset <| fun i ↦ iUnion_subset (fun _ ↦ subset_iUnion f i)
-                  exact MeasurableSet.biUnion (countable_coe_iff.1 inferInstance)
-                    (fun n _ ↦ (hf n).1)
-                · calc
-                    (μ ((⋃ n ∈ (Finset.range (N + 1)), f n) ∆
-                    (⋃ n ∈ (Finset.range (N + 1)), g ↑n))).toReal
-                      ≤ (μ (⋃ n ∈ (Finset.range (N + 1)), f n ∆ g n)).toReal :=
-                          toReal_mono (measure_ne_top _ _) (measure_mono biSup_symmDiff_biSup_le)
-                    _ ≤ ∑ n in (Finset.range (N + 1)), (μ (f n ∆ g n)).toReal := by
-                          rw [← toReal_sum (fun _ _ ↦ measure_ne_top _ _)]
-                          exact toReal_mono (ne_of_lt <| sum_lt_top fun _ _ ↦ measure_ne_top μ _)
-                            (measure_biUnion_finset_le _ _)
-                    _ < ∑ n in (Finset.range (N + 1)), (ε / (2 * (N + 1))) :=
-                          Finset.sum_lt_sum (fun i _ ↦ le_of_lt (hg i)) ⟨0, by simp, hg 0⟩
-                    _ ≤ ε / 2 := by
-                          simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul,
-                            Nat.cast_add, Nat.cast_one]
-                          rw [div_mul_eq_div_mul_one_div, ← mul_assoc, mul_comm ((N : ℝ) + 1),
-                            mul_assoc]
-                          exact mul_le_of_le_one_right (by linarith [ε_pos]) <|
-                            le_of_eq <| mul_one_div_cancel <| Nat.cast_add_one_ne_zero _
+                rw [← add_halves ε, ENNReal.coe_add]
+                simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, coe_div, coe_ofNat]
+                apply ENNReal.add_lt_add
+                · rw [measure_diff (h_fin := measure_ne_top _ _)]
+                  convert hN N le_refl
+                --   apply lt_of_le_of_lt (sub_le_dist ..)
+                --   simp only [Finset.mem_range, Nat.lt_add_one_iff]
+                --   exact (dist_comm (α := ℝ) .. ▸ hN N (le_refl N))
+                --   exact (measure_mono <| iUnion_subset <|
+                --     fun i ↦ iUnion_subset (fun _ ↦ subset_iUnion f i))
+                --   exact iUnion_subset <| fun i ↦ iUnion_subset (fun _ ↦ subset_iUnion f i)
+                --   exact MeasurableSet.biUnion (countable_coe_iff.1 inferInstance)
+                --     (fun n _ ↦ (hf n).1)
+                -- · calc
+                --     (μ ((⋃ n ≤ N, f n) ∆
+                --     (⋃ n ≤ N, g ↑n))).toReal
+                --       ≤ (μ (⋃ n ≤ N, f n ∆ g n)).toReal :=
+                --           toReal_mono (measure_ne_top _ _) (measure_mono biSup_symmDiff_biSup_le)
+                --     _ ≤ ∑ n in (Finset.range (N + 1)), (μ (f n ∆ g n)).toReal := by
+                --           rw [← toReal_sum (fun _ _ ↦ measure_ne_top _ _)]
+                --           exact toReal_mono (ne_of_lt <| sum_lt_top fun _ _ ↦ measure_ne_top μ _)
+                --             (measure_biUnion_finset_le _ _)
+                --     _ < ∑ n in (Finset.range (N + 1)), (ε / (2 * (N + 1))) :=
+                --           Finset.sum_lt_sum (fun i _ ↦ le_of_lt (hg i)) ⟨0, by simp, hg 0⟩
+                --     _ ≤ ε / 2 := by
+                --           simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul,
+                --             Nat.cast_add, Nat.cast_one]
+                --           rw [div_mul_eq_div_mul_one_div, ← mul_assoc, mul_comm ((N : ℝ) + 1),
+                --             mul_assoc]
+                --           exact mul_le_of_le_one_right (by linarith [ε_pos]) <|
+                --             le_of_eq <| mul_one_div_cancel <| Nat.cast_add_one_ne_zero _
     rintro - ε ε_pos
-    rcases this.2 ε ε_pos with ⟨t, t_mem, hμst⟩
-    exact ⟨t, t_mem, (lt_ofReal_iff_toReal_lt (measure_ne_top _ _)).2 hμst⟩
+    exact this.2 ε ε_pos
 
 /-- If a measure space `X` is generated by an algebra of sets which contains a monotone countable
 family of sets with finite measure spanning `X` (thus the measure is `σ`-finite), then this algebra
