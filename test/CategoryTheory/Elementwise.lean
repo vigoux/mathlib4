@@ -82,7 +82,7 @@ example {C : Type u} [Category.{v} C] [ConcreteCategory.{w} C]
   rw [this]
 
 section Mon
--- TODO: switch to actual Mon when it is ported
+-- TODO: switch to actual Mon
 variable (Mon : Type _) [Category Mon] [ConcreteCategory Mon]
 
 lemma bar' {M N K : Mon} {f : M ⟶ N} {g : N ⟶ K} {h : M ⟶ K} (w : f ≫ g = h) (x : M) :

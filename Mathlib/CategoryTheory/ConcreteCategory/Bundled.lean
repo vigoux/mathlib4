@@ -60,8 +60,7 @@ instance search is able to "see" that a morphism R ⟶ S in Ring is really
 a (semi)ring homomorphism from R.α to S.α, and not merely from
 `(Bundled.map @Ring.toSemiring R).α` to `(Bundled.map @Ring.toSemiring S).α`.
 
-TODO: Once at least one use of this has been ported, check if this still needs to be reducible in
-Lean 4.
+TODO: check if this still needs to be reducible in Lean 4.
 -/
 /-- Map over the bundled structure -/
 def map (f : ∀ {α}, c α → d α) (b : Bundled c) : Bundled d :=
