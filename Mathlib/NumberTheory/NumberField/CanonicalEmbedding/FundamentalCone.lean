@@ -119,6 +119,13 @@ theorem logMap_zero : logMap (0 : E K) = 0 := by
   ext
   rw [logMap, map_zero, map_zero, Real.log_zero, zero_mul, sub_self, mul_zero, Pi.zero_apply]
 
+@[simp]
+theorem logMap_one : logMap (1 : E K) = 0 := by
+  ext
+  rw [logMap, map_one, show 1 = mixedEmbedding K (1 : (𝓞 K)ˣ) by
+      rw [Units.val_one, map_one, map_one], norm_unit, Real.log_one, zero_mul, sub_self,
+    mul_zero, Pi.zero_apply]
+
 theorem logMap_mul {x y : E K} (hx : mixedEmbedding.norm x ≠ 0) (hy : mixedEmbedding.norm y ≠ 0) :
     logMap (x * y) = logMap x + logMap y := by
   ext w
@@ -127,6 +134,18 @@ theorem logMap_mul {x y : E K} (hx : mixedEmbedding.norm x ≠ 0) (hy : mixedEmb
   · ring
   · exact mixedEmbedding.norm_ne_zero_iff.mp hx w
   · exact mixedEmbedding.norm_ne_zero_iff.mp hy w
+
+theorem logMap_prod {ι : Type*} [DecidableEq ι] (s : Finset ι) {x : ι → (E K)}
+    (hx : ∀ i ∈ s, mixedEmbedding.norm (x i) ≠ 0) :
+    logMap (∏ i ∈ s, x i) = ∑ i ∈ s, logMap (x i) := by
+  induction s using Finset.cons_induction with
+  | empty => simp
+  | cons i s hi h_ind =>
+      rw [Finset.prod_cons, Finset.sum_cons, logMap_mul, h_ind]
+      · exact fun _ h ↦ hx _ (Finset.mem_cons_of_mem h)
+      · exact hx i (Finset.mem_cons_self i s)
+      · rw [map_prod, Finset.prod_ne_zero_iff]
+        exact fun _ h ↦ hx _ (Finset.mem_cons_of_mem h)
 
 theorem logMap_eq_logEmbedding (u : (𝓞 K)ˣ) :
     logMap (mixedEmbedding K u) = logEmbedding K u := by
@@ -604,7 +623,7 @@ theorem volume_interior_normLessThanOne_step1 :
   · intro w _
     rw [ContinuousLinearEquiv.preimage_interior, signFlipAt_preimage_normLessThanOne]
 
-
+#exit
 
 variable (K) in
 def realSpaceToMixedSpace : (InfinitePlace K → ℝ) →ₐ[ℝ] (E K) where

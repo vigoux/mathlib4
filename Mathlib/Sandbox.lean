@@ -3,6 +3,15 @@ import Mathlib.MeasureTheory.Constructions.Pi
 import Mathlib.MeasureTheory.Measure.Haar.Unique
 import Mathlib.MeasureTheory.MeasurableSpace.Embedding
 
+/-- A family of algebra homomorphisms `g i : A →ₐ[R] B i` defines an algebra homomorphism
+`Pi.algHom f : A →+* Π i, B i` given by `Pi.algHom f x i = f i x`. -/
+@[simps!]
+def Pi.algHom {I R : Type*} [CommSemiring R] {A : Type*} [Semiring A] [Algebra R A] {B : I → Type*}
+    [∀ i, Semiring (B i)] [∀ i, Algebra R (B i)] (g : (i : I) → A →ₐ[R] B i) :
+    A →ₐ[R] (i : I) → B i where
+  __ := Pi.ringHom fun i ↦ (g i)
+  commutes' _ := by ext; simp
+
 section Measure
 
 open MeasureTheory MeasureTheory.Measure MeasurableSpace
