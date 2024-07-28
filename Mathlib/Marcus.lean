@@ -194,22 +194,32 @@ def mapToUnitsPow : PartialHomeomorph (InfinitePlace K → ℝ) (InfinitePlace K
   left_inv' := by
     intro x hx
     rw [_root_.map_smul, logMap_smul]
-    ext w
-    by_cases hw : w = w₀
-    · rw [hw, dif_pos rfl, mixedEmbedding.norm_smul, norm_mapToUnitsPow₀, mul_one]
-      sorry
-    · rw [dif_neg hw, ← mapToUnitsPow₀_symm_apply K (norm_mapToUnitsPow₀ K _),
-        PartialEquiv.left_inv _ (by rw [mapToUnitsPow₀_source]; trivial )]
+    · ext w
+      by_cases hw : w = w₀
+      · rw [hw, dif_pos rfl, mixedEmbedding.norm_smul, norm_mapToUnitsPow₀, mul_one]
+        sorry
+      · rw [dif_neg hw, ← mapToUnitsPow₀_symm_apply K (norm_mapToUnitsPow₀ K _),
+          PartialEquiv.left_inv _ (by rw [mapToUnitsPow₀_source]; trivial )]
+    · rw [norm_mapToUnitsPow₀]
+      exact one_ne_zero
+    · have := (if_pos rfl) ▸ Set.mem_univ_pi.mp hx w₀
+      exact abs_ne_zero.mpr (ne_of_gt (by exact this))
   right_inv' := by
     intro x hx
     ext w
+    dsimp only
+    rw [dif_pos rfl]
+    simp_rw [dif_neg sorry]
+    rw [← mapToUnitsPow₀_symm_apply, PartialEquiv.right_inv, Pi.smul_apply, smul_eq_mul,
+      norm_realToMixed]
+    
+#exit
     by_cases hw : w = w₀
     · dsimp only
-      rw [dif_pos rfl]
+
       sorry
     · dsimp only
-      rw [dif_pos rfl]
-      simp
+
       sorry
   open_source := sorry
   open_target := sorry
