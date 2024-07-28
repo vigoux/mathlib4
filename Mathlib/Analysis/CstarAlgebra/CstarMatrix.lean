@@ -11,9 +11,9 @@ import Mathlib.Topology.UniformSpace.Matrix
 /-!
 # Matrices with entries in a C⋆-algebra
 
-This file creates a type copy of `n → A` meant for vectors with entries in a C⋆-algebra `A`. It is
-endowed with a Hilbert C⋆-module structure, which in particular comes with an `A`-valued
-"inner product" `⟪w, v⟫ = ∑ i, star (w i) * v i` and a norm `‖v‖ = √‖⟪v, v⟫‖`.
+This file creates a type copy of `Matrix m n A` called `CstarMatrix m n A` meant for vectors with
+entries in a C⋆-algebra `A`. Its action on `CstarVec n A` (via `Matrix.mulVec`) gives it the
+operator norm, and this norm makes `CstarMatrix n n A` a C⋆-algebra.
 
 ## Main declarations
 
@@ -32,6 +32,9 @@ for more details.
 
 open scoped ComplexOrder Topology Uniformity Bornology Matrix NNReal
 
+/-- Type copy `Matrix m n A` meant for matrices with entries in a C⋆-algebra. This is
+a C⋆-algebra when `m = n`. This is an abbrev in order to inherit all instances from `Matrix`,
+which includes the product uniformity, but not a norm. -/
 abbrev CstarMatrix (m : Type*) (n : Type*) (A : Type*) := Matrix m n A
 
 namespace CstarMatrix
@@ -42,6 +45,7 @@ variable {A : Type*} [NonUnitalNormedRing A] [StarRing A] [CstarRing A] [Partial
 
 variable {m n : Type*} [Fintype m] [Fintype n] [DecidableEq n]
 
+/-- The equivalence between `CstarMatrix m n A` and `Matrix m n A`. -/
 def ofMatrix : (Matrix m n A) ≃ CstarMatrix m n A := Equiv.refl _
 
 lemma ofMatrix_symm_apply {M : Matrix m n A} {i : m} : (ofMatrix.symm M) i = M i := rfl
@@ -52,6 +56,7 @@ attribute [fun_prop] Continuous.matrix_mulVec
 lemma ext {M₁ M₂ : CstarMatrix m n A} (h : ∀ i j, M₁ i j = M₂ i j) : M₁ = M₂ := Matrix.ext h
 
 variable (A) in
+/-- Interpret a `CstarMatrix m n A` as a continuous linear map acting on `CstarVec n A`. -/
 def toCLM : CstarMatrix m n A →ₗ[ℂ] CstarVec n A →L[ℂ] CstarVec m A where
   toFun M := { toFun := M.mulVec
                map_add' := M.mulVec_add
@@ -65,10 +70,10 @@ def toCLM : CstarMatrix m n A →ₗ[ℂ] CstarVec n A →L[ℂ] CstarVec m A wh
       Pi.smul_apply]
     apply Eq.symm
     simp [Finset.smul_sum, smul_mul_assoc]
-  --map_zero' := by ext; simp [Matrix.mulVec]
-  --map_mul' M₁ M₂ := by ext; simp
 
 variable (A) in
+/-- Interpret a `CstarMatrix m n A` as a continuous linear map acting on `CstarVec n A`. This
+version is specialized to the case `m = n` and is bundled as a non-unital algebra homomorphism. -/
 def toCLMNonUnitalAlgHom : CstarMatrix n n A →ₙₐ[ℂ] CstarVec n A →L[ℂ] CstarVec n A :=
   { toCLM (n := n) (m := n) A with
     map_zero' := by ext; simp [Matrix.mulVec]
@@ -128,6 +133,7 @@ lemma toCLM_inner_conjTranspose_right_eq_left {M : CstarMatrix m n A} {v : Cstar
   nth_rewrite 2 [this]
   rw [toCLM_inner_right_eq_left]
 
+/-- The operator norm on `CstarMatrix m n A`. -/
 noncomputable instance instNorm : Norm (CstarMatrix m n A) where
   norm M := ‖toCLM A M‖
 
@@ -143,10 +149,6 @@ lemma normedSpaceCore : NormedSpace.Core ℂ (CstarMatrix m n A) where
     change ‖toCLM A M‖ = 0 ↔ M = 0
     rw [norm_eq_zero]
     exact toCLM_eq_zero_iff
-
---lemma norm_eq_sSup {M : CstarMatrix m n A} : ‖M‖ = sSup { ‖toCLM A M v‖ | (v : CstarVec n A)
---    (hv : ‖v‖ ≤ 1) } := by
---  sorry
 
 open HilbertCstarModule in
 lemma norm_entry_le_norm [DecidableEq m] {M : CstarMatrix m n A} {i : m} {j : n} :
@@ -270,7 +272,8 @@ private lemma nnnorm_le_of_forall_inner_le {M : CstarMatrixAux m n A} {C : ℝ�
   CstarMatrix.norm_le_of_forall_inner_le fun v w => h v w
 
 open Finset in
-private lemma lipschitzWith_ofMatrix_symm_aux : LipschitzWith 1 (ofMatrix.symm : CstarMatrixAux m n A → Matrix m n A) := by
+private lemma lipschitzWith_ofMatrix_symm_aux :
+    LipschitzWith 1 (ofMatrix.symm : CstarMatrixAux m n A → Matrix m n A) := by
   refine LipschitzWith.of_dist_le_mul fun M₁ M₂ => ?_
   simp only [dist_eq_norm, NNReal.coe_one, one_mul]
   simp [← map_sub]
@@ -279,8 +282,10 @@ private lemma lipschitzWith_ofMatrix_symm_aux : LipschitzWith 1 (ofMatrix.symm :
   simp_rw [Matrix.nnnorm_def, Pi.nnnorm_def]
   by_cases hm_triv : Nonempty m
   · by_cases hn_triv : Nonempty n
-    · obtain ⟨i, _, hi⟩ := exists_mem_eq_sup (univ : Finset m) (univ_nonempty_iff.mpr hm_triv) fun b => Finset.univ.sup fun b_1 => ‖ofMatrix.symm M b b_1‖₊
-      obtain ⟨j, _, hj⟩ := exists_mem_eq_sup (univ : Finset n) (univ_nonempty_iff.mpr hn_triv) fun b_1 => ‖ofMatrix.symm M i b_1‖₊
+    · obtain ⟨i, _, hi⟩ := exists_mem_eq_sup (univ : Finset m) (univ_nonempty_iff.mpr hm_triv)
+        fun b => Finset.univ.sup fun b_1 => ‖ofMatrix.symm M b b_1‖₊
+      obtain ⟨j, _, hj⟩ := exists_mem_eq_sup (univ : Finset n) (univ_nonempty_iff.mpr hn_triv)
+        fun b_1 => ‖ofMatrix.symm M i b_1‖₊
       rw [hi, hj]
       exact CstarMatrix.norm_entry_le_norm
     · simp only [not_nonempty_iff] at hn_triv
@@ -289,7 +294,9 @@ private lemma lipschitzWith_ofMatrix_symm_aux : LipschitzWith 1 (ofMatrix.symm :
     simp [Finset.sup_eq_bot_of_isEmpty, bot_eq_zero]
 
 open Finset in
-private lemma antilipschitzWith_ofMatrix_symm_aux : AntilipschitzWith (Fintype.card n * Fintype.card m) (ofMatrix.symm : CstarMatrixAux m n A → Matrix m n A) := by
+private lemma antilipschitzWith_ofMatrix_symm_aux :
+    AntilipschitzWith (Fintype.card n * Fintype.card m)
+      (ofMatrix.symm : CstarMatrixAux m n A → Matrix m n A) := by
   refine AntilipschitzWith.of_le_mul_dist fun M₁ M₂ => ?_
   set Dn := Fintype.card n
   set Dm := Fintype.card m
@@ -299,14 +306,18 @@ private lemma antilipschitzWith_ofMatrix_symm_aux : AntilipschitzWith (Fintype.c
   simp_rw [Matrix.nnnorm_def, Pi.nnnorm_def]
   by_cases hm_triv : Nonempty m
   · by_cases hn_triv : Nonempty n
-    · obtain ⟨i, _, hi⟩ := exists_mem_eq_sup (univ : Finset m) (univ_nonempty_iff.mpr hm_triv) fun b => Finset.univ.sup fun b_1 => ‖ofMatrix.symm M b b_1‖₊
-      obtain ⟨j, _, hj⟩ := exists_mem_eq_sup (univ : Finset n) (univ_nonempty_iff.mpr hn_triv) fun b_1 => ‖ofMatrix.symm M i b_1‖₊
+    · obtain ⟨i, _, hi⟩ := exists_mem_eq_sup (univ : Finset m) (univ_nonempty_iff.mpr hm_triv)
+        fun b => Finset.univ.sup fun b_1 => ‖ofMatrix.symm M b b_1‖₊
+      obtain ⟨j, _, hj⟩ := exists_mem_eq_sup (univ : Finset n) (univ_nonempty_iff.mpr hn_triv)
+        fun b_1 => ‖ofMatrix.symm M i b_1‖₊
       rw [hi, hj]
       change ‖M‖₊ ≤ ↑Dn * ↑Dm * ‖M i j‖₊
       refine nnnorm_le_of_forall_inner_le fun v w => ?_
-      simp only [CstarVec.inner_eq_sum, CstarMatrix.toCLM_apply_eq_sum, CstarVec.ofFun_apply, mul_sum]
+      simp only [CstarVec.inner_eq_sum, CstarMatrix.toCLM_apply_eq_sum, CstarVec.ofFun_apply,
+                 mul_sum]
       have hmax : ∀ k l, ‖M k l‖₊ ≤ ‖M i j‖₊ := fun k l => by
-        change (univ.sup fun b => univ.sup fun b_1 => ‖M b b_1‖₊) = univ.sup fun b_1 => ‖M i b_1‖₊ at hi
+        change (univ.sup fun b => univ.sup fun b_1 => ‖M b b_1‖₊)
+          = univ.sup fun b_1 => ‖M i b_1‖₊ at hi
         change (univ.sup fun b_1 => ‖M i b_1‖₊) = ‖M i j‖₊ at hj
         calc ‖M k l‖₊ ≤ univ.sup fun l' => ‖M k l'‖₊ :=
                   Finset.le_sup (f := fun l' => ‖M k l'‖₊) (mem_univ l)
@@ -386,12 +397,13 @@ instance instBornology : Bornology (CstarMatrix m n A) := Pi.instBornology
 
 noncomputable instance instNormedAddCommGroup : NormedAddCommGroup (CstarMatrix m n A) :=
   .ofCoreReplaceAll CstarMatrix.normedSpaceCore
-    CstarMatrixAux.uniformity_eq_aux.symm fun _ => Filter.ext_iff.1 CstarMatrixAux.cobounded_eq_aux.symm _
+    CstarMatrixAux.uniformity_eq_aux.symm
+      fun _ => Filter.ext_iff.1 CstarMatrixAux.cobounded_eq_aux.symm _
 
 instance instNormedSpace : NormedSpace ℂ (CstarMatrix m n A) :=
   .ofCore CstarMatrix.normedSpaceCore
 
-lemma norm_mul {M₁ M₂ : CstarMatrix n n A} : ‖M₁ * M₂‖ ≤ ‖M₁‖ * ‖M₂‖ := by
+protected lemma norm_mul {M₁ M₂ : CstarMatrix n n A} : ‖M₁ * M₂‖ ≤ ‖M₁‖ * ‖M₂‖ := by
   change ‖toCLMNonUnitalAlgHom A (M₁ * M₂)‖
     ≤ ‖toCLMNonUnitalAlgHom A M₁‖ * ‖toCLMNonUnitalAlgHom A M₂‖
   rw [map_mul]
@@ -399,18 +411,18 @@ lemma norm_mul {M₁ M₂ : CstarMatrix n n A} : ‖M₁ * M₂‖ ≤ ‖M₁�
 
 noncomputable instance instNonUnitalNormedRing : NonUnitalNormedRing (CstarMatrix n n A) where
   dist_eq _ _ := rfl
-  norm_mul _ _ := norm_mul
+  norm_mul _ _ := CstarMatrix.norm_mul
 
-open ContinuousLinearMap in
+open ContinuousLinearMap HilbertCstarModule in
 instance instCstarRing : CstarRing (CstarMatrix n n A) where
   norm_mul_self_le M := by
     have hmain : ‖M‖ ≤ √‖star M * M‖ := by
       change ‖toCLM A M‖ ≤ √‖star M * M‖
       rw [opNorm_le_iff (by positivity)]
       intro v
-      rw [CstarVec.norm_eq_inner, ← toCLM_inner_conjTranspose_right_eq_left]
+      rw [norm_eq_sqrt_norm_inner_self, ← toCLM_inner_conjTranspose_right_eq_left]
       have h₁ : ‖⟪v, ((toCLM A) Mᴴ) (((toCLM A) M) v)⟫_A‖ ≤ ‖star M * M‖ * ‖v‖ ^ 2 := calc
-          _ ≤ ‖v‖ * ‖((toCLM A) Mᴴ) ((toCLM A) M v)‖ := HilbertCstarModule.cauchy_schwarz₂ (E := CstarVec n A) _ _
+          _ ≤ ‖v‖ * ‖((toCLM A) Mᴴ) ((toCLM A) M v)‖ := norm_inner_le (CstarVec n A)
           _ ≤ ‖v‖ * ‖((toCLM A) Mᴴ).comp ((toCLM A) M)‖ * ‖v‖ := by
                     rw [mul_assoc]
                     gcongr
@@ -440,7 +452,7 @@ variable {n : Type*} [Fintype n] [DecidableEq n]
 
 noncomputable instance instNormedRing : NormedRing (CstarMatrix n n A) where
   dist_eq _ _ := rfl
-  norm_mul _ _  := norm_mul
+  norm_mul _ _  := CstarMatrix.norm_mul
 
 noncomputable instance instNormedAlgebra : NormedAlgebra ℂ (CstarMatrix n n A) where
   norm_smul_le r M := by
