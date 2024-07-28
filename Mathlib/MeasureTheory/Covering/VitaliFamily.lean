@@ -5,8 +5,6 @@ Authors: Sébastien Gouëzel
 -/
 import Mathlib.MeasureTheory.Measure.MeasureSpace
 
-#align_import measure_theory.covering.vitali_family from "leanprover-community/mathlib"@"f2ce6086713c78a7f880485f7917ea547a215982"
-
 /-!
 # Vitali families
 
@@ -82,7 +80,6 @@ structure VitaliFamily {X : Type u} [TopologicalSpace X] {m : MeasurableSpace X}
     (∀ x, f x ⊆ setsAt x) → (∀ x, ∃ᶠ t in (𝓝 x).smallSets, t ∈ f x) →
     ∃ (ι : Type u) (c : ι → X) (t : ι → Set X), Countable ι ∧
       (∀ i, c i ∈ s) ∧ Pairwise (Disjoint on t) ∧ (∀ i, t i ∈ f (c i)) ∧ μ (s \ ⋃ i, t i) = 0
-#align vitali_family VitaliFamily
 
 namespace VitaliFamily
 
@@ -97,13 +94,11 @@ def mono (v : VitaliFamily μ) (ν : Measure X) (hν : ν ≪ μ) : VitaliFamily
   covering s f h h' :=
     let ⟨ι, c, t, hcount, hc, hd, ht, hμ⟩ := v.covering s f h h'
     ⟨ι, c, t, hcount, hc, hd, ht, hν hμ⟩
-#align vitali_family.mono VitaliFamily.mono
 
 /-- Given a vitali family `v`, then `v.filterAt x` is the filter on `Set X` made of those families
 that contain all sets of `v.setsAt x` of a sufficiently small diameter. This filter makes it
 possible to express limiting behavior when sets in `v.setsAt x` shrink to `x`. -/
 def filterAt (v : VitaliFamily μ) (x : X) : Filter (Set X) := (𝓝 x).smallSets ⊓ 𝓟 (v.setsAt x)
-#align vitali_family.filter_at VitaliFamily.filterAt
 
 theorem _root_.Filter.HasBasis.vitaliFamily {ι : Sort*} {p : ι → Prop} {s : ι → Set X} {x : X}
     (h : (𝓝 x).HasBasis p s) (v : VitaliFamily μ) :
@@ -112,27 +107,22 @@ theorem _root_.Filter.HasBasis.vitaliFamily {ι : Sort*} {p : ι → Prop} {s : 
 
 instance filterAt_neBot (v : VitaliFamily μ) (x : X) : (v.filterAt x).NeBot :=
   frequently_mem_iff_neBot.1 <| v.nontrivial x
-#align vitali_family.filter_at_ne_bot VitaliFamily.filterAt_neBot
 
 theorem eventually_subset_of_nhds (v : VitaliFamily μ) {x : X} {U : Set X} (hx : U ∈ 𝓝 x) :
     ∀ᶠ a in v.filterAt x, a ⊆ U :=
   (eventually_smallSets_subset.2 hx).filter_mono inf_le_left
-#align vitali_family.eventually_filter_at_subset_of_nhds VitaliFamily.eventually_subset_of_nhds
 
 theorem eventually_mem_setsAt (v : VitaliFamily μ) (x : X) :
     ∀ᶠ s in v.filterAt x, s ∈ v.setsAt x :=
   eventually_inf_principal.2 <| eventually_of_forall fun _ ↦ id
-#align vitali_family.eventually_filter_at_mem_sets VitaliFamily.eventually_mem_setsAt
 
 theorem eventually_measurableSet (v : VitaliFamily μ) (x : X) :
     ∀ᶠ a in v.filterAt x, MeasurableSet a :=
   (v.eventually_mem_setsAt x).mono <| v.measurableSet _
-#align vitali_family.eventually_filter_at_measurable_set VitaliFamily.eventually_measurableSet
 
 structure FineSubfamilyOn (v : VitaliFamily μ) (s : Set X) where
   toFun : X → Set (Set X)
   ae_frequently' : ∀ᵐ x ∂μ, x ∈ s → ∃ᶠ t in v.filterAt x, t ∈ toFun x
-#align vitali_family.fine_subfamily_on VitaliFamily.FineSubfamilyOn
 
 namespace FineSubfamilyOn
 
@@ -202,7 +192,6 @@ theorem covering_mem (f : FineSubfamilyOn v s) (i : f.Index) : f.covering i ∈ 
 protected theorem measurableSet_covering (f : FineSubfamilyOn v s) (i : f.Index) :
     MeasurableSet (f.covering i) :=
   v.measurableSet _ _ (f.covering_mem_setsAt _)
-#align vitali_family.fine_subfamily_on.measurable_set_u VitaliFamily.FineSubfamilyOn.measurableSet_covering
 
 theorem outerMeasure_le_tsum_of_absolutelyContinuous (f : FineSubfamilyOn v s)
     {ρ : OuterMeasure X} (hρ : ∀ ⦃t⦄, μ t = 0 → ρ t = 0) : ρ s ≤ ∑' i, ρ (f.covering i) :=
@@ -217,11 +206,9 @@ theorem outerMeasure_le_tsum_of_absolutelyContinuous (f : FineSubfamilyOn v s)
 theorem measure_le_tsum_of_absolutelyContinuous (f : FineSubfamilyOn v s) {ρ : Measure X}
     (hρ : ρ ≪ μ) : ρ s ≤ ∑' i, ρ (f.covering i) :=
   f.outerMeasure_le_tsum_of_absolutelyContinuous hρ
-#align vitali_family.fine_subfamily_on.measure_le_tsum_of_absolutely_continuous VitaliFamily.FineSubfamilyOn.measure_le_tsum_of_absolutelyContinuous
 
 theorem measure_le_tsum (f : FineSubfamilyOn v s) : μ s ≤ ∑' i, μ (f.covering i) :=
   f.measure_le_tsum_of_absolutelyContinuous Measure.AbsolutelyContinuous.rfl
-#align vitali_family.fine_subfamily_on.measure_le_tsum VitaliFamily.FineSubfamilyOn.measure_le_tsum
 
 def restrOpen (f : FineSubfamilyOn v s) (o : Set X) (ho : IsOpen o) (hsub : s ⊆ o) :
     FineSubfamilyOn v s where
@@ -258,31 +245,24 @@ theorem ae_eventually_measure_pos (v : VitaliFamily μ) :
 -- theorem mem_filterAt_iff {x : α} {s : Set (Set α)} :
 --     s ∈ v.filterAt x ↔ ∃ ε > (0 : ℝ), ∀ a ∈ v.setsAt x, a ⊆ closedBall x ε → a ∈ s := by
 --   simp only [(v.filterAt_basis_closedBall x).mem_iff, ← and_imp, subset_def, mem_setOf]
--- #align vitali_family.mem_filter_at_iff VitaliFamily.mem_filterAt_iff
 
 -- theorem eventually_filterAt_iff {x : α} {P : Set α → Prop} :
 --     (∀ᶠ a in v.filterAt x, P a) ↔ ∃ ε > (0 : ℝ), ∀ a ∈ v.setsAt x, a ⊆ closedBall x ε → P a :=
 --   v.mem_filterAt_iff
--- #align vitali_family.eventually_filter_at_iff VitaliFamily.eventually_filterAt_iff
 
 -- theorem tendsto_filterAt_iff {ι : Type*} {l : Filter ι} {f : ι → Set α} {x : α} :
 --     Tendsto f l (v.filterAt x) ↔
 --       (∀ᶠ i in l, f i ∈ v.setsAt x) ∧ ∀ ε > (0 : ℝ), ∀ᶠ i in l, f i ⊆ closedBall x ε := by
 --   simp only [filterAt, tendsto_inf, nhds_basis_closedBall.smallSets.tendsto_right_iff,
 --     tendsto_principal, and_comm, mem_powerset_iff]
--- #align vitali_family.tendsto_filter_at_iff VitaliFamily.tendsto_filterAt_iff
 
 -- theorem eventually_filterAt_subset_closedBall (x : α) {ε : ℝ} (hε : 0 < ε) :
 --     ∀ᶠ a : Set α in v.filterAt x, a ⊆ closedBall x ε :=
 --   (v.tendsto_filterAt_iff.mp tendsto_id).2 ε hε
--- #align vitali_family.eventually_filter_at_subset_closed_ball VitaliFamily.eventually_filterAt_subset_closedBall
 
 -- theorem frequently_filterAt_iff {x : α} {P : Set α → Prop} :
 --     (∃ᶠ a in v.filterAt x, P a) ↔ ∀ ε > (0 : ℝ), ∃ a ∈ v.setsAt x, a ⊆ closedBall x ε ∧ P a := by
 --   simp only [(v.filterAt_basis_closedBall x).frequently_iff, ← and_assoc, subset_def, mem_setOf]
--- #align vitali_family.frequently_filter_at_iff VitaliFamily.frequently_filterAt_iff
-
-
 
 
 -- namespace FineSubfamilyOn
@@ -296,48 +276,38 @@ theorem ae_eventually_measure_pos (v : VitaliFamily μ) :
 --       (∀ p : α × Set α, p ∈ t → p.2 ∈ v.setsAt p.1 ∩ f p.1) ∧
 --       μ (s \ ⋃ (p : α × Set α) (_ : p ∈ t), p.2) = 0 :=
 --   v.covering s (fun x => v.setsAt x ∩ f x) (fun _ _ => inter_subset_left _ _) h
--- #align vitali_family.fine_subfamily_on.exists_disjoint_covering_ae VitaliFamily.FineSubfamilyOn.exists_disjoint_covering_ae
 
 -- /-- Given `h : v.FineSubfamilyOn f s`, then `h.index` is a set parametrizing a disjoint
 -- covering of almost every `s`. -/
 -- protected def Index : Type _ :=
 --   h.exists_disjoint_covering_ae.choose
--- #align vitali_family.fine_subfamily_on.index VitaliFamily.FineSubfamilyOn.Index
 
 -- /-- Given `h : v.FineSubfamilyOn f s`, then `h.covering p` is a set in the family,
 -- for `p ∈ h.index`, such that these sets form a disjoint covering of almost every `s`. -/
 -- protected def covering (h : FineSubfamilyOn v f s) : h.Index → Set α :=
 --   fun p => p.2
--- #align vitali_family.fine_subfamily_on.covering VitaliFamily.FineSubfamilyOn.covering
 
 -- theorem index_subset : ∀ p : α × Set α, p ∈ h.index → p.1 ∈ s :=
 --   h.exists_disjoint_covering_ae.choose_spec.1
--- #align vitali_family.fine_subfamily_on.index_subset VitaliFamily.FineSubfamilyOn.index_subset
 
 -- theorem covering_disjoint : h.index.PairwiseDisjoint h.covering :=
 --   h.exists_disjoint_covering_ae.choose_spec.2.1
--- #align vitali_family.fine_subfamily_on.covering_disjoint VitaliFamily.FineSubfamilyOn.covering_disjoint
 
 -- theorem covering_disjoint_subtype : Pairwise (Disjoint on fun x : h.index => h.covering x) :=
 --   (pairwise_subtype_iff_pairwise_set _ _).2 h.covering_disjoint
--- #align vitali_family.fine_subfamily_on.covering_disjoint_subtype VitaliFamily.FineSubfamilyOn.covering_disjoint_subtype
 
 -- theorem covering_mem {p : α × Set α} (hp : p ∈ h.index) : h.covering p ∈ f p.1 :=
 --   (h.exists_disjoint_covering_ae.choose_spec.2.2.1 p hp).2
--- #align vitali_family.fine_subfamily_on.covering_mem VitaliFamily.FineSubfamilyOn.covering_mem
 
 -- theorem covering_mem_family {p : α × Set α} (hp : p ∈ h.index) : h.covering p ∈ v.setsAt p.1 :=
 --   (h.exists_disjoint_covering_ae.choose_spec.2.2.1 p hp).1
--- #align vitali_family.fine_subfamily_on.covering_mem_family VitaliFamily.FineSubfamilyOn.covering_mem_family
 
 -- theorem measure_diff_biUnion : μ (s \ ⋃ p ∈ h.index, h.covering p) = 0 :=
 --   h.exists_disjoint_covering_ae.choose_spec.2.2.2
--- #align vitali_family.fine_subfamily_on.measure_diff_bUnion VitaliFamily.FineSubfamilyOn.measure_diff_biUnion
 
 -- theorem index_countable [SecondCountableTopology α] : h.index.Countable :=
 --   h.covering_disjoint.countable_of_nonempty_interior fun _ hx =>
 --     v.nonempty_interior _ _ (h.covering_mem_family hx)
--- #align vitali_family.fine_subfamily_on.index_countable VitaliFamily.FineSubfamilyOn.index_countable
 
 -- end FineSubfamilyOn
 
@@ -370,7 +340,6 @@ def enlarge (v : VitaliFamily μ) (δ : ℝ) (δpos : 0 < δ) : VitaliFamily μ 
     let g : v.FineSubfamilyOn s := ⟨f, ae_of_all _ hf⟩
     exact ⟨g.Index, g.center, g.covering, inferInstance, g.center_mem, g.pairwise_disjoint,
       g.covering_mem, g.measure_diff_iUnion⟩
-#align vitali_family.enlarge VitaliFamily.enlarge
 
 @[simp]
 theorem enlarge_filterAt (v : VitaliFamily μ) {δ : ℝ} (δpos : 0 < δ) :
