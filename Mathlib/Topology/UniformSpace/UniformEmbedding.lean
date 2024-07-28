@@ -323,7 +323,7 @@ theorem completeSpace_extension {m : β → α} (hm : UniformInducing m) (dense 
         have h₁ : { y | (x, y) ∈ t' } ∈ 𝓝[range m] x :=
           @mem_inf_of_left α (𝓝 x) (𝓟 (range m)) _ <| mem_nhds_left x ht'
         have h₂ : range m ∈ 𝓝[range m] x :=
-          @mem_inf_of_right α (𝓝 x) (𝓟 (range m)) _ <| Subset.refl _
+          @mem_inf_of_right α (𝓝 x) (𝓟 (range m)) _ <| Subset.rfl
         have : { y | (x, y) ∈ t' } ∩ range m ∈ 𝓝[range m] x := @inter_mem α (𝓝[range m] x) _ _ h₁ h₂
         let ⟨y, xyt', b, b_eq⟩ := h₀.nonempty_of_mem this
         ⟨b, b_eq.symm ▸ ht'_sub ⟨x, hx, xyt'⟩⟩

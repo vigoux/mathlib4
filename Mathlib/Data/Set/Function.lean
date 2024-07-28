@@ -409,8 +409,8 @@ theorem MapsTo.union (h₁ : MapsTo f s₁ t) (h₂ : MapsTo f s₂ t) : MapsTo 
 @[simp]
 theorem mapsTo_union : MapsTo f (s₁ ∪ s₂) t ↔ MapsTo f s₁ t ∧ MapsTo f s₂ t :=
   ⟨fun h =>
-    ⟨h.mono subset_union_left (Subset.refl t),
-      h.mono subset_union_right (Subset.refl t)⟩,
+    ⟨h.mono subset_union_left Subset.rfl,
+      h.mono subset_union_right Subset.rfl⟩,
     fun h => h.1.union h.2⟩
 
 theorem MapsTo.inter (h₁ : MapsTo f s t₁) (h₂ : MapsTo f s t₂) : MapsTo f s (t₁ ∩ t₂) := fun _ hx =>
@@ -422,14 +422,14 @@ theorem MapsTo.inter_inter (h₁ : MapsTo f s₁ t₁) (h₂ : MapsTo f s₂ t�
 @[simp]
 theorem mapsTo_inter : MapsTo f s (t₁ ∩ t₂) ↔ MapsTo f s t₁ ∧ MapsTo f s t₂ :=
   ⟨fun h =>
-    ⟨h.mono (Subset.refl s) inter_subset_left,
-      h.mono (Subset.refl s) inter_subset_right⟩,
+    ⟨h.mono Subset.rfl inter_subset_left,
+      h.mono Subset.rfl inter_subset_right⟩,
     fun h => h.1.inter h.2⟩
 
 theorem mapsTo_univ (f : α → β) (s : Set α) : MapsTo f s univ := fun _ _ => trivial
 
 theorem mapsTo_range (f : α → β) (s : Set α) : MapsTo f s (range f) :=
-  (mapsTo_image f s).mono (Subset.refl s) (image_subset_range _ _)
+  (mapsTo_image f s).mono Subset.rfl (image_subset_range _ _)
 
 @[simp]
 theorem mapsTo_image_iff {f : α → β} {g : γ → α} {s : Set γ} {t : Set β} :
@@ -770,8 +770,8 @@ theorem SurjOn.union (h₁ : SurjOn f s t₁) (h₂ : SurjOn f s t₂) : SurjOn 
 
 theorem SurjOn.union_union (h₁ : SurjOn f s₁ t₁) (h₂ : SurjOn f s₂ t₂) :
     SurjOn f (s₁ ∪ s₂) (t₁ ∪ t₂) :=
-  (h₁.mono subset_union_left (Subset.refl _)).union
-    (h₂.mono subset_union_right (Subset.refl _))
+  (h₁.mono subset_union_left (Subset.rfl)).union
+    (h₂.mono subset_union_right (Subset.rfl))
 
 theorem SurjOn.inter_inter (h₁ : SurjOn f s₁ t₁) (h₂ : SurjOn f s₂ t₂) (h : InjOn f (s₁ ∪ s₂)) :
     SurjOn f (s₁ ∩ s₂) (t₁ ∩ t₂) := by
@@ -789,7 +789,7 @@ theorem SurjOn.inter (h₁ : SurjOn f s₁ t) (h₂ : SurjOn f s₂ t) (h : InjO
 lemma surjOn_id (s : Set α) : SurjOn id s s := by simp [SurjOn, subset_rfl]
 
 theorem SurjOn.comp (hg : SurjOn g t p) (hf : SurjOn f s t) : SurjOn (g ∘ f) s p :=
-  Subset.trans hg <| Subset.trans (image_subset g hf) <| image_comp g f s ▸ Subset.refl _
+  Subset.trans hg <| Subset.trans (image_subset g hf) <| image_comp g f s ▸ Subset.rfl
 
 lemma SurjOn.iterate {f : α → α} {s : Set α} (h : SurjOn f s s) : ∀ n, SurjOn f^[n] s s
   | 0 => surjOn_id _
@@ -917,7 +917,7 @@ theorem BijOn.subset_range (h : BijOn f s t) : t ⊆ range f :=
   h.surjOn.subset_range
 
 theorem InjOn.bijOn_image (h : InjOn f s) : BijOn f s (f '' s) :=
-  BijOn.mk (mapsTo_image f s) h (Subset.refl _)
+  BijOn.mk (mapsTo_image f s) h (Subset.rfl)
 
 theorem BijOn.congr (h₁ : BijOn f₁ s t) (h : EqOn f₁ f₂ s) : BijOn f₂ s t :=
   BijOn.mk (h₁.mapsTo.congr h) (h₁.injOn.congr h) (h₁.surjOn.congr h)
@@ -1236,7 +1236,7 @@ theorem surjOn_iff_exists_bijOn_subset : SurjOn f s t ↔ ∃ s' ⊆ s, BijOn f 
       haveI : Nonempty α := ⟨Classical.choose (h.comap_nonempty ht)⟩
       exact ⟨_, h.mapsTo_invFunOn.image_subset, h.bijOn_subset⟩
   · rintro ⟨s', hs', hfs'⟩
-    exact hfs'.surjOn.mono hs' (Subset.refl _)
+    exact hfs'.surjOn.mono hs' (Subset.rfl)
 
 alias ⟨SurjOn.exists_bijOn_subset, _⟩ := Set.surjOn_iff_exists_bijOn_subset
 
@@ -1541,7 +1541,7 @@ theorem Injective.comp_injOn (hg : Injective g) (hf : s.InjOn f) : s.InjOn (g �
   hg.injOn.comp hf (mapsTo_univ _ _)
 
 theorem Surjective.surjOn (hf : Surjective f) (s : Set β) : SurjOn f univ s :=
-  (surjective_iff_surjOn_univ.1 hf).mono (Subset.refl _) (subset_univ _)
+  (surjective_iff_surjOn_univ.1 hf).mono (Subset.rfl) (subset_univ _)
 
 theorem LeftInverse.leftInvOn {g : β → α} (h : LeftInverse f g) (s : Set β) : LeftInvOn f g s :=
   fun x _ => h x

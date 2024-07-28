@@ -153,7 +153,7 @@ instance : LE (Semiquot α) :=
 
 instance partialOrder : PartialOrder (Semiquot α) where
   le s t := ∀ ⦃x⦄, x ∈ s → x ∈ t
-  le_refl s := Set.Subset.refl _
+  le_refl s := Set.Subset.rfl
   le_trans s t u := Set.Subset.trans
   le_antisymm s t h₁ h₂ := ext_s.2 (Set.Subset.antisymm h₁ h₂)
 

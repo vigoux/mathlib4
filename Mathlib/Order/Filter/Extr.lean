@@ -336,11 +336,11 @@ theorem IsExtrFilter.comp_tendsto {g : δ → α} {l' : Filter δ} {b : δ} (hf 
 
 theorem IsMinOn.on_preimage (g : δ → α) {b : δ} (hf : IsMinOn f s (g b)) :
     IsMinOn (f ∘ g) (g ⁻¹' s) b :=
-  hf.comp_tendsto (tendsto_principal_principal.mpr <| Subset.refl _)
+  hf.comp_tendsto (tendsto_principal_principal.mpr <| Subset.rfl)
 
 theorem IsMaxOn.on_preimage (g : δ → α) {b : δ} (hf : IsMaxOn f s (g b)) :
     IsMaxOn (f ∘ g) (g ⁻¹' s) b :=
-  hf.comp_tendsto (tendsto_principal_principal.mpr <| Subset.refl _)
+  hf.comp_tendsto (tendsto_principal_principal.mpr <| Subset.rfl)
 
 theorem IsExtrOn.on_preimage (g : δ → α) {b : δ} (hf : IsExtrOn f s (g b)) :
     IsExtrOn (f ∘ g) (g ⁻¹' s) b :=

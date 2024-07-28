@@ -742,7 +742,7 @@ theorem complete_of_convergent_controlled_sequences (U : ℕ → Set (α × α))
     (HU : ∀ u : ℕ → α, (∀ N m n, N ≤ m → N ≤ n → (u m, u n) ∈ U N) → ∃ a, Tendsto u atTop (𝓝 a)) :
     CompleteSpace α := by
   obtain ⟨U', -, hU'⟩ := (𝓤 α).exists_antitone_seq
-  have Hmem : ∀ n, U n ∩ U' n ∈ 𝓤 α := fun n => inter_mem (U_mem n) (hU'.2 ⟨n, Subset.refl _⟩)
+  have Hmem : ∀ n, U n ∩ U' n ∈ 𝓤 α := fun n => inter_mem (U_mem n) (hU'.2 ⟨n, Subset.rfl⟩)
   refine ⟨fun hf => (HU (seq hf Hmem) fun N m n hm hn => ?_).imp <|
     le_nhds_of_seq_tendsto_nhds _ _ fun s hs => ?_⟩
   · exact inter_subset_left (seq_pair_mem hf Hmem hm hn)
@@ -754,7 +754,7 @@ complete. -/
 theorem complete_of_cauchySeq_tendsto (H' : ∀ u : ℕ → α, CauchySeq u → ∃ a, Tendsto u atTop (𝓝 a)) :
     CompleteSpace α :=
   let ⟨U', _, hU'⟩ := (𝓤 α).exists_antitone_seq
-  complete_of_convergent_controlled_sequences U' (fun n => hU'.2 ⟨n, Subset.refl _⟩) fun u hu =>
+  complete_of_convergent_controlled_sequences U' (fun n => hU'.2 ⟨n, Subset.rfl⟩) fun u hu =>
     H' u <| cauchySeq_of_controlled U' (fun _ hs => hU'.1 hs) hu
 
 variable (α)

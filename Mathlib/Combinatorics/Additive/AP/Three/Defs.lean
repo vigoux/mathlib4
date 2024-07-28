@@ -280,7 +280,7 @@ theorem ThreeGPFree.le_mulRothNumber (hs : ThreeGPFree (s : Set α)) (h : s ⊆ 
 @[to_additive]
 theorem ThreeGPFree.mulRothNumber_eq (hs : ThreeGPFree (s : Set α)) :
     mulRothNumber s = s.card :=
-  (mulRothNumber_le _).antisymm <| hs.le_mulRothNumber <| Subset.refl _
+  (mulRothNumber_le _).antisymm <| hs.le_mulRothNumber <| Subset.rfl
 
 @[to_additive (attr := simp)]
 theorem mulRothNumber_empty : mulRothNumber (∅ : Finset α) = 0 :=

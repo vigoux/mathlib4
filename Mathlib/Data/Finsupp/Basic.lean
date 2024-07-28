@@ -497,7 +497,7 @@ theorem mapDomain_support_of_injOn [DecidableEq β] {f : α → β} (s : α →�
     · exact hx_h_left
     · simp only [mem_coe, mem_support_iff, Ne]
       exact hx_h_left
-    · exact Subset.refl _
+    · exact Subset.rfl
 
 theorem mapDomain_support_of_injective [DecidableEq β] {f : α → β} (hf : Function.Injective f)
     (s : α →₀ M) : (mapDomain f s).support = Finset.image f s.support :=

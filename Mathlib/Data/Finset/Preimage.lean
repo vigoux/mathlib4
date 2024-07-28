@@ -112,7 +112,7 @@ theorem sigma_preimage_mk_of_subset {β : α → Type*} [DecidableEq α] (s : Fi
 theorem sigma_image_fst_preimage_mk {β : α → Type*} [DecidableEq α] (s : Finset (Σa, β a)) :
     ((s.image Sigma.fst).sigma fun a => s.preimage (Sigma.mk a) sigma_mk_injective.injOn) =
       s :=
-  s.sigma_preimage_mk_of_subset (Subset.refl _)
+  s.sigma_preimage_mk_of_subset (Subset.rfl)
 
 end Preimage
 end Finset

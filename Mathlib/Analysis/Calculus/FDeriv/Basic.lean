@@ -843,7 +843,7 @@ theorem HasFDerivWithinAt.congr_mono (h : HasFDerivWithinAt f f' s x) (ht : EqOn
 
 theorem HasFDerivWithinAt.congr (h : HasFDerivWithinAt f f' s x) (hs : EqOn f₁ f s)
     (hx : f₁ x = f x) : HasFDerivWithinAt f₁ f' s x :=
-  h.congr_mono hs hx (Subset.refl _)
+  h.congr_mono hs hx (Subset.rfl)
 
 theorem HasFDerivWithinAt.congr' (h : HasFDerivWithinAt f f' s x) (hs : EqOn f₁ f s) (hx : x ∈ s) :
     HasFDerivWithinAt f₁ f' s x :=
@@ -863,7 +863,7 @@ theorem DifferentiableWithinAt.congr_mono (h : DifferentiableWithinAt 𝕜 f s x
 
 theorem DifferentiableWithinAt.congr (h : DifferentiableWithinAt 𝕜 f s x) (ht : ∀ x ∈ s, f₁ x = f x)
     (hx : f₁ x = f x) : DifferentiableWithinAt 𝕜 f₁ s x :=
-  DifferentiableWithinAt.congr_mono h ht hx (Subset.refl _)
+  DifferentiableWithinAt.congr_mono h ht hx (Subset.rfl)
 
 theorem DifferentiableWithinAt.congr_of_eventuallyEq (h : DifferentiableWithinAt 𝕜 f s x)
     (h₁ : f₁ =ᶠ[𝓝[s] x] f) (hx : f₁ x = f x) : DifferentiableWithinAt 𝕜 f₁ s x :=

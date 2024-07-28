@@ -163,7 +163,7 @@ theorem mem_filter_iff (B : FilterBasis α) {U : Set α} : U ∈ B.filter ↔ �
   Iff.rfl
 
 theorem mem_filter_of_mem (B : FilterBasis α) {U : Set α} : U ∈ B → U ∈ B.filter := fun U_in =>
-  ⟨U, U_in, Subset.refl _⟩
+  ⟨U, U_in, Subset.rfl⟩
 
 theorem eq_iInf_principal (B : FilterBasis α) : B.filter = ⨅ s : B.sets, 𝓟 s := by
   have : Directed (· ≥ ·) fun s : B.sets => 𝓟 (s : Set α) := by

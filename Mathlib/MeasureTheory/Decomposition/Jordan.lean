@@ -522,7 +522,7 @@ theorem mutuallySingular_ennreal_iff (s : SignedMeasure α) (μ : VectorMeasure 
       -- Porting note: added `NNReal.eq_iff`
       simp [hu₁ _ Set.inter_subset_right, NNReal.eq_iff]
     · rw [VectorMeasure.ennrealToMeasure_apply hmeas.compl]
-      exact hu₂ _ (Set.Subset.refl _)
+      exact hu₂ _ Set.Subset.rfl
   · rintro ⟨u, hmeas, hu₁, hu₂⟩
     refine
       VectorMeasure.MutuallySingular.mk u hmeas

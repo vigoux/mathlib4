@@ -101,7 +101,7 @@ theorem multipliable_subtype_iff_mulIndicator {s : Set β} :
 
 @[to_additive (attr := simp)]
 theorem hasProd_subtype_mulSupport : HasProd (f ∘ (↑) : mulSupport f → α) a ↔ HasProd f a :=
-  hasProd_subtype_iff_of_mulSupport_subset <| Set.Subset.refl _
+  hasProd_subtype_iff_of_mulSupport_subset <| Set.Subset.rfl
 
 @[to_additive]
 protected theorem Finset.multipliable (s : Finset β) (f : β → α) :

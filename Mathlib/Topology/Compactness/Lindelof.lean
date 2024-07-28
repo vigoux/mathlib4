@@ -147,7 +147,7 @@ theorem IsLindelof.elim_countable_subcover {ι : Type v} (hs : IsLindelof s) (U 
     let ⟨i, hi⟩ := mem_iUnion.1 (hsU hx)
     refine ⟨U i, mem_nhdsWithin_of_mem_nhds ((hUo i).mem_nhds hi), {i}, by simp, ?_⟩
     simp only [mem_singleton_iff, iUnion_iUnion_eq_left]
-    exact Subset.refl _
+    exact Subset.rfl
   exact hs.induction_on hmono hcountable_union h_nhds
 
 theorem IsLindelof.elim_nhds_subcover' (hs : IsLindelof s) (U : ∀ x ∈ s, Set X)
@@ -162,7 +162,7 @@ theorem IsLindelof.elim_nhds_subcover' (hs : IsLindelof s) (U : ∀ x ∈ s, Set
   apply iUnion₂_subset
   intro i hi
   apply Subset.trans interior_subset
-  exact subset_iUnion_of_subset i (subset_iUnion_of_subset hi (Subset.refl _))
+  exact subset_iUnion_of_subset i (subset_iUnion_of_subset hi (Subset.rfl))
 
 theorem IsLindelof.elim_nhds_subcover (hs : IsLindelof s) (U : X → Set X)
     (hU : ∀ x ∈ s, U x ∈ 𝓝 x) :

@@ -60,7 +60,7 @@ theorem adjoin_eq_of_le (S : Subalgebra R A) (h₁ : s ⊆ S) (h₂ : S ≤ adjo
   le_antisymm (adjoin_le h₁) h₂
 
 theorem adjoin_eq (S : Subalgebra R A) : adjoin R ↑S = S :=
-  adjoin_eq_of_le _ (Set.Subset.refl _) subset_adjoin
+  adjoin_eq_of_le _ Set.Subset.rfl subset_adjoin
 
 theorem adjoin_iUnion {α : Type*} (s : α → Set A) :
     adjoin R (Set.iUnion s) = ⨆ i : α, adjoin R (s i) :=

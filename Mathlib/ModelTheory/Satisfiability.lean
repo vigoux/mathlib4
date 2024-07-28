@@ -346,7 +346,7 @@ theorem models_iff_finset_models {φ : L.Sentence} :
     simpa using h (T0 ∪ {Formula.not φ})
       (by
         simp only [Finset.coe_union, Finset.coe_singleton]
-        exact Set.union_subset_union hT0 (Set.Subset.refl _))
+        exact Set.union_subset_union hT0 Set.Subset.rfl)
   · intro h T0 hT0
     exact IsSatisfiable.mono (h (T0.erase (Formula.not φ))
       (by simpa using hT0)) (by simp)

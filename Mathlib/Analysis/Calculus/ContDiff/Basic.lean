@@ -338,13 +338,13 @@ theorem HasFTaylorSeriesUpToOn.compContinuousLinearMap (hf : HasFTaylorSeriesUpT
     rfl
   · intro m hm x hx
     convert (hA m).hasFDerivAt.comp_hasFDerivWithinAt x
-        ((hf.fderivWithin m hm (g x) hx).comp x g.hasFDerivWithinAt (Subset.refl _))
+        ((hf.fderivWithin m hm (g x) hx).comp x g.hasFDerivWithinAt (Subset.rfl))
     ext y v
     change p (g x) (Nat.succ m) (g ∘ cons y v) = p (g x) m.succ (cons (g y) (g ∘ v))
     rw [comp_cons]
   · intro m hm
     exact (hA m).continuous.comp_continuousOn <| (hf.cont m hm).comp g.continuous.continuousOn <|
-      Subset.refl _
+      Subset.rfl
 
 /-- Composition by continuous linear maps on the right preserves `C^n` functions at a point on
 a domain. -/

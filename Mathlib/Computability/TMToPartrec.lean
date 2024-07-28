@@ -1898,7 +1898,7 @@ states in `codeSupp c k`, so this is a finite state machine. Even though the und
 state labels `Λ'` is infinite, for a given partial recursive function `c` and continuation `k`,
 only finitely many states are accessed, corresponding roughly to subterms of `c`. -/
 theorem tr_supports (c k) : @TM2.Supports _ _ _ _ ⟨trNormal c k⟩ tr (codeSupp c k) :=
-  ⟨codeSupp_self _ _ (trStmts₁_self _), fun _ => codeSupp_supports (Finset.Subset.refl _) _⟩
+  ⟨codeSupp_self _ _ (trStmts₁_self _), fun _ => codeSupp_supports Finset.Subset.rfl _⟩
 
 end
 

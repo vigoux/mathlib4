@@ -159,7 +159,7 @@ theorem exists_disjoint_subfamily_covering_enlargment_closedBall [MetricSpace α
       (u.PairwiseDisjoint fun a => closedBall (x a) (r a)) ∧
         ∀ a ∈ t, ∃ b ∈ u, closedBall (x a) (r a) ⊆ closedBall (x b) (τ * r b) := by
   rcases eq_empty_or_nonempty t with (rfl | _)
-  · exact ⟨∅, Subset.refl _, pairwiseDisjoint_empty, by simp⟩
+  · exact ⟨∅, Subset.rfl, pairwiseDisjoint_empty, by simp⟩
   by_cases ht : ∀ a ∈ t, r a < 0
   · exact ⟨t, Subset.rfl, fun a ha b _ _ => by
       #adaptation_note /-- nightly-2024-03-16

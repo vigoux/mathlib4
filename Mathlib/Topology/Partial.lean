@@ -72,7 +72,7 @@ theorem pcontinuous_iff' {f : X →. Y} :
   show f.preimage s ∈ 𝓝 x
   apply h'
   rw [mem_nhds_iff]
-  exact ⟨s, Set.Subset.refl _, os, ys⟩
+  exact ⟨s, Set.Subset.rfl, os, ys⟩
 
 theorem continuousWithinAt_iff_ptendsto_res (f : X → Y) {x : X} {s : Set X} :
     ContinuousWithinAt f s x ↔ PTendsto (PFun.res f s) (𝓝 x) (𝓝 (f x)) :=

@@ -165,7 +165,7 @@ theorem IsCompact.elim_directed_cover {ι : Type v} [hι : Nonempty ι] (hs : Is
         ⟨k, union_subset (Subset.trans hi hki) (Subset.trans hj hkj)⟩)
       fun _x hx =>
       let ⟨i, hi⟩ := mem_iUnion.1 (hsU hx)
-      ⟨U i, mem_nhdsWithin_of_mem_nhds (IsOpen.mem_nhds (hUo i) hi), i, Subset.refl _⟩
+      ⟨U i, mem_nhdsWithin_of_mem_nhds (IsOpen.mem_nhds (hUo i) hi), i, Subset.rfl⟩
 
 /-- For every open cover of a compact set, there exists a finite subcover. -/
 theorem IsCompact.elim_finite_subcover {ι : Type v} (hs : IsCompact s) (U : ι → Set X)
@@ -1110,7 +1110,7 @@ theorem IsClosed.exists_minimal_nonempty_closed_subset [CompactSpace X] {S : Set
           · exact fun U => (hc U.2).2.1.isClosed_compl.isCompact
           · exact fun U => (hc U.2).2.1.isClosed_compl
       · use Sᶜ
-        refine ⟨⟨Set.Subset.refl _, isOpen_compl_iff.mpr hS, ?_⟩, fun U Uc => (hcne ⟨U, Uc⟩).elim⟩
+        refine ⟨⟨Set.Subset.rfl, isOpen_compl_iff.mpr hS, ?_⟩, fun U Uc => (hcne ⟨U, Uc⟩).elim⟩
         rw [compl_compl]
         exact hne
   refine ⟨Uᶜ, Set.compl_subset_comm.mp Uc, Ucne, Uo.isClosed_compl, ?_⟩

@@ -132,7 +132,7 @@ variable (𝒜 k)
 theorem sized_falling : (falling k 𝒜 : Set (Finset α)).Sized k := fun _ hs => (mem_falling.1 hs).2
 
 theorem slice_subset_falling : 𝒜 # k ⊆ falling k 𝒜 := fun s hs =>
-  mem_falling.2 <| (mem_slice.1 hs).imp_left fun h => ⟨s, h, Subset.refl _⟩
+  mem_falling.2 <| (mem_slice.1 hs).imp_left fun h => ⟨s, h, Subset.rfl⟩
 
 theorem falling_zero_subset : falling 0 𝒜 ⊆ {∅} :=
   subset_singleton_iff'.2 fun _ ht => card_eq_zero.1 <| sized_falling _ _ ht
@@ -142,7 +142,7 @@ theorem slice_union_shadow_falling_succ : 𝒜 # k ∪ ∂ (falling (k + 1) 𝒜
   simp_rw [mem_union, mem_slice, mem_shadow_iff, mem_falling]
   constructor
   · rintro (h | ⟨s, ⟨⟨t, ht, hst⟩, hs⟩, a, ha, rfl⟩)
-    · exact ⟨⟨s, h.1, Subset.refl _⟩, h.2⟩
+    · exact ⟨⟨s, h.1, Subset.rfl⟩, h.2⟩
     refine ⟨⟨t, ht, (erase_subset _ _).trans hst⟩, ?_⟩
     rw [card_erase_of_mem ha, hs]
     rfl

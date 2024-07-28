@@ -82,11 +82,11 @@ theorem product_subset_product (hs : s ⊆ s') (ht : t ⊆ t') : s ×ˢ t ⊆ s'
 
 @[gcongr]
 theorem product_subset_product_left (hs : s ⊆ s') : s ×ˢ t ⊆ s' ×ˢ t :=
-  product_subset_product hs (Subset.refl _)
+  product_subset_product hs (Subset.rfl)
 
 @[gcongr]
 theorem product_subset_product_right (ht : t ⊆ t') : s ×ˢ t ⊆ s ×ˢ t' :=
-  product_subset_product (Subset.refl _) ht
+  product_subset_product (Subset.rfl) ht
 
 theorem map_swap_product (s : Finset α) (t : Finset β) :
     (t ×ˢ s).map ⟨Prod.swap, Prod.swap_injective⟩ = s ×ˢ t :=

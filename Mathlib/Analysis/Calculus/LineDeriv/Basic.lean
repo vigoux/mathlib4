@@ -180,7 +180,7 @@ theorem HasLineDerivWithinAt.congr_mono (h : HasLineDerivWithinAt 𝕜 f f' s x 
 
 theorem HasLineDerivWithinAt.congr (h : HasLineDerivWithinAt 𝕜 f f' s x v) (hs : EqOn f₁ f s)
     (hx : f₁ x = f x) : HasLineDerivWithinAt 𝕜 f₁ f' s x v :=
-  h.congr_mono hs hx (Subset.refl _)
+  h.congr_mono hs hx (Subset.rfl)
 
 theorem HasLineDerivWithinAt.congr' (h : HasLineDerivWithinAt 𝕜 f f' s x v)
     (hs : EqOn f₁ f s) (hx : x ∈ s) :
@@ -195,7 +195,7 @@ theorem LineDifferentiableWithinAt.congr_mono (h : LineDifferentiableWithinAt �
 theorem LineDifferentiableWithinAt.congr (h : LineDifferentiableWithinAt 𝕜 f s x v)
     (ht : ∀ x ∈ s, f₁ x = f x) (hx : f₁ x = f x) :
     LineDifferentiableWithinAt 𝕜 f₁ s x v :=
-  LineDifferentiableWithinAt.congr_mono h ht hx (Subset.refl _)
+  LineDifferentiableWithinAt.congr_mono h ht hx (Subset.rfl)
 
 theorem lineDerivWithin_congr (hs : EqOn f₁ f s) (hx : f₁ x = f x) :
     lineDerivWithin 𝕜 f₁ s x v = lineDerivWithin 𝕜 f s x v :=

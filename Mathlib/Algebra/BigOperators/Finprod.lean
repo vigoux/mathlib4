@@ -352,7 +352,7 @@ theorem finprod_eq_finset_prod_of_mulSupport_subset (f : α → M) {s : Finset �
 theorem finprod_def (f : α → M) [Decidable (mulSupport f).Finite] :
     ∏ᶠ i : α, f i = if h : (mulSupport f).Finite then ∏ i ∈ h.toFinset, f i else 1 := by
   split_ifs with h
-  · exact finprod_eq_prod_of_mulSupport_toFinset_subset _ h (Finset.Subset.refl _)
+  · exact finprod_eq_prod_of_mulSupport_toFinset_subset _ h Finset.Subset.rfl
   · rw [finprod, dif_neg]
     rw [mulSupport_comp_eq_preimage]
     exact mt (fun hf => hf.of_preimage Equiv.plift.surjective) h
@@ -752,7 +752,7 @@ theorem finprod_mem_insert_one (h : f a = 1) : ∏ᶠ i ∈ insert a s, f i = �
 divides `finprod f`.  -/
 theorem finprod_mem_dvd {f : α → N} (a : α) (hf : (mulSupport f).Finite) : f a ∣ finprod f := by
   by_cases ha : a ∈ mulSupport f
-  · rw [finprod_eq_prod_of_mulSupport_toFinset_subset f hf (Set.Subset.refl _)]
+  · rw [finprod_eq_prod_of_mulSupport_toFinset_subset f hf Set.Subset.rfl]
     exact Finset.dvd_prod_of_mem f ((Finite.mem_toFinset hf).mpr ha)
   · rw [nmem_mulSupport.mp ha]
     exact one_dvd (finprod f)

@@ -99,7 +99,7 @@ instance (priority := 100) BaireSpace.of_pseudoEMetricSpace_completeSpace : Bair
   have I : ∀ n, ∀ m ≥ n, closedBall (c m) (r m) ⊆ closedBall (c n) (r n) := by
     intro n
     refine Nat.le_induction ?_ fun m _ h => ?_
-    · exact Subset.refl _
+    · exact Subset.rfl
     · exact Subset.trans (incl m) (Subset.trans inter_subset_left h)
   have yball : ∀ n, y ∈ closedBall (c n) (r n) := by
     intro n

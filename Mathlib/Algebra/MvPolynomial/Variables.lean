@@ -121,7 +121,7 @@ theorem vars_pow (φ : MvPolynomial σ R) (n : ℕ) : (φ ^ n).vars ⊆ φ.vars 
   · simp
   · rw [pow_succ']
     apply Finset.Subset.trans (vars_mul _ _)
-    exact Finset.union_subset (Finset.Subset.refl _) ih
+    exact Finset.union_subset Finset.Subset.rfl ih
 
 /-- The variables of the product of a family of polynomials
 are a subset of the union of the sets of variables of each polynomial.
@@ -134,7 +134,7 @@ theorem vars_prod {ι : Type*} [DecidableEq σ] {s : Finset ι} (f : ι → MvPo
   | insert hs hsub =>
     simp only [hs, Finset.biUnion_insert, Finset.prod_insert, not_false_iff]
     apply Finset.Subset.trans (vars_mul _ _)
-    exact Finset.union_subset_union (Finset.Subset.refl _) hsub
+    exact Finset.union_subset_union Finset.Subset.rfl hsub
 
 section IsDomain
 
@@ -165,7 +165,7 @@ theorem vars_sum_subset [DecidableEq σ] :
   | insert has hsum =>
     rw [Finset.biUnion_insert, Finset.sum_insert has]
     refine Finset.Subset.trans
-      (vars_add_subset _ _) (Finset.union_subset_union (Finset.Subset.refl _) ?_)
+      (vars_add_subset _ _) (Finset.union_subset_union Finset.Subset.rfl ?_)
     assumption
 
 theorem vars_sum_of_disjoint [DecidableEq σ] (h : Pairwise <| (Disjoint on fun i => (φ i).vars)) :

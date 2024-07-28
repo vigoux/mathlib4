@@ -287,7 +287,7 @@ theorem support_single_ne_zero (a : α) (hb : b ≠ 0) : (single a b).support = 
   if_neg hb
 
 theorem support_single_subset : (single a b).support ⊆ {a} := by
-  classical show ite _ _ _ ⊆ _; split_ifs <;> [exact empty_subset _; exact Subset.refl _]
+  classical show ite _ _ _ ⊆ _; split_ifs <;> [exact empty_subset _; exact Subset.rfl]
 
 theorem single_apply_mem (x) : single a b x ∈ ({0, b} : Set M) := by
   rcases em (a = x) with (rfl | hx) <;> [simp; simp [single_eq_of_ne hx]]

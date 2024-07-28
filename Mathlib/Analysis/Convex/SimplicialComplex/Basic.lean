@@ -189,7 +189,7 @@ theorem not_facet_iff_subface (hs : s ∈ K.faces) : s ∉ K.facets ↔ ∃ t, t
   · rintro ⟨t, ht⟩ ⟨hs, hs'⟩
     have := hs' ht.1 ht.2.1
     rw [this] at ht
-    exact ht.2.2 (Subset.refl t)
+    exact ht.2.2 Subset.rfl
 
 /-!
 ### The semilattice of simplicial complexes

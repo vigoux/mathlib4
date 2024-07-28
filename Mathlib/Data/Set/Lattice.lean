@@ -1330,7 +1330,7 @@ theorem surjOn_iUnion {s : Set α} {t : ι → Set β} {f : α → β} (H : ∀ 
 
 theorem surjOn_iUnion_iUnion {s : ι → Set α} {t : ι → Set β} {f : α → β}
     (H : ∀ i, SurjOn f (s i) (t i)) : SurjOn f (⋃ i, s i) (⋃ i, t i) :=
-  surjOn_iUnion fun i => (H i).mono (subset_iUnion _ _) (Subset.refl _)
+  surjOn_iUnion fun i => (H i).mono (subset_iUnion _ _) (Subset.rfl)
 
 /- ./././Mathport/Syntax/Translate/Expr.lean:107:6: warning: expanding binder group (i j) -/
 theorem surjOn_iUnion₂ {s : Set α} {t : ∀ i, κ i → Set β} {f : α → β}
@@ -1351,7 +1351,7 @@ theorem surjOn_iInter [Nonempty ι] {s : ι → Set α} {t : Set β} {f : α →
 
 theorem surjOn_iInter_iInter [Nonempty ι] {s : ι → Set α} {t : ι → Set β} {f : α → β}
     (H : ∀ i, SurjOn f (s i) (t i)) (Hinj : InjOn f (⋃ i, s i)) : SurjOn f (⋂ i, s i) (⋂ i, t i) :=
-  surjOn_iInter (fun i => (H i).mono (Subset.refl _) (iInter_subset _ _)) Hinj
+  surjOn_iInter (fun i => (H i).mono (Subset.rfl) (iInter_subset _ _)) Hinj
 
 /-! ### `BijOn` -/
 

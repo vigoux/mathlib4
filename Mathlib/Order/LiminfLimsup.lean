@@ -58,7 +58,7 @@ variable {r : α → α → Prop} {f g : Filter α}
 /-- `f` is eventually bounded if and only if, there exists an admissible set on which it is
 bounded. -/
 theorem isBounded_iff : f.IsBounded r ↔ ∃ s ∈ f.sets, ∃ b, s ⊆ { x | r x b } :=
-  Iff.intro (fun ⟨b, hb⟩ => ⟨{ a | r a b }, hb, b, Subset.refl _⟩) fun ⟨_, hs, b, hb⟩ =>
+  Iff.intro (fun ⟨b, hb⟩ => ⟨{ a | r a b }, hb, b, Subset.rfl⟩) fun ⟨_, hs, b, hb⟩ =>
     ⟨b, mem_of_superset hs hb⟩
 
 /-- A bounded function `u` is in particular eventually bounded. -/

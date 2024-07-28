@@ -474,7 +474,7 @@ theorem linearIndependent_of_finite (s : Set M)
     (H : ∀ t ⊆ s, Set.Finite t → LinearIndependent R (fun x => x : t → M)) :
     LinearIndependent R (fun x => x : s → M) :=
   linearIndependent_subtype.2 fun l hl =>
-    linearIndependent_subtype.1 (H _ hl (Finset.finite_toSet _)) l (Subset.refl _)
+    linearIndependent_subtype.1 (H _ hl (Finset.finite_toSet _)) l (Subset.rfl)
 
 theorem linearIndependent_iUnion_of_directed {η : Type*} {s : η → Set M} (hs : Directed (· ⊆ ·) s)
     (h : ∀ i, LinearIndependent R (fun x => x : s i → M)) :
@@ -928,7 +928,7 @@ theorem exists_maximal_independent' (s : ι → M) :
     intro f hsupport hsum
     rcases eq_empty_or_nonempty c with (rfl | hn)
     · simpa using hsupport
-    haveI : IsRefl X r := ⟨fun _ => Set.Subset.refl _⟩
+    haveI : IsRefl X r := ⟨fun _ => Set.Subset.rfl⟩
     obtain ⟨I, _I_mem, hI⟩ : ∃ I ∈ c, (f.support : Set ι) ⊆ I :=
       hc.directedOn.exists_mem_subset_of_finset_subset_biUnion hn hsupport
     exact linearIndependent_comp_subtype.mp I.2 f hI hsum
@@ -1436,7 +1436,7 @@ theorem exists_of_linearIndependent_of_finite_span {t : Finset V}
           rw [span_insert_eq_span hb₁] at hb₃; simpa using hb₃
         let ⟨u, hust, hsu, eq⟩ := ih _ (by simp [insert_subset_iff, hb₂s, hs']) hst this
         -- Porting note: `hb₂t'` → `Finset.card_insert_of_not_mem hb₂t'`
-        ⟨u, Subset.trans hust <| union_subset_union (Subset.refl _) (by simp [subset_insert]), hsu,
+        ⟨u, Subset.trans hust <| union_subset_union (Subset.rfl) (by simp [subset_insert]), hsu,
           by simp [eq, Finset.card_insert_of_not_mem hb₂t', hb₁t, hb₁s']⟩
   have eq : ((t.filter fun x => x ∈ s) ∪ t.filter fun x => x ∉ s) = t := by
     ext1 x

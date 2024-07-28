@@ -255,31 +255,31 @@ theorem map_coe_atBot_of_Ioo_subset (ha : s ⊆ Ioi a) (hs : ∀ b' > a, ∃ b >
 the right endpoint in the ambient order. -/
 theorem comap_coe_Ioo_nhdsWithin_Iio (a b : α) : comap ((↑) : Ioo a b → α) (𝓝[<] b) = atTop :=
   comap_coe_nhdsWithin_Iio_of_Ioo_subset Ioo_subset_Iio_self fun h =>
-    ⟨a, nonempty_Ioo.1 h, Subset.refl _⟩
+    ⟨a, nonempty_Ioo.1 h, Subset.rfl⟩
 
 /-- The `atBot` filter for an open interval `Ioo a b` comes from the right-neighbourhoods filter at
 the left endpoint in the ambient order. -/
 theorem comap_coe_Ioo_nhdsWithin_Ioi (a b : α) : comap ((↑) : Ioo a b → α) (𝓝[>] a) = atBot :=
   comap_coe_nhdsWithin_Ioi_of_Ioo_subset Ioo_subset_Ioi_self fun h =>
-    ⟨b, nonempty_Ioo.1 h, Subset.refl _⟩
+    ⟨b, nonempty_Ioo.1 h, Subset.rfl⟩
 
 theorem comap_coe_Ioi_nhdsWithin_Ioi (a : α) : comap ((↑) : Ioi a → α) (𝓝[>] a) = atBot :=
-  comap_coe_nhdsWithin_Ioi_of_Ioo_subset (Subset.refl _) fun ⟨x, hx⟩ => ⟨x, hx, Ioo_subset_Ioi_self⟩
+  comap_coe_nhdsWithin_Ioi_of_Ioo_subset (Subset.rfl) fun ⟨x, hx⟩ => ⟨x, hx, Ioo_subset_Ioi_self⟩
 
 theorem comap_coe_Iio_nhdsWithin_Iio (a : α) : comap ((↑) : Iio a → α) (𝓝[<] a) = atTop :=
   comap_coe_Ioi_nhdsWithin_Ioi (α := αᵒᵈ) a
 
 @[simp]
 theorem map_coe_Ioo_atTop {a b : α} (h : a < b) : map ((↑) : Ioo a b → α) atTop = 𝓝[<] b :=
-  map_coe_atTop_of_Ioo_subset Ioo_subset_Iio_self fun _ _ => ⟨_, h, Subset.refl _⟩
+  map_coe_atTop_of_Ioo_subset Ioo_subset_Iio_self fun _ _ => ⟨_, h, Subset.rfl⟩
 
 @[simp]
 theorem map_coe_Ioo_atBot {a b : α} (h : a < b) : map ((↑) : Ioo a b → α) atBot = 𝓝[>] a :=
-  map_coe_atBot_of_Ioo_subset Ioo_subset_Ioi_self fun _ _ => ⟨_, h, Subset.refl _⟩
+  map_coe_atBot_of_Ioo_subset Ioo_subset_Ioi_self fun _ _ => ⟨_, h, Subset.rfl⟩
 
 @[simp]
 theorem map_coe_Ioi_atBot (a : α) : map ((↑) : Ioi a → α) atBot = 𝓝[>] a :=
-  map_coe_atBot_of_Ioo_subset (Subset.refl _) fun b hb => ⟨b, hb, Ioo_subset_Ioi_self⟩
+  map_coe_atBot_of_Ioo_subset (Subset.rfl) fun b hb => ⟨b, hb, Ioo_subset_Ioi_self⟩
 
 @[simp]
 theorem map_coe_Iio_atTop (a : α) : map ((↑) : Iio a → α) atTop = 𝓝[<] a :=

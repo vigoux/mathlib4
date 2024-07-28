@@ -226,7 +226,7 @@ theorem interior_maximal (h₁ : t ⊆ s) (h₂ : IsOpen t) : t ⊆ interior s :
   subset_sUnion_of_mem ⟨h₂, h₁⟩
 
 theorem IsOpen.interior_eq (h : IsOpen s) : interior s = s :=
-  interior_subset.antisymm (interior_maximal (Subset.refl s) h)
+  interior_subset.antisymm (interior_maximal Subset.rfl h)
 
 theorem interior_eq_iff_isOpen : interior s = s ↔ IsOpen s :=
   ⟨fun h => h ▸ isOpen_interior, IsOpen.interior_eq⟩
@@ -362,10 +362,10 @@ theorem Disjoint.closure_right (hd : Disjoint s t) (hs : IsOpen s) :
   (hd.symm.closure_left hs).symm
 
 theorem IsClosed.closure_eq (h : IsClosed s) : closure s = s :=
-  Subset.antisymm (closure_minimal (Subset.refl s) h) subset_closure
+  Subset.antisymm (closure_minimal Subset.rfl h) subset_closure
 
 theorem IsClosed.closure_subset (hs : IsClosed s) : closure s ⊆ s :=
-  closure_minimal (Subset.refl _) hs
+  closure_minimal (Subset.rfl) hs
 
 theorem IsClosed.closure_subset_iff (h₁ : IsClosed t) : closure s ⊆ t ↔ s ⊆ t :=
   ⟨Subset.trans subset_closure, fun h => closure_minimal h h₁⟩
@@ -742,7 +742,7 @@ theorem Filter.Eventually.self_of_nhds {p : X → Prop} (h : ∀ᶠ y in 𝓝 x,
   mem_of_mem_nhds h
 
 theorem IsOpen.mem_nhds (hs : IsOpen s) (hx : x ∈ s) : s ∈ 𝓝 x :=
-  mem_nhds_iff.2 ⟨s, Subset.refl _, hs, hx⟩
+  mem_nhds_iff.2 ⟨s, Subset.rfl, hs, hx⟩
 
 protected theorem IsOpen.mem_nhds_iff (hs : IsOpen s) : s ∈ 𝓝 x ↔ x ∈ s :=
   ⟨mem_of_mem_nhds, fun hx => mem_nhds_iff.2 ⟨s, Subset.rfl, hs, hx⟩⟩
@@ -1234,7 +1234,7 @@ theorem closure_diff : closure s \ closure t ⊆ closure (s \ t) :=
     closure s \ closure t = (closure t)ᶜ ∩ closure s := by simp only [diff_eq, inter_comm]
     _ ⊆ closure ((closure t)ᶜ ∩ s) := (isOpen_compl_iff.mpr <| isClosed_closure).inter_closure
     _ = closure (s \ closure t) := by simp only [diff_eq, inter_comm]
-    _ ⊆ closure (s \ t) := closure_mono <| diff_subset_diff (Subset.refl s) subset_closure
+    _ ⊆ closure (s \ t) := closure_mono <| diff_subset_diff Subset.rfl subset_closure
 
 theorem Filter.Frequently.mem_of_closed (h : ∃ᶠ x in 𝓝 x, x ∈ s)
     (hs : IsClosed s) : x ∈ s :=

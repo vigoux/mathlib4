@@ -271,7 +271,7 @@ theorem support_finset_sum [DecidableEq β] [AddCommMonoid M] {s : Finset α} {f
   induction' s using Finset.cons_induction_on with a s ha ih
   · rfl
   · rw [Finset.sum_cons, Finset.sup_cons]
-    exact support_add.trans (Finset.union_subset_union (Finset.Subset.refl _) ih)
+    exact support_add.trans (Finset.union_subset_union Finset.Subset.rfl ih)
 
 @[simp]
 theorem sum_zero [Zero M] [AddCommMonoid N] {f : α →₀ M} : (f.sum fun _ _ => (0 : N)) = 0 :=

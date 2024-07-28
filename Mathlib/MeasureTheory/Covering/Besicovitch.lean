@@ -617,7 +617,7 @@ theorem exist_finset_disjoint_balls_large_measure (μ : Measure α) [IsFiniteMea
   -- are the same, this does not spoil the estimates
   · suffices H : μ (o \ ⋃ x ∈ w, closedBall (↑x) (r ↑x)) ≤ N / (N + 1) * μ s by
       rw [Finset.set_biUnion_finset_image]
-      exact le_trans (measure_mono (diff_subset_diff so (Subset.refl _))) H
+      exact le_trans (measure_mono (diff_subset_diff so (Subset.rfl))) H
     rw [← diff_inter_self_eq_diff,
       measure_diff_le_iff_le_add _ inter_subset_right (measure_lt_top μ _).ne]
     swap

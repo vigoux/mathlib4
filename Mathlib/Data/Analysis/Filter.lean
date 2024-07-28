@@ -207,7 +207,7 @@ protected def comap (m : α → β) {f : Filter β} (F : f.Realizer) : (comap m 
       inf_le_right := fun _ _ ↦ preimage_mono (F.F.inf_le_right _ _) },
     filter_eq <| Set.ext fun _ ↦ by
       cases F; subst f
-      exact ⟨fun ⟨s, h⟩ ↦ ⟨_, ⟨s, Subset.refl _⟩, h⟩,
+      exact ⟨fun ⟨s, h⟩ ↦ ⟨_, ⟨s, Subset.rfl⟩, h⟩,
         fun ⟨_, ⟨s, h⟩, h₂⟩ ↦ ⟨s, Subset.trans (preimage_mono h) h₂⟩⟩⟩
 
 /-- Construct a realizer for the sup of two filters -/
@@ -271,7 +271,7 @@ protected def bind {f : Filter α} {m : α → Filter β} (F : f.Realizer) (G : 
       simp only [CFilter.toFilter, iUnion_subset_iff, Sigma.exists, Filter.mem_sets, mem_bind]
       exact
         ⟨fun ⟨s, f, h⟩ ↦
-          ⟨F s, ⟨s, Subset.refl _⟩, fun i H ↦ (G i).mem_sets.2 ⟨f i H, fun _ h' ↦ h i H h'⟩⟩,
+          ⟨F s, ⟨s, Subset.rfl⟩, fun i H ↦ (G i).mem_sets.2 ⟨f i H, fun _ h' ↦ h i H h'⟩⟩,
           fun ⟨_, ⟨s, h⟩, f⟩ ↦
           let ⟨f', h'⟩ := Classical.axiom_of_choice fun i : F s ↦ (G i).mem_sets.1 (f i (h i.2))
           ⟨s, fun i h ↦ f' ⟨i, h⟩, fun _ H _ m ↦ h' ⟨_, H⟩ m⟩⟩⟩
@@ -291,7 +291,7 @@ protected def prod {f g : Filter α} (F : f.Realizer) (G : g.Realizer) : (f.prod
 
 theorem le_iff {f g : Filter α} (F : f.Realizer) (G : g.Realizer) :
     f ≤ g ↔ ∀ b : G.σ, ∃ a : F.σ, F.F a ≤ G.F b :=
-  ⟨fun H t ↦ F.mem_sets.1 (H (G.mem_sets.2 ⟨t, Subset.refl _⟩)), fun H _ h ↦
+  ⟨fun H t ↦ F.mem_sets.1 (H (G.mem_sets.2 ⟨t, Subset.rfl⟩)), fun H _ h ↦
     F.mem_sets.2 <|
       let ⟨s, h₁⟩ := G.mem_sets.1 h
       let ⟨t, h₂⟩ := H s

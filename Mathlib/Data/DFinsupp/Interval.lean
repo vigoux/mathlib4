@@ -132,7 +132,7 @@ def pi (f : Π₀ i, Finset (α i)) : Finset (Π₀ i, α i) := f.support.dfinsu
 
 @[simp]
 theorem mem_pi {f : Π₀ i, Finset (α i)} {g : Π₀ i, α i} : g ∈ f.pi ↔ ∀ i, g i ∈ f i :=
-  mem_dfinsupp_iff_of_support_subset <| Subset.refl _
+  mem_dfinsupp_iff_of_support_subset <| Subset.rfl
 
 @[simp]
 theorem card_pi (f : Π₀ i, Finset (α i)) : f.pi.card = f.prod fun i => (f i).card := by

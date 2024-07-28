@@ -306,13 +306,13 @@ theorem ssubset_def : s ⊂ t ↔ s ⊆ t ∧ ¬t ⊆ s :=
   Iff.rfl
 
 theorem Subset.refl (s : Finset α) : s ⊆ s :=
-  Multiset.Subset.refl _
+  Multiset.Subset.rfl
 
 protected theorem Subset.rfl {s : Finset α} : s ⊆ s :=
-  Subset.refl _
+  Subset.rfl
 
 protected theorem subset_of_eq {s t : Finset α} (h : s = t) : s ⊆ t :=
-  h ▸ Subset.refl _
+  h ▸ Subset.rfl
 
 theorem Subset.trans {s₁ s₂ s₃ : Finset α} : s₁ ⊆ s₂ → s₂ ⊆ s₃ → s₁ ⊆ s₃ :=
   Multiset.Subset.trans
@@ -1089,7 +1089,7 @@ theorem induction_on' {α : Type*} {p : Finset α → Prop} [DecidableEq α] (S 
     (fun _ _ has hqs hs =>
       let ⟨hS, sS⟩ := Finset.insert_subset_iff.1 hs
       h₂ hS sS has (hqs sS))
-    (Finset.Subset.refl S)
+    Finset.Subset.rfl
 
 /-- To prove a proposition about a nonempty `s : Finset α`, it suffices to show it holds for all
 singletons and that if it holds for nonempty `t : Finset α`, then it also holds for the `Finset`
@@ -1882,7 +1882,7 @@ lemma cons_sdiff_cons (hab : a ≠ b) (ha hb) : s.cons a ha \ s.cons b hb = {a} 
   rw [cons_eq_insert, cons_eq_insert, insert_sdiff_insert' hab ha]
 
 theorem sdiff_insert_of_not_mem {x : α} (h : x ∉ s) (t : Finset α) : s \ insert x t = s \ t := by
-  refine Subset.antisymm (sdiff_subset_sdiff (Subset.refl _) (subset_insert _ _)) fun y hy => ?_
+  refine Subset.antisymm (sdiff_subset_sdiff (Subset.rfl) (subset_insert _ _)) fun y hy => ?_
   simp only [mem_sdiff, mem_insert, not_or] at hy ⊢
   exact ⟨hy.1, fun hxy => h <| hxy ▸ hy.1, hy.2⟩
 

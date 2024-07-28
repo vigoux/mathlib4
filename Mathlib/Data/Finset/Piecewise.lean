@@ -82,7 +82,7 @@ lemma piecewise_piecewise_of_subset_left {s t : Finset ι} [∀ i, Decidable (i 
 @[simp]
 lemma piecewise_idem_left (f₁ f₂ g : ∀ a, π a) :
     s.piecewise (s.piecewise f₁ f₂) g = s.piecewise f₁ g :=
-  piecewise_piecewise_of_subset_left (Subset.refl _) _ _ _
+  piecewise_piecewise_of_subset_left (Subset.rfl) _ _ _
 
 lemma piecewise_piecewise_of_subset_right {s t : Finset ι} [∀ i, Decidable (i ∈ s)]
     [∀ i, Decidable (i ∈ t)] (h : t ⊆ s) (f g₁ g₂ : ∀ a, π a) :
@@ -92,7 +92,7 @@ lemma piecewise_piecewise_of_subset_right {s t : Finset ι} [∀ i, Decidable (i
 @[simp]
 lemma piecewise_idem_right (f g₁ g₂ : ∀ a, π a) :
     s.piecewise f (s.piecewise g₁ g₂) = s.piecewise f g₂ :=
-  piecewise_piecewise_of_subset_right (Subset.refl _) f g₁ g₂
+  piecewise_piecewise_of_subset_right (Subset.rfl) f g₁ g₂
 
 lemma update_eq_piecewise {β : Type*} [DecidableEq ι] (f : ι → β) (i : ι) (v : β) :
     update f i v = piecewise (singleton i) (fun _ => v) f :=

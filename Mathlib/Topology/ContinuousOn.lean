@@ -743,7 +743,7 @@ theorem ContinuousOn.congr_mono {f g : α → β} {s s₁ : Set α} (h : Continu
 
 theorem ContinuousOn.congr {f g : α → β} {s : Set α} (h : ContinuousOn f s) (h' : EqOn g f s) :
     ContinuousOn g s :=
-  h.congr_mono h' (Subset.refl _)
+  h.congr_mono h' (Subset.rfl)
 
 theorem continuousOn_congr {f g : α → β} {s : Set α} (h' : EqOn g f s) :
     ContinuousOn g s ↔ ContinuousOn f s :=
@@ -934,7 +934,7 @@ theorem ContinuousOn.preimage_interior_subset_interior_preimage {f : α → β} 
     (hf : ContinuousOn f s) (hs : IsOpen s) : s ∩ f ⁻¹' interior t ⊆ s ∩ interior (f ⁻¹' t) :=
   calc
     s ∩ f ⁻¹' interior t ⊆ interior (s ∩ f ⁻¹' t) :=
-      interior_maximal (inter_subset_inter (Subset.refl _) (preimage_mono interior_subset))
+      interior_maximal (inter_subset_inter (Subset.rfl) (preimage_mono interior_subset))
         (hf.isOpen_inter_preimage hs isOpen_interior)
     _ = s ∩ interior (f ⁻¹' t) := by rw [interior_inter, hs.interior_eq]
 
