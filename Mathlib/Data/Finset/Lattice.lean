@@ -247,6 +247,10 @@ theorem sup_mem (s : Set α) (w₁ : ⊥ ∈ s) (w₂ : ∀ᵉ (x ∈ s) (y ∈ 
 protected theorem sup_eq_bot_iff (f : β → α) (S : Finset β) : S.sup f = ⊥ ↔ ∀ s ∈ S, f s = ⊥ := by
   classical induction' S using Finset.induction with a S _ hi <;> simp [*]
 
+lemma sup_eq_bot_of_isEmpty [IsEmpty β] (s : Finset β) (f : β → α) : s.sup f = ⊥ := by
+  rw [Finset.sup_eq_bot_iff]
+  exact fun b _ => False.elim <| IsEmpty.false b
+
 end Sup
 
 theorem sup_eq_iSup [CompleteLattice β] (s : Finset α) (f : α → β) : s.sup f = ⨆ a ∈ s, f a :=
