@@ -154,7 +154,7 @@ theorem ofList_subset {l₁ l₂ : List (Lists α)} (h : l₁ ⊆ l₂) :
 
 @[refl]
 theorem Subset.refl {l : Lists' α true} : l ⊆ l := by
-  rw [← Lists'.of_toList l]; exact ofList_subset (List.Subset.rfl)
+  rw [← Lists'.of_toList l]; exact ofList_subset (List.Subset.refl _)
 
 theorem subset_nil {l : Lists' α true} : l ⊆ Lists'.nil → l = Lists'.nil := by
   rw [← of_toList l]

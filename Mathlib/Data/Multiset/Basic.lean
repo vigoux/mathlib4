@@ -395,7 +395,7 @@ theorem induction_on' {p : Multiset α → Prop} (S : Multiset α) (h₁ : p 0)
     (fun _ _ hps hs =>
       let ⟨hS, sS⟩ := cons_subset.1 hs
       h₂ hS sS (hps sS))
-    Subset.rfl
+    (Subset.refl S)
 
 end Subset
 
