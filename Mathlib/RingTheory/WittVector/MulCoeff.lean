@@ -75,7 +75,7 @@ theorem wittPolyProdRemainder_vars (n : ℕ) :
     apply empty_subset
   · apply Subset.trans (vars_pow _ _)
     apply Subset.trans (wittMul_vars _ _)
-    apply product_subset_product (Subset.rfl)
+    apply product_subset_product Subset.rfl
     simp only [mem_range, range_subset] at hx ⊢
     exact hx
 

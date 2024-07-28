@@ -1439,7 +1439,7 @@ theorem map_val_atTop_of_Ici_subset [SemilatticeSup α] {a : α} {s : Set α} (h
 /-- The image of the filter `atTop` on `Ici a` under the coercion equals `atTop`. -/
 @[simp]
 theorem map_val_Ici_atTop [SemilatticeSup α] (a : α) : map ((↑) : Ici a → α) atTop = atTop :=
-  map_val_atTop_of_Ici_subset (Subset.rfl)
+  map_val_atTop_of_Ici_subset Subset.rfl
 
 /-- The image of the filter `atTop` on `Ioi a` under the coercion equals `atTop`. -/
 @[simp]

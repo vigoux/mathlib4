@@ -162,7 +162,7 @@ theorem IsLindelof.elim_nhds_subcover' (hs : IsLindelof s) (U : ∀ x ∈ s, Set
   apply iUnion₂_subset
   intro i hi
   apply Subset.trans interior_subset
-  exact subset_iUnion_of_subset i (subset_iUnion_of_subset hi (Subset.rfl))
+  exact subset_iUnion_of_subset i (subset_iUnion_of_subset hi Subset.rfl)
 
 theorem IsLindelof.elim_nhds_subcover (hs : IsLindelof s) (U : X → Set X)
     (hU : ∀ x ∈ s, U x ∈ 𝓝 x) :

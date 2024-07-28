@@ -65,7 +65,7 @@ theorem UniqueMDiffWithinAt.mono_of_mem {s t : Set M} {x : M} (hs : UniqueMDiffW
 
 theorem UniqueMDiffWithinAt.mono (h : UniqueMDiffWithinAt I s x) (st : s ⊆ t) :
     UniqueMDiffWithinAt I t x :=
-  UniqueDiffWithinAt.mono h <| inter_subset_inter (preimage_mono st) (Subset.rfl)
+  UniqueDiffWithinAt.mono h <| inter_subset_inter (preimage_mono st) Subset.rfl
 
 theorem UniqueMDiffWithinAt.inter' (hs : UniqueMDiffWithinAt I s x) (ht : t ∈ 𝓝[s] x) :
     UniqueMDiffWithinAt I (s ∩ t) x :=
@@ -153,7 +153,7 @@ theorem mfderiv_zero_of_not_mdifferentiableAt (h : ¬MDifferentiableAt I I' f x)
 theorem HasMFDerivWithinAt.mono (h : HasMFDerivWithinAt I I' f t x f') (hst : s ⊆ t) :
     HasMFDerivWithinAt I I' f s x f' :=
   ⟨ContinuousWithinAt.mono h.1 hst,
-    HasFDerivWithinAt.mono h.2 (inter_subset_inter (preimage_mono hst) (Subset.rfl))⟩
+    HasFDerivWithinAt.mono h.2 (inter_subset_inter (preimage_mono hst) Subset.rfl)⟩
 
 theorem HasMFDerivAt.hasMFDerivWithinAt (h : HasMFDerivAt I I' f x f') :
     HasMFDerivWithinAt I I' f s x f' :=
@@ -509,7 +509,7 @@ theorem MDifferentiableWithinAt.congr_mono (h : MDifferentiableWithinAt I I' f s
 
 theorem MDifferentiableWithinAt.congr (h : MDifferentiableWithinAt I I' f s x)
     (ht : ∀ x ∈ s, f₁ x = f x) (hx : f₁ x = f x) : MDifferentiableWithinAt I I' f₁ s x :=
-  (HasMFDerivWithinAt.congr_mono h.hasMFDerivWithinAt ht hx (Subset.rfl)).mdifferentiableWithinAt
+  (HasMFDerivWithinAt.congr_mono h.hasMFDerivWithinAt ht hx Subset.rfl).mdifferentiableWithinAt
 
 theorem MDifferentiableOn.congr_mono (h : MDifferentiableOn I I' f s) (h' : ∀ x ∈ t, f₁ x = f x)
     (h₁ : t ⊆ s) : MDifferentiableOn I I' f₁ t := fun x hx =>

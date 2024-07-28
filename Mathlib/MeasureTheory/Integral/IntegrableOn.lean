@@ -104,7 +104,7 @@ theorem IntegrableOn.mono_set (h : IntegrableOn f t μ) (hst : s ⊆ t) : Integr
   h.mono hst le_rfl
 
 theorem IntegrableOn.mono_measure (h : IntegrableOn f s ν) (hμ : μ ≤ ν) : IntegrableOn f s μ :=
-  h.mono (Subset.rfl) hμ
+  h.mono Subset.rfl hμ
 
 theorem IntegrableOn.mono_set_ae (h : IntegrableOn f t μ) (hst : s ≤ᵐ[μ] t) : IntegrableOn f s μ :=
   h.integrable.mono_measure <| Measure.restrict_mono_ae hst

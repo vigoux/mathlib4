@@ -504,7 +504,7 @@ theorem HasDerivWithinAt.congr_mono (h : HasDerivWithinAt f f' s x) (ht : ∀ x 
 
 theorem HasDerivWithinAt.congr (h : HasDerivWithinAt f f' s x) (hs : ∀ x ∈ s, f₁ x = f x)
     (hx : f₁ x = f x) : HasDerivWithinAt f₁ f' s x :=
-  h.congr_mono hs hx (Subset.rfl)
+  h.congr_mono hs hx Subset.rfl
 
 theorem HasDerivWithinAt.congr_of_mem (h : HasDerivWithinAt f f' s x) (hs : ∀ x ∈ s, f₁ x = f x)
     (hx : x ∈ s) : HasDerivWithinAt f₁ f' s x :=

@@ -83,7 +83,7 @@ theorem span_eq_of_le (h₁ : s ⊆ p) (h₂ : p ≤ span R s) : span R s = p :=
   le_antisymm (span_le.2 h₁) h₂
 
 theorem span_eq : span R (p : Set M) = p :=
-  span_eq_of_le _ (Subset.rfl) subset_span
+  span_eq_of_le _ Subset.rfl subset_span
 
 theorem span_eq_span (hs : s ⊆ span R t) (ht : t ⊆ span R s) : span R s = span R t :=
   le_antisymm (span_le.2 hs) (span_le.2 ht)

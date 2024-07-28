@@ -770,8 +770,8 @@ theorem SurjOn.union (h₁ : SurjOn f s t₁) (h₂ : SurjOn f s t₂) : SurjOn 
 
 theorem SurjOn.union_union (h₁ : SurjOn f s₁ t₁) (h₂ : SurjOn f s₂ t₂) :
     SurjOn f (s₁ ∪ s₂) (t₁ ∪ t₂) :=
-  (h₁.mono subset_union_left (Subset.rfl)).union
-    (h₂.mono subset_union_right (Subset.rfl))
+  (h₁.mono subset_union_left Subset.rfl).union
+    (h₂.mono subset_union_right Subset.rfl)
 
 theorem SurjOn.inter_inter (h₁ : SurjOn f s₁ t₁) (h₂ : SurjOn f s₂ t₂) (h : InjOn f (s₁ ∪ s₂)) :
     SurjOn f (s₁ ∩ s₂) (t₁ ∩ t₂) := by
@@ -917,7 +917,7 @@ theorem BijOn.subset_range (h : BijOn f s t) : t ⊆ range f :=
   h.surjOn.subset_range
 
 theorem InjOn.bijOn_image (h : InjOn f s) : BijOn f s (f '' s) :=
-  BijOn.mk (mapsTo_image f s) h (Subset.rfl)
+  BijOn.mk (mapsTo_image f s) h Subset.rfl
 
 theorem BijOn.congr (h₁ : BijOn f₁ s t) (h : EqOn f₁ f₂ s) : BijOn f₂ s t :=
   BijOn.mk (h₁.mapsTo.congr h) (h₁.injOn.congr h) (h₁.surjOn.congr h)
@@ -1236,7 +1236,7 @@ theorem surjOn_iff_exists_bijOn_subset : SurjOn f s t ↔ ∃ s' ⊆ s, BijOn f 
       haveI : Nonempty α := ⟨Classical.choose (h.comap_nonempty ht)⟩
       exact ⟨_, h.mapsTo_invFunOn.image_subset, h.bijOn_subset⟩
   · rintro ⟨s', hs', hfs'⟩
-    exact hfs'.surjOn.mono hs' (Subset.rfl)
+    exact hfs'.surjOn.mono hs' Subset.rfl
 
 alias ⟨SurjOn.exists_bijOn_subset, _⟩ := Set.surjOn_iff_exists_bijOn_subset
 
@@ -1541,7 +1541,7 @@ theorem Injective.comp_injOn (hg : Injective g) (hf : s.InjOn f) : s.InjOn (g �
   hg.injOn.comp hf (mapsTo_univ _ _)
 
 theorem Surjective.surjOn (hf : Surjective f) (s : Set β) : SurjOn f univ s :=
-  (surjective_iff_surjOn_univ.1 hf).mono (Subset.rfl) (subset_univ _)
+  (surjective_iff_surjOn_univ.1 hf).mono Subset.rfl (subset_univ _)
 
 theorem LeftInverse.leftInvOn {g : β → α} (h : LeftInverse f g) (s : Set β) : LeftInvOn f g s :=
   fun x _ => h x

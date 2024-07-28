@@ -56,7 +56,7 @@ theorem induction_on_pi_of_choice (r : ∀ i, α i → Finset (α i) → Prop)
     clear hg
     rw [update_same, erase_insert hx'] at hr
     refine step _ _ _ hr (ihs (univ.sigma g) ?_ _ rfl)
-    rw [ssubset_iff_of_subset (sigma_mono (Subset.rfl) _)]
+    rw [ssubset_iff_of_subset (sigma_mono Subset.rfl _)]
     exacts [⟨⟨i, x⟩, mem_sigma.2 ⟨mem_univ _, by simp⟩, by simp [hx']⟩,
       (@le_update_iff _ _ _ _ g g i _).2 ⟨subset_insert _ _, fun _ _ ↦ le_rfl⟩]
 
