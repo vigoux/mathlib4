@@ -49,7 +49,7 @@ def atBot [Preorder α] : Filter α :=
   ⨅ a, 𝓟 (Iic a)
 
 theorem mem_atTop [Preorder α] (a : α) : { b : α | a ≤ b } ∈ @atTop α _ :=
-  mem_iInf_of_mem a Subset.rfl
+  mem_iInf_of_mem a <| Subset.refl _
 
 theorem Ici_mem_atTop [Preorder α] (a : α) : Ici a ∈ (atTop : Filter α) :=
   mem_atTop a
@@ -59,7 +59,7 @@ theorem Ioi_mem_atTop [Preorder α] [NoMaxOrder α] (x : α) : Ioi x ∈ (atTop 
   mem_of_superset (mem_atTop z) fun _ h => lt_of_lt_of_le hz h
 
 theorem mem_atBot [Preorder α] (a : α) : { b : α | b ≤ a } ∈ @atBot α _ :=
-  mem_iInf_of_mem a Subset.rfl
+  mem_iInf_of_mem a <| Subset.refl _
 
 theorem Iic_mem_atBot [Preorder α] (a : α) : Iic a ∈ (atBot : Filter α) :=
   mem_atBot a
