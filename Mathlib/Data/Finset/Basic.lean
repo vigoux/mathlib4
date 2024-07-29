@@ -309,7 +309,7 @@ theorem Subset.refl (s : Finset α) : s ⊆ s :=
   Multiset.Subset.refl _
 
 protected theorem Subset.rfl {s : Finset α} : s ⊆ s :=
-  Subset.rfl
+  Subset.refl _
 
 protected theorem subset_of_eq {s t : Finset α} (h : s = t) : s ⊆ t :=
   h ▸ Subset.rfl
