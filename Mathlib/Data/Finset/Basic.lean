@@ -306,7 +306,7 @@ theorem ssubset_def : s ⊂ t ↔ s ⊆ t ∧ ¬t ⊆ s :=
   Iff.rfl
 
 theorem Subset.refl (s : Finset α) : s ⊆ s :=
-  Multiset.Subset.rfl
+  Multiset.Subset.refl _
 
 protected theorem Subset.rfl {s : Finset α} : s ⊆ s :=
   Subset.rfl
