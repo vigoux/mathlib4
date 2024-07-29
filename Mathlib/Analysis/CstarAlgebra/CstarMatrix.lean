@@ -18,15 +18,15 @@ operator norm, and this norm makes `CstarMatrix n n A` a C⋆-algebra.
 ## Main declarations
 
 + `CstarMatrix m n A`: the type copy
-+ `instHilbertCstarModule`: the Hilbert C⋆-module instance
++ `CstarMatrix.instCstarRing`: square matrices with entries in a C⋆-algebra form a C⋆-algebra
 
 ## Implementation notes
 
 The norm on this type induces the product uniformity and bornology, but these are not defeq to
 `Pi.uniformSpace` and `Pi.instBornology`. Hence, we prove the equality to the Pi instances and
 replace the uniformity and bornology by the Pi ones when registering the
-`NormedAddCommGroup (CstarVec n A)` instance. See the docstring of the `TopologyAux` section below
-for more details.
+`NormedAddCommGroup (CstarMatrix m n A)` instance. See the docstring of the `TopologyAux` section
+below for more details.
 
 -/
 
