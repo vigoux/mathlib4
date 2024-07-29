@@ -1215,6 +1215,59 @@ lemma ge_iff_le_forall_real_lt (x y : EReal) : (∀ z : ℝ, z < y → z ≤ x) 
       exact not_le_of_lt (lt_add_one x) <| h (x + 1) (coe_lt_top (x + 1))
   | h_top => exact le_top
 
+/-- This lemma is superseded by `add_le_of_forall_lt_add_le`. -/
+private lemma add_le_of_forall_lt_add_top {a b : EReal} (h : ∀ c < ⊤, ∀ d < a, c + d ≤ b) :
+    ⊤ + a ≤ b := by
+  induction a with
+  | h_bot => exact add_bot ⊤ ▸ bot_le
+  | h_real a =>
+    rw [top_add_coe a]
+    refine (le_iff_le_forall_real_gt _ _).1 fun c b_c ↦ ?_
+    specialize h (c - a + 1) (coe_lt_top (c - a + 1)) (a - 1)
+    rw [← coe_one, ← coe_sub, ← coe_sub, ← coe_add, ← coe_add, add_add_sub_cancel, sub_add_cancel,
+      EReal.coe_lt_coe_iff] at h
+    exact (not_le_of_lt b_c (h (sub_one_lt a))).rec
+  | h_top =>
+    rw [top_add_top]
+    refine (le_iff_le_forall_real_gt _ _).1 fun c b_c ↦ ?_
+    specialize h c (coe_lt_top c) 0 zero_lt_top
+    rw [add_zero] at h
+    exact (not_le_of_lt b_c h).rec
+
+lemma add_le_of_forall_lt_add {a b c : EReal} (h : ∀ d < a, ∀ e < b, d + e ≤ c) :
+    a + b ≤ c := by
+  induction a with
+  | h_bot => exact bot_add b ▸ bot_le
+  | h_real a => induction b with
+    | h_bot => exact add_bot (a : EReal) ▸ bot_le
+    | h_real b =>
+      refine (ge_iff_le_forall_real_lt c (a+b)).1 fun d d_ab ↦ ?_
+      rw [← coe_add, EReal.coe_lt_coe_iff] at d_ab
+      rcases exists_between d_ab with ⟨e, e_d, e_ab⟩
+      have key₁ : (a + d - e : ℝ) < (a : EReal) := by
+        apply EReal.coe_lt_coe_iff.2
+        linarith
+      have key₂ : (e - a : ℝ) < (b : EReal) := by
+        apply EReal.coe_lt_coe_iff.2
+        linarith
+      apply le_of_eq_of_le _ (h (a + d - e) key₁ (e - a) key₂)
+      rw [← coe_add, ← coe_sub,  ← coe_sub, ← coe_add, sub_add_sub_cancel, add_sub_cancel_left]
+    | h_top =>
+      rw [add_comm (a : EReal) ⊤]
+      exact add_le_of_forall_lt_add_top fun d d_top e e_a ↦ (add_comm d e ▸ h e e_a d d_top)
+  | h_top => exact add_le_of_forall_lt_add_top h
+
+lemma le_add_of_forall_gt_add {a b c : EReal} (h₁ : a ≠ ⊥ ∨ b ≠ ⊤) (h₂ : a ≠ ⊤ ∨ b ≠ ⊥)
+    (h : ∀ d > a, ∀ e > b, c ≤ d + e) :
+    c ≤ a + b := by
+  rw [← neg_le_neg_iff, neg_add h₁ h₂]
+  refine add_le_of_forall_lt_add fun d d_a e e_b ↦ ?_
+  have h₃ : d ≠ ⊥ ∨ e ≠ ⊤ := Or.inr (ne_top_of_lt e_b)
+  have h₄ : d ≠ ⊤ ∨ e ≠ ⊥ := Or.inl (ne_top_of_lt d_a)
+  rw [← neg_neg d, neg_lt_iff_neg_lt, neg_neg a] at d_a
+  rw [← neg_neg e, neg_lt_iff_neg_lt, neg_neg b] at e_b
+  exact le_neg_of_le_neg <| neg_add h₃ h₄ ▸ h (- d) d_a (- e) e_b
+
 /-! ### Absolute value -/
 
 -- Porting note (#11215): TODO: use `Real.nnabs` for the case `(x : ℝ)`
