@@ -5,7 +5,7 @@ Author: Alice Laroche, Frédéric Dupuis, Jireh Loreaux
 -/
 
 import Mathlib.Tactic.PushNeg
-import Mathlib.Init.Order.Defs
+import Mathlib.Order.Defs
 
 private axiom test_sorry : ∀ {α}, α
 set_option autoImplicit true
