@@ -50,8 +50,6 @@ def ofMatrix : (Matrix m n A) ≃ CstarMatrix m n A := Equiv.refl _
 
 lemma ofMatrix_symm_apply {M : Matrix m n A} {i : m} : (ofMatrix.symm M) i = M i := rfl
 
-attribute [fun_prop] Continuous.matrix_mulVec
-
 @[ext]
 lemma ext {M₁ M₂ : CstarMatrix m n A} (h : ∀ i j, M₁ i j = M₂ i j) : M₁ = M₂ := Matrix.ext h
 
