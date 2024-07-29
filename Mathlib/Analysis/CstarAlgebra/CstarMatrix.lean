@@ -118,7 +118,7 @@ lemma toCLM_inner_right_eq_left [DecidableEq m] {M : CstarMatrix m n A} {v : Cst
   simp only [Matrix.dotProduct, NonUnitalAlgHom.coe_mk, ContinuousLinearMap.coe_mk',
     LinearMap.coe_mk, AddHom.coe_mk, Matrix.conjTranspose_apply]
   simp_rw [← CstarVec.finset_sum_fn]
-  rw [HilbertCstarModule.inner_sum_left (E := CstarVec n A)]
+  rw [CstarModule.inner_sum_left (E := CstarVec n A)]
   simp only [CstarVec.inner_eq_sum, CstarVec.ofFun_apply]
   conv_lhs =>
     change ∑ i, star (v i) * ((∑ k : n, fun j => M j k * w k) i)
@@ -148,7 +148,7 @@ lemma normedSpaceCore : NormedSpace.Core ℂ (CstarMatrix m n A) where
     rw [norm_eq_zero]
     exact toCLM_eq_zero_iff
 
-open HilbertCstarModule in
+open CstarModule in
 lemma norm_entry_le_norm [DecidableEq m] {M : CstarMatrix m n A} {i : m} {j : n} :
     ‖M i j‖ ≤ ‖M‖ := by
   let instNACG : NormedAddCommGroup (CstarMatrix m n A) := NormedAddCommGroup.ofCore normedSpaceCore
@@ -179,7 +179,7 @@ lemma norm_entry_le_norm [DecidableEq m] {M : CstarMatrix m n A} {i : m} {j : n}
     have h₂ : 0 < ‖M i j‖ ^ 3 := by positivity
     rwa [← mul_le_mul_left h₂]
 
-open HilbertCstarModule in
+open CstarModule in
 lemma norm_le_of_forall_inner_le {M : CstarMatrix m n A} {C : ℝ≥0}
     (h : ∀ v w, ‖⟪w, toCLM A M v⟫_A‖ ≤ C * ‖v‖ * ‖w‖) : ‖M‖ ≤ C := by
   let instNACG : NormedAddCommGroup (CstarMatrix m n A) := NormedAddCommGroup.ofCore normedSpaceCore
@@ -411,7 +411,7 @@ noncomputable instance instNonUnitalNormedRing : NonUnitalNormedRing (CstarMatri
   dist_eq _ _ := rfl
   norm_mul _ _ := CstarMatrix.norm_mul
 
-open ContinuousLinearMap HilbertCstarModule in
+open ContinuousLinearMap CstarModule in
 instance instCstarRing : CstarRing (CstarMatrix n n A) where
   norm_mul_self_le M := by
     have hmain : ‖M‖ ≤ √‖star M * M‖ := by
