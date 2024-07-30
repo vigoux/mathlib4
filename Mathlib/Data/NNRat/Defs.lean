@@ -56,7 +56,7 @@ theorem ext : (p : ℚ) = (q : ℚ) → p = q :=
 protected theorem coe_injective : Injective ((↑) : ℚ≥0 → ℚ) :=
   Subtype.coe_injective
 
--- We want to use this lemma earlier than the lemma simp can prove it with
+-- We want to use this lemma earlier than the lemma simp can prove it with, namely `NNRat.cast_inj`
 @[simp, norm_cast, nolint simpNF]
 theorem coe_inj : (p : ℚ) = q ↔ p = q :=
   Subtype.coe_inj
