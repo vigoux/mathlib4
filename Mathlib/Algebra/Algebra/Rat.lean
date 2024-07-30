@@ -106,7 +106,7 @@ instance instSMulCommClass' [SMulCommClass S R S] : SMulCommClass R ℚ S :=
 end DivisionRing
 
 @[deprecated Algebra.id.map_eq_id (since := "2024-07-30")]
-lemma algebraMap_rat_rat : algebraMap ℚ ℚ = RingHom.id ℚ := rfl
+lemma _root_.algebraMap_rat_rat : algebraMap ℚ ℚ = RingHom.id ℚ := rfl
 
 instance algebra_rat_subsingleton {R} [Semiring R] : Subsingleton (Algebra ℚ R) :=
   ⟨fun x y => Algebra.algebra_ext x y <| RingHom.congr_fun <| Subsingleton.elim _ _⟩
