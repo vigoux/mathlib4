@@ -71,4 +71,32 @@ lemma sInf_eq_zero : sInf s = 0 ↔ 0 ∈ s := by
 lemma sSup_eq_zero' : sSup s = 0 ↔ s = ∅ ∨ s = {0} :=
   sSup_eq_bot'
 
+lemma isup_add (ι : Type*) [Nonempty ι] (f : ι → ℕ∞) (n : ℕ∞) :
+    (⨆ x, f x) + n = (⨆ x, f x + n) := by
+  apply le_antisymm
+  · cases n; simp; next n =>
+    apply le_iSup_iff.mpr
+    intro m hm
+    cases m; simp; next m =>
+    have hnm : n ≤ m := by
+      obtain i : ι := Classical.ofNonempty
+      specialize hm i
+      revert hm
+      cases f i; simp; next i =>
+      intro h; norm_cast at h; omega
+    suffices (⨆ x, f x) ≤ ↑(m - n) by
+      revert this
+      cases (⨆ x, f x)
+      · simp only [top_le_iff, coe_ne_top, false_imp_iff]
+      · norm_cast; omega
+    apply iSup_le
+    intro i
+    specialize hm i
+    revert hm
+    cases f i <;> intro hm
+    · exfalso; simp at hm
+    · norm_cast at *; omega
+  · apply Monotone.le_map_iSup (f := (· + n))
+    exact Monotone.add_const (fun ⦃a b⦄ h ↦ h) n
+
 end ENat
