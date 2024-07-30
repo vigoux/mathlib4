@@ -5,7 +5,6 @@ Authors: Johannes Hölzl, Mario Carneiro
 -/
 import Mathlib.Algebra.GroupWithZero.Units.Lemmas
 import Mathlib.Data.Rat.Cast.Defs
-import Mathlib.Tactic.Positivity.Basic
 
 /-!
 # Casts of rational numbers into characteristic zero fields (or division rings).
@@ -45,7 +44,7 @@ lemma cast_ne_zero : (p : α) ≠ 0 ↔ p ≠ 0 := cast_eq_zero.ne
 
 variable (α) in
 /-- Coercion `ℚ → α` as a `RingHom`. -/
-def castHom : ℚ →+* α where
+@[reducible] def castHom : ℚ →+* α where
   toFun := (↑)
   map_one' := cast_one
   map_mul' := cast_mul
@@ -77,7 +76,7 @@ lemma cast_injective : Injective ((↑) : ℚ≥0 → α) := by
   rw [← p.num_div_den, ← q.num_div_den, div_eq_div_iff]
   norm_cast at hpq ⊢
   any_goals norm_cast
-  any_goals positivity
+  any_goals apply den_ne_zero
   exact Nat.cast_commute ..
 
 @[simp, norm_cast] lemma cast_inj : (p : α) = q ↔ p = q := cast_injective.eq_iff
@@ -93,7 +92,7 @@ lemma cast_ne_zero : (q : α) ≠ 0 ↔ q ≠ 0 := cast_eq_zero.not
 
 variable (α) in
 /-- Coercion `ℚ≥0 → α` as a `RingHom`. -/
-def castHom : ℚ≥0 →+* α where
+@[reducible] def castHom : ℚ≥0 →+* α where
   toFun := (↑)
   map_one' := cast_one
   map_mul' := cast_mul
