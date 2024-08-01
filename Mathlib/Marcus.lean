@@ -21,9 +21,9 @@ def equivFinRank : Fin (rank K) ≃ {w : InfinitePlace K // w ≠ w₀} := by
   refine Fintype.equivOfCardEq ?_
   rw [Fintype.card_subtype_compl, Fintype.card_ofSubsingleton, Fintype.card_fin, rank]
 
-def realToMixed : (InfinitePlace K → ℝ) →ₐ[ℝ] (E K) := AlgHom.prod
-    (Pi.algHom fun w ↦ Pi.evalAlgHom _ _ w.val)
-    (Pi.algHom fun w ↦ Complex.ofRealAm.comp  <| Pi.evalAlgHom _ _ w.val)
+def realToMixed : (InfinitePlace K → ℝ) →L[ℝ] (E K) := ContinuousLinearMap.prod
+  (ContinuousLinearMap.pi fun w ↦ ContinuousLinearMap.proj w.val)
+  (ContinuousLinearMap.pi fun w ↦ Complex.ofRealCLM.comp (ContinuousLinearMap.proj w.val))
 
 @[simp]
 theorem normAtPlace_realToMixed (w : InfinitePlace K) (x : InfinitePlace K → ℝ) :
@@ -36,6 +36,11 @@ theorem normAtPlace_realToMixed (w : InfinitePlace K) (x : InfinitePlace K → �
 theorem norm_realToMixed (x : InfinitePlace K → ℝ) :
     mixedEmbedding.norm (realToMixed x) = ∏ w, |x w| ^ w.mult :=
   Finset.prod_congr rfl fun w _ ↦ by simp
+
+theorem pos_norm_realToMixed {x : InfinitePlace K → ℝ} (hx : ∀ w, 0 < x w) :
+    0 < mixedEmbedding.norm (realToMixed x) := by
+  rw [norm_realToMixed]
+  exact Finset.prod_pos fun w _ ↦ pow_pos (abs_pos_of_pos (hx w)) _
 
 variable (K)
 
@@ -62,7 +67,7 @@ def mapToUnitsPow₀_aux :
     intro x _
     dsimp only
     ext w
-    rw [dif_neg w.prop, Real.log_exp,  mul_inv_cancel_left₀ mult_coe_ne_zero]
+    rw [dif_neg w.prop, Real.log_exp, mul_inv_cancel_left₀ mult_coe_ne_zero]
   right_inv' := by
     intro x hx
     ext w
@@ -129,7 +134,7 @@ theorem mapToUnitsPow₀_pos (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) (
   exact trivial
 
 theorem mapToUnitsPow₀_apply (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
-    mapToUnitsPow₀ K c = fun w ↦ ∏ i, w.val (fundSystem K (equivFinRank.symm i)) ^ (c i) := by
+    mapToUnitsPow₀ K c = fun w ↦ ∏ i, w (fundSystem K (equivFinRank.symm i)) ^ (c i) := by
   ext w
   simp_rw [mapToUnitsPow₀, PartialEquiv.coe_trans, Equiv.toPartialEquiv_apply,
     LinearEquiv.coe_toEquiv, mapToUnitsPow₀_aux, Function.comp_apply, Basis.equivFun_symm_apply,
@@ -140,19 +145,19 @@ theorem mapToUnitsPow₀_apply (c : {w : InfinitePlace K // w ≠ w₀} → ℝ)
     simp_rw [← Finset.mul_sum, sum_logEmbedding_component, ← mul_assoc, mul_comm _ (c _),
       mul_assoc (c _), hw, mul_neg, neg_mul, mul_neg, neg_neg, inv_mul_cancel mult_coe_ne_zero,
       one_mul]
-    conv_lhs =>
-      enter [2, i]
-      rw [← Real.log_rpow (pos_iff.mpr (by simp))]
-    conv_lhs =>
-      enter [2, i]
-      rw [Real.exp_log (by exact Real.rpow_pos_of_pos (pos_iff.mpr (by simp)) _)]
-    rfl
+    refine Finset.prod_congr rfl fun w _ ↦ ?_
+    rw [← Real.log_rpow (pos_iff.mpr (by simp)),
+      Real.exp_log (by exact Real.rpow_pos_of_pos (pos_iff.mpr (by simp)) _)]
   · rw [dif_neg hw, Real.exp_sum]
     congr with x
     rw [logEmbedding_component, ← mul_assoc, ← mul_assoc, mul_comm _ (c _), mul_assoc (c _),
       inv_mul_cancel mult_coe_ne_zero, mul_one, ← Real.log_rpow (pos_iff.mpr (by simp)),
       Real.exp_log (Real.rpow_pos_of_pos (pos_iff.mpr (by simp)) _)]
-    rfl
+
+theorem mapToUnitsPow₀_ne_zero (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
+    mapToUnitsPow₀ K c ≠ 0 := by
+  obtain ⟨w⟩ := (inferInstance : Nonempty (InfinitePlace K))
+  exact Function.ne_iff.mpr ⟨w, ne_of_gt (mapToUnitsPow₀_pos K c w)⟩
 
 -- theorem mapToUnitsPow₀_symm_apply {x : InfinitePlace K → ℝ}
 --     (hx : mixedEmbedding.norm (realToMixed x) = 1) :
@@ -166,7 +171,7 @@ theorem mapToUnitsPow₀_symm_apply {x : InfinitePlace K → ℝ}
     (mapToUnitsPow₀ K).symm x = (((basisUnitLattice K).ofZlatticeBasis ℝ).reindex
       equivFinRank).equivFun (logMap (realToMixed x)) := by
   rw [mapToUnitsPow₀, PartialEquiv.coe_trans_symm, Equiv.toPartialEquiv_symm_apply,
-    LinearEquiv.coe_toEquiv_symm, LinearEquiv.symm_symm,  EquivLike.coe_coe, Function.comp_apply]
+    LinearEquiv.coe_toEquiv_symm, LinearEquiv.symm_symm, EquivLike.coe_coe, Function.comp_apply]
   congr with x
   rw [logMap_apply_of_norm_one hx, mapToUnitsPow₀_aux, PartialEquiv.coe_symm_mk,
     normAtPlace_realToMixed, Real.log_abs]
@@ -181,332 +186,94 @@ theorem continuousOn_mapToUnitsPow₀_symm :
 
 def mapToUnitsPow : PartialHomeomorph (InfinitePlace K → ℝ) (InfinitePlace K → ℝ) where
   toFun := fun c ↦ |c w₀| • mapToUnitsPow₀ K (fun w ↦ c w)
-  invFun := by
-    intro x w
-    by_cases hw : w = w₀
-    · exact mixedEmbedding.norm (realToMixed x) ^ (finrank ℚ K : ℝ)⁻¹
-    · exact (((basisUnitLattice K).ofZlatticeBasis ℝ).reindex
+  invFun x w :=
+    if hw : w = w₀ then mixedEmbedding.norm (realToMixed x) ^ (finrank ℚ K : ℝ)⁻¹ else
+      (((basisUnitLattice K).ofZlatticeBasis ℝ).reindex
         equivFinRank).equivFun (logMap (realToMixed x)) ⟨w, hw⟩
-  source := Set.univ.pi fun w ↦ if w = w₀ then Set.Ioi 0 else Set.univ
-  target := Set.univ.pi fun _ ↦ Set.Ioi 0
-  map_source' := sorry
-  map_target' := sorry
-  left_inv' := by
-    intro x hx
-    rw [_root_.map_smul, logMap_smul]
-    · ext w
-      by_cases hw : w = w₀
-      · rw [hw, dif_pos rfl, mixedEmbedding.norm_smul, norm_mapToUnitsPow₀, mul_one]
-        sorry
-      · rw [dif_neg hw, ← mapToUnitsPow₀_symm_apply K (norm_mapToUnitsPow₀ K _),
-          PartialEquiv.left_inv _ (by rw [mapToUnitsPow₀_source]; trivial )]
-    · rw [norm_mapToUnitsPow₀]
-      exact one_ne_zero
-    · have := (if_pos rfl) ▸ Set.mem_univ_pi.mp hx w₀
-      exact abs_ne_zero.mpr (ne_of_gt (by exact this))
-  right_inv' := by
-    intro x hx
-    ext w
+  source := {x | 0 < x w₀}
+  target := {x | ∀ w, 0 < x w}
+  map_source' _ h _ :=by
+    simp_rw [Pi.smul_apply, smul_eq_mul]
+    exact mul_pos (abs_pos.mpr (ne_of_gt h)) (mapToUnitsPow₀_pos K _ _)
+  map_target' x hx := by
+    refine Set.mem_setOf.mpr ?_
     dsimp only
     rw [dif_pos rfl]
-    simp_rw [dif_neg sorry]
-    rw [← mapToUnitsPow₀_symm_apply, PartialEquiv.right_inv, Pi.smul_apply, smul_eq_mul,
-      norm_realToMixed]
-    
-#exit
-    by_cases hw : w = w₀
-    · dsimp only
-
-      sorry
-    · dsimp only
-
-      sorry
-  open_source := sorry
-  open_target := sorry
-  continuousOn_toFun := sorry
-  continuousOn_invFun := sorry
-
-
-#exit
-
-def expMap₀_aux : PartialHomeomorph ({w : InfinitePlace K // w ≠ w₀} → ℝ)
-    (InfinitePlace K → ℝ) where
-  toFun x w := if hw : w = w₀ then
-      Real.exp (- ((w₀ : InfinitePlace K).mult : ℝ)⁻¹ * ∑ w : {w // w ≠ w₀}, x w)
-      else Real.exp ((w.mult : ℝ)⁻¹ * x ⟨w, hw⟩)
-  invFun x w := w.val.mult * Real.log (x w)
-  source := Set.univ
-  target := (Set.univ.pi fun _ ↦ Set.Ioi 0) ∩
-    {x | - ((w₀ : InfinitePlace K).mult : ℝ)⁻¹ *
-      ∑ w : { w // w ≠ w₀ }, w.val.mult * Real.log (x w.val) = Real.log (x w₀)}
-  map_source' _ _ := by
+    exact Real.rpow_pos_of_pos (pos_norm_realToMixed hx) _
+  left_inv' _ h := by
     dsimp only
-    refine ⟨?_, ?_⟩
-    · refine Set.mem_univ_pi.mpr fun _ ↦ ?_
-      split_ifs <;> exact Real.exp_pos _
-    · rw [Set.mem_setOf_eq, dif_pos rfl]
-      conv_lhs =>
-        enter [2, 2, w]
-        rw [dif_neg w.prop]
-      simp_rw [Real.log_exp, mul_inv_cancel_left₀ mult_coe_ne_zero]
-  map_target' _ _ := trivial
-  left_inv' _ _ := by
     ext w
-    simp_rw [dif_neg w.prop, Real.log_exp, mul_inv_cancel_left₀ mult_coe_ne_zero]
+    by_cases hw : w = w₀
+    · rw [hw, dif_pos rfl, _root_.map_smul, mixedEmbedding.norm_smul, norm_mapToUnitsPow₀, mul_one,
+          ← Real.rpow_natCast, ← Real.rpow_mul (abs_nonneg _), mul_inv_cancel
+          (Nat.cast_ne_zero.mpr (ne_of_gt finrank_pos)), Real.rpow_one, abs_of_nonneg
+          (abs_nonneg _), abs_of_pos (by convert h)]
+    · rw [dif_neg hw, _root_.map_smul, logMap_smul (by rw [norm_mapToUnitsPow₀]; exact one_ne_zero)
+        (abs_ne_zero.mpr (ne_of_gt h)), ← mapToUnitsPow₀_symm_apply K (norm_mapToUnitsPow₀ K _),
+        PartialEquiv.left_inv _ (by rw [mapToUnitsPow₀_source]; trivial)]
   right_inv' x hx := by
-    ext w
+    have h₀ : mixedEmbedding.norm
+        (realToMixed (mixedEmbedding.norm (realToMixed x) ^ (- (finrank ℚ K : ℝ)⁻¹) • x)) = 1 := by
+      rw [_root_.map_smul]
+      refine norm_norm_rpow_smul_eq_one (ne_of_gt (pos_norm_realToMixed hx))
     dsimp only
-    by_cases hw : w = w₀
-    · rw [hw, dif_pos rfl, hx.2, Real.exp_log ((Set.mem_univ_pi.mp hx.1) _)]
-    · rw [dif_neg hw, inv_mul_cancel_left₀ mult_coe_ne_zero,
-        Real.exp_log ((Set.mem_univ_pi.mp hx.1) _)]
-  open_source := isOpen_univ
+    rw [dif_pos rfl]
+    conv_lhs =>
+      enter [2, 2, w]
+      rw [dif_neg w.prop]
+    ext w
+    rw [Pi.smul_apply, ← logMap_smul]
+    rw [← _root_.map_smul]
+    rw [← mapToUnitsPow₀_symm_apply K h₀]
+    rw [PartialEquiv.right_inv, Pi.smul_apply, smul_eq_mul, smul_eq_mul]
+    rw [abs_of_nonneg, Real.rpow_neg, mul_inv_cancel_left₀]
+    · refine Real.rpow_ne_zero_of_pos ?_ _
+      exact pos_norm_realToMixed hx
+    · exact mixedEmbedding.norm_nonneg (realToMixed x)
+    · refine Real.rpow_nonneg ?_ _
+      exact mixedEmbedding.norm_nonneg (realToMixed x)
+    · rw [mapToUnitsPow₀_target]
+      refine ⟨fun w ↦ ?_, h₀⟩
+      exact mul_pos (Real.rpow_pos_of_pos (pos_norm_realToMixed hx) _) (hx w)
+    · exact ne_of_gt (pos_norm_realToMixed hx)
+    · refine Real.rpow_ne_zero_of_pos ?_ _
+      exact pos_norm_realToMixed hx
+  open_source := isOpen_lt continuous_const (continuous_apply w₀)
   open_target := by
-      dsimp only
-      refine IsOpen.inter ?_ ?_
-      · sorry
-      · refine
-        IsLocallyInjective.isOpen_eqLocus ?refine_2.inj ?refine_2.h₁ ?refine_2.h₂ ?refine_2.he
-        sorry
---      refine isOpen_set_pi Set.finite_univ ?_
-
-    -- isOpen_set_pi Set.finite_univ fun _ _ ↦ isOpen_Ioi
-  continuousOn_toFun := by
-      sorry
-  --  continuousOn_pi'
-  --    fun i ↦ (ContinuousOn.mul continuousOn_const (continuousOn_apply i _)).rexp
+    convert_to IsOpen (⋂ w, {x : InfinitePlace K → ℝ | 0 < x w})
+    · ext; simp
+    · exact isOpen_iInter_of_finite fun w ↦ isOpen_lt continuous_const (continuous_apply w)
+  continuousOn_toFun := ContinuousOn.smul (by fun_prop) <|
+    (continuous_mapToUnitsPow₀ K).comp_continuousOn' (by fun_prop)
   continuousOn_invFun := by
-      sorry
-  -- continuousOn_pi' fun i ↦ ContinuousOn.mul continuousOn_const <|
-  --  (continuousOn_apply i _).log <| fun _ h ↦ ne_of_gt <| (Set.mem_univ_pi.mp h) i
-
-#exit
-
-def expMap₀ : PartialHomeomorph ({w : InfinitePlace K // w ≠ w₀} → ℝ)
-    (InfinitePlace K → ℝ) := PartialHomeomorph.trans
-  (((basisUnitLattice K).ofZlatticeBasis ℝ).reindex
-    equivFinRank).equivFunL.symm.toHomeomorph.toPartialHomeomorph (expMap₀_aux K)
-
-theorem expMap₀_apply (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
-    expMap₀ K c = fun w ↦ ∏ i, w.val (fundSystem K (equivFinRank.symm i)) ^ (c i) := by
-  ext w
-  erw [expMap₀, PartialHomeomorph.coe_trans, Homeomorph.toPartialHomeomorph_apply,
-    ContinuousLinearEquiv.coe_toHomeomorph, Function.comp_apply, Basis.equivFun_symm_apply]
-  simp_rw [Basis.coe_reindex, Function.comp_apply, Basis.ofZlatticeBasis_apply, expMap₀_aux,
-    PartialHomeomorph.mk_coe, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, Finset.mul_sum,
-    ← logEmbedding_fundSystem]
-  by_cases hw : w = w₀
-  · rw [dif_pos hw, Finset.sum_comm, Real.exp_sum]
-    simp_rw [← Finset.mul_sum, sum_logEmbedding_component, ← mul_assoc, mul_comm _ (c _),
-      mul_assoc (c _), hw, mul_neg, neg_mul, neg_neg, inv_mul_cancel mult_coe_ne_zero, one_mul]
-    conv_lhs =>
-      enter [2, i]
-      rw [← Real.log_rpow (pos_iff.mpr (by simp))]
-    conv_lhs =>
-      enter [2, i]
-      rw [Real.exp_log (by exact Real.rpow_pos_of_pos (pos_iff.mpr (by simp)) _)]
-    rfl
-  · rw [dif_neg hw, Real.exp_sum]
-    congr with x
-    rw [logEmbedding_component, ← mul_assoc, ← mul_assoc, mul_comm _ (c _), mul_assoc (c _),
-      inv_mul_cancel mult_coe_ne_zero, mul_one, ← Real.log_rpow (pos_iff.mpr (by simp)),
-      Real.exp_log (Real.rpow_pos_of_pos (pos_iff.mpr (by simp)) _)]
-    rfl
-
-
-#exit
-
-def expMap₀_aux : PartialHomeomorph ({w : InfinitePlace K // w ≠ w₀} → ℝ)
-    ({w : InfinitePlace K // w ≠ w₀} → ℝ) where
-  toFun := fun x w ↦ Real.exp ((w.val.mult : ℝ)⁻¹ * x w)
-  invFun := fun x w ↦ w.val.mult * Real.log (x w)
-  source := Set.univ
-  target := Set.univ.pi fun _ ↦ Set.Ioi 0
-  map_source' _ _ := Set.mem_univ_pi.mpr fun _ ↦ Real.exp_pos _
-  map_target' _ _ := trivial
-  left_inv' _ _ := by ext; simp
-  right_inv' _ h := by ext; simpa using Real.exp_log <| (Set.mem_univ_pi.mp h) _
-  open_source := isOpen_univ
-  open_target := isOpen_set_pi Set.finite_univ fun _ _ ↦ isOpen_Ioi
-  continuousOn_toFun := continuousOn_pi'
-    fun i ↦ (ContinuousOn.mul continuousOn_const (continuousOn_apply i _)).rexp
-  continuousOn_invFun := continuousOn_pi' fun i ↦ ContinuousOn.mul continuousOn_const <|
-    (continuousOn_apply i _).log <| fun _ h ↦ ne_of_gt <| (Set.mem_univ_pi.mp h) i
-
-def expMap₀ : PartialHomeomorph ({w : InfinitePlace K // w ≠ w₀} → ℝ)
-    ({w : InfinitePlace K // w ≠ w₀} → ℝ) := PartialHomeomorph.trans
-  (((basisUnitLattice K).ofZlatticeBasis ℝ).reindex
-    equivFinRank).equivFunL.symm.toHomeomorph.toPartialHomeomorph (expMap₀_aux K)
-
-theorem expMap₀_apply (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
-    expMap₀ K c = fun w ↦ ∏ i, w.val (fundSystem K (equivFinRank.symm i)) ^ (c i) := by
-  ext w
-  erw [expMap₀, PartialHomeomorph.coe_trans, Homeomorph.toPartialHomeomorph_apply,
-    ContinuousLinearEquiv.coe_toHomeomorph, Function.comp_apply, Basis.equivFun_symm_apply]
-  simp_rw [Basis.coe_reindex, Function.comp_apply, Basis.ofZlatticeBasis_apply, expMap₀_aux,
-    PartialHomeomorph.mk_coe, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, Finset.mul_sum,
-    Real.exp_sum, ← logEmbedding_fundSystem, logEmbedding_component]
-  congr with x
-  rw [← mul_assoc, ← mul_assoc, mul_comm _ (c _), mul_assoc (c _), inv_mul_cancel
-      (by rw [Nat.cast_ne_zero]; exact mult_ne_zero), mul_one, ← Real.log_rpow
-      (pos_iff.mpr (by simp)), Real.exp_log (Real.rpow_pos_of_pos (pos_iff.mpr (by simp)) _)]
-
-def expMap_aux : PartialHomeomorph (InfinitePlace K → ℝ) (InfinitePlace K → ℝ) where
-  toFun := by
-    intro x w
+    simp only
+    rw [continuousOn_pi]
+    intro w
     by_cases hw : w = w₀
-    · exact (x w₀) * (∏ w ∈ Finset.univ.erase w₀, x w)⁻¹
-    · exact (x w₀) * x w
-  invFun := by
-    intro x w
-    let x₀ := (∏ w, (x w)) ^ (Fintype.card (InfinitePlace K) : ℝ)⁻¹
-    by_cases hw : w = w₀
-    · exact x₀
-    · exact x₀⁻¹ * (x w)
-  source := sorry
-  target := sorry
-  map_source' := sorry
-  map_target' := sorry
-  left_inv' := by
-    intro x _
-    ext w
-    dsimp only
-    by_cases hw : w = w₀
-    · rw [hw, dif_pos rfl, ← Finset.univ.mul_prod_erase _ (Finset.mem_univ w₀), dif_pos rfl]
-      sorry
+    · simp_rw [hw, dite_true]
+      refine Continuous.continuousOn ?_
+      refine Continuous.rpow_const ?_ ?_
+      · refine Continuous.comp' ?_ ?_
+        exact mixedEmbedding.continuous_norm K
+        exact ContinuousLinearMap.continuous realToMixed
+      · intro _
+        right
+        rw [inv_nonneg]
+        exact Nat.cast_nonneg' (finrank ℚ K)
     · simp_rw [dif_neg hw]
-      sorry
-  right_inv' := by
-    intro x _
-    ext w
-    dsimp only
-    by_cases hw : w = w₀
-    · rw [dif_pos hw, dif_pos rfl]
-      sorry
-    · rw [dif_neg hw, dif_neg hw, dif_pos rfl, ← mul_assoc, mul_inv_cancel, one_mul]
-      sorry
-  open_source := sorry
-  open_target := sorry
-  continuousOn_toFun := sorry
-  continuousOn_invFun := sorry
+      refine Continuous.comp_continuousOn' (continuous_apply _) <|
+        (continuous_equivFun_basis _).comp_continuousOn' ?_
+      refine ContinuousOn.comp'' (continuousOn_logMap) ?_ ?_
+      refine Continuous.continuousOn ?_
+      exact ContinuousLinearMap.continuous realToMixed
+      intro x hx
+      refine ne_of_gt ?_
+      exact pos_norm_realToMixed hx
 
-def expMap : (InfinitePlace K → ℝ) → (InfinitePlace K → ℝ) := by
-  intro c
-  let u := expMap₀ K (fun w ↦ c w.val)
-  exact expMap_aux K
-    (fun w ↦ if hw : w = w₀ then c w₀ else u ⟨w, hw⟩)
+theorem mapToUnitsPow_apply (c : InfinitePlace K → ℝ) :
+    mapToUnitsPow K c = |c w₀| • mapToUnitsPow₀ K (fun w ↦ c w) := rfl
 
-theorem expMap_apply (c : InfinitePlace K → ℝ) :
-    expMap K c = fun w ↦ (c w₀) • ∏ i, w.val (fundSystem K (equivFinRank.symm i)) ^ (c i.val) := by
-  ext w
-  by_cases hw : w = w₀
-  · sorry
-  · sorry
-
-
-#exit
-
-def expMap : PartialHomeomorph (InfinitePlace K → ℝ) (InfinitePlace K → ℝ) where
-  toFun := by
-    intro c
-
-
-
-#exit
-
--- def expMap₀ : PartialHomeomorph ({w : InfinitePlace K // w ≠ w₀} → ℝ)
---     ({w : InfinitePlace K // w ≠ w₀} → ℝ) where
---   toFun := fun x w ↦ rexp (mult w.val * x w)
---   invFun := fun x w ↦ (mult w.val : ℝ)⁻¹ * Real.log (x w)
---   source := Set.univ
---   target := Set.univ.pi fun _ ↦ Set.Ioi 0
---   map_source' _ _ := Set.mem_univ_pi.mpr fun _ ↦ Real.exp_pos _
---   map_target' _ _ := trivial
---   left_inv' _ := by simp
---   right_inv' _ h := by simpa using funext fun _ ↦ by rw [Real.exp_log (h _ trivial)]
---   open_source := isOpen_univ
---   open_target := isOpen_set_pi Set.finite_univ fun _ _ ↦ isOpen_Ioi
---   continuousOn_toFun := continuousOn_pi'
---     fun i ↦ (ContinuousOn.mul continuousOn_const (continuousOn_apply i _)).rexp
---   continuousOn_invFun := continuousOn_pi' fun i ↦ ContinuousOn.mul continuousOn_const <|
---     (continuousOn_apply i _).log <| fun _ h ↦ ne_of_gt <| (Set.mem_univ_pi.mp h) i
-
-def mapToUnitsPow₀ (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) : InfinitePlace K → ℝ :=
-  fun w ↦ ∏ i, w (fundSystem K (equivFinRank.symm i)) ^ (c i)
-
-theorem mapToUnitsPow₀_pos (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) (w : InfinitePlace K) :
-    0 < mapToUnitsPow₀ K c w := sorry
-
-theorem prod_mapToUnitsPow₀ (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
-    ∏ w, (mapToUnitsPow₀ K c w) ^ mult w = 1 := sorry
-
-def realToMixed : (InfinitePlace K → ℝ) →ₐ[ℝ] (E K) := AlgHom.prod
-    (Pi.algHom fun w ↦ Pi.evalAlgHom _ _ w.val)
-    (Pi.algHom fun w ↦ Complex.ofRealAm.comp  <| Pi.evalAlgHom _ _ w.val)
-
-def logRepr (x : InfinitePlace K → ℝ) : ({w : InfinitePlace K // w ≠ w₀} → ℝ) :=
-  (((basisUnitLattice K).ofZlatticeBasis ℝ).reindex equivFinRank).repr (logMap (realToMixed K x))
-
-theorem logRepr_prod {ι : Type*} [DecidableEq ι] (s : Finset ι) {x : ι → (InfinitePlace K → ℝ)}
-    (hx : ∀ i ∈ s, mixedEmbedding.norm (realToMixed K (x i)) ≠ 0) :
-    logRepr K (∏ i ∈ s, x i) = ∑ i ∈ s, logRepr K (x i) := by
-  rw [logRepr, map_prod, logMap_prod s hx, _root_.map_sum, Finsupp.coe_finset_sum]
-  rfl
-
-theorem logRepr_unit_rpow (u : (𝓞 K)ˣ) (c : ℝ) :
-    logRepr K (fun w ↦ (w u) ^ c) = c • logEmbedding K u := by
-  sorry
-
-theorem logRepr_mapToUnitPow₀ (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
-    logRepr K (mapToUnitsPow₀ K c) = c := by
-  unfold mapToUnitsPow₀
-  rw [← Finset.prod_fn, logRepr_prod]
-
-
-#exit
-  have : (fun w : InfinitePlace K ↦ ∏ i, w (fundSystem K (equivFinRank.symm i)) ^ (c i)) =
-      ∏ i, fun w : InfinitePlace K ↦ w (fundSystem K (equivFinRank.symm i)) ^ (c i) := by
-    exact
-      Eq.symm
-        (prod_fn univ fun c_1 w ↦
-          w ((algebraMap (𝓞 K) K) ↑(fundSystem K (equivFinRank.symm c_1))) ^ c c_1)
-  sorry
-
--- Refactor this definition
-@[simps apply source target]
-def mapToUnitsPow : PartialHomeomorph (InfinitePlace K → ℝ) (InfinitePlace K → ℝ) where
-  toFun := fun c ↦ |c w₀| • mapToUnitsPow₀ K (fun w ↦ c w)
-  invFun := sorry
-  source := Set.univ.pi fun w ↦ if w = w₀ then Set.Ioi 0 else Set.univ
-  target := Set.univ.pi fun _ ↦ Set.Ioi 0
-  map_source' := sorry
-  map_target' := sorry
-  left_inv' := sorry
-  right_inv' := sorry
-  open_source := sorry
-  open_target := sorry
-  continuousOn_toFun := sorry
-  continuousOn_invFun := sorry
-
-theorem prod_mapToUnitsPow (c : InfinitePlace K → ℝ) :
-    ∏ w, (mapToUnitsPow K c w) ^ mult w = (c w₀) ^ mult (w₀ : InfinitePlace K) := sorry
-
-theorem mapToUnitsPow_nonneg (c : InfinitePlace K → ℝ) (w : InfinitePlace K) :
-    0 ≤ mapToUnitsPow K c w  := by
-  rw [mapToUnitsPow_apply, Pi.smul_apply, smul_eq_mul]
-  refine mul_nonneg ?_ ?_
-  · sorry -- exact Real.rpow_nonneg (abs_nonneg _) _
-  · exact (mapToUnitsPow₀_pos _ _ _).le
-
-theorem mapToUnitsPow_zero_iff (c : InfinitePlace K → ℝ) (w : InfinitePlace K) :
-    mapToUnitsPow K c w = 0 ↔ c w₀ = 0 := by
-  sorry
-  -- simp_rw [mapToUnitsPow_apply, Pi.smul_apply, smul_eq_mul, mul_eq_zero,
-  --   ne_of_gt (mapToUnitsPow₀_pos _ _ _), or_false, Real.rpow_eq_zero_iff_of_nonneg (abs_nonneg _),
-  --   abs_eq_zero, and_iff_left_iff_imp, ne_eq, inv_eq_zero, Nat.cast_eq_zero, ← ne_eq]
-  -- intro _
-  -- exact ne_of_gt finrank_pos
-
+-- Use this to simplify the definition of mapToUnitsPow?
 abbrev mapToUnitsPow_single (c : (InfinitePlace K → ℝ)) : InfinitePlace K → (InfinitePlace K → ℝ) :=
   fun i ↦ if hi : i = w₀ then fun _ ↦ |c w₀| else
     fun w ↦ (w (fundSystem K (equivFinRank.symm ⟨i, hi⟩))) ^ (c i)
@@ -514,16 +281,22 @@ abbrev mapToUnitsPow_single (c : (InfinitePlace K → ℝ)) : InfinitePlace K �
 theorem mapToUnitsPow₀_eq_prod_single (c : (InfinitePlace K → ℝ)) (w : InfinitePlace K) :
     mapToUnitsPow₀ K (fun w ↦ c w.val) w =
       ∏ i ∈ univ.erase w₀, mapToUnitsPow_single K c i w := by
-  rw [mapToUnitsPow₀, Finset.prod_subtype (Finset.univ.erase w₀)
+  rw [mapToUnitsPow₀_apply, Finset.prod_subtype (Finset.univ.erase w₀)
     (fun w ↦ (by aesop : w ∈ univ.erase w₀ ↔ w ≠ w₀))]
-  conv_rhs =>
-    enter [2, i]
-    rw [mapToUnitsPow_single, dif_neg i.prop]
+  exact Finset.prod_congr rfl fun w _ ↦ by rw [mapToUnitsPow_single, dif_neg w.prop]
 
 theorem mapToUnitsPow_eq_prod_single (c : (InfinitePlace K → ℝ)) (w : InfinitePlace K) :
     mapToUnitsPow K c w = ∏ i, mapToUnitsPow_single K c i w := by
   rw [← Finset.univ.mul_prod_erase _ (Finset.mem_univ w₀), mapToUnitsPow_apply, Pi.smul_apply,
     mapToUnitsPow₀_eq_prod_single, smul_eq_mul, mapToUnitsPow_single, dif_pos rfl]
+
+theorem mapToUnitsPow_nonneg (c : (InfinitePlace K → ℝ)) (w : InfinitePlace K) :
+    0 ≤ mapToUnitsPow K c w :=
+  mul_nonneg (abs_nonneg _) (mapToUnitsPow₀_pos K _ _).le
+
+theorem mapToUnitsPow_zero_iff (c : (InfinitePlace K → ℝ)) :
+    mapToUnitsPow K c = 0 ↔ c w₀ = 0 := by
+  rw [mapToUnitsPow_apply, smul_eq_zero, abs_eq_zero, or_iff_left (mapToUnitsPow₀_ne_zero K _)]
 
 open ContinuousLinearMap
 
@@ -533,7 +306,7 @@ abbrev mapToUnitsPow_fDeriv_single (c : InfinitePlace K → ℝ) (i w : Infinite
     (w (fundSystem K (equivFinRank.symm ⟨i, hi⟩)) ^ c i *
       (w (fundSystem K (equivFinRank.symm ⟨i, hi⟩))).log) • proj i
 
-theorem mapToUnitsPow_hasFDeriv_single (c : InfinitePlace K → ℝ) (i w : InfinitePlace K)
+theorem hasFDeriv_mapToUnitsPow_single (c : InfinitePlace K → ℝ) (i w : InfinitePlace K)
     (hc : 0 ≤ c w₀) :
     HasFDerivWithinAt (fun x ↦ mapToUnitsPow_single K x i w)
       (mapToUnitsPow_fDeriv_single K c i w) {x | 0 ≤ x w₀} c := by
@@ -549,145 +322,219 @@ abbrev jacobianCoeff (w i : InfinitePlace K) : (InfinitePlace K → ℝ) → ℝ
 abbrev jacobian (c : InfinitePlace K → ℝ) : (InfinitePlace K → ℝ) →L[ℝ] InfinitePlace K → ℝ :=
   pi fun i ↦ (mapToUnitsPow₀ K (fun w ↦ c w) i • ∑ w, (jacobianCoeff K i w c) • proj w)
 
-theorem mapToUnitsPow_hasFDeriv (c : InfinitePlace K → ℝ) (hc : 0 ≤ c w₀) :
+theorem hasFDeriv_mapToUnitsPow (c : InfinitePlace K → ℝ) (hc : 0 ≤ c w₀) :
     HasFDerivWithinAt (mapToUnitsPow K) (jacobian K c) {x | 0 ≤ x w₀} c := by
   refine hasFDerivWithinAt_pi'.mpr fun w ↦ ?_
   simp_rw [mapToUnitsPow_eq_prod_single]
-  convert HasFDerivWithinAt.finset_prod fun i _ ↦ mapToUnitsPow_hasFDeriv_single K c i w hc
+  convert HasFDerivWithinAt.finset_prod fun i _ ↦ hasFDeriv_mapToUnitsPow_single K c i w hc
   rw [ContinuousLinearMap.proj_pi, Finset.smul_sum]
   refine Fintype.sum_congr _ _ fun i ↦ ?_
   by_cases hi : i = w₀
   · simp_rw [hi, jacobianCoeff, dite_true, one_smul, dif_pos, mapToUnitsPow₀_eq_prod_single]
   · rw [mapToUnitsPow₀_eq_prod_single, jacobianCoeff, dif_neg hi, smul_smul, ← mul_assoc,
-      show |c w₀| = mapToUnitsPow_single K c w₀ w by simp_rw [dif_pos rfl], Finset.prod_erase_mul _ _
-      (Finset.mem_univ w₀), mapToUnitsPow_fDeriv_single, dif_neg hi, smul_smul,  ← mul_assoc,
-      show w (algebraMap (𝓞 K) K (fundSystem K (equivFinRank.symm ⟨i, hi⟩))) ^ c i =
-        mapToUnitsPow_single K c i w by simp_rw [dif_neg hi], Finset.prod_erase_mul _ _
-        (Finset.mem_univ i)]
+      show |c w₀| = mapToUnitsPow_single K c w₀ w by simp_rw [dif_pos rfl],
+      Finset.prod_erase_mul _ _ (Finset.mem_univ w₀), mapToUnitsPow_fDeriv_single, dif_neg hi,
+      smul_smul,  ← mul_assoc, show w (algebraMap (𝓞 K) K
+        (fundSystem K (equivFinRank.symm ⟨i, hi⟩))) ^ c i = mapToUnitsPow_single K c i w by
+      simp_rw [dif_neg hi], Finset.prod_erase_mul _ _ (Finset.mem_univ i)]
 
+theorem prod_mapToUnitsPow₀(c : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
+    ∏ w : InfinitePlace K, mapToUnitsPow₀ K c w =
+      (∏ w : {w : InfinitePlace K // IsComplex w}, mapToUnitsPow₀ K c w)⁻¹ := by
+  have : ∏ w : { w  // IsComplex w}, (mapToUnitsPow₀ K) c w.val ≠ 0 :=
+    Finset.prod_ne_zero_iff.mpr fun w _ ↦ ne_of_gt (mapToUnitsPow₀_pos K c w)
+  rw [← mul_eq_one_iff_eq_inv₀ this]
+  convert norm_mapToUnitsPow₀ K c
+  simp_rw [norm_realToMixed, ← Fintype.prod_subtype_mul_prod_subtype (fun w ↦ IsReal w)]
+  rw [← (Equiv.subtypeEquivRight (fun _ ↦ not_isReal_iff_isComplex)).prod_comp]
+  simp_rw [Equiv.subtypeEquivRight_apply_coe]
+  rw [mul_assoc, ← sq, ← Finset.prod_pow]
+  congr with w
+  · rw [abs_of_pos (mapToUnitsPow₀_pos K c _), mult, if_pos w.prop, pow_one]
+  · rw [abs_of_pos (mapToUnitsPow₀_pos K c _), mult, if_neg w.prop]
 
-
-
-
-
-
-
-
-#exit
-
-  simp only [mapToUnitsPow_apply, ne_eq, Pi.smul_apply, smul_eq_mul]
-  simp only [mapToUnitsPow₀]
-  let A : (InfinitePlace K → ℝ) → InfinitePlace K → (InfinitePlace K → ℝ) :=
-    fun x i ↦ if hi : i = w₀ then fun _ ↦ |x w₀| else
-      fun w ↦ (w (fundSystem K (equivFinRank.symm ⟨i, hi⟩))) ^ (x i)
-  convert_to HasFDerivAt
-    (fun x ↦ ∏ i, A x i w) ((ContinuousLinearMap.proj w).comp (jacobian K c)) c
-  · ext x
-    rw [← Finset.univ.mul_prod_erase _ (Finset.mem_univ w₀)]
-    congr!
-    · simp [A]
-    · dsimp only [A]
-      rw [Finset.prod_subtype (Finset.univ.erase w₀)
-        (fun w ↦ (by aesop : w ∈ univ.erase w₀ ↔ w ≠ w₀))]
-      refine Finset.prod_congr rfl ?_
-      intro i _
-      rw [dif_neg]
-
-
-
-
-
-
-#exit
-  let p : InfinitePlace K → ((InfinitePlace K → ℝ) →L[ℝ] ℝ) :=
-    fun i ↦ if hi : i = w₀ then ContinuousLinearMap.proj w₀ else
-      (w (fundSystem K (equivFinRank.symm ⟨i, hi⟩)) ^ (c i) *
-        (w (fundSystem K (equivFinRank.symm ⟨i, hi⟩))).log) • ContinuousLinearMap.proj i
-
-  have := HasFDerivAt.finset_prod (fun i _ ↦ p i)
-  simp [jacobian]
-  dsimp only
---  have : HasFDerivAt (fun x ↦ |x w₀| ^ (finrank ℚ K : ℝ)⁻¹)
---  refine HasFDerivAt.mul ?_ ?_
-
-
-#exit
-
-
--- Generalize!
-theorem injOn_mapToUnitsPow :
-    Set.InjOn (mapToUnitsPow K) (box₁ K) := by
-  refine Set.InjOn.mono (Set.pi_mono fun _ _ ↦ ?_) (mapToUnitsPow K).injOn
-  split_ifs
-  exact Set.Ioc_subset_Ioi_self
-  exact Set.subset_univ _
-
-theorem jacobian_det (c : InfinitePlace K → ℝ) :
+theorem jacobian_det {c : InfinitePlace K → ℝ} (hc : 0 ≤ c w₀) :
     |(jacobian K c).det| =
-      (∏ w : {w : InfinitePlace K // w.IsComplex }, mapToUnitsPow K (fun w ↦ c w) w)⁻¹ *
+      (∏ w : {w : InfinitePlace K // w.IsComplex }, mapToUnitsPow₀ K (fun w ↦ c w) w)⁻¹ *
         2⁻¹ ^ NrComplexPlaces K * |c w₀| ^ (rank K) * (finrank ℚ K) * regulator K := by
-  sorry
+  have : LinearMap.toMatrix' (jacobian K c).toLinearMap =
+      Matrix.of fun w i ↦ mapToUnitsPow₀ K (fun w ↦ c w) w * jacobianCoeff K w i c := by
+    ext
+    simp_rw [jacobian, ContinuousLinearMap.coe_pi, ContinuousLinearMap.coe_smul,
+      ContinuousLinearMap.coe_sum, LinearMap.toMatrix'_apply, LinearMap.pi_apply,
+      LinearMap.smul_apply, LinearMap.coeFn_sum, Finset.sum_apply, ContinuousLinearMap.coe_coe,
+      ContinuousLinearMap.coe_smul', Pi.smul_apply, ContinuousLinearMap.proj_apply, smul_eq_mul,
+      mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, if_true, Matrix.of_apply]
+  rw [ContinuousLinearMap.det, ← LinearMap.det_toMatrix', this]
+  rw [Matrix.det_mul_column, prod_mapToUnitsPow₀, ← Matrix.det_transpose]
+  simp_rw [jacobianCoeff]
+  rw [mul_assoc, finrank_mul_regulator_eq_det K w₀ equivFinRank.symm]
+  have : |c w₀| ^ rank K = |∏ w : InfinitePlace K, if w = w₀ then 1 else c w₀| := by
+    rw [Finset.prod_ite, Finset.prod_const_one, Finset.prod_const, one_mul, abs_pow]
+    rw [Finset.filter_ne', Finset.card_erase_of_mem (Finset.mem_univ _), Finset.card_univ, rank]
+  rw [this, mul_assoc, ← abs_mul, ← Matrix.det_mul_column]
+  have : (2 : ℝ)⁻¹ ^ NrComplexPlaces K = |∏ w : InfinitePlace K, (mult w : ℝ)⁻¹| := by
+    rw [Finset.abs_prod]
+    simp_rw [mult, Nat.cast_ite, Nat.cast_one, Nat.cast_ofNat, apply_ite, abs_inv, abs_one, inv_one,
+      Nat.abs_ofNat, Finset.prod_ite, Finset.prod_const_one, Finset.prod_const, one_mul]
+    rw [Finset.filter_not, Finset.card_univ_diff, ← Fintype.card_subtype]
+    rw [card_eq_nrRealPlaces_add_nrComplexPlaces, ← NrRealPlaces, add_tsub_cancel_left]
+  rw [this, mul_assoc, ← abs_mul, ← Matrix.det_mul_row, abs_mul]
+  congr
+  · rw [abs_eq_self.mpr]
+    rw [inv_nonneg]
+    exact Finset.prod_nonneg fun _ _ ↦ (mapToUnitsPow₀_pos K _ _).le
+  · ext
+    simp only [Matrix.transpose_apply, Matrix.of_apply, ite_mul, one_mul, mul_ite]
+    split_ifs
+    · rw [inv_mul_cancel mult_coe_ne_zero]
+    · rw [← mul_assoc, mul_comm _ (c w₀), mul_assoc, inv_mul_cancel_left₀ mult_coe_ne_zero,
+        abs_eq_self.mpr hc]
+
+open ENNReal in
+theorem setLIntegral_mapToUnitsPow {s : Set (InfinitePlace K → ℝ)} (hs₀ : MeasurableSet s)
+    (hs₁ : s ⊆ {x | 0 < x w₀}) (f : (InfinitePlace K → ℝ) → ℝ≥0∞) :
+    ∫⁻ x in (mapToUnitsPow K) '' s, f x =
+      (2 : ℝ≥0∞)⁻¹ ^ NrComplexPlaces K * ENNReal.ofReal (regulator K) * (finrank ℚ K) *
+      ∫⁻ x in s, ENNReal.ofReal (∏ i : {w : InfinitePlace K // IsComplex w},
+        (mapToUnitsPow₀ K (fun w ↦ x w) i))⁻¹ *
+        ENNReal.ofReal |x w₀| ^ rank K * f (mapToUnitsPow K x) := by
+  have hs₂ : s ⊆ {x | 0 ≤ x w₀} := subset_trans hs₁ fun _ h ↦ Set.mem_setOf.mpr (le_of_lt h)
+  rw [lintegral_image_eq_lintegral_abs_det_fderiv_mul volume hs₀
+    (fun c hc ↦ HasFDerivWithinAt.mono (hasFDeriv_mapToUnitsPow K c (hs₂ hc)) hs₂)
+    ((mapToUnitsPow K).injOn.mono hs₁)]
+  rw [setLIntegral_congr_fun hs₀ (ae_of_all volume fun c hc ↦ by rw [jacobian_det K (hs₂ hc)])]
+  rw [← lintegral_const_mul']
+  congr with x
+  have : 0 ≤ (∏ w : {w : InfinitePlace K // IsComplex w}, mapToUnitsPow₀ K (fun w ↦ x w) w)⁻¹ :=
+    inv_nonneg.mpr <| Finset.prod_nonneg fun w _ ↦ (mapToUnitsPow₀_pos K _ w).le
+  rw [ofReal_mul (by positivity), ofReal_mul (by positivity), ofReal_mul (by positivity),
+    ofReal_mul (by positivity), ofReal_natCast, ofReal_pow (by positivity), ofReal_pow
+    (by positivity), ofReal_inv_of_pos zero_lt_two, ofReal_ofNat]
+  · ring_nf
+  · exact mul_ne_top (mul_ne_top (pow_ne_top (inv_ne_top.mpr two_ne_zero)) ofReal_ne_top)
+      (natCast_ne_top _)
+
+def realProdComplexProdMeasurableEquiv :
+    ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ × ℝ) ≃ᵐ
+       (InfinitePlace K → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ) :=
+  MeasurableEquiv.trans (MeasurableEquiv.prodCongr (MeasurableEquiv.refl _)
+      (MeasurableEquiv.arrowProdEquivProdArrow ℝ ℝ _)) <|
+    MeasurableEquiv.trans MeasurableEquiv.prodAssoc.symm <|
+       MeasurableEquiv.trans
+        (MeasurableEquiv.prodCongr (MeasurableEquiv.prodCongr (MeasurableEquiv.refl _)
+        (MeasurableEquiv.arrowCongr'
+          (Equiv.subtypeEquivRight (fun _ ↦ not_isReal_iff_isComplex.symm))
+        (MeasurableEquiv.refl _))) (MeasurableEquiv.refl _))
+        (MeasurableEquiv.prodCongr (MeasurableEquiv.piEquivPiSubtypeProd (fun _ ↦ ℝ) _).symm
+        (MeasurableEquiv.refl _))
+
+-- marcus₂.symm
+def realProdComplexProdEquiv :
+    ({w : InfinitePlace K // IsReal w} → ℝ) ×
+      ({w : InfinitePlace K // IsComplex w} → ℝ × ℝ) ≃ₜ
+        (InfinitePlace K → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ) where
+  __ := realProdComplexProdMeasurableEquiv K
+  continuous_toFun := by
+    change Continuous fun x ↦ ⟨fun w ↦ if hw : w.IsReal then x.1 ⟨w, hw⟩ else
+      (x.2 ⟨w, not_isReal_iff_isComplex.mp hw⟩).1, fun w ↦ (x.2 w).2⟩
+    refine continuous_prod_mk.mpr ⟨continuous_pi_iff.mpr fun w ↦ ?_, by fun_prop⟩
+    by_cases hw : IsReal w
+    · simp_rw [dif_pos hw]; fun_prop
+    · simp_rw [dif_neg hw]; fun_prop
+  continuous_invFun := by
+    change Continuous fun x ↦ (fun w ↦ x.1 w.val, fun w ↦ ⟨x.1 w.val, x.2 w⟩)
+    fun_prop
+
+theorem volume_preserving_realProdComplexProdEquiv :
+    MeasurePreserving (realProdComplexProdEquiv K) := by
+  change MeasurePreserving (realProdComplexProdMeasurableEquiv K) volume volume
+  exact MeasurePreserving.trans ((MeasurePreserving.id volume).prod
+      (volume_preserving.arrowProdEquivProdArrow ℝ ℝ {w : InfinitePlace K // IsComplex w})) <|
+    MeasurePreserving.trans (volume_preserving.prodAssoc.symm) <|
+      MeasurePreserving.trans
+        (((MeasurePreserving.id volume).prod (volume_preserving.arrowCongr' _
+        (MeasurableEquiv.refl ℝ)
+          (MeasurePreserving.id volume))).prod (MeasurePreserving.id volume))
+      <| ((volume_preserving_piEquivPiSubtypeProd (fun _ : InfinitePlace K ↦ ℝ)
+        (fun w : InfinitePlace K ↦ IsReal w)).symm).prod (MeasurePreserving.id volume)
+
+theorem realProdComplexProdEquiv_apply (x : ({w : InfinitePlace K // IsReal w} → ℝ) ×
+    ({w : InfinitePlace K // IsComplex w} → ℝ × ℝ)) :
+    realProdComplexProdEquiv K x = ⟨fun w ↦ if hw : w.IsReal then x.1 ⟨w, hw⟩ else
+      (x.2 ⟨w, not_isReal_iff_isComplex.mp hw⟩).1, fun w ↦ (x.2 w).2⟩ := rfl
+
+theorem realProdComplexProdEquiv_symm_apply (x : (InfinitePlace K → ℝ) ×
+    ({w : InfinitePlace K // IsComplex w} → ℝ)) :
+    (realProdComplexProdEquiv K).symm x = (fun w ↦ x.1 w.val, fun w ↦ ⟨x.1 w.val, x.2 w⟩) := rfl
+
+-- marcus₃
+def polarCoordToMixedSpace : PartialHomeomorph
+    ((InfinitePlace K → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ)) (E K) :=
+  (realProdComplexProdEquiv K).symm.transPartialHomeomorph <|
+    (PartialHomeomorph.refl _).prod <| PartialHomeomorph.pi fun _ ↦ Complex.polarCoord.symm
+
+theorem polarCoordToMixedSpace_apply (x : (InfinitePlace K → ℝ) ×
+    ({w : InfinitePlace K // IsComplex w} → ℝ)) :
+    polarCoordToMixedSpace K x = ⟨fun w ↦ x.1 w.val,
+      fun w ↦ Complex.polarCoord.symm (x.1 w, x.2 w)⟩ := rfl
+
+theorem polarCoordToMixedSpace_source : (polarCoordToMixedSpace K).source =
+    (Set.univ.pi fun w ↦
+      if IsReal w then Set.univ else Set.Ioi 0) ×ˢ (Set.univ.pi fun _ ↦ Set.Ioo (-π) π):= by
+  rw [polarCoordToMixedSpace, Homeomorph.transPartialHomeomorph_source]
+  ext
+  simp_rw [Set.mem_preimage, realProdComplexProdEquiv_symm_apply, PartialHomeomorph.prod_source,
+    Set.mem_prod, PartialHomeomorph.refl_source, PartialHomeomorph.pi_source,
+    PartialHomeomorph.symm_source, Complex.polarCoord_target]
+  aesop
+
+theorem polarCoordToMixedSpace_target :
+    (polarCoordToMixedSpace K).target = Set.univ ×ˢ Set.univ.pi fun _ ↦ Complex.slitPlane := by
+  simp [polarCoordToMixedSpace, Complex.polarCoord_source]
+
+-- Probably merge with volume_marcus₃_set_prod_set
+theorem lintegral_marcus₃ (f : (E K) → ENNReal) (hf : Measurable f) :
+    ∫⁻ x, f x =
+      ∫⁻ x, (∏ w : {w // IsComplex w}, (x.1 w.val).toNNReal) * f (polarCoordToMixedSpace K x) := by
+  have : Measurable fun x ↦ (∏ w : {w : InfinitePlace K // w.IsComplex }, (x.1 w).toNNReal) *
+    f ((polarCoordToMixedSpace K) x) := sorry
+  rw [← (volume_preserving_realProdComplexProdEquiv K).lintegral_comp]
+  simp_rw [realProdComplexProdEquiv_apply, ENNReal.coe_finset_prod, polarCoordToMixedSpace_apply,
+    dif_pos (Subtype.prop _), dif_neg (not_isReal_iff_isComplex.mpr (Subtype.prop _)),
+    Subtype.coe_eta, Prod.mk.eta]
+  rw [volume_eq_prod, volume_eq_prod, lintegral_prod, lintegral_prod]
+  congr with x
+  dsimp only
+
+  · sorry
+  · refine Measurable.aemeasurable ?_
+    convert this
+    sorry
+  · exact hf.aemeasurable
+  · sorry
+
+#exit
+
+-- marcus₁
+def mapToUnitsPowComplex₀ :=
+  PartialHomeomorph.prod (mapToUnitsPow K)
+    (PartialHomeomorph.refl ({w : InfinitePlace K // IsComplex w} → ℝ))
 
 
+
+#exit
+
+def marcus₃ : PartialHomeomorph (F K) (E K) :=
+  (marcus₂ K).toPartialHomeomorph.trans <|
+    (PartialHomeomorph.refl _).prod <| PartialHomeomorph.pi fun _ ↦ Complex.polarCoord.symm
+
+#exit
 
 local notation "F" K => (InfinitePlace K → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ)
 
--- def expMap₀ : PartialHomeomorph ({w : InfinitePlace K // w ≠ w₀} → ℝ)
---     ({w : InfinitePlace K // w ≠ w₀} → ℝ) where
---   toFun := fun x w ↦ rexp (mult w.val * x w)
---   invFun := fun x w ↦ (mult w.val : ℝ)⁻¹ * Real.log (x w)
---   source := Set.univ
---   target := Set.univ.pi fun _ ↦ Set.Ioi 0
---   map_source' _ _ := Set.mem_univ_pi.mpr fun _ ↦ Real.exp_pos _
---   map_target' _ _ := trivial
---   left_inv' _ := by simp
---   right_inv' _ h := by simpa using funext fun _ ↦ by rw [Real.exp_log (h _ trivial)]
---   open_source := isOpen_univ
---   open_target := isOpen_set_pi Set.finite_univ fun _ _ ↦ isOpen_Ioi
---   continuousOn_toFun := continuousOn_pi'
---     fun i ↦ (ContinuousOn.mul continuousOn_const (continuousOn_apply i _)).rexp
---   continuousOn_invFun := continuousOn_pi' fun i ↦ ContinuousOn.mul continuousOn_const <|
---     (continuousOn_apply i _).log <| fun _ h ↦ ne_of_gt <| (Set.mem_univ_pi.mp h) i
-
--- def expMap : PartialHomeomorph ({w : InfinitePlace K // w ≠ w₀} → ℝ)
---     ({w : InfinitePlace K // w ≠ w₀} → ℝ) := PartialHomeomorph.trans
---   (((basisUnitLattice K).ofZlatticeBasis ℝ).reindex equivFinRank.symm).equivFunL.toHomeomorph.toPartialHomeomorph
---   (expMap₀ K)
-
--- def expMapFull : PartialHomeomorph (InfinitePlace K → ℝ) (InfinitePlace K → ℝ) where
---   toFun := by
---     intro x
---     let y := expMap K (fun w ↦ x w.val)
---     intro w
---     by_cases hw : w = w₀
---     · exact (x w₀) * (∏ w, y w)⁻¹
---     · exact (x w₀) * (y ⟨w, hw⟩)
---   invFun := by
---     intro x w
---     let P := ∏ w, x w
---     by_cases hw : w = w₀
---     · exact P
---     · exact
---       sorry
-
-
--- -- Refactor this definition
--- @[simps apply source target]
--- def mapToUnitsPow : PartialHomeomorph (InfinitePlace K → ℝ) (InfinitePlace K → ℝ) where
---   toFun := fun c ↦ |c w₀| ^ (finrank ℚ K : ℝ)⁻¹ • mapToUnitsPow₀ K (fun w ↦ c w)
---   invFun := sorry
---   source := Set.univ.pi fun w ↦ if w = w₀ then Set.Ioi 0 else Set.univ
---   target := Set.univ.pi fun _ ↦ Set.Ioi 0
---   map_source' := sorry
---   map_target' := sorry
---   left_inv' := sorry
---   right_inv' := sorry
---   open_source := sorry
---   open_target := sorry
---   continuousOn_toFun := sorry
---   continuousOn_invFun := sorry
-
-
+local notation "G" K => ({w : InfinitePlace K // IsReal w} → ℝ) ×
+    ({w : InfinitePlace K // IsComplex w} → ℝ × ℝ)
 
 @[simps! apply symm_apply source target]
 def marcus₁ : PartialHomeomorph (F K) (F K) :=
@@ -698,8 +545,7 @@ theorem marcus₁_image_prod (s : Set (InfinitePlace K → ℝ))
     marcus₁ K '' (s ×ˢ t) = (mapToUnitsPow K '' s) ×ˢ t := by
   ext; aesop
 
-local notation "G" K => ({w : InfinitePlace K // IsReal w} → ℝ) ×
-    ({w : InfinitePlace K // IsComplex w} → ℝ × ℝ)
+
 
 @[simps apply symm_apply]
 def marcus₂ : Homeomorph (F K) (G K) where
@@ -741,7 +587,8 @@ theorem volume_preserving_marcus₂_symm : MeasurePreserving (marcus₂ K).symm 
       (volume_preserving.arrowProdEquivProdArrow ℝ ℝ {w : InfinitePlace K // IsComplex w})) <|
     MeasurePreserving.trans (volume_preserving.prodAssoc.symm) <|
       MeasurePreserving.trans
-        (((MeasurePreserving.id volume).prod (volume_preserving.arrowCongr' _ (MeasurableEquiv.refl ℝ)
+        (((MeasurePreserving.id volume).prod (volume_preserving.arrowCongr' _
+        (MeasurableEquiv.refl ℝ)
           (MeasurePreserving.id volume))).prod (MeasurePreserving.id volume))
       <| ((volume_preserving_piEquivPiSubtypeProd (fun _ : InfinitePlace K ↦ ℝ)
         (fun w : InfinitePlace K ↦ IsReal w)).symm).prod (MeasurePreserving.id volume)

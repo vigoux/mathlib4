@@ -416,6 +416,13 @@ theorem norm_unit (u : (𝓞 K)ˣ) :
     mixedEmbedding.norm (mixedEmbedding K u) = 1 := by
   rw [norm_eq_norm, Units.norm, Rat.cast_one]
 
+theorem norm_norm_rpow_smul_eq_one {x : E K} (hx : mixedEmbedding.norm x ≠ 0) :
+    mixedEmbedding.norm ((mixedEmbedding.norm x) ^ (- (finrank ℚ K : ℝ)⁻¹) • x) = 1 := by
+  rw [norm_smul, abs_of_pos, ← Real.rpow_natCast, ← Real.rpow_mul (mixedEmbedding.norm_nonneg _),
+    neg_mul, inv_mul_cancel, Real.rpow_neg_one, inv_mul_cancel hx]
+  · exact Nat.cast_ne_zero.mpr (ne_of_gt finrank_pos)
+  · exact Real.rpow_pos_of_pos (lt_iff_le_and_ne.mpr ⟨mixedEmbedding.norm_nonneg _, Ne.symm hx⟩) _
+
 variable (K) in
 protected theorem continuous_norm : Continuous (mixedEmbedding.norm : (E K) → ℝ) :=
   continuous_finset_prod Finset.univ fun _ _ ↦ (continuous_normAtPlace _).pow _
