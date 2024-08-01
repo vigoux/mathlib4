@@ -155,7 +155,7 @@ theorem toCircle_add (x : AddCircle T) (y : AddCircle T) :
   simp_rw [← coe_add, toCircle_apply_mk, mul_add, Circle.exp_add]
 
 lemma toCircle_zero : toCircle (0 : AddCircle T) = 1 := by
-  rw [← QuotientAddGroup.mk_zero, toCircle_apply_mk, mul_zero, expMapCircle_zero]
+  rw [← QuotientAddGroup.mk_zero, toCircle_apply_mk, mul_zero, Circle.exp_zero]
 
 theorem continuous_toCircle : Continuous (@toCircle T) :=
   continuous_coinduced_dom.mpr (Circle.exp.continuous.comp <| continuous_const.mul continuous_id')
