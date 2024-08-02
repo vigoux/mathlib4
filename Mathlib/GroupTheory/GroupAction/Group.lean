@@ -4,11 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Hughes
 -/
 import Mathlib.Algebra.Group.Action.Basic
-import Mathlib.Algebra.Group.Aut
 import Mathlib.Algebra.Group.Invertible.Basic
-import Mathlib.Algebra.GroupWithZero.Action.Basic
 import Mathlib.Algebra.GroupWithZero.Action.Units
 import Mathlib.Algebra.GroupWithZero.Units.Basic
+import Mathlib.Algebra.SMulWithZero
 
 /-!
 # Group actions applied to various types of group
