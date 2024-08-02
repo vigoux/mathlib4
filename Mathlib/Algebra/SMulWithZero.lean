@@ -201,12 +201,6 @@ theorem smul_inv₀ [SMulCommClass α β β] [IsScalarTower α β β] (c : α) (
 
 end GroupWithZero
 
-/-- Scalar multiplication as a monoid homomorphism with zero. -/
-@[simps]
-def smulMonoidWithZeroHom {α β : Type*} [MonoidWithZero α] [MulZeroOneClass β]
-    [MulActionWithZero α β] [IsScalarTower α β β] [SMulCommClass α β β] : α × β →*₀ β :=
-  { smulMonoidHom with map_zero' := smul_zero _ }
-
 -- This instance seems a bit incongruous in this file, but `#find_home!` told me to put it here.
 instance NonUnitalNonAssocSemiring.toDistribSMul [NonUnitalNonAssocSemiring R] :
     DistribSMul R R where
