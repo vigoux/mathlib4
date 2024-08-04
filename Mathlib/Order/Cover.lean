@@ -566,3 +566,12 @@ theorem covby_iff : x ⋖ y ↔ x.1 ⋖ y.1 ∧ x.2 = y.2 ∨ x.2 ⋖ y.2 ∧ x.
 #align prod.covby_iff Prod.covby_iff
 
 end Prod
+
+namespace WithTop
+
+variable [Preorder α] {a b : α}
+
+@[simp] lemma coe_wcovby_coe : (a : WithTop α) ⩿ b ↔ a ⩿ b :=
+  Set.OrdConnected.apply_wcovby_apply_iff OrderEmbedding.withTopCoe _
+
+end WithTop

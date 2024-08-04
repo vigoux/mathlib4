@@ -701,6 +701,13 @@ protected def withTopMap (f : α ↪o β) : WithTop α ↪o WithTop β :=
 #align order_embedding.with_top_map OrderEmbedding.withTopMap
 #align order_embedding.with_top_map_apply OrderEmbedding.withTopMap_apply
 
+/-- Coercion `α → WithTop α` as an `OrderEmbedding`. -/
+@[simps (config := { fullyApplied := false })]
+protected def withTopCoe : α ↪o WithTop α where
+  toFun := (↑)
+  inj' := Option.some_injective _
+  map_rel_iff' := WithTop.coe_le_coe
+
 /-- To define an order embedding from a partial order to a preorder it suffices to give a function
 together with a proof that it satisfies `f a ≤ f b ↔ a ≤ b`.
 -/
