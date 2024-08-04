@@ -570,40 +570,39 @@ theorem tail_append_of_ne_nil (l l' : List α) (h : l ≠ []) : (l ++ l').tail =
 
 theorem getElem_eq_getElem? (l : List α) (i : Nat) (h : i < l.length) :
     l[i] = l[i]?.get (by simp [getElem?_eq_getElem, h]) := by
-  simp [getElem_eq_iff]
+  simp [h]
 
 theorem get_eq_get? (l : List α) (i : Fin l.length) :
     l.get i = (l.get? i).get (by simp [getElem?_eq_getElem]) := by
-  simp [getElem_eq_iff]
+  simp
+
+@[simp]
+theorem getElem_tail {l : List α} {i : ℕ} (h : i < l.tail.length) :
+    l.tail[i] = l[i + 1]'(by rw [length_tail] at h; omega) := by
+  cases l <;> [cases h; rfl]
+
+theorem getElem_cons {l : List α} {a : α} {n : ℕ} (h : n < (a :: l).length) :
+    (a :: l)[n] = if hn : n = 0 then a else l[n - 1]'(by rw [length_cons] at h; omega) := by
+  cases n <;> simp
 
 section deprecated
 set_option linter.deprecated false -- TODO(Mario): make replacements for theorems in this section
 
 /-- nth element of a list `l` given `n < l.length`. -/
-@[deprecated get (since := "2023-01-05")]
-def nthLe (l : List α) (n) (h : n < l.length) : α := get l ⟨n, h⟩
+@[deprecated GetElem.getElem (since := "2023-01-05")]
+def nthLe (l : List α) (n) (h : n < l.length) : α := l[n]
 
-@[simp] theorem nthLe_tail (l : List α) (i) (h : i < l.tail.length)
+@[deprecated getElem_tail (since := "2024-08-03")]
+theorem nthLe_tail (l : List α) (i) (h : i < l.tail.length)
     (h' : i + 1 < l.length := (by simp only [length_tail] at h; omega)) :
-    l.tail.nthLe i h = l.nthLe (i + 1) h' := by
-  cases l <;> [cases h; rfl]
+    l.tail.nthLe i h = l.nthLe (i + 1) h' :=
+  getElem_tail h
 
-theorem nthLe_cons_aux {l : List α} {a : α} {n} (hn : n ≠ 0) (h : n < (a :: l).length) :
-    n - 1 < l.length := by
-  contrapose! h
-  rw [length_cons]
-  omega
-
+@[deprecated getElem_cons (since := "2024-08-03")]
 theorem nthLe_cons {l : List α} {a : α} {n} (hl) :
-    (a :: l).nthLe n hl = if hn : n = 0 then a else l.nthLe (n - 1) (nthLe_cons_aux hn hl) := by
-  split_ifs with h
-  · simp [nthLe, h]
-  cases l
-  · rw [length_singleton, Nat.lt_succ_iff] at hl
-    omega
-  cases n
-  · contradiction
-  rfl
+    (a :: l).nthLe n hl =
+      if hn : n = 0 then a else l.nthLe (n - 1) (by rw [length_cons] at hl; omega) :=
+  getElem_cons hl
 
 end deprecated
 
@@ -866,9 +865,9 @@ end IndexOf
 section deprecated
 set_option linter.deprecated false
 
-@[deprecated get_of_mem (since := "2023-01-05")]
+@[deprecated getElem_of_mem (since := "2023-01-05")]
 theorem nthLe_of_mem {a} {l : List α} (h : a ∈ l) : ∃ n h, nthLe l n h = a :=
-  let ⟨i, h⟩ := get_of_mem h; ⟨i.1, i.2, h⟩
+  getElem_of_mem h
 
 @[deprecated get?_eq_get (since := "2023-01-05")]
 theorem nthLe_get? {l : List α} {n} (h) : get? l n = some (nthLe l n h) := get?_eq_get _
@@ -879,17 +878,10 @@ theorem getElem?_length (l : List α) : l[l.length]? = none := getElem?_len_le l
 @[deprecated getElem?_length (since := "2024-06-12")]
 theorem get?_length (l : List α) : l.get? l.length = none := get?_len_le le_rfl
 
-@[deprecated get_mem (since := "2023-01-05")]
-theorem nthLe_mem (l : List α) (n h) : nthLe l n h ∈ l := get_mem ..
-
-@[deprecated mem_iff_get (since := "2023-01-05")]
-theorem mem_iff_nthLe {a} {l : List α} : a ∈ l ↔ ∃ n h, nthLe l n h = a :=
-  mem_iff_get.trans ⟨fun ⟨⟨n, h⟩, e⟩ => ⟨n, h, e⟩, fun ⟨n, h, e⟩ => ⟨⟨n, h⟩, e⟩⟩
+@[deprecated getElem_mem (since := "2023-01-05")]
+theorem nthLe_mem (l : List α) (n h) : nthLe l n h ∈ l := getElem_mem ..
 
 @[deprecated (since := "2024-05-03")] alias get?_injective := get?_inj
-
-@[deprecated get_map (since := "2023-01-05")]
-theorem nthLe_map (f : α → β) {l n} (H1 H2) : nthLe (map f l) n H1 = f (nthLe l n H2) := get_map ..
 
 /-- A version of `getElem_map` that can be used for rewriting. -/
 theorem getElem_map_rev (f : α → β) {l} {n : Nat} {h : n < l.length} :
@@ -901,14 +893,14 @@ theorem get_map_rev (f : α → β) {l n} :
     f (get l n) = get (map f l) ⟨n.1, (l.length_map f).symm ▸ n.2⟩ := Eq.symm (get_map _)
 
 /-- A version of `nthLe_map` that can be used for rewriting. -/
-@[deprecated get_map_rev (since := "2023-01-05")]
+@[deprecated getElem_map_rev (since := "2023-01-05")]
 theorem nthLe_map_rev (f : α → β) {l n} (H) :
     f (nthLe l n H) = nthLe (map f l) n ((l.length_map f).symm ▸ H) :=
-  (nthLe_map f _ _).symm
+  getElem_map_rev ..
 
-@[simp, deprecated get_map (since := "2023-01-05")]
+@[deprecated getElem_map (since := "2023-01-05")]
 theorem nthLe_map' (f : α → β) {l n} (H) :
-    nthLe (map f l) n H = f (nthLe l n (l.length_map f ▸ H)) := nthLe_map f _ _
+    nthLe (map f l) n H = f (nthLe l n (l.length_map f ▸ H)) := getElem_map f
 
 @[simp, deprecated get_singleton (since := "2023-01-05")]
 theorem nthLe_singleton (a : α) {n : ℕ} (hn : n < 1) : nthLe [a] n hn = a := get_singleton ..
@@ -922,9 +914,9 @@ theorem get_length_sub_one {l : List α} (h : l.length - 1 < l.length) :
     l.get ⟨l.length - 1, h⟩ = l.getLast (by rintro rfl; exact Nat.lt_irrefl 0 h) :=
   (getLast_eq_get l _).symm
 
-@[deprecated get_cons_length (since := "2023-01-05")]
+@[deprecated getElem_cons_length (since := "2023-01-05")]
 theorem nthLe_cons_length : ∀ (x : α) (xs : List α) (n : ℕ) (h : n = xs.length),
-    (x :: xs).nthLe n (by simp [h]) = (x :: xs).getLast (cons_ne_nil x xs) := get_cons_length
+    (x :: xs).nthLe n (by simp [h]) = (x :: xs).getLast (cons_ne_nil x xs) := getElem_cons_length
 
 theorem take_one_drop_eq_of_lt_length {l : List α} {n : ℕ} (h : n < l.length) :
     (l.drop n).take 1 = [l.get ⟨n, h⟩] := by
@@ -1031,9 +1023,7 @@ theorem nthLe_reverse (l : List α) (i : Nat) (h1 h2) :
 
 theorem nthLe_reverse' (l : List α) (n : ℕ) (hn : n < l.reverse.length) (hn') :
     l.reverse.nthLe n hn = l.nthLe (l.length - 1 - n) hn' := by
-  rw [eq_comm]
-  convert nthLe_reverse l.reverse n (by simpa) hn using 1
-  simp
+  rw [← nthLe_reverse] <;> simp [hn']
 
 theorem get_reverse' (l : List α) (n) (hn') :
     l.reverse.get n = l.get ⟨l.length - 1 - n, hn'⟩ := nthLe_reverse' ..
@@ -1477,11 +1467,6 @@ theorem getElem_scanl_zero {h : 0 < (scanl f b l).length} : (scanl f b l)[0] = b
 theorem get_zero_scanl {h : 0 < (scanl f b l).length} : (scanl f b l).get ⟨0, h⟩ = b := by
   simp [getElem_scanl_zero]
 
-set_option linter.deprecated false in
-@[simp, deprecated get_zero_scanl (since := "2023-01-05")]
-theorem nthLe_zero_scanl {h : 0 < (scanl f b l).length} : (scanl f b l).nthLe 0 h = b :=
-  get_zero_scanl
-
 theorem get?_succ_scanl {i : ℕ} : (scanl f b l).get? (i + 1) =
     ((scanl f b l).get? i).bind fun x => (l.get? i).map fun y => f x y := by
   induction' l with hd tl hl generalizing b i
@@ -1492,6 +1477,24 @@ theorem get?_succ_scanl {i : ℕ} : (scanl f b l).get? (i + 1) =
     cases i
     · simp
     · simp only [hl, get?]
+
+theorem getElem_succ_scanl {i : ℕ} (h : i + 1 < (scanl f b l).length) :
+    (scanl f b l)[i + 1] =
+      f ((scanl f b l)[i]'(Nat.lt_of_succ_lt h))
+        (l[i]'(Nat.lt_of_succ_lt_succ (h.trans_eq (length_scanl b l)))) := by
+  induction i generalizing b l with
+  | zero =>
+    cases l
+    · simp only [length, zero_eq, lt_self_iff_false] at h
+    · simp
+  | succ i hi =>
+    cases l
+    · simp only [length] at h
+      exact absurd h (by omega)
+    · simp_rw [scanl_cons]
+      rw [getElem_append_right]
+      · simp only [length, Nat.zero_add 1, succ_add_sub_one, hi]; rfl
+      · simp only [length_singleton]; omega
 
 set_option linter.deprecated false in
 theorem nthLe_succ_scanl {i : ℕ} {h : i + 1 < (scanl f b l).length} :
