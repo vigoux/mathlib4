@@ -262,8 +262,9 @@ theorem integrable_neg : Integrable I l (-f) vol ↔ Integrable I l f vol :=
 
 open Classical in
 @[simp]
-theorem integral_neg : integral I l (-f) vol = -integral I l f vol :=
-  if h : Integrable I l f vol then h.hasIntegral.neg.integral_eq
+theorem integral_neg : integral I l (-f) vol = -integral I l f vol := by
+  classical
+  exact if h : Integrable I l f vol then h.hasIntegral.neg.integral_eq
   else by rw [integral, integral, dif_neg h, dif_neg (mt Integrable.of_neg h), neg_zero]
 
 theorem HasIntegral.sub (h : HasIntegral I l f vol y) (h' : HasIntegral I l g vol y') :

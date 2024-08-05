@@ -154,8 +154,7 @@ theorem inner_eq_tsum (f g : lp G 2) : ⟪f, g⟫ = ∑' i, ⟪f i, g i⟫ :=
 theorem hasSum_inner (f g : lp G 2) : HasSum (fun i => ⟪f i, g i⟫) ⟪f, g⟫ :=
   (summable_inner f g).hasSum
 
-open Classical in
-theorem inner_single_left (i : ι) (a : G i) (f : lp G 2) :
+theorem inner_single_left [DecidableEq ι] (i : ι) (a : G i) (f : lp G 2) :
     ⟪lp.single 2 i a, f⟫ = ⟪a, f i⟫ := by
   refine (hasSum_inner (lp.single 2 i a) f).unique ?_
   convert hasSum_ite_eq i ⟪a, f i⟫ using 1
@@ -165,9 +164,9 @@ theorem inner_single_left (i : ι) (a : G i) (f : lp G 2) :
   · subst h; rfl
   · simp
 
-open Classical in
-theorem inner_single_right (i : ι) (a : G i) (f : lp G 2) : ⟪f, lp.single 2 i a⟫ = ⟪f i, a⟫ := by
-  simpa [inner_conj_symm] using congr_arg conj (@inner_single_left _ 𝕜 _ _ _ _ i a f)
+theorem inner_single_right [DecidableEq ι] (i : ι) (a : G i) (f : lp G 2) :
+    ⟪f, lp.single 2 i a⟫ = ⟪f i, a⟫ := by
+  simpa [inner_conj_symm] using congr_arg conj (inner_single_left (𝕜 := 𝕜) i a f)
 
 end lp
 
@@ -214,7 +213,7 @@ protected theorem hasSum_linearIsometry (f : lp G 2) :
 
 open Classical in
 @[simp]
-protected theorem linearIsometry_apply_single {i : ι} (x : G i) :
+protected theorem linearIsometry_apply_single [DecidableEq ι] {i : ι} (x : G i) :
     hV.linearIsometry (lp.single 2 i x) = V i x := by
   rw [hV.linearIsometry_apply, ← tsum_ite_eq i (V i x)]
   congr
@@ -224,9 +223,8 @@ protected theorem linearIsometry_apply_single {i : ι} (x : G i) :
   · subst h; simp
   · simp [h]
 
-open Classical in
-protected theorem linearIsometry_apply_dfinsupp_sum_single (W₀ : Π₀ i : ι, G i) :
-    hV.linearIsometry (W₀.sum (lp.single 2)) = W₀.sum fun i => V i := by
+protected theorem linearIsometry_apply_dfinsupp_sum_single [DecidableEq ι] [∀ i, DecidableEq (G i)]
+    (W₀ : Π₀ i : ι, G i) : hV.linearIsometry (W₀.sum (lp.single 2)) = W₀.sum fun i => V i := by
   simp
 
 /-- The canonical linear isometry from the `lp 2` of a mutually orthogonal family of subspaces of
@@ -235,6 +233,7 @@ protected theorem range_linearIsometry [∀ i, CompleteSpace (G i)] :
     LinearMap.range hV.linearIsometry.toLinearMap =
       (⨆ i, LinearMap.range (V i).toLinearMap).topologicalClosure := by
     -- Porting note: dot notation broken
+  classical
   refine le_antisymm ?_ ?_
   · rintro x ⟨f, rfl⟩
     classical
@@ -319,8 +318,9 @@ open Classical in
 `lp G 2`, an "elementary basis vector" in `lp G 2` supported at `i : ι` is the image of the
 associated element in `E`. -/
 @[simp]
-protected theorem IsHilbertSum.linearIsometryEquiv_symm_apply_single (hV : IsHilbertSum 𝕜 G V)
-    {i : ι} (x : G i) : hV.linearIsometryEquiv.symm (lp.single 2 i x) = V i x := by
+protected theorem IsHilbertSum.linearIsometryEquiv_symm_apply_single
+    [DecidableEq ι] (hV : IsHilbertSum 𝕜 G V) {i : ι} (x : G i) :
+    hV.linearIsometryEquiv.symm (lp.single 2 i x) = V i x := by
   simp [IsHilbertSum.linearIsometryEquiv, OrthogonalFamily.linearIsometry_apply_single]
 
 open Classical in
@@ -328,7 +328,7 @@ open Classical in
 `lp G 2`, a finitely-supported vector in `lp G 2` is the image of the associated finite sum of
 elements of `E`. -/
 protected theorem IsHilbertSum.linearIsometryEquiv_symm_apply_dfinsupp_sum_single
-    (hV : IsHilbertSum 𝕜 G V) (W₀ : Π₀ i : ι, G i) :
+    [DecidableEq ι] [∀ i, DecidableEq (G i)] (hV : IsHilbertSum 𝕜 G V) (W₀ : Π₀ i : ι, G i) :
     hV.linearIsometryEquiv.symm (W₀.sum (lp.single 2)) = W₀.sum fun i => V i := by
   simp only [map_dfinsupp_sum, IsHilbertSum.linearIsometryEquiv_symm_apply_single]
 
@@ -338,7 +338,7 @@ open Classical in
 elements of `E`. -/
 @[simp]
 protected theorem IsHilbertSum.linearIsometryEquiv_apply_dfinsupp_sum_single
-    (hV : IsHilbertSum 𝕜 G V) (W₀ : Π₀ i : ι, G i) :
+    [DecidableEq ι] [∀ i, DecidableEq (G i)] (hV : IsHilbertSum 𝕜 G V) (W₀ : Π₀ i : ι, G i) :
     ((W₀.sum (γ := lp G 2) fun a b ↦ hV.linearIsometryEquiv (V a b)) : ∀ i, G i) = W₀ := by
   rw [← map_dfinsupp_sum]
   rw [← hV.linearIsometryEquiv_symm_apply_dfinsupp_sum_single]
@@ -395,17 +395,18 @@ instance instCoeFun : CoeFun (HilbertBasis ι 𝕜 E) fun _ => ι → E where
 
 open Classical in
 -- This is a bad `@[simp]` lemma: the RHS is a coercion containing the LHS.
-protected theorem repr_symm_single (b : HilbertBasis ι 𝕜 E) (i : ι) :
-    b.repr.symm (lp.single 2 i (1 : 𝕜)) = b i :=
-  rfl
+protected theorem repr_symm_single [DecidableEq ι] (b : HilbertBasis ι 𝕜 E) (i : ι) :
+    b.repr.symm (lp.single 2 i (1 : 𝕜)) = b i := by
+  convert rfl
 
-open Classical in
-protected theorem repr_self (b : HilbertBasis ι 𝕜 E) (i : ι) :
+protected theorem repr_self [DecidableEq ι] (b : HilbertBasis ι 𝕜 E) (i : ι) :
     b.repr (b i) = lp.single 2 i (1 : 𝕜) := by
   simp only [LinearIsometryEquiv.apply_symm_apply]
+  convert rfl
 
 protected theorem repr_apply_apply (b : HilbertBasis ι 𝕜 E) (v : E) (i : ι) :
     b.repr v i = ⟪b i, v⟫ := by
+  classical
   rw [← b.repr.inner_map_map (b i) v, b.repr_self, lp.inner_single_left]
   simp
 
@@ -490,8 +491,7 @@ protected theorem hasSum_orthogonalProjection {U : Submodule 𝕜 E} [CompleteSp
   simpa only [b.repr_apply_apply, inner_orthogonalProjection_eq_of_mem_left] using
     b.hasSum_repr (orthogonalProjection U x)
 
-open Classical in
-theorem finite_spans_dense (b : HilbertBasis ι 𝕜 E) :
+theorem finite_spans_dense [DecidableEq E] (b : HilbertBasis ι 𝕜 E) :
     (⨆ J : Finset ι, span 𝕜 (J.image b : Set E)).topologicalClosure = ⊤ :=
   eq_top_iff.mpr <| b.dense_span.ge.trans (by
     simp_rw [← Submodule.span_iUnion]
@@ -505,8 +505,7 @@ variable {v : ι → E} (hv : Orthonormal 𝕜 v)
 protected def mk (hsp : ⊤ ≤ (span 𝕜 (Set.range v)).topologicalClosure) : HilbertBasis ι 𝕜 E :=
   HilbertBasis.ofRepr <| (hv.isHilbertSum hsp).linearIsometryEquiv
 
-open Classical in
-theorem _root_.Orthonormal.linearIsometryEquiv_symm_apply_single_one (h i) :
+theorem _root_.Orthonormal.linearIsometryEquiv_symm_apply_single_one [DecidableEq ι] (h i) :
     (hv.isHilbertSum h).linearIsometryEquiv.symm (lp.single 2 i 1) = v i := by
   rw [IsHilbertSum.linearIsometryEquiv_symm_apply_single, LinearIsometry.toSpanSingleton_apply,
     one_smul]
@@ -514,6 +513,7 @@ theorem _root_.Orthonormal.linearIsometryEquiv_symm_apply_single_one (h i) :
 @[simp]
 protected theorem coe_mk (hsp : ⊤ ≤ (span 𝕜 (Set.range v)).topologicalClosure) :
     ⇑(HilbertBasis.mk hv hsp) = v := by
+  classical
   apply funext <| Orthonormal.linearIsometryEquiv_symm_apply_single_one hv hsp
 
 /-- An orthonormal family of vectors whose span has trivial orthogonal complement is a Hilbert
