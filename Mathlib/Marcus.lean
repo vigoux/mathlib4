@@ -5,7 +5,7 @@ variable (K : Type*) [Field K] [NumberField K]
 open NumberField NumberField.InfinitePlace NumberField.mixedEmbedding MeasureTheory Finset
   NumberField.Units NumberField.Units.dirichletUnitTheorem FiniteDimensional MeasureTheory.Measure
 
-open scoped Real ENNReal ComplexOrder Classical
+open scoped Real ENNReal ComplexOrder
 
 namespace NumberField.mixedEmbedding.fundamentalCone
 
@@ -18,6 +18,7 @@ local notation "E" K =>
 variable {K}
 
 def equivFinRank : Fin (rank K) ≃ {w : InfinitePlace K // w ≠ w₀} := by
+  classical
   refine Fintype.equivOfCardEq ?_
   rw [Fintype.card_subtype_compl, Fintype.card_ofSubsingleton, Fintype.card_fin, rank]
 
@@ -44,6 +45,7 @@ theorem pos_norm_realToMixed {x : InfinitePlace K → ℝ} (hx : ∀ w, 0 < x w)
 
 variable (K)
 
+open Classical in
 -- This cannot be a `PartiaHomeomorph` because the target is not an open set
 def mapToUnitsPow₀_aux :
     PartialEquiv ({w : InfinitePlace K // w ≠ w₀} → ℝ) (InfinitePlace K → ℝ) where
@@ -94,6 +96,7 @@ theorem continuousOn_mapToUnitsPow₀_aux_symm :
   continuousOn_pi.mpr fun w ↦
     continuousOn_const.mul <| (continuousOn_apply _ _).log fun _ h ↦ h w
 
+open Classical in
 -- This cannot be a `PartiaHomeomorph` because the target is not an open set
 def mapToUnitsPow₀ :
     PartialEquiv ({w : InfinitePlace K // w ≠ w₀} → ℝ) (InfinitePlace K → ℝ) :=
@@ -133,6 +136,7 @@ theorem mapToUnitsPow₀_pos (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) (
   rw [mapToUnitsPow₀_source]
   exact trivial
 
+open Classical in
 theorem mapToUnitsPow₀_apply (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
     mapToUnitsPow₀ K c = fun w ↦ ∏ i, w (fundSystem K (equivFinRank.symm i)) ^ (c i) := by
   ext w
@@ -166,6 +170,7 @@ theorem mapToUnitsPow₀_ne_zero (c : {w : InfinitePlace K // w ≠ w₀} → �
 --   rw [logMap_apply_of_norm_one hx, mapToUnitsPow₀_aux, PartialEquiv.coe_symm_mk,
 --     normAtPlace_realToMixed, Real.log_abs]
 
+open Classical in
 theorem mapToUnitsPow₀_symm_apply {x : InfinitePlace K → ℝ}
     (hx : mixedEmbedding.norm (realToMixed x) = 1) :
     (mapToUnitsPow₀ K).symm x = (((basisUnitLattice K).ofZlatticeBasis ℝ).reindex
@@ -176,6 +181,7 @@ theorem mapToUnitsPow₀_symm_apply {x : InfinitePlace K → ℝ}
   rw [logMap_apply_of_norm_one hx, mapToUnitsPow₀_aux, PartialEquiv.coe_symm_mk,
     normAtPlace_realToMixed, Real.log_abs]
 
+open Classical in
 theorem continuous_mapToUnitsPow₀ :
     Continuous (mapToUnitsPow₀ K) := (continuous_mapToUnitsPow₀_aux K).comp <|
   LinearEquiv.continuous_symm _ (continuous_equivFun_basis _)
@@ -184,6 +190,7 @@ theorem continuousOn_mapToUnitsPow₀_symm :
     ContinuousOn (mapToUnitsPow₀ K).symm {x | ∀ w, x w ≠ 0} :=
   (continuous_equivFun_basis _).comp_continuousOn (continuousOn_mapToUnitsPow₀_aux_symm K)
 
+open Classical in
 @[simps source target]
 def mapToUnitsPow : PartialHomeomorph (InfinitePlace K → ℝ) (InfinitePlace K → ℝ) where
   toFun := fun c ↦ |c w₀| • mapToUnitsPow₀ K (fun w ↦ c w)
@@ -274,11 +281,13 @@ def mapToUnitsPow : PartialHomeomorph (InfinitePlace K → ℝ) (InfinitePlace K
 theorem mapToUnitsPow_apply (c : InfinitePlace K → ℝ) :
     mapToUnitsPow K c = |c w₀| • mapToUnitsPow₀ K (fun w ↦ c w) := rfl
 
+open Classical in
 -- Use this to simplify the definition of mapToUnitsPow?
 abbrev mapToUnitsPow_single (c : (InfinitePlace K → ℝ)) : InfinitePlace K → (InfinitePlace K → ℝ) :=
   fun i ↦ if hi : i = w₀ then fun _ ↦ |c w₀| else
     fun w ↦ (w (fundSystem K (equivFinRank.symm ⟨i, hi⟩))) ^ (c i)
 
+open Classical in
 theorem mapToUnitsPow₀_eq_prod_single (c : (InfinitePlace K → ℝ)) (w : InfinitePlace K) :
     mapToUnitsPow₀ K (fun w ↦ c w.val) w =
       ∏ i ∈ univ.erase w₀, mapToUnitsPow_single K c i w := by
@@ -288,6 +297,7 @@ theorem mapToUnitsPow₀_eq_prod_single (c : (InfinitePlace K → ℝ)) (w : Inf
 
 theorem mapToUnitsPow_eq_prod_single (c : (InfinitePlace K → ℝ)) (w : InfinitePlace K) :
     mapToUnitsPow K c w = ∏ i, mapToUnitsPow_single K c i w := by
+  classical
   rw [← Finset.univ.mul_prod_erase _ (Finset.mem_univ w₀), mapToUnitsPow_apply, Pi.smul_apply,
     mapToUnitsPow₀_eq_prod_single, smul_eq_mul, mapToUnitsPow_single, dif_pos rfl]
 
@@ -304,6 +314,7 @@ open ContinuousLinearMap
 
 abbrev mapToUnitsPow_fDeriv_single (c : InfinitePlace K → ℝ) (i w : InfinitePlace K) :
     (InfinitePlace K → ℝ) →L[ℝ] ℝ := by
+  classical
   exact if hi : i = w₀ then proj w₀ else
     (w (fundSystem K (equivFinRank.symm ⟨i, hi⟩)) ^ c i *
       (w (fundSystem K (equivFinRank.symm ⟨i, hi⟩))).log) • proj i
@@ -318,6 +329,7 @@ theorem hasFDeriv_mapToUnitsPow_single (c : InfinitePlace K → ℝ) (i w : Infi
     exact fun _ h ↦ by simp_rw [abs_of_nonneg (Set.mem_setOf.mp h)]
   · exact HasFDerivWithinAt.const_rpow (hasFDerivWithinAt_apply i c _) <| pos_iff.mpr (by aesop)
 
+open Classical in
 abbrev jacobianCoeff (w i : InfinitePlace K) : (InfinitePlace K → ℝ) → ℝ :=
   fun c ↦ if hi : i = w₀ then 1 else |c w₀| * (w (fundSystem K (equivFinRank.symm ⟨i, hi⟩))).log
 
@@ -326,6 +338,7 @@ abbrev jacobian (c : InfinitePlace K → ℝ) : (InfinitePlace K → ℝ) →L[�
 
 theorem hasFDeriv_mapToUnitsPow (c : InfinitePlace K → ℝ) (hc : 0 ≤ c w₀) :
     HasFDerivWithinAt (mapToUnitsPow K) (jacobian K c) {x | 0 ≤ x w₀} c := by
+  classical
   refine hasFDerivWithinAt_pi'.mpr fun w ↦ ?_
   simp_rw [mapToUnitsPow_eq_prod_single]
   convert HasFDerivWithinAt.finset_prod fun i _ ↦ hasFDeriv_mapToUnitsPow_single K c i w hc
@@ -340,6 +353,7 @@ theorem hasFDeriv_mapToUnitsPow (c : InfinitePlace K → ℝ) (hc : 0 ≤ c w₀
         (fundSystem K (equivFinRank.symm ⟨i, hi⟩))) ^ c i = mapToUnitsPow_single K c i w by
       simp_rw [dif_neg hi], Finset.prod_erase_mul _ _ (Finset.mem_univ i)]
 
+open Classical in
 theorem prod_mapToUnitsPow₀(c : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
     ∏ w : InfinitePlace K, mapToUnitsPow₀ K c w =
       (∏ w : {w : InfinitePlace K // IsComplex w}, mapToUnitsPow₀ K c w)⁻¹ := by
@@ -355,6 +369,7 @@ theorem prod_mapToUnitsPow₀(c : {w : InfinitePlace K // w ≠ w₀} → ℝ) :
   · rw [abs_of_pos (mapToUnitsPow₀_pos K c _), mult, if_pos w.prop, pow_one]
   · rw [abs_of_pos (mapToUnitsPow₀_pos K c _), mult, if_neg w.prop]
 
+open Classical in
 theorem jacobian_det {c : InfinitePlace K → ℝ} (hc : 0 ≤ c w₀) :
     |(jacobian K c).det| =
       (∏ w : {w : InfinitePlace K // w.IsComplex }, mapToUnitsPow₀ K (fun w ↦ c w) w)⁻¹ *
@@ -393,7 +408,7 @@ theorem jacobian_det {c : InfinitePlace K → ℝ} (hc : 0 ≤ c w₀) :
     · rw [← mul_assoc, mul_comm _ (c w₀), mul_assoc, inv_mul_cancel_left₀ mult_coe_ne_zero,
         abs_eq_self.mpr hc]
 
-open ENNReal in
+open ENNReal Classical in
 theorem setLIntegral_mapToUnitsPow {s : Set (InfinitePlace K → ℝ)} (hs₀ : MeasurableSet s)
     (hs₁ : s ⊆ {x | 0 < x w₀}) (f : (InfinitePlace K → ℝ) → ℝ≥0∞) :
     ∫⁻ x in (mapToUnitsPow K) '' s, f x =
@@ -417,6 +432,7 @@ theorem setLIntegral_mapToUnitsPow {s : Set (InfinitePlace K → ℝ)} (hs₀ : 
   · exact mul_ne_top (mul_ne_top (pow_ne_top (inv_ne_top.mpr two_ne_zero)) ofReal_ne_top)
       (natCast_ne_top _)
 
+open Classical in
 def realProdComplexProdMeasurableEquiv :
     ({w : InfinitePlace K // IsReal w} → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ × ℝ) ≃ᵐ
        (InfinitePlace K → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ) :=
@@ -431,6 +447,7 @@ def realProdComplexProdMeasurableEquiv :
         (MeasurableEquiv.prodCongr (MeasurableEquiv.piEquivPiSubtypeProd (fun _ ↦ ℝ) _).symm
         (MeasurableEquiv.refl _))
 
+open Classical in
 -- marcus₂.symm
 def realProdComplexProdEquiv :
     ({w : InfinitePlace K // IsReal w} → ℝ) ×
@@ -448,6 +465,7 @@ def realProdComplexProdEquiv :
     change Continuous fun x ↦ (fun w ↦ x.1 w.val, fun w ↦ ⟨x.1 w.val, x.2 w⟩)
     fun_prop
 
+open Classical in
 theorem volume_preserving_realProdComplexProdEquiv :
     MeasurePreserving (realProdComplexProdEquiv K) := by
   change MeasurePreserving (realProdComplexProdMeasurableEquiv K) volume volume
@@ -461,6 +479,7 @@ theorem volume_preserving_realProdComplexProdEquiv :
       <| ((volume_preserving_piEquivPiSubtypeProd (fun _ : InfinitePlace K ↦ ℝ)
         (fun w : InfinitePlace K ↦ IsReal w)).symm).prod (MeasurePreserving.id volume)
 
+open Classical in
 theorem realProdComplexProdEquiv_apply (x : ({w : InfinitePlace K // IsReal w} → ℝ) ×
     ({w : InfinitePlace K // IsComplex w} → ℝ × ℝ)) :
     realProdComplexProdEquiv K x = ⟨fun w ↦ if hw : w.IsReal then x.1 ⟨w, hw⟩ else
@@ -500,6 +519,7 @@ theorem measurable_polarCoordToMixedSpace :
     simp_rw [Complex.polarCoord_symm_apply]
     fun_prop
 
+open Classical in
 theorem polarCoordToMixedSpace_source : (polarCoordToMixedSpace K).source =
   (Set.univ.pi fun w ↦
       if IsReal w then Set.univ else Set.Ioi 0) ×ˢ (Set.univ.pi fun _ ↦ Set.Ioo (-π) π):= by
@@ -556,6 +576,7 @@ theorem realProdComplexProdEquiv_preimage_polarCoordToMixedSpace_source :
       specialize h i
       exact h.2
 
+open Classical in
 theorem lintegral_mixedSpace_eq (f : (E K) → ENNReal) (hf : Measurable f) :
     ∫⁻ x, f x =
       ∫⁻ x in (polarCoordToMixedSpace K).source,

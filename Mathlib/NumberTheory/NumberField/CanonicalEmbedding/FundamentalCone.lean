@@ -477,8 +477,6 @@ theorem measurableSet_normLessThanOne :
 
 variable {K}
 
-open Classical
-
 theorem measurableSet_positiveAt (T : Finset {w : InfinitePlace K // w.IsReal}) :
     MeasurableSet {x : E K | ∀ w ∈ T, 0 < x.1 w} := by
   refine MeasurableSet.congr (s := ⋂ z ∈ T, {x | x.1 z > 0})
@@ -487,6 +485,7 @@ theorem measurableSet_positiveAt (T : Finset {w : InfinitePlace K // w.IsReal}) 
         (measurable_pi_apply _).comp measurable_fst
 
 -- flipSignAt?
+open Classical in
 def signFlipAt (w : {w : InfinitePlace K // w.IsReal}) : (E K) ≃L[ℝ] (E K) :=
   ContinuousLinearEquiv.prod (ContinuousLinearEquiv.piCongrRight
     fun w' ↦ if w' = w then ContinuousLinearEquiv.neg _ else ContinuousLinearEquiv.refl _ _)
@@ -520,6 +519,7 @@ theorem logMap_signFlipAt (w : {w // w.IsReal}) (x : E K) :
   ext
   simp_rw [logMap_apply, normAtPlace_signFlipAt, norm_signFlipAt]
 
+open Classical in
 theorem volume_preserving_signFlipAt (w : {w : InfinitePlace K // w.IsReal}) :
     MeasurePreserving (signFlipAt w) := by
   refine MeasurePreserving.prod (volume_preserving_pi fun w ↦ ?_) ( MeasurePreserving.id _)
@@ -534,6 +534,7 @@ theorem signFlipAt_preimage_normLessThanOne (w : {w : InfinitePlace K // w.IsRea
   simp_rw [normLessThanOne, Set.preimage_setOf_eq, Set.mem_setOf_eq, mem_fundamentalCone,
     norm_signFlipAt, logMap_signFlipAt]
 
+open Classical in
 theorem volume_eq_zero_at (w : {w : InfinitePlace K // w.IsReal}) :
     volume {x : E K | x.1 w = 0} = 0 := by
   let A : AffineSubspace ℝ (E K) := by
@@ -548,6 +549,7 @@ theorem volume_eq_zero_at (w : {w : InfinitePlace K // w.IsReal}) :
   have : 1 ∈ A := h ▸ Set.mem_univ _
   simp [A] at this
 
+open Classical in
 theorem volume_inter_positiveAt {s : Set (E K)} (hs₁ : MeasurableSet s)
     (T : Finset {w : InfinitePlace K // w.IsReal}) (hs₂ : ∀ w ∈ T, signFlipAt w ⁻¹' s = s) :
     volume s = 2 ^ Finset.card T * volume (s ∩ {x | ∀ w ∈ T, 0 < x.1 w}) := by
@@ -600,6 +602,7 @@ theorem volume_inter_positiveAt {s : Set (E K)} (hs₁ : MeasurableSet s)
         · exact measurableSet_positiveAt T
       exact fun w hw ↦  hs₂ w (Finset.mem_insert_of_mem hw)
 
+open Classical in
 theorem volume_normLessThanOne_step1 :
     volume (normLessThanOne K) = 2 ^ (NrRealPlaces K) *
       volume (normLessThanOne K ∩ {x | ∀ w, 0 < x.1 w}) := by
@@ -608,6 +611,7 @@ theorem volume_normLessThanOne_step1 :
   · intro w _
     exact signFlipAt_preimage_normLessThanOne w
 
+open Classical in
 theorem volume_closure_normLessThanOne_step1 :
     volume (closure (normLessThanOne K)) = 2 ^ (NrRealPlaces K) *
       volume (closure (normLessThanOne K) ∩ {x | ∀ w, 0 < x.1 w}) := by
@@ -617,6 +621,7 @@ theorem volume_closure_normLessThanOne_step1 :
   · intro w _
     rw [ContinuousLinearEquiv.preimage_closure, signFlipAt_preimage_normLessThanOne]
 
+open Classical in
 theorem volume_interior_normLessThanOne_step1 :
     volume (interior (normLessThanOne K)) = 2 ^ (NrRealPlaces K) *
       volume (interior (normLessThanOne K) ∩ {x | ∀ w, 0 < x.1 w}) := by
