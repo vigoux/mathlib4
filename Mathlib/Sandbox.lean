@@ -3,6 +3,95 @@ import Mathlib.MeasureTheory.Constructions.Pi
 import Mathlib.MeasureTheory.Measure.Haar.Unique
 import Mathlib.MeasureTheory.MeasurableSpace.Embedding
 
+section Measure
+
+open MeasureTheory MeasureTheory.Measure MeasurableSpace
+
+theorem MeasureTheory.measure_restrict_pi_pi {ι : Type*} {α : ι → Type*} [Fintype ι]
+    [(i : ι) → MeasurableSpace (α i)] (μ : (i : ι) → MeasureTheory.Measure (α i))
+    [∀ i, SigmaFinite (μ i)] (s : (i : ι) → Set (α i)) :
+    (Measure.pi μ).restrict (Set.univ.pi fun i ↦ s i) =
+      Measure.pi (fun i ↦ (μ i).restrict (s i)) := by
+  refine (Measure.pi_eq fun _ h ↦ ?_).symm
+  simp_rw [restrict_apply (MeasurableSet.univ_pi h), restrict_apply (h _),
+    ← Set.pi_inter_distrib, pi_pi]
+
+section marginal
+
+variable {δ : Type*} {π : δ → Type*} [DecidableEq δ] [(x : δ) → MeasurableSpace (π x)]
+    {μ : (i : δ) → MeasureTheory.Measure (π i)} {s : Finset δ}
+
+theorem Measurable.lmarginal_zero {x : (i : δ) → π i} :
+    (∫⋯∫⁻_s, 0 ∂μ) x = 0 := lintegral_zero
+
+theorem Measurable.lmarginal_update [∀ (i : δ), SigmaFinite (μ i)]
+    {f : ((i : δ) → π i) → ENNReal} (hf : Measurable f) {x : (i : δ) → π i} {i : δ} :
+    Measurable fun xᵢ ↦ (∫⋯∫⁻_s, f ∂μ) (Function.update x i xᵢ) := by
+  exact (Measurable.lmarginal _ hf).comp (measurable_update x)
+
+theorem MeasureTheory.lmarginal_const_smul
+    {f : ((i : δ) → π i) → ENNReal} (hf : Measurable f) {x : (i : δ) → π i} (r : ENNReal) :
+    (∫⋯∫⁻_s, r • f ∂μ) x = r * (∫⋯∫⁻_s, f ∂μ) x := by
+  simp_rw [lmarginal, Pi.smul_apply, smul_eq_mul]
+  rw [lintegral_const_mul _ (by convert hf.comp measurable_updateFinset)]
+
+theorem MeasureTheory.lmarginal_const_smul'
+    {f : ((i : δ) → π i) → ENNReal} {x : (i : δ) → π i} (r : ENNReal) (hr : r ≠ ⊤):
+    (∫⋯∫⁻_s, r • f ∂μ) x = r * (∫⋯∫⁻_s, f ∂μ) x := by
+  simp_rw [lmarginal, Pi.smul_apply, smul_eq_mul]
+  rw [lintegral_const_mul' _ _ hr]
+
+end marginal
+
+theorem Complex.lintegral_pi_comp_polarCoord_symm_aux {ι : Type*} [DecidableEq ι]
+    (f : (ι → ℂ) → ENNReal) (hf : Measurable f) (s : Finset ι) (a : ι → ℝ × ℝ) :
+    (∫⋯∫⁻_s, f ∂fun _ ↦ (volume : Measure ℂ)) (fun i ↦ Complex.polarCoord.symm (a i)) =
+      (∫⋯∫⁻_s, fun p ↦
+          ((∏ i ∈ s, (p i).1.toNNReal) * f (fun i ↦ Complex.polarCoord.symm (p i)))
+            ∂fun _ ↦ ((volume : Measure (ℝ × ℝ)).restrict polarCoord.target)) a := by
+  induction s using Finset.induction generalizing f a with
+  | empty => simp
+  | @insert i₀ s hi₀ h_ind =>
+      have h : ∀ t : Finset ι, Measurable fun p : ι → ℝ × ℝ ↦
+          (∏ i ∈ t, (p i).1.toNNReal) * f fun i ↦ Complex.polarCoord.symm (p i) := by
+        intro _
+        refine Measurable.mul ?_ ?_
+        · exact measurable_coe_nnreal_ennreal_iff.mpr <|
+            Finset.measurable_prod _ fun _ _ ↦ by fun_prop
+        · exact hf.comp <| measurable_pi_lambda _ fun _ ↦
+            Complex.measurable_polarCoord_symm.comp (measurable_pi_apply _)
+      calc
+        _ = ∫⁻ x in polarCoord.target, x.1.toNNReal •
+              (∫⋯∫⁻_s, f ∂fun _ ↦ volume)
+                fun j ↦ Complex.polarCoord.symm (Function.update a i₀ x j) := by
+          rw [MeasureTheory.lmarginal_insert _ hf hi₀, ← Complex.lintegral_comp_polarCoord_symm _
+            hf.lmarginal_update]
+          congr!
+          simp_rw [Function.update_apply]
+          split_ifs <;> rfl
+        _ = ∫⁻ (x : ℝ × ℝ) in polarCoord.target,
+              (∫⋯∫⁻_s,
+                (fun p ↦ ↑(∏ i ∈ insert i₀ s, (p i).1.toNNReal) *
+                  (f fun i ↦ Complex.polarCoord.symm (p i))) ∘ fun p ↦ Function.update p i₀ x
+              ∂fun _ ↦ volume.restrict polarCoord.target) a := by
+            simp_rw [h_ind _ hf, lmarginal_update_of_not_mem (h s) hi₀, Function.comp,
+              ENNReal.smul_def, smul_eq_mul, ← lmarginal_const_smul' _ ENNReal.coe_ne_top,
+              Pi.smul_def, Finset.prod_insert hi₀, Function.update_same, smul_eq_mul,
+              ENNReal.coe_mul, mul_assoc]
+        _ = (∫⋯∫⁻_insert i₀ s, fun p ↦ (∏ i ∈ insert i₀ s, (p i).1.toNNReal) *
+              f (fun i ↦ Complex.polarCoord.symm (p i))
+                ∂fun _ ↦ volume.restrict polarCoord.target) a := by
+          simp_rw [← lmarginal_update_of_not_mem (h _) hi₀]
+          rw [MeasureTheory.lmarginal_insert _ (h _) hi₀]
+
+theorem Complex.lintegral_pi_comp_polarCoord_symm {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (f : (ι → ℂ) → ENNReal) (hf : Measurable f) :
+    ∫⁻ p, f p = ∫⁻ p in (Set.univ.pi fun _ : ι ↦ polarCoord.target),
+      (∏ i, (p i).1.toNNReal) * f (fun i ↦ Complex.polarCoord.symm (p i)) := by
+  rw [volume_pi, lintegral_eq_lmarginal_univ (fun _ ↦ Complex.polarCoord.symm 0),
+    Complex.lintegral_pi_comp_polarCoord_symm_aux _ hf, lmarginal_univ, ← measure_restrict_pi_pi]
+  rfl
+
 /-- A family of algebra homomorphisms `g i : A →ₐ[R] B i` defines an algebra homomorphism
 `Pi.algHom f : A →+* Π i, B i` given by `Pi.algHom f x i = f i x`. -/
 @[simps!]
@@ -11,10 +100,6 @@ def Pi.algHom {I R : Type*} [CommSemiring R] {A : Type*} [Semiring A] [Algebra R
     A →ₐ[R] (i : I) → B i where
   __ := Pi.ringHom fun i ↦ (g i)
   commutes' _ := by ext; simp
-
-section Measure
-
-open MeasureTheory MeasureTheory.Measure MeasurableSpace
 
 theorem Equiv.arrowProdEquivProdArrow_preimage {α β γ : Type*} {s : γ → Set α} {t : γ → Set β} :
     Equiv.arrowProdEquivProdArrow α β γ ⁻¹' (_root_.Set.univ.pi s ×ˢ _root_.Set.univ.pi t) =
@@ -136,7 +221,7 @@ theorem MeasurablePreserving.subtypeEquiv {α β : Type*} [MeasurableSpace α] [
     erw [MeasurableEmbedding.map_apply (e.subtypeEquiv h).measurableEmbedding,
       MeasurableEmbedding.comap_apply heq, MeasurableEmbedding.comap_apply, ← he.measure_preimage]
     · congr; aesop
-    · exact heq.measurableSet_image.mpr hs
+    · exact (heq.measurableSet_image.mpr hs).nullMeasurableSet
     · convert (e.symm.measurableEmbedding.comp heq).comp (e.subtypeEquiv h).measurableEmbedding
       ext
       simp only [Set.mem_setOf_eq, MeasurableEquiv.subtypeEquiv, MeasurableEquiv.coe_mk,
@@ -218,15 +303,6 @@ theorem lintegral_comp_abs {f : ℝ → ENNReal} (hf : Measurable f) :
       rw [two_mul, show Iio (0 : ℝ) = (fun x ↦ -x) ⁻¹' Ioi 0 by simp,
         ← (setLIntegral_map measurableSet_Ioi hf measurable_neg), Measure.map_neg_eq_self]
 
-theorem MeasureTheory.measure_restrict_pi_pi {ι : Type*} {α : ι → Type*} [Fintype ι]
-    [(i : ι) → MeasurableSpace (α i)] (μ : (i : ι) → MeasureTheory.Measure (α i))
-    [∀ i, SigmaFinite (μ i)] (s : (i : ι) → Set (α i)) :
-    (Measure.pi μ).restrict (Set.univ.pi fun i ↦ s i) =
-      Measure.pi (fun i ↦ (μ i).restrict (s i)) := by
-  refine (Measure.pi_eq fun _ h ↦ ?_).symm
-  simp_rw [restrict_apply (MeasurableSet.univ_pi h), restrict_apply (h _),
-    ← Set.pi_inter_distrib, pi_pi]
-
 theorem MeasureTheory.Measure.restrict_prod_eq_univ_prod {α β : Type*} [MeasurableSpace α]
     [MeasurableSpace β] {μ : MeasureTheory.Measure α} {ν : MeasureTheory.Measure β}
     [MeasureTheory.SFinite ν] [MeasureTheory.SFinite μ]  (t : Set β) :
@@ -265,7 +341,8 @@ theorem ContinuousLinearEquiv.preimage_interior {R₁ R₂ : Type*} [Semiring R�
 -- theorem MeasureTheory.measurePreserving_subtypeEquivRight
 --     {α : Type*} [MeasurableSpace α] {p : α → Prop} {q : α → Prop} (hq : MeasurableSet {x | q x})
 --     (e : ∀ (x : α), p x ↔ q x) (μ : Measure α) :
---     MeasurePreserving (Equiv.subtypeEquivRight e) (comap Subtype.val μ) (comap Subtype.val μ) := by
+--     MeasurePreserving (Equiv.subtypeEquivRight e) (comap Subtype.val μ)
+-- (comap Subtype.val μ) := by
 --   have h : Measurable (Equiv.subtypeEquivRight e) := by
 --     rw [Equiv.subtypeEquivRight]
 --     exact Measurable.subtype_map (fun ⦃t⦄ a ↦ a) fun x ↦ (e x).mp
@@ -329,32 +406,7 @@ theorem ContinuousLinearEquiv.symm_neg {R : Type*} {M : Type*} [Semiring R] [Add
 
 open MeasureTheory
 
-section marginal
-
-variable {δ : Type*} {π : δ → Type*} [DecidableEq δ] [(x : δ) → MeasurableSpace (π x)]
-    (μ : (i : δ) → MeasureTheory.Measure (π i)) {s : Finset δ}
-
-theorem Measurable.lmarginal_zero {x : (i : δ) → π i} :
-    (∫⋯∫⁻_s, 0 ∂μ) x = 0 := lintegral_zero
-
-theorem Measurable.lmarginal_update [∀ (i : δ), SigmaFinite (μ i)]
-    {f : ((i : δ) → π i) → ENNReal} (hf : Measurable f) {x : (i : δ) → π i} (i : δ) :
-    Measurable fun xᵢ ↦ (∫⋯∫⁻_s, f ∂μ) (Function.update x i xᵢ) := by
-  exact (Measurable.lmarginal _ hf).comp (measurable_update x)
-
-theorem MeasureTheory.lmarginal_const_smul
-    {f : ((i : δ) → π i) → ENNReal} (hf : Measurable f) {x : (i : δ) → π i} (r : ENNReal) :
-    (∫⋯∫⁻_s, r • f ∂μ) x = r * (∫⋯∫⁻_s, f ∂μ) x := by
-  simp_rw [lmarginal, Pi.smul_apply, smul_eq_mul]
-  rw [lintegral_const_mul _ (by convert hf.comp measurable_updateFinset)]
-
-theorem MeasureTheory.lmarginal_const_smul'
-    {f : ((i : δ) → π i) → ENNReal} {x : (i : δ) → π i} (r : ENNReal) (hr : r ≠ ⊤):
-    (∫⋯∫⁻_s, r • f ∂μ) x = r * (∫⋯∫⁻_s, f ∂μ) x := by
-  simp_rw [lmarginal, Pi.smul_apply, smul_eq_mul]
-  rw [lintegral_const_mul' _ _ hr]
-
-end marginal
+#exit
 
 open NNReal ENNReal Real
 

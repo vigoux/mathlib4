@@ -120,9 +120,9 @@ theorem volume_image_eq_volume_div_covolume {E : Type*} [NormedAddCommGroup E]
       OrthonormalBasis.repr_symm_single, Basis.equiv_apply, Equiv.refl_apply,
       OrthonormalBasis.reindex_toBasis, OrthonormalBasis.coe_reindex, Basis.coe_reindex,
       OrthonormalBasis.coe_toBasis]
-  rw [← (EuclideanSpace.volume_preserving_measurableEquiv _).measure_preimage h₁]
-  rw [← ((stdOrthonormalBasis ℝ E).reindex e).measurePreserving_repr.measure_preimage
-    ((MeasurableEquiv.measurableSet_preimage _).mpr h₁)]
+  rw [← (EuclideanSpace.volume_preserving_measurableEquiv _).measure_preimage,
+    ← ((stdOrthonormalBasis ℝ E).reindex e).measurePreserving_repr.measure_preimage]
+  any_goals exact h₁.nullMeasurableSet
   simp_rw [EuclideanSpace.coe_measurableEquiv, ← WithLp.linearEquiv_apply 2 ℝ,
     ← LinearIsometryEquiv.coe_toLinearEquiv, ← LinearEquiv.image_symm_eq_preimage,
     ← Set.image_comp, ← LinearEquiv.coe_coe, ← LinearMap.coe_comp, LinearEquiv.comp_coe]
@@ -135,7 +135,6 @@ theorem volume_image_eq_volume_div_covolume {E : Type*} [NormedAddCommGroup E]
     ENNReal.one_toReal, mul_one, mul_comm, div_eq_mul_inv, ← ENNReal.ofReal_inv_of_pos
     (by positivity), abs_inv, ← h₂]
   rfl
-
 end Basic
 
 namespace covolume

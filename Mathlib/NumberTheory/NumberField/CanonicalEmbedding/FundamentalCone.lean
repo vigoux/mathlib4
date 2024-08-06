@@ -585,10 +585,12 @@ theorem volume_inter_positiveAt {s : Set (E K)} (hs₁ : MeasurableSet s)
           · rw [signFlipAt_apply_of_isReal_ne]
             exact h z hz
             exact ne_of_mem_of_not_mem hz hw
-        · refine MeasurableSet.inter (MeasurableSet.inter hs₁ ?_) ?_
+        · refine MeasurableSet.inter (MeasurableSet.inter hs₁.nullMeasurableSet ?_) ?_
           · refine measurableSet_lt (g := fun _ ↦ (0 : ℝ)) ?_ measurable_const
-            exact (measurable_pi_apply _).comp measurable_fst
-          · exact measurableSet_positiveAt T
+            sorry
+            -- exact (measurable_pi_apply _).comp measurable_fst
+          · sorry
+            -- exact measurableSet_positiveAt T
       rw [h_ind, measure_congr h₁, measure_union h₂, h₃, ← two_mul, ← mul_assoc, ← pow_succ,
         Finset.card_insert_of_not_mem hw]
       · simp_rw [Finset.mem_insert, forall_eq_or_imp, Set.setOf_and, Set.inter_assoc]

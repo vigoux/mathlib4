@@ -184,6 +184,7 @@ theorem continuousOn_mapToUnitsPow₀_symm :
     ContinuousOn (mapToUnitsPow₀ K).symm {x | ∀ w, x w ≠ 0} :=
   (continuous_equivFun_basis _).comp_continuousOn (continuousOn_mapToUnitsPow₀_aux_symm K)
 
+@[simps source target]
 def mapToUnitsPow : PartialHomeomorph (InfinitePlace K → ℝ) (InfinitePlace K → ℝ) where
   toFun := fun c ↦ |c w₀| • mapToUnitsPow₀ K (fun w ↦ c w)
   invFun x w :=
@@ -294,9 +295,10 @@ theorem mapToUnitsPow_nonneg (c : (InfinitePlace K → ℝ)) (w : InfinitePlace 
     0 ≤ mapToUnitsPow K c w :=
   mul_nonneg (abs_nonneg _) (mapToUnitsPow₀_pos K _ _).le
 
-theorem mapToUnitsPow_zero_iff (c : (InfinitePlace K → ℝ)) :
-    mapToUnitsPow K c = 0 ↔ c w₀ = 0 := by
-  rw [mapToUnitsPow_apply, smul_eq_zero, abs_eq_zero, or_iff_left (mapToUnitsPow₀_ne_zero K _)]
+theorem mapToUnitsPow_zero_iff (c : (InfinitePlace K → ℝ)) (w : InfinitePlace K) :
+    mapToUnitsPow K c w = 0 ↔ c w₀ = 0 := by
+  rw [mapToUnitsPow_apply, Pi.smul_apply, smul_eq_mul, mul_eq_zero, abs_eq_zero,
+    or_iff_left (ne_of_gt (mapToUnitsPow₀_pos K _ _))]
 
 open ContinuousLinearMap
 
@@ -474,13 +476,32 @@ def polarCoordToMixedSpace : PartialHomeomorph
   (realProdComplexProdEquiv K).symm.transPartialHomeomorph <|
     (PartialHomeomorph.refl _).prod <| PartialHomeomorph.pi fun _ ↦ Complex.polarCoord.symm
 
-theorem polarCoordToMixedSpace_apply (x : (InfinitePlace K → ℝ) ×
-    ({w : InfinitePlace K // IsComplex w} → ℝ)) :
+theorem polarCoordToMixedSpace_apply (x : (InfinitePlace K → ℝ) × ({w // IsComplex w} → ℝ)) :
     polarCoordToMixedSpace K x = ⟨fun w ↦ x.1 w.val,
       fun w ↦ Complex.polarCoord.symm (x.1 w, x.2 w)⟩ := rfl
 
+theorem polarCoordToMixedSpace_symm_apply (x : E K) :
+    (polarCoordToMixedSpace K).symm x =
+      (realProdComplexProdEquiv K) (x.1, fun w ↦ Complex.polarCoord (x.2 w)) := by
+  rw [polarCoordToMixedSpace]
+  rw [Homeomorph.transPartialHomeomorph_symm_apply, Homeomorph.symm_symm,
+    PartialHomeomorph.prod_symm, PartialHomeomorph.prod_apply, Function.comp_apply,
+    PartialHomeomorph.refl_symm, PartialHomeomorph.refl_apply, id_eq]
+  rfl
+
+theorem measurable_polarCoordToMixedSpace :
+    Measurable (polarCoordToMixedSpace K) := by
+  change Measurable (fun x ↦ polarCoordToMixedSpace K x)
+  simp_rw [polarCoordToMixedSpace_apply]
+  refine Measurable.prod ?_ ?_
+  · dsimp only
+    exact measurable_pi_lambda _ fun x ↦ (measurable_pi_apply _).comp' measurable_fst
+  · dsimp only
+    simp_rw [Complex.polarCoord_symm_apply]
+    fun_prop
+
 theorem polarCoordToMixedSpace_source : (polarCoordToMixedSpace K).source =
-    (Set.univ.pi fun w ↦
+  (Set.univ.pi fun w ↦
       if IsReal w then Set.univ else Set.Ioi 0) ×ˢ (Set.univ.pi fun _ ↦ Set.Ioo (-π) π):= by
   rw [polarCoordToMixedSpace, Homeomorph.transPartialHomeomorph_source]
   ext
@@ -493,41 +514,211 @@ theorem polarCoordToMixedSpace_target :
     (polarCoordToMixedSpace K).target = Set.univ ×ˢ Set.univ.pi fun _ ↦ Complex.slitPlane := by
   simp [polarCoordToMixedSpace, Complex.polarCoord_source]
 
--- Probably merge with volume_marcus₃_set_prod_set
-theorem lintegral_marcus₃ (f : (E K) → ENNReal) (hf : Measurable f) :
+theorem measurableSet_polarCoordToMixedSpace_source :
+    MeasurableSet (polarCoordToMixedSpace K).source := by
+  rw [polarCoordToMixedSpace_source]
+  refine MeasurableSet.prod ?_ ?_
+  · refine MeasurableSet.univ_pi ?_
+    intro w
+    refine MeasurableSet.ite' ?_ ?_
+    · intro _
+      exact MeasurableSet.univ
+    · intro _
+      exact measurableSet_Ioi
+  · refine MeasurableSet.univ_pi ?_
+    intro _
+    exact measurableSet_Ioo
+
+theorem realProdComplexProdEquiv_preimage_polarCoordToMixedSpace_source :
+  (realProdComplexProdEquiv K) ⁻¹' (polarCoordToMixedSpace K).source =
+    Set.univ ×ˢ Set.univ.pi fun _ ↦ polarCoord.target := by
+  ext
+  simp_rw [polarCoordToMixedSpace_source, Set.mem_preimage, realProdComplexProdEquiv_apply,
+    polarCoord_target, Set.mem_prod, Set.mem_pi, Set.mem_univ, true_implies, true_and,
+    Set.mem_ite_univ_left, not_isReal_iff_isComplex, Set.mem_prod]
+  refine ⟨?_, ?_⟩
+  · rintro ⟨h₁, h₂⟩ i
+    refine ⟨?_, ?_⟩
+    · specialize h₁ i i.prop
+      rwa [dif_neg] at h₁
+      rw [not_isReal_iff_isComplex]
+      exact i.prop
+    · specialize h₂ i
+      exact h₂
+  · intro h
+    refine ⟨?_, ?_⟩
+    · intro i hi
+      rw [dif_neg]
+      specialize h ⟨i, hi⟩
+      exact h.1
+      rwa [not_isReal_iff_isComplex]
+    · intro i
+      specialize h i
+      exact h.2
+
+theorem lintegral_mixedSpace_eq (f : (E K) → ENNReal) (hf : Measurable f) :
     ∫⁻ x, f x =
-      ∫⁻ x, (∏ w : {w // IsComplex w}, (x.1 w.val).toNNReal) * f (polarCoordToMixedSpace K x) := by
-  have : Measurable fun x ↦ (∏ w : {w : InfinitePlace K // w.IsComplex }, (x.1 w).toNNReal) *
-    f ((polarCoordToMixedSpace K) x) := sorry
-  rw [← (volume_preserving_realProdComplexProdEquiv K).lintegral_comp]
-  simp_rw [realProdComplexProdEquiv_apply, ENNReal.coe_finset_prod, polarCoordToMixedSpace_apply,
-    dif_pos (Subtype.prop _), dif_neg (not_isReal_iff_isComplex.mpr (Subtype.prop _)),
-    Subtype.coe_eta, Prod.mk.eta]
-  rw [volume_eq_prod, volume_eq_prod, lintegral_prod, lintegral_prod]
-  congr with x
-  dsimp only
+      ∫⁻ x in (polarCoordToMixedSpace K).source,
+        (∏ w : {w // IsComplex w}, (x.1 w.val).toNNReal) * f (polarCoordToMixedSpace K x) := by
+  have h : Measurable fun x ↦ (∏ w : { w // IsComplex w}, (x.1 w.val).toNNReal) *
+      f (polarCoordToMixedSpace K x) := by
+    refine Measurable.mul ?_ ?_
+    · exact measurable_coe_nnreal_ennreal_iff.mpr <| Finset.measurable_prod _ fun _ _ ↦ by fun_prop
+    · exact hf.comp' (measurable_polarCoordToMixedSpace K)
+  rw [← (volume_preserving_realProdComplexProdEquiv K).setLIntegral_comp_preimage
+    (measurableSet_polarCoordToMixedSpace_source K) h, volume_eq_prod, volume_eq_prod,
+    lintegral_prod _ hf.aemeasurable]
+  simp_rw [Complex.lintegral_pi_comp_polarCoord_symm _ (hf.comp' measurable_prod_mk_left)]
+  rw [realProdComplexProdEquiv_preimage_polarCoordToMixedSpace_source,
+    ← Measure.restrict_prod_eq_univ_prod, lintegral_prod _
+    (h.comp' (realProdComplexProdEquiv K).measurable).aemeasurable]
+  simp_rw [realProdComplexProdEquiv_apply, polarCoordToMixedSpace_apply, dif_pos (Subtype.prop _),
+    dif_neg (not_isReal_iff_isComplex.mpr (Subtype.prop _))]
 
-  · sorry
-  · refine Measurable.aemeasurable ?_
-    convert this
+def mapToUnitsPowComplex : PartialHomeomorph
+    ((InfinitePlace K → ℝ) × ({w : InfinitePlace K // IsComplex w} → ℝ)) (E K) :=
+  PartialHomeomorph.trans
+    (PartialHomeomorph.prod (mapToUnitsPow K) (PartialHomeomorph.refl _))
+    (polarCoordToMixedSpace K)
+
+theorem mapToUnitsPowComplex_apply (x : (InfinitePlace K → ℝ) × ({w // IsComplex w} → ℝ)) :
+    mapToUnitsPowComplex K x =
+      (fun w ↦ mapToUnitsPow K x.1 w.val,
+        fun w ↦ Complex.polarCoord.symm (mapToUnitsPow K x.1 w.val, x.2 w)) := rfl
+
+theorem mapToUnitsPowComplex_source :
+    (mapToUnitsPowComplex K).source = {x | 0 < x w₀} ×ˢ Set.univ.pi fun _ ↦ Set.Ioo (-π) π := by
+  ext
+  simp_rw [mapToUnitsPowComplex, PartialHomeomorph.trans_source, PartialHomeomorph.prod_source,
+    PartialHomeomorph.refl_source, Set.mem_inter_iff, Set.mem_prod, Set.mem_univ, and_true,
+    Set.mem_preimage, PartialHomeomorph.prod_apply, PartialHomeomorph.refl_apply, id_eq,
+    polarCoordToMixedSpace_source, Set.mem_prod, mapToUnitsPow_source]
+  rw [and_congr_right]
+  intro h
+  rw [and_iff_right_iff_imp]
+  intro _
+  simp_rw [Set.mem_univ_pi, Set.mem_ite_univ_left, not_isReal_iff_isComplex]
+  intro w _
+  rw [Set.mem_Ioi, lt_iff_le_and_ne]
+  refine ⟨mapToUnitsPow_nonneg K _ _, ?_⟩
+  rw [ne_comm, ne_eq, mapToUnitsPow_zero_iff]
+  exact ne_of_gt h
+
+theorem mapToUnitsPowComplex_target :
+    (mapToUnitsPowComplex K).target =
+      (Set.univ.pi fun _ ↦ Set.Ioi 0) ×ˢ (Set.univ.pi fun _ ↦ Complex.slitPlane) := by
+  ext
+  simp_rw [mapToUnitsPowComplex, PartialHomeomorph.trans_target, polarCoordToMixedSpace_target,
+    PartialHomeomorph.prod_target, PartialHomeomorph.refl_target, Set.mem_inter_iff,
+    Set.mem_preimage, mapToUnitsPow_target, Set.mem_prod, Set.mem_univ, true_and, and_true,
+    and_comm]
+  rw [and_congr_right]
+  intro h
+  simp_rw [polarCoordToMixedSpace_symm_apply, realProdComplexProdEquiv_apply, Set.mem_pi,
+    Set.mem_univ, true_implies]
+  refine ⟨?_, ?_⟩
+  · intro h' w
+    specialize h' w
+    simp_rw [dif_pos w.prop] at h'
+    exact h'
+  · intro h' w
+    by_cases hw : IsReal w
+    · simp_rw [dif_pos hw]
+      exact h' ⟨w, hw⟩
+    · simp_rw [dif_neg hw]
+      rw [Complex.polarCoord_apply]
+      dsimp only
+      rw [Set.mem_pi] at h
+      specialize h ⟨w, not_isReal_iff_isComplex.mp hw⟩ (Set.mem_univ _)
+      rw [AbsoluteValue.pos_iff]
+      exact Complex.slitPlane_ne_zero h
+
+theorem mapToUnitsPowComplex_image_prod_indicator (s : Set (InfinitePlace K → ℝ))
+    (t : Set ({w // IsComplex w} → ℝ)) (x : (InfinitePlace K → ℝ) × ({w // IsComplex w} → ℝ)) :
+    (mapToUnitsPowComplex K '' s ×ˢ t).indicator (fun _ ↦ (1 : ENNReal))
+      (polarCoordToMixedSpace K x) =
+      (mapToUnitsPow K '' s).indicator 1 x.1 * t.indicator 1 x.2 := by
+  rw [← @Set.indicator_prod_one]
+  rw [← Set.indicator_comp_right]
+  have : polarCoordToMixedSpace K ⁻¹' (mapToUnitsPowComplex K '' s ×ˢ t) =
+      (mapToUnitsPow K '' s) ×ˢ t := by
+    ext x
+    simp_rw [Set.mem_preimage, Set.mem_prod, polarCoordToMixedSpace_apply, mapToUnitsPowComplex,
+      PartialHomeomorph.coe_trans, PartialHomeomorph.prod_apply, PartialHomeomorph.refl_apply,
+      id_eq, Function.comp_apply, Set.mem_image, Set.mem_prod, Prod.exists]
+    refine ⟨?_, ?_⟩
+    · rintro ⟨a, ⟨b, ⟨ha, hb⟩, h⟩⟩
+      rw [polarCoordToMixedSpace_apply, Prod.mk.injEq] at h
+      dsimp at h
+      refine ⟨?_, ?_⟩
+      · use a
+
+        sorry
+      ·
+        sorry
+    ·
+      sorry
+
+#exit
+
+
+    simp only [Complex.polarCoord_symm_apply, Complex.ofReal_cos, Complex.ofReal_sin,
+      mapToUnitsPowComplex, PartialHomeomorph.coe_trans, PartialHomeomorph.prod_apply,
+      PartialHomeomorph.refl_apply, id_eq, Function.comp_apply, Set.mem_image, Set.mem_prod,
+      Prod.exists]
+
+  by_cases hx : polarCoordToMixedSpace K x ∈ mapToUnitsPowComplex K '' s ×ˢ t
+  · rw [Set.indicator_of_mem hx, Set.indicator_of_mem, Set.indicator_of_mem, Pi.one_apply,
+      Pi.one_apply, one_mul]
+    simp_rw [mapToUnitsPowComplex, PartialHomeomorph.coe_trans, PartialHomeomorph.prod_apply,
+      PartialHomeomorph.refl_apply, id_eq, Function.comp_apply, Set.mem_image] at hx
+
+    simp only [PartialHomeomorph.coe_trans, PartialHomeomorph.prod_apply,
+      PartialHomeomorph.refl_apply, id_eq, Function.comp_apply, Set.mem_image, Set.mem_prod,
+      Prod.exists] at hx
+    rw [polarCoordToMixedSpace_apply] at hx
+
+    simp only [Complex.polarCoord_symm_apply, Complex.ofReal_cos, Complex.ofReal_sin, Set.mem_image,
+      Set.mem_prod, Prod.exists] at hx
+
     sorry
-  · exact hf.aemeasurable
-  · sorry
+  ·
+    sorry
+
+theorem normVector_mapToUnitsPowComplex (x : (InfinitePlace K → ℝ) × ({w // IsComplex w} → ℝ)) :
+    (fun w ↦ normAtPlace w (mapToUnitsPowComplex K x)) = mapToUnitsPow K x.1 := by
+  rw [mapToUnitsPowComplex_apply]
+  ext w
+  obtain hw | hw := isReal_or_isComplex w
+  · rw [normAtPlace_apply_isReal hw, Real.norm_eq_abs, abs_eq_self.mpr (mapToUnitsPow_nonneg K _ _)]
+  · rw [normAtPlace_apply_isComplex hw, Complex.norm_eq_abs, Complex.polarCoord_symm_abs,
+      abs_eq_self.mpr (mapToUnitsPow_nonneg K _ _)]
+
+theorem volume_mapToUnitsPowComplex_set_prod_set (s : Set (InfinitePlace K → ℝ))
+    (t : Set ({w : InfinitePlace K // IsComplex w} → ℝ)) :
+    volume (mapToUnitsPowComplex K '' (s ×ˢ t)) =
+      volume t * ∫⁻ x in mapToUnitsPow K '' s,
+        ∏ w : { w : InfinitePlace K // w.IsComplex }, (x w).toNNReal := by
+  rw [← setLIntegral_one, ← lintegral_indicator, lintegral_mixedSpace_eq]
+  simp_rw [mapToUnitsPowComplex_image_prod]
+
+#exit
+  rw [full_marcus, PartialHomeomorph.coe_trans, Set.image_comp, marcus₁_image_prod]
+  rw [marcus₃]
+  simp only [PartialHomeomorph.coe_trans, PartialHomeomorph.prod_apply,
+    PartialHomeomorph.refl_apply, id_eq, Homeomorph.toPartialHomeomorph_apply, Function.comp_apply,
+    marcus₂_apply]
+  all_goals sorry
+
 
 #exit
 
--- marcus₁
-def mapToUnitsPowComplex₀ :=
-  PartialHomeomorph.prod (mapToUnitsPow K)
-    (PartialHomeomorph.refl ({w : InfinitePlace K // IsComplex w} → ℝ))
+@[simps! apply symm_apply source target]
+def marcus₁ : PartialHomeomorph (F K) (F K) :=
+  PartialHomeomorph.prod (mapToUnitsPow K) (PartialHomeomorph.refl _)
 
-
-
-#exit
-
-def marcus₃ : PartialHomeomorph (F K) (E K) :=
-  (marcus₂ K).toPartialHomeomorph.trans <|
-    (PartialHomeomorph.refl _).prod <| PartialHomeomorph.pi fun _ ↦ Complex.polarCoord.symm
+def full_marcus : PartialHomeomorph (F K) (E K) := by
+  refine PartialHomeomorph.trans (marcus₁ K) (marcus₃ K)
 
 #exit
 
@@ -544,8 +735,6 @@ theorem marcus₁_image_prod (s : Set (InfinitePlace K → ℝ))
     (t : Set ({w : InfinitePlace K // IsComplex w} → ℝ)) :
     marcus₁ K '' (s ×ˢ t) = (mapToUnitsPow K '' s) ×ˢ t := by
   ext; aesop
-
-
 
 @[simps apply symm_apply]
 def marcus₂ : Homeomorph (F K) (G K) where
