@@ -71,7 +71,7 @@ lemma sInf_eq_zero : sInf s = 0 ↔ 0 ∈ s := by
 lemma sSup_eq_zero' : sSup s = 0 ↔ s = ∅ ∨ s = {0} :=
   sSup_eq_bot'
 
-lemma isup_add (ι : Type*) [Nonempty ι] (f : ι → ℕ∞) (n : ℕ∞) :
+lemma iSup_add (ι : Type*) [Nonempty ι] (f : ι → ℕ∞) (n : ℕ∞) :
     (⨆ x, f x) + n = (⨆ x, f x + n) := by
   apply le_antisymm
   · cases n; simp; next n =>
